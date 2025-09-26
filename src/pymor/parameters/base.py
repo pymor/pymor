@@ -552,7 +552,7 @@ class ParametricObject(ImmutableObject):
     def parameters(self):
         if self._parameters is not None:
             return self._parameters
-        assert self._locked, 'parameters attribute can only be accessed after class initialization'
+        assert not self._in_init, 'parameters attribute can only be accessed after class initialization'
         params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
         if (self._init_has_args or self._init_has_kwargs) and getattr(self, '_parameters_varargs_warning', True):
             import warnings

@@ -5,7 +5,7 @@
 from collections.abc import Iterable, Mapping
 from weakref import WeakValueDictionary
 
-from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
 from pymor.tools.formatsrc import format_source, print_source
@@ -146,27 +146,8 @@ class match_generic(rule):
         return self.condition(obj)
 
 
-class RuleTableMeta(UberMeta):
+class RuleTableMeta(type):
     """Meta class for |RuleTable|."""
-
-    def __new__(cls, name, parents, dct):
-        assert 'rules' not in dct
-        rules = []
-        if not {p.__name__ for p in parents} <= {'RuleTable', 'BasicObject'}:
-            raise NotImplementedError('Inheritance for RuleTables not implemented yet.')
-        for k, v in dct.items():
-            if isinstance(v, rule):
-                if not k.startswith('action_'):
-                    raise ValueError('Rule definition names have to start with "action_"')
-                v.name = k
-                rules.append(v)
-        # note: since Python 3.6, the definition order is preserved in dct,
-        # so rules has the right order
-        dct['rules'] = rules
-        dct['_breakpoint_for_obj'] = WeakValueDictionary()
-        dct['_breakpoint_for_name'] = set()
-
-        return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
         return format_rules(cls.rules)
@@ -390,6 +371,24 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     def __repr__(self):
         return super().__repr__() + '\n\n' + format_rules(self.rules)
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        assert 'rules' not in cls.__dict__
+        rules = []
+        if not {p.__name__ for p in cls.__bases__} <= {'RuleTable', 'BasicObject'}:
+            raise NotImplementedError('Inheritance for RuleTables not implemented yet.')
+        for k, v in cls.__dict__.items():
+            if isinstance(v, rule):
+                if not k.startswith('action_'):
+                    raise ValueError('Rule definition names have to start with "action_"')
+                v.name = k
+                rules.append(v)
+        # note: since Python 3.6, the definition order is preserved in dct,
+        # so rules has the right order
+        cls.rules = rules
+        cls._breakpoint_for_obj = WeakValueDictionary()
+        cls._breakpoint_for_name = set()
 
 
 def print_children(obj):

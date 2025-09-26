@@ -8,12 +8,11 @@ The purpose of these classes is to provide some common functionality for
 all objects in pyMOR. The most notable features provided by :class:`BasicObject`
 are the following:
 
-    1. :class:`BasicObject` sets class :class:`UberMeta` as metaclass
-       which itself inherits from :class:`abc.ABCMeta`. Thus it is possible
+    1. :class:`BasicObject` inherits from :class:`abc.ABC`. Thus it is possible
        to define interface classes with abstract methods using the
        :func:`abstractmethod` decorator. There are also decorators for
        abstract class methods, static methods, and properties.
-    2. Using metaclass magic, each *class* deriving from :class:`BasicObject`
+    2. Using `__init_subclass__` magic, each *class* deriving from :class:`BasicObject`
        comes with its own :mod:`~pymor.core.logger` instance accessible through its `logger`
        attribute. The logger prefix is automatically set to the class name.
     3. Logging can be disabled and re-enabled for each *instance* using the
@@ -33,7 +32,7 @@ are the following:
 :class:`ImmutableObject` derives from :class:`BasicObject` and adds the following
 functionality:
 
-    1. Using more metaclass magic, each instance which derives from
+    1. Using more __init_subclass__ magic, each instance which derives from
        :class:`ImmutableObject` is locked after its `__init__` method has returned.
        Each attempt to change one of its attributes raises an exception. Private
        attributes (of the form `_name`) are exempted from this rule.
@@ -80,66 +79,7 @@ class UID:
         self.counter[0] += 1
 
 
-class UberMeta(abc.ABCMeta):
-
-    def __init__(cls, name, bases, namespace):
-        """Metaclass of :class:`BasicObject`.
-
-        I create a logger for each class I create.
-        I add an `init_arguments` attribute to the class.
-        """
-        cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
-        abc.ABCMeta.__init__(cls, name, bases, namespace)
-
-    def __new__(cls, classname, bases, classdict):
-        for attr in ('_init_arguments', '_init_defaults'):
-            if attr in classdict:
-                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
-
-        def __auto_init(self, locals_):
-            """Automatically assign __init__ arguments.
-
-            This method is used in __init__ to automatically assign __init__ arguments to equally
-            named object attributes. The values are provided by the `locals_` dict. Usually,
-            `__auto_init` is called as::
-
-                self.__auto_init(locals())
-
-            where `locals()` returns a dictionary of all local variables in the current scope.
-            Only attributes which have not already been set by the user are initialized by
-            `__auto_init`.
-            """
-            for arg in c._init_arguments:
-                if arg not in self.__dict__:
-                    setattr(self, arg, locals_[arg])
-
-        auto_init_name = f"_{classname.lstrip('_')}__auto_init"
-        classdict[auto_init_name] = __auto_init
-        c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
-        # by updating the qualified name we make filtering in sphinx possible
-        getattr(c, auto_init_name).__qualname__ = auto_init_name
-
-        init_sig = inspect.signature(c.__init__)
-        init_args = []
-        has_args, has_kwargs = False, False
-        for arg, description in init_sig.parameters.items():
-            if arg == 'self':
-                continue
-            if description.kind in (description.POSITIONAL_OR_KEYWORD, description.POSITIONAL_ONLY,
-                                    description.KEYWORD_ONLY):
-                init_args.append(arg)
-            elif description.kind == description.VAR_POSITIONAL:
-                has_args = True
-            elif description.kind == description.VAR_KEYWORD:
-                has_kwargs = True
-            else:
-                raise NotImplementedError(f'Unknown argument type {description.kind}')
-        c._init_arguments, c._init_has_args, c._init_has_kwargs = tuple(init_args), has_args, has_kwargs
-
-        return c
-
-
-class BasicObject(metaclass=UberMeta):
+class BasicObject:
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -156,6 +96,50 @@ class BasicObject(metaclass=UberMeta):
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
     """
+
+    def __init_subclass__(cls):
+        cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{cls.__qualname__}')
+
+        for attr in ('_init_arguments', '_init_defaults'):
+            if attr in cls.__dict__:
+                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
+
+        init_sig = inspect.signature(cls.__init__)
+        init_args = []
+        has_args, has_kwargs = False, False
+        for arg, description in init_sig.parameters.items():
+            if arg == 'self':
+                continue
+            if description.kind in (description.POSITIONAL_OR_KEYWORD, description.POSITIONAL_ONLY,
+                                    description.KEYWORD_ONLY):
+                init_args.append(arg)
+            elif description.kind == description.VAR_POSITIONAL:
+                has_args = True
+            elif description.kind == description.VAR_KEYWORD:
+                has_kwargs = True
+            else:
+                raise NotImplementedError(f'Unknown argument type {description.kind}')
+        cls._init_arguments, cls._init_has_args, cls._init_has_kwargs = tuple(init_args), has_args, has_kwargs
+
+        def __auto_init(self, locals_):
+            """Automatically assign __init__ arguments.
+
+            This method is used in __init__ to automatically assign __init__ arguments to equally
+            named object attributes. The values are provided by the `locals_` dict. Usually,
+            `__auto_init` is called as::
+
+                self.__auto_init(locals())
+
+            where `locals()` returns a dictionary of all local variables in the current scope.
+            Only attributes which have not already been set by the user are initialized by
+            `__auto_init`.
+            """
+            for arg in cls._init_arguments:
+                if arg not in self.__dict__:
+                    setattr(self, arg, locals_[arg])
+
+        auto_init_name = f"_{cls.__name__.lstrip('_')}__auto_init"
+        setattr(cls, auto_init_name, __auto_init)
 
     @property
     def name(self):
@@ -234,33 +218,7 @@ class classinstancemethod: # noqa: N801
         return self
 
 
-class ImmutableMeta(UberMeta):
-    """Metaclass for :class:`ImmutableObject`."""
-
-    def __new__(cls, classname, bases, classdict):
-
-        c = UberMeta.__new__(cls, classname, bases, classdict)
-
-        # set __signature__ attribute on newly created class c to ensure that
-        # inspect.signature(c) returns the signature of its __init__ arguments and not
-        # the signature of ImmutableMeta.__call__
-        sig = inspect.signature(c.__init__)
-        c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
-        return c
-
-    def _call(cls, *args, **kwargs):
-        instance = super().__call__(*args, **kwargs)
-        assert all(hasattr(instance, arg) for arg in instance._init_arguments), \
-            (f'__init__ arguments {[arg for arg in instance._init_arguments if not hasattr(instance,arg)]} '
-             f'of class {cls.__name__} not available as instance attributes\n'
-             f'(all __init__ args need to be attributes for with_ to work).')
-        instance._locked = True
-        return instance
-
-    __call__ = _call
-
-
-class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
+class ImmutableObject(BasicObject):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableObject` are immutable in the sense that
@@ -282,18 +240,31 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
     by possible changes of the global :mod:`~pymor.core.defaults`.
     """
 
-    _locked = False
+    _in_init = 0
 
-    # we need to define __init__, otherwise the Python 2 signature hack will fail
-    def __init__(self):
-        pass
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+
+        if (real_init := cls.__dict__.get('__init__')) is None:
+            return
+
+        @wraps(real_init)
+        def init_wrapper(self, *args, **kwargs):
+            self._in_init += 1
+            real_init(self, *args, **kwargs)
+            assert all(hasattr(self, arg) for arg in cls._init_arguments), \
+                (f'__init__ arguments {[arg for arg in cls._init_arguments if not hasattr(self, arg)]} '
+                 f'of class {cls.__name__} not available as instance attributes\n'
+                 f'(all __init__ args need to be attributes for with_ to work).')
+            self._in_init -= 1
+
+        cls.__init__ = init_wrapper
 
     def __setattr__(self, key, value):
-        """Depending on _locked state delegate the setattr call to object or raise an Exception."""
-        if not self._locked or key[0] == '_':
+        if self._in_init or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
-            raise ConstError(f'Changing "{key}" is not allowed in locked "{self.__class__}"')
+            raise ConstError(f'Changing "{key}" is not allowed in immutable "{self.__class__}"')
 
     def with_(self, new_type=None, **kwargs):
         """Returns a copy with changed attributes.
