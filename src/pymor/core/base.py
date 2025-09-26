@@ -32,7 +32,7 @@ are the following:
 :class:`ImmutableObject` derives from :class:`BasicObject` and adds the following
 functionality:
 
-    1. Using more metaclass magic, each instance which derives from
+    1. Using more __init_subclass__ magic, each instance which derives from
        :class:`ImmutableObject` is locked after its `__init__` method has returned.
        Each attempt to change one of its attributes raises an exception. Private
        attributes (of the form `_name`) are exempted from this rule.
@@ -220,33 +220,7 @@ class classinstancemethod: # noqa: N801
         return self
 
 
-class ImmutableMeta(type):
-    """Metaclass for :class:`ImmutableObject`."""
-
-    def __new__(cls, classname, bases, classdict):
-
-        c = type.__new__(cls, classname, bases, classdict)
-
-        # set __signature__ attribute on newly created class c to ensure that
-        # inspect.signature(c) returns the signature of its __init__ arguments and not
-        # the signature of ImmutableMeta.__call__
-        sig = inspect.signature(c.__init__)
-        c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
-        return c
-
-    def _call(cls, *args, **kwargs):
-        instance = super().__call__(*args, **kwargs)
-        assert all(hasattr(instance, arg) for arg in instance._init_arguments), \
-            (f'__init__ arguments {[arg for arg in instance._init_arguments if not hasattr(instance,arg)]} '
-             f'of class {cls.__name__} not available as instance attributes\n'
-             f'(all __init__ args need to be attributes for with_ to work).')
-        instance._locked = True
-        return instance
-
-    __call__ = _call
-
-
-class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
+class ImmutableObject(BasicObject):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableObject` are immutable in the sense that
@@ -268,18 +242,34 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
     by possible changes of the global :mod:`~pymor.core.defaults`.
     """
 
-    _locked = False
+    _in_init = 0
 
-    # we need to define __init__, otherwise the Python 2 signature hack will fail
     def __init__(self):
         pass
 
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+
+        if (real_init := cls.__dict__.get('__init__')) is None:
+            return
+
+        @wraps(real_init)
+        def init_wrapper(self, *args, **kwargs):
+            self._in_init += 1
+            real_init(self, *args, **kwargs)
+            assert all(hasattr(self, arg) for arg in cls._init_arguments), \
+                (f'__init__ arguments {[arg for arg in cls._init_arguments if not hasattr(self, arg)]} '
+                 f'of class {cls.__name__} not available as instance attributes\n'
+                 f'(all __init__ args need to be attributes for with_ to work).')
+            self._in_init -= 1
+
+        cls.__init__ = init_wrapper
+
     def __setattr__(self, key, value):
-        """Depending on _locked state delegate the setattr call to object or raise an Exception."""
-        if not self._locked or key[0] == '_':
+        if self._in_init or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
-            raise ConstError(f'Changing "{key}" is not allowed in locked "{self.__class__}"')
+            raise ConstError(f'Changing "{key}" is not allowed in immutable "{self.__class__}"')
 
     def with_(self, new_type=None, **kwargs):
         """Returns a copy with changed attributes.
