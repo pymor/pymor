@@ -141,8 +141,6 @@ class BasicObject:
         auto_init_name = f"_{cls.__name__.lstrip('_')}__auto_init"
         setattr(cls, auto_init_name, __auto_init)
 
-        cls.__auto_init = __auto_init
-
     @property
     def name(self):
         n = getattr(self, '_name', None)
@@ -243,9 +241,6 @@ class ImmutableObject(BasicObject):
     """
 
     _in_init = 0
-
-    def __init__(self):
-        pass
 
     def __init_subclass__(cls):
         super().__init_subclass__()
