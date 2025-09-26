@@ -5,7 +5,7 @@
 from collections.abc import Iterable, Mapping
 from weakref import WeakValueDictionary
 
-from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
 from pymor.tools.formatsrc import format_source, print_source
@@ -146,7 +146,7 @@ class match_generic(rule):
         return self.condition(obj)
 
 
-class RuleTableMeta(UberMeta):
+class RuleTableMeta(type):
     """Meta class for |RuleTable|."""
 
     def __new__(cls, name, parents, dct):
