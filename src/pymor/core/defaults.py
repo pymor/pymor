@@ -53,6 +53,7 @@ import pkgutil
 import textwrap
 import threading
 from collections import OrderedDict, defaultdict
+from typing import Any, Callable, TypeVar, cast
 
 from pymor.core.exceptions import DependencyMissingError
 from pymor.tools.table import format_table
@@ -188,6 +189,7 @@ Defaults
 
 _default_container = DefaultContainer()
 
+F = TypeVar('F', bound=Callable[..., Any])
 
 def defaults(*args):
     """Function decorator for marking function arguments as user-configurable defaults.
@@ -215,7 +217,13 @@ def defaults(*args):
     """
     assert all(isinstance(arg, str) for arg in args)
 
-    def the_decorator(decorated_function):
+    # Note: We use the pre-ParamSpec style of annotating @defaults here, as reccomended by mypy
+    # docs. Using P = ParamSpec('P'); T = TypeVar('T'); Callable[P, T] does not work with jedi.
+    # For some reason, it loses its ability to remove self from method signatures, when using this
+    # annotation.
+    # def the_decorator[**P, T](decorated_function: Callable[P, T]) -> Callable[P, T]
+    # seems to work, but requires Python >= 3.12.
+    def the_decorator(decorated_function: F) -> F:
 
         if not args:
             return decorated_function
@@ -233,13 +241,13 @@ def defaults(*args):
             wrapper_kwargs = dict(decorated_function.defaultsdict, **wrapper_kwargs)
             return wrapper_kwargs
 
-        # ensure that __signature__ is not copied
+        # updated=(): ensure that __dict__ is not copied
         @functools.wraps(decorated_function, updated=())
         def defaults_wrapper(*wrapper_args, **wrapper_kwargs):
             kwargs = set_default_values(*wrapper_args, **wrapper_kwargs)
             return decorated_function(**kwargs)
 
-        return defaults_wrapper
+        return cast(F, defaults_wrapper)
 
     return the_decorator
 
