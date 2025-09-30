@@ -2,8 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import weakref
-
 import numpy as np
 import scipy.sparse as sps
 from packaging.version import parse
@@ -26,6 +24,7 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.solvers.interface import Solver
+from pymor.tools.weakrefcache import WeakRefCache
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._arrays._sparray
@@ -47,27 +46,6 @@ def svd_lapack_driver(driver='gesvd_unless_win_mkl'):
         else:
             return 'gesvd'
     return driver
-
-
-class WeakRefCache:
-
-    def __init__(self):
-        self.data = {}
-
-    def set(self, key, value):
-        i = id(key)
-        ref = weakref.ref(key, lambda w: self.remove(i))
-        self.data[i] = (ref, value)
-
-    def get(self, key):
-        ref, value = self.data[id(key)]
-        if ref() is None:
-            assert False  # this should actually never happen
-            raise KeyError
-        return value
-
-    def remove(self, i):
-        del self.data[i]
 
 
 class ScipyLinearSolver(Solver):
