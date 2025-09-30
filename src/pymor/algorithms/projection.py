@@ -214,7 +214,7 @@ class ProjectRules(RuleTable):
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
-        return self.replace_children(op).with_()
+        return self.replace_children(op)
 
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):

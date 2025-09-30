@@ -24,7 +24,7 @@ class Solver(ImmutableObject):
         assert V in operator.range
         assert initial_guess is None or initial_guess in operator.source and len(initial_guess) == len(V)
 
-        # always treat handle the zero dimensional case here to avoid having to do this for every
+        # always treat the zero-dimensional case here to avoid having to do this for every
         # linear solver implementation
         if operator.linear and operator.source.dim == operator.range.dim == 0:
             return operator.source.zeros(len(V))
@@ -40,7 +40,7 @@ class Solver(ImmutableObject):
         if not operator.linear:
             raise LinAlgError('Operator not linear.')
 
-        # always treat handle the zero dimensional case here to avoid having to do this for every
+        # always treat the zero-dimensional case here to avoid having to do this for every
         # linear solver implementation
         if operator.source.dim == operator.range.dim == 0:
             return operator.range.zeros(len(U))
@@ -67,7 +67,7 @@ class SolverWithAdjointImpl(Solver):
         if not operator.linear:
             raise LinAlgError('Operator not linear.')
 
-        # always treat handle the zero dimensional case here to avoid having to do this for every
+        # always treat the zero-dimensional case here to avoid having to do this for every
         # linear solver implementation
         if operator.source.dim == operator.range.dim == 0:
             return operator.range.zeros(len(U))
