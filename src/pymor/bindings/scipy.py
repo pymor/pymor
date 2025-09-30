@@ -169,6 +169,9 @@ class ScipySpSolveSolver(ScipyLinearSolver):
         self.__auto_init(locals())
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
+        if not (sps.isspmatrix_csc(matrix) or sps.isspmatrix_csr(matrix)):
+            matrix = matrix.tocsc()
+
         try:
             if self.keep_factorization:
                 try:
@@ -176,10 +179,11 @@ class ScipySpSolveSolver(ScipyLinearSolver):
                     if not np.can_cast(V.dtype, dtype, casting='safe'):
                         raise KeyError
                 except KeyError:
+                    matrix = matrix_astype_nocopy(matrix, promoted_type)
                     if self.use_umfpack and HAS_UMFPACK:
-                        fac = scikits.umfpack.splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type))
+                        fac = scikits.umfpack.splu(matrix)
                     else:
-                        fac = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type), permc_spec=self.permc_spec)
+                        fac = splu(matrix, permc_spec=self.permc_spec)
                     self._factorizations.set(matrix, (fac, promoted_type))
                 # we may use a complex factorization of a real matrix to
                 # apply it to a real vector. In that case, we downcast
@@ -189,10 +193,11 @@ class ScipySpSolveSolver(ScipyLinearSolver):
             else:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
+                matrix = matrix_astype_nocopy(matrix, promoted_type)
                 if self.use_umfpack and HAS_UMFPACK:
-                    R = scikits.umfpack.spsolve(matrix_astype_nocopy(matrix, promoted_type), V)
+                    R = scikits.umfpack.spsolve(matrix, V)
                 else:
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=self.permc_spec, use_umfpack=False)
+                    R = spsolve(matrix, V, permc_spec=self.permc_spec, use_umfpack=False)
             return R
         except RuntimeError as e:
             raise InversionError(e) from e
