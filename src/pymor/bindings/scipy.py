@@ -27,6 +27,13 @@ from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.solvers.interface import Solver
 
+try:
+    import scikits.umfpack
+    HAS_UMFPACK = True
+except ImportError:
+    HAS_UMFPACK = False
+
+
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._arrays._sparray
 
@@ -156,8 +163,8 @@ class ScipySpSolveSolver(ScipyLinearSolver):
 
     _factorizations = WeakRefCache()
 
-    @defaults('permc_spec', 'keep_factorization')
-    def __init__(self, check_finite=None, permc_spec='COLAMD', keep_factorization=True):
+    @defaults('permc_spec', 'keep_factorization', 'use_umfpack')
+    def __init__(self, check_finite=None, permc_spec='COLAMD', keep_factorization=True, use_umfpack=True):
         super().__init__(check_finite)
         self.__auto_init(locals())
 
@@ -169,7 +176,10 @@ class ScipySpSolveSolver(ScipyLinearSolver):
                     if not np.can_cast(V.dtype, dtype, casting='safe'):
                         raise KeyError
                 except KeyError:
-                    fac = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type), permc_spec=self.permc_spec)
+                    if self.use_umfpack and HAS_UMFPACK:
+                        fac = scikits.umfpack.splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type))
+                    else:
+                        fac = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type), permc_spec=self.permc_spec)
                     self._factorizations.set(matrix, (fac, promoted_type))
                 # we may use a complex factorization of a real matrix to
                 # apply it to a real vector. In that case, we downcast
@@ -179,7 +189,10 @@ class ScipySpSolveSolver(ScipyLinearSolver):
             else:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
-                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=self.permc_spec)
+                if self.use_umfpack and HAS_UMFPACK:
+                    R = scikits.umfpack.spsolve(matrix_astype_nocopy(matrix, promoted_type), V)
+                else:
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=self.permc_spec, use_umfpack=False)
             return R
         except RuntimeError as e:
             raise InversionError(e) from e
