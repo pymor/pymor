@@ -43,6 +43,9 @@ class ParameterFunctional(ParametricObject):
         else:
             raise NotImplementedError
 
+    def conjugate(self):
+        return ConjugateParameterFunctional(self)
+
     def __call__(self, mu=None):
         return self.evaluate(mu)
 
@@ -363,6 +366,9 @@ class ConjugateParameterFunctional(ParameterFunctional):
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
         return np.conj(self.functional.evaluate(mu))
+
+    def conjugate(self):
+        return self.functional
 
     def d_mu(self, parameter, index=0):
         return self.with_(functional=self.functional.d_mu(parameter, index), name=f'{self.name}_d_{parameter}_{index}')
