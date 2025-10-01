@@ -67,9 +67,6 @@ class MPIVectorArrayImpl(VectorArrayImpl):
     def amax(self, ind):
         return mpi.call(mpi.function_call, _MPIVectorArray_amax, self.obj_id, ind)
 
-    def __del__(self):
-        mpi.call(mpi.remove_object, self.obj_id)
-
     def real(self, ind):
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_real, self.obj_id, ind), self.space)
 
