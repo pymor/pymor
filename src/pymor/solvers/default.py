@@ -35,7 +35,7 @@ class DefaultSolver(SolverWithAdjointImpl):
         # if the operator is linear, try converting to a matrix as a last resort
         if operator.linear:
             if not self.try_to_matrix:
-                raise InversionError('No solver.')
+                raise InversionError(f'{operator!r} has no solver.')
             mat_op = self._convert_to_matrix(operator, assembled_op)
             v = mat_op.range.from_numpy(V.to_numpy())
             i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
@@ -90,5 +90,5 @@ class DefaultSolver(SolverWithAdjointImpl):
                 if not op.parametric:
                     op._mat_op = mat_op
             except (NoMatchingRuleError, NotImplementedError) as e:
-                raise InversionError from e
+                raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
         return mat_op
