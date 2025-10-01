@@ -123,6 +123,7 @@ class NGSolveLinearSolver(ComplexifiedListVectorArrayBasedSolver):
         self.__auto_init(locals())
 
     def _prepare(self, operator, U, mu, adjoint):
+        operator = operator.assemble(mu)
         if adjoint:
             raise NotImplementedError
         return operator.matrix.Inverse(operator.source.V.FreeDofs(), inverse=self.method)

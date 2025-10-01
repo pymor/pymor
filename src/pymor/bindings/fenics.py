@@ -275,6 +275,8 @@ class FenicsLinearSolver(ComplexifiedListVectorArrayBasedSolver):
             return df.KrylovSolver(method, preconditioner)
 
     def _prepare(self, operator, U, mu, adjoint):
+        operator = operator.assemble(mu)
+
         if adjoint and not hasattr(operator, '_matrix_transpose'):
             # since dolfin does not have 'apply_inverse_adjoint', we assume
             # PETSc is used as backend and transpose the matrix
