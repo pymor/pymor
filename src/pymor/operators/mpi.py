@@ -4,6 +4,7 @@
 
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
+from pymor.solvers.mpi import MPISolver
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _indexed, _register_local_space
 
@@ -138,24 +139,6 @@ class MPIOperator(Operator):
         else:
             return mpi.call(mpi.function_call, _MPIOperator_apply_adjoint, self.obj_id, V, V_ind, mu)
 
-    def _apply_inverse(self, V, mu, initial_guess):
-        if not self.mpi_source or not self.mpi_range:
-            raise NotImplementedError
-        return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse,
-                                               self.obj_id,
-                                               V.impl.obj_id, V.ind, mu,
-                                               initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
-                                                              else None))), {}
-
-    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None):
-        if not self.mpi_source or not self.mpi_range:
-            raise NotImplementedError
-        return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse_adjoint,
-                                               self.obj_id,
-                                               U.impl.obj_id, U.ind, mu,
-                                               initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
-                                                              else None))), {}
-
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert self.mpi_source
@@ -215,16 +198,6 @@ def _MPIOperator_apply_adjoint(self, V, V_ind, mu):
     return self.apply_adjoint(_indexed(V, V_ind), mu=mu)
 
 
-def _MPIOperator_apply_inverse(self, V, V_ind, mu, initial_guess):
-    return self.apply_inverse(_indexed(V, V_ind), mu=mu,
-                              initial_guess=initial_guess)
-
-
-def _MPIOperator_apply_inverse_adjoint(self, U, U_ind, mu, initial_guess):
-    return self.apply_inverse_adjoint(_indexed(U, U_ind), mu=mu,
-                                      initial_guess=initial_guess)
-
-
 def _MPIOperator_jacobian(self, U, U_ind, mu):
     return self.jacobian(_indexed(U, U_ind), mu=mu)
 
@@ -270,20 +243,30 @@ def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_l
     The wrapped |Operator|.
     """
     op = mpi.get_object(obj_id)
+    solver_id = mpi.call(_mpi_wrap_operator_manage_solver, obj_id)
+    solver = MPISolver(solver_id)
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
         return LincombOperator([mpi_wrap_operator(o, mpi_range, mpi_source, with_apply2, pickle_local_spaces,
                                                   space_type)
-                                for o in obj_ids], op.coefficients, name=op.name)
+                                for o in obj_ids], op.coefficients, solver=solver, name=op.name)
     elif isinstance(op, VectorArrayOperator):
         array_obj_id, local_spaces = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array,
                                               obj_id, pickle_local_spaces)
         if all(ls == local_spaces[0] for ls in local_spaces):
             local_spaces = (local_spaces[0],)
         return VectorArrayOperator(space_type(local_spaces).make_array(array_obj_id),
-                                   adjoint=op.adjoint, name=op.name)
+                                   adjoint=op.adjoint, solver=solver, name=op.name)
     else:
-        return MPIOperator(obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, space_type)
+        return MPIOperator(obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, space_type,
+                           solver=solver, name=op.name)
+
+
+def _mpi_wrap_operator_manage_solver(obj_id):
+    op = mpi.get_object(obj_id)
+    obj_id = mpi.manage_object(op.solver) if op.solver else None
+    if mpi.rank0:
+        return obj_id
 
 
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
