@@ -85,20 +85,7 @@ class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatri
     def _apply_one_vector(self, u, mu=None, prepare_data=None):
         return self.matrix.dot(u._array)
 
-    # TODO: update
-    def _apply_inverse_one_vector(self, v, mu, initial_guess, prepare_data):
-        op = self.with_(new_type=NumpyMatrixOperator)
-        u = op.apply_inverse(
-            op.range.make_array(v._array),
-            initial_guess=op.source.make_array(initial_guess._array) if initial_guess is not None else None
-        ).to_numpy().ravel()
-
-        return u
-
     def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
-        raise NotImplementedError
-
-    def _apply_inverse_adjoint_one_vector(self, u, mu, initial_guess, prepare_data):
         raise NotImplementedError
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
