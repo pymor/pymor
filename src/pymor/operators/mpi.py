@@ -188,7 +188,6 @@ class MPIOperator(Operator):
         obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, identity_shift, name=name)
         op = mpi.get_object(obj_id)
         if op is None:
-            mpi.call(mpi.remove_object, obj_id)
             return None
         else:
             return self.with_(obj_id=obj_id)
@@ -198,9 +197,6 @@ class MPIOperator(Operator):
         if retval is None:
             raise NotImplementedError
         return retval
-
-    def __del__(self):
-        mpi.call(mpi.remove_object, self.obj_id)
 
 
 def _MPIOperator_get_local_spaces(self, source, pickle_local_spaces):
@@ -303,7 +299,6 @@ def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_l
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
     op = mpi.get_object(obj_id)
     obj_ids = [mpi.manage_object(o) for o in op.operators]
-    mpi.remove_object(obj_id)
     if mpi.rank0:
         return obj_ids
 
@@ -315,6 +310,5 @@ def _mpi_wrap_operator_VectorArrayOperator_manage_array(obj_id, pickle_local_spa
     if not pickle_local_spaces:
         local_space = _register_local_space(local_space)
     local_spaces = mpi.comm.gather(local_space, root=0)
-    mpi.remove_object(obj_id)
     if mpi.rank0:
         return array_obj_id, tuple(local_spaces)

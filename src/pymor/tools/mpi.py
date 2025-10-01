@@ -168,7 +168,8 @@ def quit():
     if _managed_objects:
         from warnings import warn
         warn('Leaving MPI event loop while not all managed objects have been removed. '
-             'This might be caused by a resource leak.')
+             'This might be caused by a resource leak.'
+             f'{_managed_objects.keys()}')
         for obj_id in list(_managed_objects):
             call(remove_object, obj_id)
     comm.bcast(('QUIT', None, None))
@@ -212,8 +213,8 @@ def function_call(f, *args, **kwargs):
     Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
     """
-    return f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-             **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
+    return f(*((get_object(arg) if isinstance(arg, ObjectId) else arg) for arg in args),
+             **{k: (get_object(v) if isinstance(v, ObjectId) else v) for k, v in kwargs.items()})
 
 
 def function_call_manage(f, *args, **kwargs):
@@ -278,16 +279,27 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
 
 ################################################################################
 
-
 class ObjectId(int):
     """A handle to an MPI distributed object."""
+
+
+class Rank0ObjectId(ObjectId):
+    """Automatically removes managed object when going out of scope."""
+
+    def __del__(self):
+        call(remove_object, self)
+
+    def __reduce__(self):
+        # this hack is necessary to avoid having a second Rank0ObjectId
+        # with the same value that would remove the same underlying object
+        return (ObjectId, (int(self),))
 
 
 def manage_object(obj):
     """Keep track of `obj` and return an :class:`ObjectId` handle."""
     global _object_counter
-    obj_id = ObjectId(_object_counter)
-    _managed_objects[obj_id] = obj
+    obj_id = Rank0ObjectId(_object_counter) if rank0 else ObjectId(_object_counter)
+    _managed_objects[_object_counter] = obj
     _object_counter += 1
     return obj_id
 
