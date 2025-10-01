@@ -4,10 +4,10 @@
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.solvers.interface import SolverWithAdjointImpl
+from pymor.solvers.interface import Solver
 
 
-class DefaultSolver(SolverWithAdjointImpl):
+class DefaultSolver(Solver):
 
     @defaults('try_to_matrix')
     def __init__(self, try_to_matrix=True):

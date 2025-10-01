@@ -17,7 +17,7 @@ class Solver(ImmutableObject):
 
     @property
     def adjoint_solver(self):
-        return self
+        return self if type(self)._solve_adjoint is Solver._solve_adjoint else AdjointSolver(self)
 
     def solve(self, operator, V, mu=None, initial_guess=None, return_info=False):
         assert self.least_squares or operator.source.dim == operator.range.dim
@@ -45,39 +45,12 @@ class Solver(ImmutableObject):
         if operator.source.dim == operator.range.dim == 0:
             return operator.range.zeros(len(U))
 
-        result = self._solve(operator.H, U, mu=mu, initial_guess=initial_guess)
-        assert len(result) == 2
-        return result if return_info else result[0]
-
-
-    def _solve(self, operator, V, mu, initial_guess):
-        raise NotImplementedError
-
-
-class SolverWithAdjointImpl(Solver):
-
-    @property
-    def adjoint_solver(self):
-        return AdjointSolver(self)
-
-    def solve_adjoint(self, operator, U, mu=None, initial_guess=None, return_info=False):
-        assert self.least_squares or operator.source.dim == operator.range.dim
-        assert U in operator.source
-        assert initial_guess is None or initial_guess in operator.range and len(initial_guess) == len(U)
-        if not operator.linear:
-            raise LinAlgError('Operator not linear.')
-
-        # always treat the zero-dimensional case here to avoid having to do this for every
-        # linear solver implementation
-        if operator.source.dim == operator.range.dim == 0:
-            return operator.range.zeros(len(U))
-
         result = self._solve_adjoint(operator, U, mu=mu, initial_guess=initial_guess)
         assert len(result) == 2
         return result if return_info else result[0]
 
     def _solve_adjoint(self, operator, U, mu, initial_guess):
-        raise NotImplementedError
+        return self._solve(operator.H, U, mu=mu, initial_guess=initial_guess)
 
 
 class AdjointSolver(Solver):
@@ -90,7 +63,7 @@ class AdjointSolver(Solver):
         return self.solver
 
     def _solve(self, operator, V, mu, initial_guess):
-        return self.solver.solve_adjoint(operator.H, V, mu=mu, initial_guess=initial_guess)
+        return self.solver._solve_adjoint(operator.H, V, mu=mu, initial_guess=initial_guess)
 
     def _solve_adjoint(self, operator, U, mu, initial_guess):
-        return self.solver.solve(operator.H, U, mu=mu, initial_guess=initial_guess)
+        return self.solver._solve(operator.H, U, mu=mu, initial_guess=initial_guess)

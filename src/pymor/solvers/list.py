@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.solvers.interface import SolverWithAdjointImpl
+from pymor.solvers.interface import Solver
 
 
-class ListVectorArrayBasedSolver(SolverWithAdjointImpl):
+class ListVectorArrayBasedSolver(Solver):
 
     def _prepare(self, operator, U, mu, adjoint):
         pass

@@ -2,12 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.solvers.interface import SolverWithAdjointImpl
+from pymor.solvers.interface import Solver
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import _indexed
 
 
-class MPISolver(SolverWithAdjointImpl):
+class MPISolver(Solver):
     """MPI distributed |Solver|.
 
     Forwards calls to MPI-aware solvers on each MPI rank.
