@@ -2,9 +2,18 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, LincombOperator, VectorArrayOperator
+from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    ConcatenationOperator,
+    IdentityOperator,
+    LincombOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
@@ -96,6 +105,72 @@ class ExpandRules(RuleTable):
                     ops.append(o)
             op = op.with_(operators=ops, coefficients=coeffs)
         return op
+
+    @match_class(AdjointOperator)
+    def action_AdjointOperator(self, op):
+        inner = self.apply(op.operator)
+
+        # If the inside is a LincombOperator, distribute adjoint over the sum:
+        # (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*
+        if isinstance(inner, LincombOperator):
+            ops = [AdjointOperator(o, source_product=op.source_product, range_product=op.range_product)
+                   for o in inner.operators]
+            coeffs = [c.conjugate() for c in inner.coefficients]
+            return LincombOperator(ops, coeffs)
+
+        return AdjointOperator(inner, source_product=op.source_product, range_product=op.range_product)
+
+    @match_class(BlockOperator)
+    def action_BlockOperator(self, op):
+        # recursively expand all children
+        op = self.replace_children(op)
+
+        nrows, ncols = op.blocks.shape
+
+        # Build the constant part: copy non-Lincomb blocks; Lincomb blocks start as zero
+        const_blocks = np.full((nrows, ncols), None, dtype=object)
+        for i in range(nrows):
+            for j in range(ncols):
+                b = op.blocks[i, j]
+                if not isinstance(b, LincombOperator):
+                    const_blocks[i, j] = b
+
+        expanded_terms = []
+        for i in range(nrows):
+            for j in range(ncols):
+                b = op.blocks[i, j]
+                if not isinstance(b, LincombOperator):
+                    continue
+                for c_k, a_k in zip(b.coefficients, b.operators):
+                    if isinstance(c_k, ParameterFunctional):
+                        blocks_k = np.full((nrows, ncols), None, dtype=object)
+                        blocks_k[i, j] = a_k
+                        expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces,
+                                                source_spaces=op.source.subspaces)))
+                    else:
+                        cur = const_blocks[i, j]
+                        if cur is None:
+                            const_blocks[i, j] = LincombOperator([a_k], [c_k])
+                        else:
+                            cur_op = cur.operators
+                            cur_coeff = cur.coeffcients
+                            const_blocks[i, j] = LincombOperator([cur_op.append(a_k)], [cur_coeff.append(c_k)])
+
+        const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
+
+        ops, coeffs = [], []
+        if const_blocks.any():
+            ops.append(const_part)
+            coeffs.append(1)
+
+        for c, bop_k in expanded_terms:
+            ops.append(bop_k)
+            coeffs.append(c)
+
+        if len(ops) == 1 and coeffs == [1]:
+            return ops[0]
+
+        return LincombOperator(ops, coeffs)
 
     @match_class(ConcatenationOperator)
     def action_ConcatenationOperator(self, op):
