@@ -1165,7 +1165,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         if target_loss and losses['full'] <= target_loss:
             logger.info(f'Finished training after {run - 1} restart{"s" if run - 1 != 1 else ""}, '
                         f'found neural network with loss of {losses["full"]:.3e} ...')
-            return neural_network, losses
+            return best_neural_network, losses
 
         with logger.block(f'Training neural network #{run} ...'):
             # reset parameters of layers to start training with a new and untrained network
