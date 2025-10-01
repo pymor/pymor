@@ -134,6 +134,7 @@ nitpick_ignore = [
     ('py:obj', 'k3d.plot.Plot'),
     ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
     ('py:obj', 'qtpy.QtWidgets.QWidget'),
+    ('py:class', 'F'),
 ]
 nitpick_ignore_regex = [
     ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
