@@ -165,7 +165,6 @@ class Operator(ParametricObject):
         else:
             raise LinAlgError('Operator not linear.')
 
-    # TODO: document solver, return_info
     def apply_inverse(self, V, mu=None, initial_guess=None, return_info=False, solver=None):
         """Apply the inverse operator.
 
@@ -179,10 +178,19 @@ class Operator(ParametricObject):
             |VectorArray| with the same length as `V` containing initial guesses
             for the solution.  Some implementations of `apply_inverse` may
             ignore this parameter.  If `None` a solver-dependent default is used.
+        return_info
+            If `True`, return a dict with additional information on the solution
+            process (runtime, iterations, residuals, etc.) as a second return value.
+        solver
+            If not `None`, use this |Solver| for computing the solution.
 
         Returns
         -------
-        |VectorArray| of the inverse operator evaluations.
+        U
+            |VectorArray| containing the inverse operator evaluations.
+        info
+            Dict with additional information. Only returned when `return_info` is
+            `True`.
 
         Raises
         ------
@@ -193,7 +201,6 @@ class Operator(ParametricObject):
         solver = solver or self.solver or DefaultSolver()
         return solver.solve(self, V, mu=mu, initial_guess=initial_guess, return_info=return_info)
 
-    ## TODO: document solver, return_info
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, return_info=False, solver=None):
         """Apply the inverse adjoint operator.
 
@@ -207,10 +214,19 @@ class Operator(ParametricObject):
             |VectorArray| with the same length as `U` containing initial guesses
             for the solution.  Some implementations of `apply_inverse_adjoint` may
             ignore this parameter.  If `None` a solver-dependent default is used.
+        return_info
+            If `True`, return a dict with additional information on the solution
+            process (runtime, iterations, residuals, etc.) as a second return value.
+        solver
+            If not `None`, use this |Solver| for computing the solution.
 
         Returns
         -------
-        |VectorArray| of the inverse adjoint operator evaluations.
+        V
+            |VectorArray| containing the inverse adjoint operator evaluations.
+        info
+            Dict with additional information. Only returned when `return_info` is
+            `True`.
 
         Raises
         ------
@@ -221,10 +237,20 @@ class Operator(ParametricObject):
         solver = solver or self.solver or DefaultSolver()
         return solver.solve_adjoint(self, U, mu=mu, initial_guess=initial_guess, return_info=return_info)
 
-    def _apply_inverse(self, V, mu, initial_guess):  ## TODO: document
+    def _apply_inverse(self, V, mu, initial_guess):
+        """Default implementation for :meth:`~Operator.apply_inverse`.
+
+        This method is called by :class:`~pymor.solvers.default.DefaultSolver`.
+        Can be overridden by selecting another |Solver| for the operator.
+        """
         raise NotImplementedError
 
-    def _apply_inverse_adjoint(self, U, mu, initial_guess):  # TODO: document
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        """Default implementation for :meth:`~Operator.apply_inverse_adjoint`.
+
+        This method is called by :class:`~pymor.solvers.default.DefaultSolver`.
+        Can be overridden by selecting another |Solver| for the operator.
+        """
         raise NotImplementedError
 
     def jacobian(self, U, mu=None):
