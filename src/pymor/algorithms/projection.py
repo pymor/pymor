@@ -214,11 +214,11 @@ class ProjectRules(RuleTable):
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
-        return self.replace_children(op)
+        return self.replace_children(op).with_(solver=None)
 
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):
-        return self.replace_children(op)
+        return self.replace_children(op).with_(solver=None)
 
     @match_class(BlockOperatorBase)
     def action_BlockOperatorBase(self, op):
