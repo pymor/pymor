@@ -5,6 +5,8 @@
 from collections.abc import Iterable, Mapping
 from weakref import WeakValueDictionary
 
+import numpy as np
+
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
@@ -347,6 +349,11 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
                 result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
             elif isinstance(c, (list, tuple)):
                 result[child] = tuple(self.apply(v) if v is not None else v for v in c)
+            elif isinstance(c, np.ndarray):
+                new = c.copy()
+                for idx, v in np.ndenumerate(c):
+                    new[idx] = self.apply(v) if v is not None else v
+                result[child] = new
             else:
                 result[child] = self.apply(c) if c is not None else c
         return result
@@ -371,6 +378,8 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
             2. `a` is a dict` and each of its values is either an |Operator| or `None`.
             3. `a` is a `list` or `tuple` and each of its elements is either an |Operator|
                or `None`.
+            4. `a` is an 'np.ndarray` of `dtype=object` and each of its elements is either
+               an |Operator| or `None`.
         """
         # Note: we return a list instead of a set (as was done previously) to ensure
         # a deterministic order of children. In particular, this is needed to ensure that
@@ -380,13 +389,32 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
-                if (isinstance(v, Operator)
-                        or isinstance(v, dict) and all(isinstance(vv, Operator) or vv is None for vv in v.values())
-                        or isinstance(v, (list, tuple)) and all(isinstance(vv, Operator) or vv is None for vv in v)):
+                if isinstance(v, Operator) or cls._is_operator_container(v):
                     children.append(k)
             except AttributeError:
                 pass
         return children
+
+    @staticmethod
+    def _is_operator_container(v):
+        if isinstance(v, dict):
+            it = v.values()
+        elif isinstance(v, (list, tuple)):
+            it = v
+        elif isinstance(v, np.ndarray) and v.dtype == object:
+            it = v.flat
+        else:
+            return False
+
+        has_operator = False
+        for vv in it:
+            if vv is None:
+                continue
+            if isinstance(vv, Operator):
+                has_operator = True
+            else:
+                return False
+        return has_operator
 
     def __repr__(self):
         return super().__repr__() + '\n\n' + format_rules(self.rules)
