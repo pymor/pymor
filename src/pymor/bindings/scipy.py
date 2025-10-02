@@ -144,8 +144,13 @@ class ScipySpSolveSolver(ScipyLinearSolver):
         self.__auto_init(locals())
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
-        if not (sps.isspmatrix_csc(matrix) or sps.isspmatrix_csr(matrix)):
-            matrix = matrix.tocsc()
+        # convert to csc
+        if not sps.isspmatrix_csc(matrix):
+            # csr is also fine when using umfpack
+            if sps.isspmatrix_csr(matrix) and self.use_umfpack and config.HAVE_UMPACK:
+                pass
+            else:
+                matrix = matrix.tocsc()
 
         try:
             if self.keep_factorization:
