@@ -17,7 +17,7 @@ class BlockOperatorBase(Operator):
         for (i, j) in np.ndindex(self.blocks.shape):
             yield self.blocks[i, j]
 
-    def __init__(self, blocks, name=None):
+    def __init__(self, blocks, range_spaces=None, source_spaces=None, name=None):
         self.blocks = blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
@@ -31,20 +31,31 @@ class BlockOperatorBase(Operator):
         assert all(isinstance(op, Operator) or op is None for op in self._operators())
 
         # check if every row/column contains at least one operator
-        assert all(any(blocks[i, j] is not None for j in range(blocks.shape[1]))
-                   for i in range(blocks.shape[0]))
-        assert all(any(blocks[i, j] is not None for i in range(blocks.shape[0]))
-                   for j in range(blocks.shape[1]))
+        # find source/range spaces for every column/row if its not passed as an argument
+        if not(range_spaces and source_spaces):
+            assert all(any(blocks[i, j] is not None for j in range(blocks.shape[1]))
+                        for i in range(blocks.shape[0]))
+            assert all(any(blocks[i, j] is not None for i in range(blocks.shape[0]))
+                        for j in range(blocks.shape[1]))
 
-        # find source/range spaces for every column/row
-        source_spaces = [None for j in range(blocks.shape[1])]
-        range_spaces = [None for i in range(blocks.shape[0])]
-        for (i, j), op in np.ndenumerate(blocks):
-            if op is not None:
-                assert source_spaces[j] is None or op.source == source_spaces[j]
-                source_spaces[j] = op.source
-                assert range_spaces[i] is None or op.range == range_spaces[i]
-                range_spaces[i] = op.range
+            source_spaces = [None for _ in range(blocks.shape[1])]
+            range_spaces = [None for _ in range(blocks.shape[0])]
+
+            for (i, j), op in np.ndenumerate(blocks):
+                if op is not None:
+                    assert source_spaces[j] is None or op.source == source_spaces[j]
+                    source_spaces[j] = op.source
+                    assert range_spaces[i] is None or op.range == range_spaces[i]
+                    range_spaces[i] = op.range
+
+        else:
+            for (i, j), op in np.ndenumerate(blocks):
+                if op is not None:
+                    assert op.source == source_spaces[j]
+                    assert op.range == range_spaces[i]
+                else:
+                    assert source_spaces[j]
+                    assert range_spaces[i]
 
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
@@ -52,6 +63,11 @@ class BlockOperatorBase(Operator):
                 self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
         self.__auto_init(locals())
+
+        # if self.source_spaces and self.range_spaces are not set to None,
+        # op.with_(blocks=...) will fail when some spaces change.
+        self.source_spaces = None
+        self.range_spaces = None
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
