@@ -52,7 +52,7 @@ class Operator(ParametricObject):
     @property
     def H(self):
         from pymor.operators.constructions import AdjointOperator
-        return AdjointOperator(self)
+        return AdjointOperator(self, solver=self._adjoint_solver)
 
     @abstractmethod
     def apply(self, U, mu=None):
