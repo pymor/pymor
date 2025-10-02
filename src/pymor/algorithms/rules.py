@@ -395,6 +395,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
                 pass
         return children
 
+    @staticmethod
     def _is_operator_container(v):
         if isinstance(v, dict):
             it = v.values()
