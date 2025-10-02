@@ -172,7 +172,6 @@ def test_raises_if_row_or_column_empty_without_spaces():
 
 
 def test_allow_single_empty_row_or_column_with_explicit_spaces():
-
     A = NumpyMatrixOperator(np.eye(2))
     blocks = np.array([[A, None], [None, None]], dtype=object)
 
