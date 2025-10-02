@@ -34,12 +34,6 @@ class Operator(ParametricObject):
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
-    H
-        The adjoint operator, i.e. ::
-
-            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
-
-        for all V, mu.
     """
 
     # override NumPy binary operations and ufuncs
@@ -51,6 +45,17 @@ class Operator(ParametricObject):
 
     @property
     def H(self):
+        """Adjoint |Operator|.
+
+        It hold that ::
+
+            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
+
+        for all `V`, `mu`.
+
+        If the operator has a |Solver|, the adjoint operator will be equipped
+        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
+        """
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self, solver=self._adjoint_solver)
 
@@ -257,6 +262,9 @@ class Operator(ParametricObject):
     def jacobian(self, U, mu=None):
         """Return the operator's Jacobian as a new |Operator|.
 
+        If the operator has a |Solver|, the Jacobian |Operator| will be equipped
+        with the solver's :attr:`~pymor.solvers.interface.Solver.jacobian_solver`.
+
         Parameters
         ----------
         U
@@ -279,6 +287,9 @@ class Operator(ParametricObject):
 
     def d_mu(self, parameter, index=0):
         """Return the operator's derivative with respect to a given parameter.
+
+        If the operator has a |Solver|, the derivative |Operator| will be equipped
+        with the same |Solver|.
 
         Parameters
         ----------
@@ -395,6 +406,9 @@ class Operator(ParametricObject):
         :class:`~pymor.operators.constructions.FixedParameterOperator`.
         The only assured property of the assembled operator is that it no longer
         depends on a |Parameter|.
+
+        If the operator has a |Solver|, the assembled |Operator| will be equipped
+        with the same |Solver|.
 
         Parameters
         ----------
