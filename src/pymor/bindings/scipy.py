@@ -147,7 +147,7 @@ class ScipySpSolveSolver(ScipyLinearSolver):
         # convert to csc
         if not sps.isspmatrix_csc(matrix):
             # csr is also fine when using umfpack
-            if sps.isspmatrix_csr(matrix) and self.use_umfpack and config.HAVE_UMPACK:
+            if sps.isspmatrix_csr(matrix) and self.use_umfpack and config.HAVE_UMFPACK:
                 pass
             else:
                 matrix = matrix.tocsc()
