@@ -349,7 +349,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
                 result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
             elif isinstance(c, (list, tuple)):
                 result[child] = tuple(self.apply(v) if v is not None else v for v in c)
-            elif isinstance(c, np.ndarray) and c.dtype == object and c.ndim >= 1:
+            elif isinstance(c, np.ndarray):
                 new = c.copy()
                 for idx, v in np.ndenumerate(c):
                     new[idx] = self.apply(v) if v is not None else v
@@ -389,15 +389,31 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
-                if (isinstance(v, Operator)
-                        or isinstance(v, dict) and all(isinstance(vv, Operator) or vv is None for vv in v.values())
-                        or isinstance(v, (list, tuple)) and all(isinstance(vv, Operator) or vv is None for vv in v)
-                        or isinstance(v, np.ndarray) and v.dtype == object and v.ndim >= 1
-                            and all(isinstance(vv, Operator) or vv is None for vv in v.flat)):
+                if isinstance(v, Operator) or cls._is_operator_container(v):
                     children.append(k)
             except AttributeError:
                 pass
         return children
+
+    def _is_operator_container(v):
+        if isinstance(v, dict):
+            it = v.values()
+        elif isinstance(v, (list, tuple)):
+            it = v
+        elif isinstance(v, np.ndarray) and v.dtype == object:
+            it = v.flat
+        else:
+            return False
+
+        has_operator = False
+        for vv in it:
+            if vv is None:
+                continue
+            if isinstance(vv, Operator):
+                has_operator = True
+            else:
+                return False
+        return has_operator
 
     def __repr__(self):
         return super().__repr__() + '\n\n' + format_rules(self.rules)
