@@ -6,6 +6,7 @@ from pymor.solvers.interface import Solver
 
 
 class ListVectorArrayBasedSolver(Solver):
+    """Base class for |Solvers| for |ListVectorArray|-based |Operators|."""
 
     def _prepare(self, operator, U, mu, adjoint):
         pass

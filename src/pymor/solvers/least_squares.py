@@ -9,6 +9,21 @@ from pymor.solvers.interface import Solver
 
 
 class QRLeastSquaresSolver(Solver):
+    """Least-squares solver using QR decomposition.
+
+    Convertes `operator` to a |VectorArray| via
+    :meth:`~pymor.operators.interface.Operator.as_range_array` or
+    :meth:`~pymor.operators.interface.Operator.as_source_array`.
+    Then uses :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
+    for QR decomposition.
+
+    Parameters
+    ----------
+    space
+        If `'range'`, represent `operator` as a |VectorArray| in
+        `operator.range`. If `'source'`, represent `operator` as a
+        |VectorArray| in `operator.source`.
+    """
 
     least_squares = True
 

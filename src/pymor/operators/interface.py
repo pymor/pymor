@@ -47,6 +47,7 @@ class Operator(ParametricObject):
     __array_ufunc__ = None
 
     solver = None
+    """The |Solver| to use for `apply_inverse` and `apply_inverse_adjoint`."""
 
     @property
     def H(self):

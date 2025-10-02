@@ -14,6 +14,48 @@ from pymor.solvers.interface import Solver
 
 
 class NewtonSolver(Solver):
+    """Newton algorithm.
+
+    Parameters
+    ----------
+    range_product
+        The inner product with which the norm of the residual is computed.
+        If `None`, the Euclidean inner product is used.
+    source_product
+        The inner product with which the norm of the solution and update
+        vectors is computed. If `None`, the Euclidean inner product is used.
+    miniter
+        Minimum amount of iterations to perform.
+    maxiter
+        Fail if the iteration count reaches this value without converging.
+    atol
+        Finish when the error measure is below this threshold.
+    rtol
+        Finish when the error measure has been reduced by this factor
+        relative to the norm of the initial residual resp. the norm of the current solution.
+    relax
+        If real valued, relaxation factor for Newton updates; otherwise `'armijo'` to
+        indicate that the :func:`~pymor.algorithms.line_search.armijo` line search algorithm
+        shall be used.
+    line_search_params
+        Dictionary of additional parameters passed to the line search method.
+    stagnation_window
+        Finish when the error measure has not been reduced by a factor of
+        `stagnation_threshold` during the last `stagnation_window` iterations.
+    stagnation_threshold
+        See `stagnation_window`.
+    error_measure
+        If `'residual'`, convergence depends on the norm of the residual. If
+        `'update'`, convergence depends on the norm of the update vector.
+    jacobian_solver
+        The |Solver| to use for the linear update equations.
+    return_stages
+        If `True`, return a |VectorArray| of the intermediate approximations of `U`
+        after each iteration.
+    return_residuals
+        If `True`, return a |VectorArray| of all residual vectors which have been computed
+        during the Newton iterations.
+    """
 
     least_squares = False
 
@@ -23,54 +65,6 @@ class NewtonSolver(Solver):
                  miniter=0, maxiter=100, atol=0., rtol=1e-7, relax='armijo', line_search_params=None,
                  stagnation_window=3, stagnation_threshold=np.inf, error_measure='update',
                  jacobian_solver=None, return_stages=False, return_residuals=False):
-        """Newton algorithm.
-
-        This method solves the nonlinear equation ::
-
-            A(U, mu) = V
-
-        for `U` using the Newton method.
-
-        Parameters
-        ----------
-        range_product
-            The inner product with which the norm of the residual is computed.
-            If `None`, the Euclidean inner product is used.
-        source_product
-            The inner product with which the norm of the solution and update
-            vectors is computed. If `None`, the Euclidean inner product is used.
-        miniter
-            Minimum amount of iterations to perform.
-        maxiter
-            Fail if the iteration count reaches this value without converging.
-        atol
-            Finish when the error measure is below this threshold.
-        rtol
-            Finish when the error measure has been reduced by this factor
-            relative to the norm of the initial residual resp. the norm of the current solution.
-        relax
-            If real valued, relaxation factor for Newton updates; otherwise `'armijo'` to
-            indicate that the :func:`~pymor.algorithms.line_search.armijo` line search algorithm
-            shall be used.
-        line_search_params
-            Dictionary of additional parameters passed to the line search method.
-        stagnation_window
-            Finish when the error measure has not been reduced by a factor of
-            `stagnation_threshold` during the last `stagnation_window` iterations.
-        stagnation_threshold
-            See `stagnation_window`.
-        error_measure
-            If `'residual'`, convergence depends on the norm of the residual. If
-            `'update'`, convergence depends on the norm of the update vector.
-        jacobian_solver
-            The |Solver| to use for the linear update equations.
-        return_stages
-            If `True`, return a |VectorArray| of the intermediate approximations of `U`
-            after each iteration.
-        return_residuals
-            If `True`, return a |VectorArray| of all residual vectors which have been computed
-            during the Newton iterations.
-        """
         assert error_measure in ('residual', 'update')
         self.__auto_init(locals())
 

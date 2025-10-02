@@ -11,6 +11,13 @@ class MPISolver(Solver):
     """MPI distributed |Solver|.
 
     Forwards calls to MPI-aware solvers on each MPI rank.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the |Solver|
+        to wrap. If `None`, the `operator`'s default solver is
+        used.
     """
 
     def __init__(self, obj_id=None):

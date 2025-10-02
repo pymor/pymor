@@ -8,6 +8,28 @@ from pymor.solvers.interface import Solver
 
 
 class DefaultSolver(Solver):
+    """Default |Solver|.
+
+    This |Solver| is used by :meth:`~pymor.operators.interface.Operator.apply_inverse`
+    and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint` when the
+    |Operator| has no :attr:`~pymor.operators.interface.Operator.solver` and no solver
+    is specified in the method call.
+
+    `DefaultSolver` uses the following strategy:
+
+    1. Try to call `operator._apply_inverse`.
+    2. Assemble `operator`. Try `assembled_operator._apply_inverse`.
+    3. a) If `operator` is linear, try to convert `assembled_operator` to a
+          |NumpyMatrixOperator| using :func:`~pymor.algorithms.to_matrix.to_matrix`
+          and call `apply_inverse` on the converted operator.
+       b) If `operator` is non-linear, use :class:`~pymor.solvers.newton.NewtonSolver`.
+
+    Parameters
+    ----------
+    try_to_matrix
+        If `False`, do not try to convert linear operators to |NumpyMatrixOperator|.
+        Fail instead.
+    """
 
     @defaults('try_to_matrix')
     def __init__(self, try_to_matrix=True):
