@@ -215,7 +215,6 @@ class ImplicitEulerTimeStepper(TimeStepper):
         M_dt_A = (M + A * dt)
         if not _depends_on_time(M_dt_A, mu):
             M_dt_A = M_dt_A.assemble(mu)
-        solver = self.solver
 
         t = t0
         U = U0.copy()
@@ -230,7 +229,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
                 dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U, solver=solver)
+            U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U, solver=self.solver)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
@@ -400,8 +399,6 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         M_dt_A_expl = (M - A * (dt/2))
         if not _depends_on_time(M_dt_A_expl, mu):
             M_dt_A_expl = M_dt_A_expl.assemble(mu)
-        solver = self.solver
-
 
         t = t0
         U = U0.copy()
@@ -416,7 +413,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
                 dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t, solver=solver)
+            U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t, solver=self.solver)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
