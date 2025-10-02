@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 import pytest
 
 from pymor.basic import Mu
@@ -57,3 +58,39 @@ def test_LincombParameterFunctional():
     assert len(three_pf_named.coefficients) != len(three_pf_.coefficients)
     assert pf_times_pf_squared_named(mu) == pf_times_pf_squared(mu)
     assert len(pf_times_pf_squared_named.factors) != len(pf_times_pf_squared.factors)
+
+def test_ParameterFunctionals_conjugate_method():
+    mu = Mu({'mu': [10, 2], 'nu': [3]})
+
+    # complex-valued functional
+    f = ExpressionParameterFunctional(
+        '(1+2j) * mu[0] - 1j * mu[1] + sin(nu[0])',
+        {'mu': 2, 'nu': 1},
+        name='f'
+    )
+
+    # real-valued functional
+    g = ProjectionParameterFunctional('mu', 2, 0)
+
+    # basic property: (f.conjugate())(μ) == conj(f(μ))
+    fc = f.conjugate()
+    assert np.allclose(fc(mu), np.conjugate(f(mu)))
+
+    # involution: conjugate(conjugate(f)) == f
+    fcc = fc.conjugate()
+    assert fcc is f
+    assert np.allclose(fcc(mu), f(mu))
+
+    # real-valued functional: conjugate(g) == g (value-wise)
+    gc = g.conjugate()
+    assert np.allclose(gc(mu), g(mu))
+
+    # linear combinations: conj distributes (value-wise)
+    h = f + g - 3
+    hc = h.conjugate()
+    assert np.allclose(hc(mu), np.conjugate(h(mu)))
+
+    # products: conj(x*y) == conj(x) * conj(y) (value-wise)
+    p = f * g
+    pc = p.conjugate()
+    assert np.allclose(pc(mu), np.conjugate(p(mu)))

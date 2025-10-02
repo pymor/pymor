@@ -15,7 +15,6 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import (
-    ConjugateParameterFunctional,
     ParameterFunctional,
     ProjectionParameterFunctional,
 )
@@ -62,9 +61,7 @@ class LincombOperator(Operator):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         return self.with_(operators=[op.H for op in self.operators], solver_options=options,
-                          coefficients=[ConjugateParameterFunctional(c) if isinstance(c, ParameterFunctional)
-                                        else np.conj(c)
-                                        for c in self.coefficients],
+                          coefficients=[c.conjugate() for c in self.coefficients],
                           name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
