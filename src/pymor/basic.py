@@ -15,7 +15,6 @@ from pymor.algorithms.ei import deim, ei_greedy, interpolate_function, interpola
 from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.greedy import rb_greedy
-from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis

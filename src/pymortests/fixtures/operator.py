@@ -21,6 +21,7 @@ from pymor.operators.numpy import (
     NumpyMatrixOperator,
     NumpyToeplitzOperator,
 )
+from pymor.solvers.newton import NewtonSolver
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import BUILTIN_DISABLED
 
@@ -44,8 +45,8 @@ class MonomOperator(Operator):
         assert len(U) == 1
         return NumpyMatrixOperator(self.derivative(U.to_numpy().T).reshape((1, 1)))
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.range.make_array(1. / V.to_numpy())
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.range.make_array(1. / V.to_numpy()), {}
 
 
 def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng, sparse=False):
@@ -607,7 +608,7 @@ if config.HAVE_FENICS:
         op = FenicsOperator(F, space, space, w, (bc,),
                             parameter_setter=lambda mu: c.assign(mu['c'].item()),
                             parameters={'c': 1},
-                            solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
+                            solver=NewtonSolver(rtol=1e-6))
 
         prod = FenicsMatrixOperator(df.assemble(u*v*df.dx), V, V)
         return op, op.parameters.parse(42), op.source.random(), op.range.random(), prod, prod

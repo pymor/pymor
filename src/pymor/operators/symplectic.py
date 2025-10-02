@@ -16,11 +16,12 @@ class CanonicalSymplecticFormOperator(BlockOperator):
         The phase space of a |SymplecticBasis|.
     """
 
-    def __init__(self, phase_space):
+    def __init__(self, phase_space, solver=None, name=None):
         assert isinstance(phase_space, BlockVectorSpace)
         assert len(phase_space.subspaces) == 2
         assert phase_space.subspaces[0] == phase_space.subspaces[1]
         self.__auto_init(locals())
         half_space = phase_space.subspaces[0]
         super().__init__([[None, IdentityOperator(half_space)],
-                          [-IdentityOperator(half_space), None]])
+                          [-IdentityOperator(half_space), None]],
+                         solver=solver, name=name)

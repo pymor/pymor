@@ -9,7 +9,7 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
-def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
+def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None, shifted_system_solver=None):
     r"""Solve Sylvester equation by Schur decomposition.
 
     Solves Sylvester equation
@@ -49,6 +49,8 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     Cr
         Real |Operator| or `None`.
         It is assumed that `Cr.source.from_numpy` is implemented.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -128,7 +130,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
                 rhs -= E.apply(V.lincomb(TAr[i, :i:-1].conjugate().T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
-            V.append(eAaE.apply_inverse(rhs))
+            V.append(eAaE.apply_inverse(rhs, solver=shifted_system_solver))
 
         V = V.lincomb(Z.conjugate()[:, ::-1].T)
         V = V.real
@@ -147,7 +149,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
                 rhs -= E.apply_adjoint(W.lincomb(TAr[:i, i].T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
-            W.append(eAaE.apply_inverse_adjoint(rhs))
+            W.append(eAaE.apply_inverse_adjoint(rhs, solver=shifted_system_solver))
 
         W = W.lincomb(Q.conjugate().T)
         W = W.real

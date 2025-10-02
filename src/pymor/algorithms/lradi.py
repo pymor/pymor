@@ -6,9 +6,9 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.eigs import _arnoldi
-from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
+from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
@@ -16,12 +16,13 @@ from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
-          'projection_shifts_subspace_columns',
+@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'shifted_system_solver',
+          'projection_shifts_init_maxiter', 'projection_shifts_subspace_columns',
           'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
+                             shifted_system_solver=None,
                              projection_shifts_init_maxiter=20,
                              projection_shifts_subspace_columns=6,
                              wachspress_large_ritz_num=50,
@@ -47,6 +48,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`wachspress_shifts_init`.
     wachspress_tol
         See :func:`wachspress_shifts_init`.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -56,6 +59,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                       'tol': lradi_tol,
                       'maxiter': lradi_maxiter,
                       'shifts': lradi_shifts,
+                      'shifted_system_solver': shifted_system_solver,
                       'shift_options':
                       {'projection_shifts': {'type': 'projection_shifts',
                                              'init_maxiter': projection_shifts_init_maxiter,
@@ -114,6 +118,8 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     else:
         raise ValueError('Unknown low-rank ADI shift strategy.')
 
+    solver = options['shifted_system_solver']
+
     if E is None:
         E = IdentityOperator(A.source)
 
@@ -131,10 +137,10 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
         if shifts[j_shift].imag == 0:
             AaE = A + shifts[j_shift].real * E
             if not trans:
-                V = AaE.apply_inverse(W)
+                V = AaE.apply_inverse(W, solver=solver)
                 W -= E.apply(V) * (2 * shifts[j_shift].real)
             else:
-                V = AaE.apply_inverse_adjoint(W)
+                V = AaE.apply_inverse_adjoint(W, solver=solver)
                 W -= E.apply_adjoint(V) * (2 * shifts[j_shift].real)
             Z.append(V * np.sqrt(-2 * shifts[j_shift].real))
             j += 1
@@ -143,10 +149,10 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
             gs = -4 * shifts[j_shift].real
             d = shifts[j_shift].real / shifts[j_shift].imag
             if not trans:
-                V = AaE.apply_inverse(W)
+                V = AaE.apply_inverse(W, solver=solver)
                 W += E.apply(V.real + V.imag * d) * gs
             else:
-                V = AaE.apply_inverse_adjoint(W).conj()
+                V = AaE.apply_inverse_adjoint(W, solver=solver).conj()
                 W += E.apply_adjoint(V.real + V.imag * d) * gs
             g = np.sqrt(gs)
             Z.append((V.real + V.imag * d) * g)

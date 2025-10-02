@@ -14,6 +14,7 @@ import numpy as np
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+from pymor.solvers.list import ComplexifiedListVectorArrayBasedSolver
 from pymor.tools.io import change_to_directory
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
@@ -115,20 +116,34 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
         return v
 
 
+class NGSolveLinearSolver(ComplexifiedListVectorArrayBasedSolver):
+
+    @defaults('method')
+    def __init__(self, method=''):
+        self.__auto_init(locals())
+
+    def _prepare(self, operator, U, mu, adjoint):
+        operator = operator.assemble(mu)
+        if adjoint:
+            raise NotImplementedError
+        return operator.matrix.Inverse(operator.source.V.FreeDofs(), inverse=self.method)
+
+    def _real_solve_one_vector(self, operator, v, mu, initial_guess, prepare_data):
+        inv = prepare_data
+        r = operator.source.real_zero_vector()
+        r.impl.vec.data = inv * v.impl.vec
+        return r
+
+    def _real_solve_adjoint_one_vector(self, operator, u, mu, initial_guess, prepare_data):
+        raise NotImplementedError
+
+
 class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     """Wraps a NGSolve matrix as an |Operator|."""
 
-    def __init__(self, matrix, range, source, solver_options=None, name=None):
+    def __init__(self, matrix, range, source, solver=None, name=None):
+        solver = solver or NGSolveLinearSolver()
         self.__auto_init(locals())
-
-    @defaults('default_solver')
-    def _prepare_apply(self, U, mu, kind, least_squares=False, default_solver=''):
-        if kind == 'apply_inverse':
-            if least_squares:
-                raise NotImplementedError
-            solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
-            inv = self.matrix.Inverse(self.source.V.FreeDofs(), inverse=solver)
-            return inv
 
     def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
         r = self.range.real_zero_vector()
@@ -144,14 +159,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         mat.Mult(v.impl.vec, u.impl.vec)
         return u
 
-    def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
-                                       least_squares=False, prepare_data=None):
-        inv = prepare_data
-        r = self.source.real_zero_vector()
-        r.impl.vec.data = inv * v.impl.vec
-        return r
-
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
             return None
         if identity_shift != 0:
@@ -161,7 +169,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
         for op, c in zip(operators[1:], coefficients[1:]):
             matrix.AsVector().data += float(c) * op.matrix.AsVector()
-        return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
+        return NGSolveMatrixOperator(matrix, self.range, self.source, name=name)
 
     def as_vector(self, copy=True):
         vec = self.matrix.AsVector().FV().NumPy()

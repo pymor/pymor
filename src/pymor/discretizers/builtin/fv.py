@@ -184,11 +184,6 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
         return Fs
 
 
-@defaults('delta')
-def jacobian_options(delta=1e-7):
-    return {'delta': delta}
-
-
 class NonlinearAdvectionOperator(Operator):
     """Nonlinear finite volume advection |Operator|.
 
@@ -207,15 +202,17 @@ class NonlinearAdvectionOperator(Operator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`, constant-zero
         boundary is assumed.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
+    @defaults('jacobian_delta')
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, jacobian_delta=1e-7,
+                 solver=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, Function)
 
         self.__auto_init(locals())
@@ -333,11 +330,7 @@ class NonlinearAdvectionOperator(Operator):
         NEUMANN_BOUNDARIES = gd['NEUMANN_BOUNDARIES']
         UNIT_OUTER_NORMALS = gd['UNIT_OUTER_NORMALS']
         INNER = np.setdiff1d(np.arange(g.size(1)), BOUNDARIES)
-
-        solver_options = self.solver_options
-        delta = solver_options.get('jacobian_delta') if solver_options else None
-        if delta is None:
-            delta = jacobian_options()['delta']
+        delta = self.jacobian_delta
 
         if bi.has_dirichlet:
             if hasattr(self, '_dirichlet_values'):
@@ -421,28 +414,32 @@ class NonlinearAdvectionOperator(Operator):
         A = csc_matrix(A).copy()   # See pymor.discretizers.builtin.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A)
+        return NumpyMatrixOperator(A, solver=self._jacobian_solver)
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
-                                                dirichlet_data=None, solver_options=None, name=None):
+                                                dirichlet_data=None, jacobian_delta=None, solver=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
-                                                           dirichlet_data=None, solver_options=None, name=None):
+                                                           dirichlet_data=None, jacobian_delta=None,
+                                                           solver=None, name=None):
     """Create a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
-                                                dirichlet_data=None, solver_options=None, name=None):
+                                                dirichlet_data=None, jacobian_delta=None, solver=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
     num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
@@ -464,13 +461,13 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
         |Function| defining the velocity field `v`.
     lxf_lambda
         The stabilization parameter `λ`.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
-    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 
@@ -523,15 +520,15 @@ class L2Product(NumpyMatrixBasedOperator):
     ----------
     grid
         The |Grid| for which to assemble the product.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the product.
     """
 
     sparse = True
 
-    def __init__(self, grid, solver_options=None, name=None):
+    def __init__(self, grid, solver=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 
@@ -555,15 +552,15 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         The |Grid| for which to assemble the operator.
     reaction_coefficient
         The function 'c'
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
     sparse = True
 
-    def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
+    def __init__(self, grid, reaction_coefficient, solver=None, name=None):
         assert reaction_coefficient.dim_domain == grid.dim
         assert reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
@@ -614,7 +611,7 @@ class NonlinearReactionOperator(Operator):
         A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
                        shape=(self.grid.size(0),) * 2)
 
-        return NumpyMatrixOperator(A)
+        return NumpyMatrixOperator(A, solver=self._jacobian_solver)
 
 
 class L2Functional(NumpyMatrixBasedOperator):
@@ -773,15 +770,15 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         The scalar-valued |Function| `d(x)`. If `None`, constant one is assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
+    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver=None,
                  name=None):
         super().__init__()
         assert isinstance(grid, GridWithOrthogonalCenters)
@@ -897,7 +894,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
 
 def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
-                             grid=None, boundary_info=None, preassemble=True):
+                             grid=None, boundary_info=None, preassemble=True, solver=None):
     """Discretizes a |StationaryProblem| using the finite volume method.
 
     Parameters
@@ -934,6 +931,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         Must be provided if `grid` is specified.
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
+    solver
+        The |Solver| to be used.
 
     Returns
     -------
@@ -1042,6 +1041,9 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     else:
         L = LincombOperator(operators=L, coefficients=L_coefficients, name='elliptic_operator')
 
+    if solver:
+        L = L.with_(solver=solver)
+
     # rhs
     if len(F_coefficients) == 0:
         F = ZeroOperator(L.range, NumpyVectorSpace(1))
@@ -1057,7 +1059,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     else:
         visualizer = None
 
-    l2_product = L2Product(grid, name='l2')
+    l2_product = L2Product(grid, name='l2', solver=solver)
     products = {'l2': l2_product}
 
     # assemble additional output functionals
@@ -1105,7 +1107,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
-                               preassemble=True):
+                               preassemble=True, solver=None):
     """FV Discretization of an |InstationaryProblem| with a |StationaryProblem| as stationary part.
 
     Parameters
@@ -1153,6 +1155,8 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         Euler time stepping.
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
+    solver
+        The |Solver| to be used.
 
     Returns
     -------
@@ -1180,7 +1184,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     m, data = discretize_stationary_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                        grid_type=grid_type, num_flux=num_flux, lxf_lambda=lxf_lambda,
                                        eo_gausspoints=eo_gausspoints, eo_intervals=eo_intervals, grid=grid,
-                                       boundary_info=boundary_info)
+                                       boundary_info=boundary_info, solver=solver)
     grid = data['grid']
 
     if p.initial_data.parametric:
@@ -1200,7 +1204,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         if p.stationary_part.diffusion is None:
             time_stepper = ExplicitEulerTimeStepper(nt=nt)
         else:
-            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+            time_stepper = ImplicitEulerTimeStepper(nt=nt, solver=solver)
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 

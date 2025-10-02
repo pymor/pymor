@@ -413,13 +413,13 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         )
         if self.version == 'V':
             self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b.T), sigma,
-                                                orth=False)
+                                                orth=False, shifted_system_solver=fom.shifted_system_solver)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
         else:
             self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, fom.C.range.from_numpy(c.T), sigma, trans=True,
-                                                orth=False)
+                                                orth=False, shifted_system_solver=fom.shifted_system_solver)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
@@ -542,7 +542,8 @@ class TSIAReductor(GenericIRKAReductor):
         self.V, self.W = solve_sylv_schur(fom.A, rom.A,
                                           E=fom.E, Er=rom.E,
                                           B=fom.B, Br=rom.B,
-                                          C=fom.C, Cr=rom.C)
+                                          C=fom.C, Cr=rom.C,
+                                          shifted_system_solver=fom.shifted_system_solver)
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
             gram_schmidt(self.W, atol=0, rtol=0, copy=False)

@@ -16,7 +16,7 @@ from pymor.tools.random import new_rng
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
-          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10):
+          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, shifted_system_solver=None):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -71,6 +71,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         Maximum dimension of search space before performing a restart.
     rqi_maxiter
         Maximum number of iterations for the two-sided Rayleigh quotient iteration.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -136,7 +138,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         k += 1
 
         sEmA = st * E - A
-        sEmAB = sEmA.apply_inverse(B_defl)
+        sEmAB = sEmA.apply_inverse(B_defl, solver=shifted_system_solver)
         Hs = C_defl.inner(sEmAB)
 
         y_all, _, u_all = spla.svd(Hs)
@@ -145,7 +147,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         y = y_all[:, 0]
 
         x = sEmAB.lincomb(u)
-        v = sEmA.apply_inverse_adjoint(C_defl.lincomb(y))
+        v = sEmA.apply_inverse_adjoint(C_defl.lincomb(y), solver=shifted_system_solver)
 
         X.append(x)
         V.append(v)
@@ -195,7 +197,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
 
             if nres < dorqitol and do_rqi and nres >= tol:
                 schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta,
-                                                                 nres, imagtol, rqitol, rqi_maxiter)
+                                                                 nres, imagtol, rqitol, rqi_maxiter,
+                                                                 shifted_system_solver)
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
@@ -368,7 +371,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     return poles, residues, rightev, leftev
 
 
-def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
+def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter, shifted_system_solver):
     """Refine an initial guess for an eigentriplet of the matrix pair (A, E).
 
     Parameters
@@ -391,6 +394,8 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
         Convergence tolerance for the residual of the pole.
     maxiter
         Maximum number of iteration.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -410,8 +415,8 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
         Ex = E.apply(x)
         Ey = E.apply_adjoint(y)
         tEmA = theta * E - A
-        x_rqi = tEmA.apply_inverse(Ex)
-        v_rqi = tEmA.apply_inverse_adjoint(Ey)
+        x_rqi = tEmA.apply_inverse(Ex, solver=shifted_system_solver)
+        v_rqi = tEmA.apply_inverse_adjoint(Ey, solver=shifted_system_solver)
 
         x_rqi.scal(1 / x_rqi.norm())
         v_rqi.scal(1 / v_rqi.norm())

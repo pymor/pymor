@@ -9,202 +9,87 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
+from pymor.solvers.interface import Solver
 
 
-@defaults('lgmres_tol', 'lgmres_maxiter',
-          'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
-          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
-          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show',
-          'least_squares_lsqr_atol', 'least_squares_lsqr_btol', 'least_squares_lsqr_conlim',
-          'least_squares_lsqr_iter_lim', 'least_squares_lsqr_show')
-def solver_options(lgmres_tol=1e-5,
-                   lgmres_maxiter=1000,
-                   lgmres_inner_m=39,
-                   lgmres_outer_k=3,
-                   least_squares_lsmr_damp=0.0,
-                   least_squares_lsmr_atol=1e-6,
-                   least_squares_lsmr_btol=1e-6,
-                   least_squares_lsmr_conlim=1e8,
-                   least_squares_lsmr_maxiter=None,
-                   least_squares_lsmr_show=False,
-                   least_squares_lsqr_damp=0.0,
-                   least_squares_lsqr_atol=1e-6,
-                   least_squares_lsqr_btol=1e-6,
-                   least_squares_lsqr_conlim=1e8,
-                   least_squares_lsqr_iter_lim=None,
-                   least_squares_lsqr_show=False):
-    """Returns available solvers with default |solver_options|.
+class LGMRESSolver(Solver):
 
-    Parameters
-    ----------
-    lgmres_tol
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_maxiter
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_inner_m
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_outer_k
-        See :func:`scipy.sparse.linalg.lgmres`.
-    least_squares_lsmr_damp
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_atol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_btol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_conlim
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_maxiter
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_show
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsqr_damp
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_atol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_btol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_conlim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_iter_lim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_show
-        See :func:`scipy.sparse.linalg.lsqr`.
+    @defaults('tol', 'maxiter', 'inner_m', 'outer_k', 'check_finite')
+    def __init__(self, tol=1e-5, maxiter=1000, inner_m=39, outer_k=3, check_finite=True):
+        self.__auto_init(locals())
 
-    Returns
-    -------
-    A dict of available solvers with default |solver_options|.
-    """
-    return {'generic_lgmres': {'type': 'generic_lgmres',
-                               'tol': lgmres_tol,
-                               'maxiter': lgmres_maxiter,
-                               'inner_m': lgmres_inner_m,
-                               'outer_k': lgmres_outer_k},
-            'generic_least_squares_lsmr': {'type': 'generic_least_squares_lsmr',
-                                           'damp': least_squares_lsmr_damp,
-                                           'atol': least_squares_lsmr_atol,
-                                           'btol': least_squares_lsmr_btol,
-                                           'conlim': least_squares_lsmr_conlim,
-                                           'maxiter': least_squares_lsmr_maxiter,
-                                           'show': least_squares_lsmr_show},
-            'generic_least_squares_lsqr': {'type': 'generic_least_squares_lsqr',
-                                           'damp': least_squares_lsqr_damp,
-                                           'atol': least_squares_lsqr_atol,
-                                           'btol': least_squares_lsqr_btol,
-                                           'conlim': least_squares_lsqr_conlim,
-                                           'iter_lim': least_squares_lsqr_iter_lim,
-                                           'show': least_squares_lsqr_show}}
+    def _solve(self, operator, V, mu, initial_guess):
+        op = operator.assemble(mu)
+        R = operator.source.empty(reserve=len(V))
 
-
-@defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, check_finite=True,
-                  default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr'):
-    """Solve linear equation system.
-
-    Applies the inverse of `op` to the vectors in `V` using a generic iterative solver.
-
-    Parameters
-    ----------
-    op
-        The linear, non-parametric |Operator| to invert.
-    V
-        |VectorArray| of right-hand sides for the equation system.
-    initial_guess
-        |VectorArray| with the same length as `V` containing initial guesses
-        for the solution.  Some implementations of `apply_inverse` may
-        ignore this parameter.  If `None` a solver-dependent default is used.
-    options
-        The |solver_options| to use (see :func:`solver_options`).
-    least_squares
-        If `True`, return least squares solution.
-    check_finite
-        Test if solution only contains finite values.
-    default_solver
-        Default solver to use (generic_lgmres, generic_least_squares_lsmr,
-        generic_least_squares_lsqr).
-    default_least_squares_solver
-        Default solver to use for least squares problems (generic_least_squares_lsmr,
-        generic_least_squares_lsqr).
-
-    Returns
-    -------
-    |VectorArray| of the solution vectors.
-    """
-    assert V in op.range
-    assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
-    options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
-
-    R = op.source.empty(reserve=len(V))
-
-    if options['type'] == 'generic_lgmres':
         for i in range(len(V)):
             r, info = lgmres(op, V[i], initial_guess[i] if initial_guess is not None else None,
-                             tol=options['tol'],
-                             maxiter=options['maxiter'],
-                             inner_m=options['inner_m'],
-                             outer_k=options['outer_k'])
+                             tol=self.tol, maxiter=self.maxiter, inner_m=self.inner_m, outer_k=self.outer_k)
             if info > 0:
                 raise InversionError(f'lgmres failed to converge after {info} iterations')
             assert info == 0
             R.append(r)
-    elif options['type'] == 'generic_least_squares_lsmr':
-        for i in range(len(V)):
-            r, info, itn, _, _, _, _, _ = lsmr(op, V[i],
-                                               damp=options['damp'],
-                                               atol=options['atol'],
-                                               btol=options['btol'],
-                                               conlim=options['conlim'],
-                                               maxiter=options['maxiter'],
-                                               show=options['show'])
-            assert 0 <= info <= 7
-            if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
-            getLogger('pymor.algorithms.genericsolvers.lsmr').info(f'Converged after {itn} iterations')
-            R.append(r)
-    elif options['type'] == 'generic_least_squares_lsqr':
-        for i in range(len(V)):
-            r, info, itn, _, _, _, _, _, _ = lsqr(op, V[i],
-                                                  damp=options['damp'],
-                                                  atol=options['atol'],
-                                                  btol=options['btol'],
-                                                  conlim=options['conlim'],
-                                                  iter_lim=options['iter_lim'],
-                                                  show=options['show'])
-            assert 0 <= info <= 7
-            if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
-            getLogger('pymor.algorithms.genericsolvers.lsqr').info(f'Converged after {itn} iterations')
-            R.append(r)
-    else:
-        raise ValueError('Unknown solver type')
 
-    if check_finite:
-        if not np.isfinite(np.all(R.norm())):
+        if self.check_finite and not np.isfinite(np.all(R.norm())):
             raise InversionError('Result contains non-finite values')
 
-    return R
+        return R, {}
 
 
-def _parse_options(options, default_options, default_solver, default_least_squares_solver, least_squares):
-    if options is None:
-        options = default_options[default_least_squares_solver] if least_squares else default_options[default_solver]
-    elif isinstance(options, str):
-        options = default_options[options]
-    else:
-        assert 'type' in options
-        assert options['type'] in default_options
-        assert options.keys() <= default_options[options['type']].keys()
-        user_options = options
-        options = default_options[user_options['type']]
-        options.update(user_options)
+class LSMRSolver(Solver):
 
-    if least_squares != ('least_squares' in options['type']):
-        logger = getLogger('foo')
-        if least_squares:
-            logger.warning('Non-least squares solver selected for least squares problem.')
-        else:
-            logger.warning('Least squares solver selected for non-least squares problem.')
+    least_squares = True
 
-    return options
+    @defaults('damp', 'atol', 'btol', 'conlim', 'maxiter', 'show', 'check_finite')
+    def __init__(self, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False, check_finite=True):
+        self.__auto_init(locals())
+
+    def _solve(self, operator, V, mu, initial_guess):
+        op = operator.assemble(mu)
+        R = operator.source.empty(reserve=len(V))
+
+        for i in range(len(V)):
+            r, info, itn, _, _, _, _, _ = lsmr(op, V[i],
+                                               damp=self.damp, atol=self.atol, btol=self.btol, conlim=self.conlim,
+                                               maxiter=self.maxiter, show=self.show)
+            assert 0 <= info <= 7
+            if info == 7:
+                raise InversionError(f'lsmr failed to converge after {itn} iterations')
+            self.logger.info(f'Converged after {itn} iterations')
+            R.append(r)
+
+        if self.check_finite and not np.isfinite(np.all(R.norm())):
+            raise InversionError('Result contains non-finite values')
+
+        return R, {}
+
+
+class LSQRSolver(Solver):
+
+    least_squares = True
+
+    @defaults('damp', 'atol', 'btol', 'conlim', 'iter_lim', 'show', 'check_finite')
+    def __init__(self, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, iter_lim=None, show=False, check_finite=True):
+        self.__auto_init(locals())
+
+    def _solve(self, operator, V, mu, initial_guess):
+        op = operator.assemble(mu)
+        R = operator.source.empty(reserve=len(V))
+
+        for i in range(len(V)):
+            r, info, itn, _, _, _, _, _, _ = lsqr(op, V[i],
+                                                  damp=self.damp, atol=self.atol, btol=self.btol, conlim=self.conlim,
+                                                  iter_lim=self.iter_lim, show=self.show)
+            assert 0 <= info <= 7
+            if info == 7:
+                raise InversionError(f'lsmr failed to converge after {itn} iterations')
+            self.logger.info(f'Converged after {itn} iterations')
+            R.append(r)
+
+        if self.check_finite and not np.isfinite(np.all(R.norm())):
+            raise InversionError('Result contains non-finite values')
+
+        return R, {}
 
 
 # The following code is an adapted version of
@@ -382,7 +267,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         # didn't converge ...
         return x, maxiter
 
-    getLogger('pymor.algorithms.genericsolvers.lgmres').info(f'Converged after {k_outer+1} iterations')
+    getLogger('pymor.solvers.generic.lgmres').info(f'Converged after {k_outer+1} iterations')
 
     return x, 0
 

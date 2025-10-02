@@ -7,6 +7,7 @@ import platform
 import sys
 import warnings
 from importlib import import_module
+from importlib.metadata import PackageNotFoundError, version
 
 from packaging.version import parse
 
@@ -120,6 +121,14 @@ def _get_qt_version():
     return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
 
 
+def _get_umfpack_version():
+    try:
+        return version('scikit-umfpack')
+    except PackageNotFoundError:
+        pass
+    return False
+
+
 def is_jupyter():
     """Check if we believe to be running in a Jupyter Notebook or Lab.
 
@@ -160,6 +169,7 @@ _PACKAGES = {
     'TORCH': _get_version('torch', True),
     'THREADPOOLCTL': _get_version('threadpoolctl'),
     'TYPER': _get_version('typer'),
+    'UMFPACK': _get_umfpack_version,
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
 }
 

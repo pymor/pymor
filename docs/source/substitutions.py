@@ -162,7 +162,8 @@ common = """
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
-.. |solver_options| replace:: :attr:`~pymor.operators.interface.Operator.solver_options`
+.. |Solver| replace:: :attr:`~pymor.solvers.interface.Solver`
+.. |Solvers| replace:: :attr:`Solvers <pymor.solvers.interface.Solver>`
 
 .. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
 .. |RuleTables| replace:: :class:`RuleTables <pymor.algorithms.rules.RuleTable>`

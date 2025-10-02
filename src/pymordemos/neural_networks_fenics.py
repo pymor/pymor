@@ -8,6 +8,7 @@ from typer import Argument, run
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissingError
+from pymor.solvers.newton import NewtonSolver
 
 DIM = 2
 GRID_INTERVALS = 50
@@ -111,7 +112,7 @@ def _discretize_fenics():
     op = FenicsOperator(F, space, space, u, (bc,),
                         parameter_setter=lambda mu: c.assign(mu['c'].item()),
                         parameters={'c': 1},
-                        solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
+                        solver=NewtonSolver(rtol=1e-6))
     rhs = VectorOperator(op.range.zeros())
 
     fom = StationaryModel(op, rhs)

@@ -6,10 +6,9 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
-from pymor.core.exceptions import InversionError, LinAlgError
+from pymor.core.exceptions import LinAlgError
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.interface import VectorArray
@@ -29,49 +28,36 @@ class Operator(ParametricObject):
 
     Attributes
     ----------
-    solver_options
-        If not `None`, a dict which can contain the following keys:
-
-        :'inverse':           solver options used for
-                              :meth:`~Operator.apply_inverse`
-        :'inverse_adjoint':   solver options used for
-                              :meth:`~Operator.apply_inverse_adjoint`
-        :'jacobian':          solver options for the operators returned
-                              by :meth:`~Operator.jacobian`
-                              (has no effect for linear operators)
-
-        If `solver_options` is `None` or a dict entry is missing
-        or `None`, default options are used.
-        The interpretation of the given solver options is up to
-        the operator at hand. In general, values in `solver_options`
-        should either be strings (indicating a solver type) or
-        dicts of options, usually with an entry `'type'` which
-        specifies the solver type to use and further items which
-        configure this solver.
     linear
         `True` if the operator is linear.
     source
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
-    H
-        The adjoint operator, i.e. ::
-
-            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
-
-        for all V, mu.
     """
 
     # override NumPy binary operations and ufuncs
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
-    solver_options = None
+    solver = None
+    """The |Solver| to use for `apply_inverse` and `apply_inverse_adjoint`."""
 
     @property
     def H(self):
+        """Adjoint |Operator|.
+
+        It hold that ::
+
+            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
+
+        for all `V`, `mu`.
+
+        If the operator has a |Solver|, the adjoint operator will be equipped
+        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
+        """
         from pymor.operators.constructions import AdjointOperator
-        return AdjointOperator(self)
+        return AdjointOperator(self, solver=self._adjoint_solver)
 
     @abstractmethod
     def apply(self, U, mu=None):
@@ -185,7 +171,7 @@ class Operator(ParametricObject):
         else:
             raise LinAlgError('Operator not linear.')
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, return_info=False, solver=None):
         """Apply the inverse operator.
 
         Parameters
@@ -198,93 +184,30 @@ class Operator(ParametricObject):
             |VectorArray| with the same length as `V` containing initial guesses
             for the solution.  Some implementations of `apply_inverse` may
             ignore this parameter.  If `None` a solver-dependent default is used.
-        least_squares
-            If `True`, solve the least squares problem::
-
-                u = argmin ||op(u) - v||_2.
-
-            Since for an invertible operator the least squares solution agrees
-            with the result of the application of the inverse operator,
-            setting this option should, in general, have no effect on the result
-            for those operators. However, note that when no appropriate
-            |solver_options| are set for the operator, most implementations
-            will choose a least squares solver by default which may be
-            undesirable.
+        return_info
+            If `True`, return a dict with additional information on the solution
+            process (runtime, iterations, residuals, etc.) as a second return value.
+        solver
+            If not `None`, use this |Solver| for computing the solution.
 
         Returns
         -------
-        |VectorArray| of the inverse operator evaluations.
+        U
+            |VectorArray| containing the inverse operator evaluations.
+        info
+            Dict with additional information. Only returned when `return_info` is
+            `True`.
 
         Raises
         ------
         InversionError
             The operator could not be inverted.
         """
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        from pymor.operators.constructions import FixedParameterOperator
-        assembled_op = self.assemble(mu)
-        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+        from pymor.solvers.default import DefaultSolver
+        solver = solver or self.solver or DefaultSolver()
+        return solver.solve(self, V, mu=mu, initial_guess=initial_guess, return_info=return_info)
 
-        options = self.solver_options.get('inverse') if self.solver_options else None
-        options = (None if options is None else
-                   {'type': options} if isinstance(options, str) else
-                   options.copy())
-        solver_type = None if options is None else options['type']
-
-        if self.linear:
-            if solver_type is None or solver_type == 'to_matrix':
-                mat_op = None
-                if not hasattr(self, '_mat_op'):
-                    if solver_type is None:
-                        self.logger.warning(f'No specialized linear solver available for {self}.')
-                        self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
-                    from pymor.algorithms.rules import NoMatchingRuleError
-                    try:
-                        from pymor.algorithms.to_matrix import to_matrix
-                        from pymor.operators.numpy import NumpyMatrixOperator
-                        mat = to_matrix(assembled_op, mu=mu)
-                        mat_op = NumpyMatrixOperator(mat)
-                        if not self.parametric:
-                            self._mat_op = mat_op
-                    except (NoMatchingRuleError, NotImplementedError) as e:
-                        if solver_type == 'to_matrix':
-                            raise InversionError from e
-                        else:
-                            self.logger.warning('Failed.')
-                else:
-                    mat_op = self._mat_op
-                if mat_op is not None:
-                    v = mat_op.range.from_numpy(V.to_numpy())
-                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
-                    u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
-                    return self.source.from_numpy(u.to_numpy())
-            self.logger.warning('Solving with unpreconditioned iterative solver.')
-            return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
-                                                options=options, least_squares=least_squares)
-        else:
-            from pymor.algorithms.newton import newton
-            from pymor.core.exceptions import NewtonError
-
-            assert solver_type is None or solver_type == 'newton'
-            options = options or {}
-            options.pop('type', None)
-            options['least_squares'] = least_squares
-
-            with self.logger.block('Solving nonlinear problem using newton algorithm ...'):
-                R = V.empty(reserve=len(V))
-                for i in range(len(V)):
-                    try:
-                        R.append(newton(self, V[i],
-                                        initial_guess=initial_guess[i] if initial_guess is not None else None,
-                                        mu=mu,
-                                        **options)[0])
-                    except NewtonError as e:
-                        raise InversionError(e) from e
-            return R
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, return_info=False, solver=None):
         """Apply the inverse adjoint operator.
 
         Parameters
@@ -297,43 +220,50 @@ class Operator(ParametricObject):
             |VectorArray| with the same length as `U` containing initial guesses
             for the solution.  Some implementations of `apply_inverse_adjoint` may
             ignore this parameter.  If `None` a solver-dependent default is used.
-        least_squares
-            If `True`, solve the least squares problem::
-
-                v = argmin ||op^*(v) - u||_2.
-
-            Since for an invertible operator the least squares solution agrees
-            with the result of the application of the inverse operator,
-            setting this option should, in general, have no effect on the result
-            for those operators. However, note that when no appropriate
-            |solver_options| are set for the operator, most operator
-            implementations will choose a least squares solver by default which
-            may be undesirable.
+        return_info
+            If `True`, return a dict with additional information on the solution
+            process (runtime, iterations, residuals, etc.) as a second return value.
+        solver
+            If not `None`, use this |Solver| for computing the solution.
 
         Returns
         -------
-        |VectorArray| of the inverse adjoint operator evaluations.
+        V
+            |VectorArray| containing the inverse adjoint operator evaluations.
+        info
+            Dict with additional information. Only returned when `return_info` is
+            `True`.
 
         Raises
         ------
         InversionError
             The operator could not be inverted.
         """
-        from pymor.operators.constructions import FixedParameterOperator
-        if not self.linear:
-            raise LinAlgError('Operator not linear.')
-        assembled_op = self.assemble(mu)
-        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse_adjoint(U, initial_guess=initial_guess, least_squares=least_squares)
-        else:
-            # use generic solver for the adjoint operator
-            from pymor.operators.constructions import AdjointOperator
-            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
-            return adjoint_op.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+        from pymor.solvers.default import DefaultSolver
+        solver = solver or self.solver or DefaultSolver()
+        return solver.solve_adjoint(self, U, mu=mu, initial_guess=initial_guess, return_info=return_info)
+
+    def _apply_inverse(self, V, mu, initial_guess):
+        """Default implementation for :meth:`~Operator.apply_inverse`.
+
+        This method is called by :class:`~pymor.solvers.default.DefaultSolver`.
+        Can be overridden by selecting another |Solver| for the operator.
+        """
+        raise NotImplementedError
+
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        """Default implementation for :meth:`~Operator.apply_inverse_adjoint`.
+
+        This method is called by :class:`~pymor.solvers.default.DefaultSolver`.
+        Can be overridden by selecting another |Solver| for the operator.
+        """
+        raise NotImplementedError
 
     def jacobian(self, U, mu=None):
         """Return the operator's Jacobian as a new |Operator|.
+
+        If the operator has a |Solver|, the Jacobian |Operator| will be equipped
+        with the solver's :attr:`~pymor.solvers.interface.Solver.jacobian_solver`.
 
         Parameters
         ----------
@@ -357,6 +287,9 @@ class Operator(ParametricObject):
 
     def d_mu(self, parameter, index=0):
         """Return the operator's derivative with respect to a given parameter.
+
+        If the operator has a |Solver|, the derivative |Operator| will be equipped
+        with the same |Solver|.
 
         Parameters
         ----------
@@ -474,6 +407,9 @@ class Operator(ParametricObject):
         The only assured property of the assembled operator is that it no longer
         depends on a |Parameter|.
 
+        If the operator has a |Solver|, the assembled |Operator| will be equipped
+        with the same |Solver|.
+
         Parameters
         ----------
         mu
@@ -486,11 +422,11 @@ class Operator(ParametricObject):
         if self.parametric:
             from pymor.operators.constructions import FixedParameterOperator
 
-            return FixedParameterOperator(self, mu=mu, name=self.name + '_assembled')
+            return FixedParameterOperator(self, mu=mu, solver=self.solver, name=self.name + '_assembled')
         else:
             return self
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         """Try to assemble a linear combination of the given operators.
 
         Returns a new |Operator| which represents the sum ::
@@ -513,8 +449,6 @@ class Operator(ParametricObject):
             List of the corresponding linear coefficients `c_i`.
         identity_shift
             The coefficient `s`.
-        solver_options
-            |solver_options| for the assembled operator.
         name
             Name of the assembled operator.
 
@@ -581,7 +515,7 @@ class Operator(ParametricObject):
         else:
             operators, coefficients = self.operators + (other,), self.coefficients + (sign,)
 
-        return LincombOperator(operators, coefficients, solver_options=self.solver_options)
+        return LincombOperator(operators, coefficients)
 
     def _radd_sub(self, other, sign):
         if other == 0:
@@ -628,6 +562,14 @@ class Operator(ParametricObject):
     def __str__(self):
         return (f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  '
                 f'(parameters: {self.parameters}, class: {self.__class__.__name__})')
+
+    @property
+    def _adjoint_solver(self):
+        return getattr(self.solver, 'adjoint_solver', None)
+
+    @property
+    def _jacobian_solver(self):
+        return getattr(self.solver, 'jacobian_solver', None)
 
 
 @defaults('value')

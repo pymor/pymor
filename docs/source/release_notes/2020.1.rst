@@ -123,7 +123,7 @@ initial_guess parameter for apply_inverse
 The :meth:`~pymor.operators.interface.Operator.apply_inverse` and
 :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint` methods of the |Operator| interface
 have gained an additional `initial_guess` parameter that can be passed to iterative linear solvers.
-For nonlinear |Operators| the initial guess is passed to the :meth:`~pymor.algorithms.newton.newton`
+For nonlinear |Operators| the initial guess is passed to the :meth:`!~pymor.algorithms.newton.newton`
 algorithm `[#941] <https://github.com/pymor/pymor/pull/941>`_.
 
 

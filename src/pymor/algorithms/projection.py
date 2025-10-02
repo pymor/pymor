@@ -214,11 +214,11 @@ class ProjectRules(RuleTable):
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
-        return self.replace_children(op).with_(solver_options=None)
+        return self.replace_children(op).with_(solver=None)
 
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):
-        return self.replace_children(op)
+        return self.replace_children(op).with_(solver=None)
 
     @match_class(BlockOperatorBase)
     def action_BlockOperatorBase(self, op):
@@ -303,8 +303,7 @@ class ProjectToSubbasisRules(RuleTable):
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op):
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy(),
-                                   solver_options=op.solver_options)
+        return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy())
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
@@ -342,8 +341,7 @@ class ProjectToSubbasisRules(RuleTable):
         source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:, :self.dim_source])
 
         return ProjectedEmpiricalInterpolatedOperator(restricted_operator, op.interpolation_matrix,
-                                                      source_basis_dofs, projected_collateral_basis, op.triangular,
-                                                      solver_options=op.solver_options)
+                                                      source_basis_dofs, projected_collateral_basis, op.triangular)
 
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
@@ -377,8 +375,7 @@ class ProjectToSubbasisRules(RuleTable):
             else op.source_basis[:dim_source]
         range_basis = op.range_basis if dim_range is None \
             else op.range_basis[:dim_range]
-        return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
-                                 solver_options=op.solver_options)
+        return ProjectedOperator(op.operator, range_basis, source_basis, product=None)
 
     @match_class(QuadraticFunctional)
     def action_QuadraticFunctional(self, op):

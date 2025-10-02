@@ -8,6 +8,7 @@ from pymor.algorithms.ei import ei_greedy
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import StationaryRBReductor
+from pymor.solvers.generic import LGMRESSolver
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal, runmodule
 
@@ -17,7 +18,8 @@ def test_ei_restricted_to_full(stationary_models):
     op = model.operator
     cb = op.range.from_numpy(np.eye(op.range.dim))
     dofs = list(range(cb.dim))
-    ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
+    ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True,
+                                          solver=LGMRESSolver())
     ei_model = model.with_(operator=ei_op)
 
     mus = model.parameters.space(1, 2).sample_randomly(3)
