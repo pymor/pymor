@@ -43,9 +43,9 @@ class BlockOperatorBase(Operator):
 
             for (i, j), op in np.ndenumerate(blocks):
                 if op is not None:
-                    assert source_spaces[j] is None or op.source == source_spaces[j]
+                    assert source_spaces is None or op.source == source_spaces[j]
                     source_spaces[j] = op.source
-                    assert range_spaces[i] is None or op.range == range_spaces[i]
+                    assert range_spaces is None or op.range == range_spaces[i]
                     range_spaces[i] = op.range
 
         else:
