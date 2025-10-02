@@ -331,3 +331,119 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
 
     return fom
+
+def stokes_2Dexample(rhs=None):
+    """Return a discretization of the parametric, stationary Stokes equation on the unit circle.
+
+    The problem consists in solving ::
+
+        - μ Δ u(x, μ) + ∇ p(x, μ) = f(x)  in Ω
+        ∇ ⋅ u(x, μ) = 0  in Ω
+
+    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity.
+    To eliminate the singularity of the saddle-point system, one pressure node is set to zero.
+
+    Parameters
+    ----------
+    rhs
+        The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
+
+    Returns
+    -------
+    fom
+        Stokes equation problem as a |StationaryModel|.
+    """
+    import numpy as np
+    from skfem.assembly import Basis, LinearForm, asm
+    from skfem.element import ElementTriP1, ElementTriP2, ElementVector
+    from skfem.mesh import MeshTri
+    from skfem.models.general import divergence
+    from skfem.models.poisson import mass, vector_laplace
+    from skfem.utils import bmat, condense
+
+    from pymor.analyticalproblems.functions import Function
+    from pymor.models.basic import StationaryModel
+    from pymor.operators.block import BlockColumnOperator, BlockOperator
+    from pymor.operators.constructions import LincombOperator, VectorOperator, ZeroOperator
+    from pymor.operators.numpy import NumpyMatrixOperator
+    from pymor.parameters.base import Parameters
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+    assert isinstance(rhs, Function)
+    assert rhs.dim_domain == 2
+    assert rhs.shape_range == (2,)
+
+    mesh = MeshTri.init_circle(4)
+
+    # Taylor-Hood discretization
+    element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
+    basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
+
+    def make_body_force(rhs):
+        def integrand(v, w):
+            K, Q = w.x.shape[1], w.x.shape[2]
+            x, y = w.x[0], w.x[1]
+
+            vals = rhs(np.array([x.reshape(-1), y.reshape(-1)]).T)
+            vals = vals.reshape(K, Q, 2)
+            f_x = vals[:, :, 0]
+            f_y = vals[:, :, 1]
+
+            return f_x * v[0] + f_y * v[1]
+
+        return LinearForm(integrand)
+
+    # assemble
+    A = asm(vector_laplace, basis['u'])
+    B = (-1) * asm(divergence, basis['u'], basis['p'])
+    C = asm(mass, basis['p'])
+    product_u = A
+    product_p = C
+
+    K = bmat([[A, B.T], [B, 0 * C]], 'csr')
+    f = np.concatenate([asm(make_body_force(rhs), basis['u']), basis['p'].zeros()])
+
+    # dirichlet boundary values, fix one pressure node to zero
+    D_u = basis['u'].get_dofs().flatten()
+    D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
+    D_all = np.concatenate([D_u, D_p + A.shape[0]])
+
+    # condense
+    K_c, f_c, _, I = condense(K, f, D=D_all, expand=True)
+    free_u = len(I[I < A.shape[0]])
+    free_p = len(I[I >= A.shape[0]] - A.shape[0])
+
+    # extract blocks
+    A_c = K_c[:free_u, :free_u]
+    B_c = K_c[free_u:, :free_u]
+
+    all_u = np.arange(product_u.shape[0])
+    free_idx_u = np.setdiff1d(all_u, D_u)
+    all_p = np.arange(product_p.shape[0])
+    free_idx_p = np.setdiff1d(all_p, D_p)
+
+    product_u_c = product_u[free_idx_u][:, free_idx_u]
+    product_p_c = product_p[free_idx_p][:, free_idx_p]
+
+    # build BlockOperator
+    U_space = NumpyVectorSpace(free_u)
+    P_space = NumpyVectorSpace(free_p)
+    nu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    A_op = NumpyMatrixOperator(A_c)
+    A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
+    B_op = NumpyMatrixOperator(B_c)
+    B_op_T = NumpyMatrixOperator(B_c.T)
+    Z_op = ZeroOperator(range=P_space, source=P_space)
+
+    K_op = BlockOperator([[A_op_nu, B_op_T], [B_op, Z_op]])
+    F_op = BlockColumnOperator([VectorOperator(U_space.make_array(f_c[:free_u])),
+                               VectorOperator(P_space.make_array(f_c[free_u:]))])
+
+    fom = StationaryModel(operator=K_op,
+                          rhs=F_op,
+                          products={'u': NumpyMatrixOperator(product_u_c),
+                                    'p': NumpyMatrixOperator(product_p_c)},
+                          name='Stokes-TH')
+
+    return fom

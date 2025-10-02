@@ -70,10 +70,10 @@ class ProjectionBasedReductor(BasicObject):
             self._last_rom = self._reduce()
             self._last_rom_dims = {k: len(v) for k, v in self.bases.items()}
 
-        if dims == self._last_rom_dims:
-            return self._last_rom
-        else:
+        elif dims != self._last_rom_dims:
             return self._reduce_to_subbasis(dims)
+
+        return self._last_rom
 
     def _reduce(self):
         with self.logger.block('Operator projection ...'):
