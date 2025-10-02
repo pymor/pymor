@@ -27,11 +27,8 @@ from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.solvers.interface import Solver
 
-try:
+if config.HAVE_UMFPACK:
     import scikits.umfpack
-    HAS_UMFPACK = True
-except ImportError:
-    HAS_UMFPACK = False
 
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
@@ -180,7 +177,7 @@ class ScipySpSolveSolver(ScipyLinearSolver):
                         raise KeyError
                 except KeyError:
                     matrix = matrix_astype_nocopy(matrix, promoted_type)
-                    if self.use_umfpack and HAS_UMFPACK:
+                    if self.use_umfpack and config.HAVE_UMFPACK:
                         fac = scikits.umfpack.splu(matrix)
                     else:
                         fac = splu(matrix, permc_spec=self.permc_spec)
@@ -194,7 +191,7 @@ class ScipySpSolveSolver(ScipyLinearSolver):
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
                 matrix = matrix_astype_nocopy(matrix, promoted_type)
-                if self.use_umfpack and HAS_UMFPACK:
+                if self.use_umfpack and config.HAVE_UMFPACK:
                     R = scikits.umfpack.spsolve(matrix, V)
                 else:
                     R = spsolve(matrix, V, permc_spec=self.permc_spec, use_umfpack=False)
