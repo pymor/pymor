@@ -72,8 +72,11 @@ class PatchVisualizer(ImmutableObject):
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
         filename
-            If specified, write the data to a VTK-file using
-            :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
+            If specified, save the data as a file based on the provided file extension
+            instead of displaying it.
+            Supported formats include `.vtk`, `.mp4`, and all file types supported by
+            `matplotlib.pyplot.savefig`.
+            If no file extension is specified, `.vtk` will be used by default.
         return_widget
             If `True`, create an interactive visualization that can be used as a jupyter widget.
         kwargs
@@ -84,12 +87,23 @@ class PatchVisualizer(ImmutableObject):
                 and all(isinstance(u, VectorArray) for u in U)
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
-            from pymor.discretizers.builtin.grids.vtkio import write_vtk
-            if not isinstance(U, tuple):
-                write_vtk(self.grid, U, filename, codim=self.codim)
+            split_filename = filename.split('.')
+
+            # there is no file extension or filename ends with '.vtk'
+            if len(split_filename)==1 or split_filename[-1]=='vtk':
+                filename = split_filename[0]
+                from pymor.discretizers.builtin.grids.vtkio import write_vtk
+                if not isinstance(U, tuple):
+                    write_vtk(self.grid, U, filename, codim=self.codim)
+                else:
+                    for i, u in enumerate(U):
+                        write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
             else:
-                for i, u in enumerate(U):
-                    write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
+                from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
+                return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                                        legend=legend, separate_colorbars=separate_colorbars,
+                                        rescale_colorbars=rescale_colorbars, columns=columns,
+                                        return_widget=return_widget, filename=filename, **kwargs)
         else:
             if self.backend == 'jupyter':
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
@@ -136,7 +150,7 @@ class OnedVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_plots=False,
-                  rescale_axes=False, block=None, columns=2, return_widget=False):
+                  rescale_axes=False, block=None, columns=2, filename=None, return_widget=False):
         """Visualize the provided data.
 
         Parameters
@@ -160,9 +174,23 @@ class OnedVisualizer(ImmutableObject):
             default provided during instantiation.
         columns
             Number of columns the subplots are organized in.
+        filename
+            If specified, save the data as a file based on the provided file extension
+            instead of displaying it.
+            Supported formats include `.mp4`, and all file types supported by
+            `matplotlib.pyplot.savefig`.
+            If no file extension is specified, `.png` will be used by default.
         return_widget
             If `True`, create an interactive visualization that can be used as a jupyter widget.
         """
+        if filename:
+            if len(filename.split('.')) < 2:
+                filename = filename + '.png'
+            from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
+            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
+                                           separate_plots=separate_plots, rescale_axes=rescale_axes,
+                                           columns=columns, filename=filename, return_widget=return_widget)
+
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
