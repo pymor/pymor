@@ -34,7 +34,7 @@ repos:
           - --autofix
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.9
+    rev: v0.13.3
     hooks:
       - id: ruff
         args:
@@ -46,11 +46,11 @@ repos:
         args:
           - --fix
   - repo: https://github.com/pappasam/toml-sort.git
-    rev: v0.24.2
+    rev: v0.24.3
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/lyz-code/yamlfix
-    rev: 1.17.0
+    rev: 1.18.0
     hooks:
       - id: yamlfix
         types:
