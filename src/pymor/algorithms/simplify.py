@@ -129,43 +129,33 @@ class ExpandRules(RuleTable):
 
         # Build the constant part: copy non-Lincomb blocks; Lincomb blocks start as zero
         const_blocks = np.full((nrows, ncols), None, dtype=object)
-        for i in range(nrows):
-            for j in range(ncols):
-                b = op.blocks[i, j]
-                if not isinstance(b, LincombOperator):
-                    const_blocks[i, j] = b
+        for (i, j), b in np.ndenumerate(op.blocks):
+            if not isinstance(b, LincombOperator):
+                const_blocks[i, j] = b
 
         expanded_terms = []
-        for i in range(nrows):
-            for j in range(ncols):
-                b = op.blocks[i, j]
-                if not isinstance(b, LincombOperator):
-                    continue
-                for c_k, a_k in zip(b.coefficients, b.operators):
-                    if isinstance(c_k, ParameterFunctional):
-                        blocks_k = np.full((nrows, ncols), None, dtype=object)
-                        blocks_k[i, j] = a_k
-                        expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces,
-                                                source_spaces=op.source.subspaces)))
+        for (i, j), b in np.ndenumerate(op.blocks):
+            if not isinstance(b, LincombOperator):
+                continue
+            for c_k, a_k in zip(b.coefficients, b.operators):
+                if isinstance(c_k, ParameterFunctional):
+                    blocks_k = np.full((nrows, ncols), None, dtype=object)
+                    blocks_k[i, j] = a_k
+                    expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces,
+                                                            source_spaces=op.source.subspaces)))
+                else:
+                    cur = const_blocks[i, j]
+                    if cur is None:
+                        const_blocks[i, j] = c_k * a_k
                     else:
-                        cur = const_blocks[i, j]
-                        if cur is None:
-                            const_blocks[i, j] = LincombOperator([a_k], [c_k])
-                        else:
-                            cur_op = cur.operators
-                            cur_coeff = cur.coeffcients
-                            const_blocks[i, j] = LincombOperator([cur_op.append(a_k)], [cur_coeff.append(c_k)])
+                        const_blocks[i, j] += a_k * c_k
 
         const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
 
-        ops, coeffs = [], []
+        ops, coeffs = zip(*expanded_terms)
         if const_blocks.any():
-            ops.append(const_part)
-            coeffs.append(1)
-
-        for c, bop_k in expanded_terms:
-            ops.append(bop_k)
-            coeffs.append(c)
+            ops = [const_part] + ops
+            coeffs = [1.] + coeffs
 
         if len(ops) == 1 and coeffs == [1]:
             return ops[0]
