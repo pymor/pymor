@@ -118,7 +118,35 @@ class ExpandRules(RuleTable):
             coeffs = [c.conjugate() for c in inner.coefficients]
             return LincombOperator(ops, coeffs)
 
+        # If the inside is a ConcatenationOperator, distribute adjoint over the concatenation:
+        # (A @ B @ C)^* = C^* @ B^* @ A^*
+        if isinstance(inner, ConcatenationOperator):
+            return self._adjoint_of_concatenation(inner, outer_source_product=op.source_product,
+                                                outer_range_product=op.range_product)
+
         return AdjointOperator(inner, source_product=op.source_product, range_product=op.range_product)
+
+    def _adjoint_of_concatenation(self, inner_concat, outer_source_product, outer_range_product):
+        ops = inner_concat.operators
+        k = len(ops)
+
+        adj_factors = []
+        for i_rev, A_i in enumerate(reversed(ops), start=1):
+            j = k - i_rev
+            s_prod = None
+            r_prod = None
+            if j == 0:
+                s_prod = outer_source_product
+            if j == k - 1:
+                r_prod = outer_range_product
+            if s_prod is None:
+                s_prod = getattr(A_i, 'source_product', None)
+            if r_prod is None:
+                r_prod = getattr(A_i, 'range_product', None)
+
+            adj_factors.append(AdjointOperator(A_i, source_product=s_prod, range_product=r_prod))
+
+        return ConcatenationOperator(adj_factors)
 
     @match_class(BlockOperator)
     def action_BlockOperator(self, op):
@@ -146,18 +174,18 @@ class ExpandRules(RuleTable):
                 else:
                     cur = const_blocks[i, j]
                     if cur is None:
-                        const_blocks[i, j] = c_k * a_k
+                        const_blocks[i, j] = contract(c_k * a_k)
                     else:
-                        const_blocks[i, j] += a_k * c_k
+                        const_blocks[i, j] += contract(c_k * a_k)
 
         const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
 
-        ops, coeffs = zip(*expanded_terms)
+        coeffs, ops = zip(*expanded_terms)
         if const_blocks.any():
-            ops = [const_part] + ops
-            coeffs = [1.] + coeffs
+            ops = [const_part] + list(ops)
+            coeffs = [1.] + list(coeffs)
 
-        if len(ops) == 1 and coeffs == [1]:
+        if len(ops) == 1 and list(coeffs) == [1.]:
             return ops[0]
 
         return LincombOperator(ops, coeffs)
