@@ -93,6 +93,10 @@ common = """
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |ConcatenationOperator| replace:: :class:`~pymor.operators.constructions.ConcatenationOperator`
 .. |ConcatenationOperators| replace:: :class:`ConcatenationOperators <pymor.operators.constructions.ConcatenationOperator>`
+.. |AdjointOperator| replace:: :class:`~pymor.operators.constructions.AdjointOperator`
+.. |AdjointOperators| replace:: :class:`AdjointOperators <pymor.operators.constructions.AdjointOperator>`
+.. |BlockOperator| replace:: :class:`~pymor.operators.block.BlockOperator`
+.. |BlockOperators| replace:: :class:`BlockOperators <pymor.operators.block.BlockOperator>`
 .. |SelectionOperator| replace:: :class:`~pymor.operators.constructions.SelectionOperator`
 .. |VectorOperator| replace:: :class:`~pymor.operators.constructions.VectorOperator`
 .. |VectorArrayOperator| replace:: :class:`~pymor.operators.constructions.VectorArrayOperator`

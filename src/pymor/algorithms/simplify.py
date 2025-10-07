@@ -21,7 +21,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def expand(obj):
-    """Expand concatenations of LincombOperators.
+    """Expand concatenations of |LincombOperators|.
 
     To any given |Operator| or |Model|, the following
     transformations are applied recursively:
@@ -45,14 +45,14 @@ def expand(obj):
 
           (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*.
 
-    - |ConcatentationOperators| inside |AdjointOperators| are reversed ::
+    - |ConcatenationOperators| inside |AdjointOperators| are reversed ::
 
           (A @ B @ C)^* = C^* @ B^* @ A^*.
 
     - |BlockOperators| inside |LincombOperator| are distributed element-wise and collected
       into a single |LincombOperator| of |BlockOperators|. Numeric coefficients are merged
-      into the constant block using :meth:`<pymor.algorithms.simplify.contract>`,
-      while parametric coefficients remain as coefficients.
+      into the constant block using :func:`contract <pymor.algorithms.simplify.contract>`,
+      while parametric coefficients remain as coefficients of the resulting |LincombOperator|.
 
     Parameters
     ----------
