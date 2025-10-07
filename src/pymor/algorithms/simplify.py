@@ -36,10 +36,23 @@ def expand(obj):
           O1 @ O3 + O1 @ O4 + O2 @ O3 + O2 @ O4
 
     - |LincombOperators| inside |LincombOperators| are merged into a single
-      |LincombOperator|
+      |LincombOperator|.
 
     - |ConcatenationOperators| inside |ConcatenationOperators| are merged into a
       single |ConcatenationOperator|.
+
+    - |LincombOperators| inside |AdjointOperators| are distributed over the linear combination ::
+
+          (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*.
+
+    - |ConcatentationOperators| inside |AdjointOperators| are reversed ::
+
+          (A @ B @ C)^* = C^* @ B^* @ A^*.
+
+    - |BlockOperators| inside |LincombOperator| are distributed element-wise and collected
+      into a single |LincombOperator| of |BlockOperators|. Numeric coefficients are merged
+      into the constant block using :meth:`<pymor.algorithms.simplify.contract>`,
+      while parametric coefficients remain as coefficients.
 
     Parameters
     ----------
