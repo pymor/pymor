@@ -27,6 +27,7 @@ from pymor.operators.numpy import (
     NumpyMatrixOperator,
 )
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
+from pymor.solvers.least_squares import QRLeastSquaresSolver
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
@@ -341,6 +342,10 @@ def test_H(operator_with_arrays):
 def test_apply_inverse(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
     for ind in valid_inds(V):
+        if op.source.dim != op.range.dim and (op.solver is None or not op.solver.least_squares):
+            with pytest.raises(AssertionError):
+                U = op.apply_inverse(V[ind], mu=mu)
+            continue
         try:
             U = op.apply_inverse(V[ind], mu=mu)
         except InversionError:
@@ -357,6 +362,10 @@ def test_apply_inverse_adjoint(operator_with_arrays):
         return
     for ind in valid_inds(U):
         if len(U[ind]) == 0:
+            continue
+        if op.source.dim != op.range.dim and (op.solver is None or not op.solver.least_squares):
+            with pytest.raises(AssertionError):
+                V = op.apply_inverse_adjoint(U[ind], mu=mu)
             continue
         try:
             V = op.apply_inverse_adjoint(U[ind], mu=mu)
@@ -394,6 +403,9 @@ def test_assemble(operator_with_arrays):
         ATV = None
     if ATV is not None:
         assert np.all(almost_equal(aop.apply_adjoint(V), ATV))
+
+    if op.source.dim != op.range.dim:
+        return
 
     try:
         AIV = op.apply_inverse(V, mu=mu)
@@ -447,6 +459,8 @@ def test_restricted_jacobian(operator_with_arrays, rng):
 
 def test_InverseOperator(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
+    if op.source.dim != op.range.dim:
+        return
     inv = InverseOperator(op)
     rtol = atol = 1e-12
     try:
@@ -473,6 +487,8 @@ def test_InverseOperator(operator_with_arrays):
 def test_InverseAdjointOperator(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
+        return
+    if op.source.dim != op.range.dim:
         return
     inv = InverseAdjointOperator(op)
     rtol = atol = 1e-12
@@ -514,7 +530,7 @@ def test_vectorarray_op_apply_inverse_lstsq(rng):
     O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
-    U = op.apply_inverse(V, least_squares=True)
+    U = op.apply_inverse(V, solver=QRLeastSquaresSolver())
     v = V.to_numpy()
     u = spla.lstsq(O, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
@@ -525,7 +541,7 @@ def test_adjoint_vectorarray_op_apply_inverse_lstsq(rng):
     O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()
-    U = op.apply_inverse(V, least_squares=True)
+    U = op.apply_inverse(V, solver=QRLeastSquaresSolver('source'))
     v = V.to_numpy()
     u = spla.lstsq(O.T, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))

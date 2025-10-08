@@ -35,13 +35,13 @@ class LincombOperator(Operator):
     coefficients
         A list of linear coefficients. A linear coefficient can
         either be a fixed number or a |ParameterFunctional|.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, operators, coefficients, solver_options=None, name=None):
+    def __init__(self, operators, coefficients, solver=None, name=None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, Operator) for op in operators)
@@ -58,10 +58,9 @@ class LincombOperator(Operator):
 
     @property
     def H(self):
-        options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-        return self.with_(operators=[op.H for op in self.operators], solver_options=options,
+        return self.with_(operators=[op.H for op in self.operators],
                           coefficients=[c.conjugate() for c in self.coefficients],
+                          solver=self._adjoint_solver,
                           name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
@@ -140,8 +139,7 @@ class LincombOperator(Operator):
         operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         # try to form a linear combination
-        op = assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
-                              name=self.name + '_assembled')
+        op = assemble_lincomb(operators, coefficients, solver=self.solver, name=self.name + '_assembled')
         # To avoid infinite recursions, only use the result if at least one of the following
         # is true:
         #   - The operator is parametric, so the the result of assemble *must* be a different,
@@ -162,8 +160,8 @@ class LincombOperator(Operator):
         if self.linear:
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
-        options = self.solver_options.get('jacobian') if self.solver_options else None
-        return LincombOperator(jacobians, self.coefficients, solver_options=options,
+        return LincombOperator(jacobians, self.coefficients,
+                               solver=self._jacobian_solver,
                                name=self.name + '_jacobian').assemble(mu)
 
     def d_mu(self, parameter, index=0):
@@ -176,39 +174,27 @@ class LincombOperator(Operator):
                 derivative_coefficients.append(coef.d_mu(parameter, index))
             else:
                 derivative_coefficients.append(0.)
-        return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
+        return self.with_(coefficients=derivative_coefficients, solver=self.solver, name=self.name + '_d_mu')
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        if len(self.operators) == 1:
-            coeff = self.evaluate_coefficients(mu)[0]
-            if not coeff:
-                if least_squares:
-                    return self.source.zeros(len(V))
-                else:
-                    raise InversionError
-            else:
-                U = self.operators[0].apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-                coefficients = self.evaluate_coefficients(mu)
-                U *= (1. / coefficients[0])
-                return U
-        else:
-            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse(self, V, mu, initial_guess):
+        if len(self.operators) != 1:
+            raise NotImplementedError
+        U = self.operators[0].apply_inverse(V, mu=mu, initial_guess=initial_guess)
+        coeff = self.evaluate_coefficients(mu)[0]
+        if coeff == 0.:
+            raise InversionError
+        U *= (1. / coeff)
+        return U, {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        if len(self.operators) == 1:
-            coeff = self.evaluate_coefficients(mu)[0]
-            if not coeff:
-                if least_squares:
-                    return self.range.zeros(len(U))
-                else:
-                    raise InversionError
-            else:
-                V = self.operators[0].apply_inverse_adjoint(U, mu=mu,
-                                                            initial_guess=initial_guess, least_squares=least_squares)
-                V *= (1. / coeff)
-                return V
-        else:
-            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        if len(self.operators) != 1:
+            raise NotImplementedError
+        V = self.operators[0].apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess)
+        coeff = self.evaluate_coefficients(mu)[0]
+        if coeff == 0.:
+            raise InversionError
+        V *= (1. / coeff)
+        return V, {}
 
     def _as_array(self, source, mu):
         coefficients = np.array(self.evaluate_coefficients(mu))
@@ -235,13 +221,13 @@ class ConcatenationOperator(Operator):
         Tuple  of |Operators| to concatenate. `operators[-1]`
         is the first applied operator, `operators[0]` is the last
         applied operator.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, operators, solver_options=None, name=None):
+    def __init__(self, operators, solver=None, name=None):
         assert all(isinstance(op, Operator) for op in operators)
         assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
         operators = tuple(operators)
@@ -253,9 +239,8 @@ class ConcatenationOperator(Operator):
 
     @property
     def H(self):
-        options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-        return type(self)(tuple(op.H for op in self.operators[::-1]), solver_options=options,
+        return type(self)(tuple(op.H for op in self.operators[::-1]),
+                          solver=self._adjoint_solver,
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
@@ -275,9 +260,9 @@ class ConcatenationOperator(Operator):
         Us = [U]
         for op in self.operators[:0:-1]:
             Us.append(op.apply(Us[-1], mu=mu))
-        options = self.solver_options.get('jacobian') if self.solver_options else None
         return ConcatenationOperator(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
-                                     solver_options=options, name=self.name + '_jacobian')
+                                     solver=self._jacobian_solver,
+                                     name=self.name + '_jacobian')
 
     def d_mu(self, parameter, index=0):
         summands = []
@@ -290,7 +275,7 @@ class ConcatenationOperator(Operator):
             ops = list(self.operators)
             ops[i] = op_d_mu
             summands.append(ConcatenationOperator(ops))
-        return LincombOperator(summands, [1.] * len(summands))
+        return LincombOperator(summands, [1.] * len(summands), solver=self.solver)
 
     def restricted(self, dofs):
         restricted_ops = []
@@ -313,7 +298,7 @@ class ConcatenationOperator(Operator):
         else:
             operators = self.operators + (other,)
 
-        return ConcatenationOperator(operators, solver_options=self.solver_options)
+        return ConcatenationOperator(operators)
 
     def __rmatmul__(self, other):
         if not isinstance(other, Operator):
@@ -325,7 +310,7 @@ class ConcatenationOperator(Operator):
         else:
             operators = (other,) + self.operators
 
-        return ConcatenationOperator(operators, solver_options=other.solver_options)
+        return ConcatenationOperator(operators)
 
 
 class ProjectedOperator(Operator):
@@ -351,13 +336,13 @@ class ProjectedOperator(Operator):
         See :func:`pymor.algorithms.projection.project`.
     product
         See :func:`pymor.algorithms.projection.project`.
-    solver_options
-        The |solver_options| for the projected operator.
+    solver
+        The |solver| for the projected operator.
     """
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver=None, name=None):
         assert isinstance(operator, Operator)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -380,9 +365,8 @@ class ProjectedOperator(Operator):
         if self.product:
             return super().H
         else:
-            options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                       'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-            return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
+            return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis,
+                                     solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -416,10 +400,8 @@ class ProjectedOperator(Operator):
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
-        if self.solver_options:
-            options = self.solver_options.get('jacobian')
-            if options:
-                pop = pop.with_(solver_options=options)
+        if jac_solver := self._jacobian_solver:
+            pop = pop.with_(solver=jac_solver)
         return pop
 
     def assemble(self, mu=None):
@@ -429,8 +411,8 @@ class ProjectedOperator(Operator):
         from pymor.algorithms.projection import project
         pop = project(op, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
-        if self.solver_options:
-            pop = pop.with_(solver_options=self.solver_options)
+        if solver := self.solver:
+            pop = pop.with_(solver=solver)
         return pop
 
     def apply_adjoint(self, V, mu=None):
@@ -460,15 +442,15 @@ class LowRankOperator(Operator):
         |VectorArray| representing :math:`R`.
     inverted
         Whether :math:`C` is inverted.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, left, core, right, inverted=False, solver_options=None, name=None):
+    def __init__(self, left, core, right, inverted=False, solver=None, name=None):
         assert isinstance(left, VectorArray)
         assert isinstance(right, VectorArray)
         assert len(left) == len(right)
@@ -482,15 +464,11 @@ class LowRankOperator(Operator):
 
     @property
     def H(self):
-        options = {
-            'inverse': self.solver_options.get('inverse_adjoint'),
-            'inverse_adjoint': self.solver_options.get('inverse'),
-        } if self.solver_options else None
         return type(self)(self.right,
                           self.core.T.conj(),
                           self.left,
                           inverted=self.inverted,
-                          solver_options=options,
+                          solver=self._adjoint_solver,
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
@@ -543,22 +521,20 @@ class LowRankUpdatedOperator(LincombOperator):
     lr_coeff
         A linear coefficient for `lr_operator`. Can either be a fixed
         number or a |ParameterFunctional|.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     def __init__(self, operator, lr_operator, coeff, lr_coeff,
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         assert isinstance(lr_operator, LowRankOperator)
         super().__init__([operator, lr_operator], [coeff, lr_coeff],
-                         solver_options=solver_options, name=name)
+                         solver=solver, name=name)
         self.__auto_init(locals())
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        if least_squares:
-            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=True)
+    def _apply_inverse(self, V, mu, initial_guess):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
@@ -572,11 +548,9 @@ class LowRankUpdatedOperator(LincombOperator):
         U = AinvV
         U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV)))
         U.scal(1 / alpha)
-        return U
+        return U, {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        if least_squares:
-            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=True)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
@@ -590,7 +564,7 @@ class LowRankUpdatedOperator(LincombOperator):
         V = AinvhU
         V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU)))
         V.scal(1 / alpha)
-        return V
+        return V, {}
 
 
 class ComponentProjectionOperator(Operator):
@@ -604,13 +578,15 @@ class ComponentProjectionOperator(Operator):
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, components, source, name=None):
+    def __init__(self, components, source, solver=None, name=None):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
@@ -638,13 +614,15 @@ class IdentityOperator(Operator):
     ----------
     space
         The |VectorSpace| the operator acts on.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, space, name=None):
+    def __init__(self, space, solver=None, name=None):
         assert isinstance(space, VectorSpace)
         self.__auto_init(locals())
         self.source = self.range = space
@@ -661,15 +639,11 @@ class IdentityOperator(Operator):
         assert V in self.range
         return V.copy()
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        return V.copy()
+    def _apply_inverse(self, V, mu, initial_guess):
+        return V.copy(), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        return U.copy()
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return U.copy(), {}
 
     def assemble(self, mu=None):
         return self
@@ -689,13 +663,15 @@ class ConstantOperator(Operator):
         returned by the operator.
     source
         Source |VectorSpace| of the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = False
 
-    def __init__(self, value, source, name=None):
+    def __init__(self, value, source, solver=None, name=None):
         assert isinstance(value, VectorArray)
         assert isinstance(source, VectorSpace)
         assert len(value) == 1
@@ -711,17 +687,12 @@ class ConstantOperator(Operator):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.range, self.source, name=self.name + '_jacobian')
+        return ZeroOperator(self.range, self.source, solver=self._jacobian_solver, name=self.name + '_jacobian')
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         restricted_value = NumpyVectorSpace.make_array(self.value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
-
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        if not least_squares:
-            raise InversionError('ConstantOperator is not invertible.')
-        return self.source.zeros(len(V))
 
 
 class ZeroOperator(Operator):
@@ -733,20 +704,22 @@ class ZeroOperator(Operator):
         Range |VectorSpace| of the operator.
     source
         Source |VectorSpace| of the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, range, source, name=None):
+    def __init__(self, range, source, solver=None, name=None):
         assert isinstance(range, VectorSpace)
         assert isinstance(source, VectorSpace)
         self.__auto_init(locals())
 
     @property
     def H(self):
-        return type(self)(self.source, self.range, name=self.name + '_adjoint')
+        return type(self)(self.source, self.range, solver=self._adjoint_solver, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -755,20 +728,6 @@ class ZeroOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.source.zeros(len(V))
-
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        if not least_squares:
-            raise InversionError
-        return self.source.zeros(len(V))
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        if not least_squares:
-            raise InversionError
-        return self.range.zeros(len(U))
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -792,15 +751,16 @@ class VectorArrayOperator(Operator):
         The |VectorArray| which is to be treated as an operator.
     adjoint
         See description above.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
     linear = True
 
-    def __init__(self, array, adjoint=False, name=None):
+    def __init__(self, array, adjoint=False, solver=None, name=None):
         array = array.copy()
-
         self.__auto_init(locals())
         if adjoint:
             self.source = array.space
@@ -811,7 +771,8 @@ class VectorArrayOperator(Operator):
 
     @property
     def H(self):
-        return VectorArrayOperator(self.array, not self.adjoint, self.name + '_adjoint')
+        return VectorArrayOperator(self.array, not self.adjoint,
+                                   solver=self._adjoint_solver, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -820,33 +781,12 @@ class VectorArrayOperator(Operator):
         else:
             return self.range.make_array(self.array.inner(U))
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        if not least_squares and len(self.array) != self.array.dim:
-            raise InversionError
-
-        from pymor.algorithms.gram_schmidt import gram_schmidt
-
-        Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
-        if self.adjoint:
-            v = spla.lstsq(R.T.conj(), V.to_numpy())[0]
-            U = Q.lincomb(v)
-        else:
-            v = Q.inner(V)
-            u = spla.lstsq(R, v)[0]
-            U = self.source.make_array(u)
-
-        return U
-
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
             return self.source.make_array(self.array.inner(V))
         else:
             return self.array.lincomb(V.to_numpy())
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
-        return adjoint_op.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         if not self.adjoint:
@@ -886,6 +826,8 @@ class VectorOperator(VectorArrayOperator):
     ----------
     vector
         |VectorArray| of length 1 containing the vector `v`.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -893,10 +835,10 @@ class VectorOperator(VectorArrayOperator):
     linear = True
     source = NumpyVectorSpace(1)
 
-    def __init__(self, vector, name=None):
+    def __init__(self, vector, solver=None, name=None):
         assert isinstance(vector, VectorArray)
         assert len(vector) == 1
-        super().__init__(vector, adjoint=False, name=name)
+        super().__init__(vector, adjoint=False, solver=solver, name=name)
         self.vector = self.array  # do not init with vector arg, as vector gets copied in VectorArrayOperator.__init__
 
 
@@ -925,6 +867,8 @@ class VectorFunctional(VectorArrayOperator):
         |VectorArray| of length 1 containing the vector `v`.
     product
         |Operator| representing the scalar product to use.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -932,14 +876,14 @@ class VectorFunctional(VectorArrayOperator):
     linear = True
     range = NumpyVectorSpace(1)
 
-    def __init__(self, vector, product=None, name=None):
+    def __init__(self, vector, product=None, solver=None, name=None):
         assert isinstance(vector, VectorArray)
         assert len(vector) == 1
         assert product is None or isinstance(product, Operator) and vector in product.source
         if product is None:
-            super().__init__(vector, adjoint=True, name=name)
+            super().__init__(vector, adjoint=True, solver=solver, name=name)
         else:
-            super().__init__(product.apply(vector), adjoint=True, name=name)
+            super().__init__(product.apply(vector), adjoint=True, solver=solver, name=name)
         self.vector = self.array  # do not init with vector arg, as vector gets copied in VectorArrayOperator.__init__
         self.product = product
 
@@ -953,11 +897,13 @@ class ProxyOperator(Operator):
     ----------
     operator
         The |Operator| to wrap.
+    solver
+        The |Solver| for the operator.
     name
         Name of the wrapping operator.
     """
 
-    def __init__(self, operator, name=None):
+    def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
         self.__auto_init(locals())
         self.source = operator.source
@@ -966,7 +912,7 @@ class ProxyOperator(Operator):
 
     @property
     def H(self):
-        return self.with_(operator=self.operator.H, name=self.name + '_adjoint')
+        return self.with_(operator=self.operator.H, solver=self._adjoint_solver, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=mu)
@@ -974,14 +920,17 @@ class ProxyOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.operator.apply_inverse(V, mu=mu, initial_guess=initial_guess), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return self.operator.apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess), {}
 
     def jacobian(self, U, mu=None):
-        return self.operator.jacobian(U, mu=mu)
+        jac = self.operator.jacobian(U, mu=mu)
+        if jac_solver := self._jacobian_solver:
+            jac = jac.with_(solver=jac_solver)
+        return jac
 
     def restricted(self, dofs):
         op, source_dofs = self.operator.restricted(dofs)
@@ -1001,8 +950,8 @@ class FixedParameterOperator(ProxyOperator):
         (and related methods) of `operator`.
     """
 
-    def __init__(self, operator, mu=None, name=None):
-        super().__init__(operator, name)
+    def __init__(self, operator, mu=None, solver=None, name=None):
+        super().__init__(operator, solver=solver, name=name)
         assert operator.parameters.assert_compatible(mu)
         self.mu = mu
         if mu:
@@ -1014,37 +963,42 @@ class FixedParameterOperator(ProxyOperator):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=self.mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=self.mu, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.operator.apply_inverse(V, mu=self.mu, initial_guess=initial_guess), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, mu=self.mu,
-                                                   initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return self.operator.apply_inverse_adjoint(U, mu=self.mu, initial_guess=initial_guess), {}
 
     def jacobian(self, U, mu=None):
-        return self.operator.jacobian(U, mu=self.mu)
+        jac = self.operator.jacobian(U, mu=self.mu)
+        if jac_solver := self._jacobian_solver:
+            jac = jac.with_(solver=jac_solver)
+        return jac
 
 
 class LinearOperator(ProxyOperator):
     """Mark the wrapped |Operator| to be linear."""
 
-    def __init__(self, operator, name=None):
-        super().__init__(operator, name)
+    def __init__(self, operator, solver=None, name=None):
+        super().__init__(operator, solver=solver, name=name)
         self.linear = True
 
 
 class AffineOperator(ProxyOperator):
     """Decompose an affine |Operator| into affine_shift and linear_part."""
 
-    def __init__(self, operator, name=None):
+    def __init__(self, operator, solver=None, name=None):
         if operator.parametric:
             raise NotImplementedError
-        super().__init__(operator, name)
+        super().__init__(operator, solver=solver, name=name)
         self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
         self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
 
     def jacobian(self, U, mu=None):
-        return self.linear_part.jacobian(U, mu)
+        jac = self.linear_part.jacobian(U, mu)
+        if jac_solver := self._jacobian_solver:
+            jac = jac.with_(solver=jac_solver)
+        return jac
 
 
 class InverseOperator(Operator):
@@ -1054,11 +1008,15 @@ class InverseOperator(Operator):
     ----------
     operator
         The |Operator| of which the inverse is formed.
+    solver
+        The |Solver| for the operator. Note that setting `solver`
+        here will not override the solver for the wrapped operator.
+        Rather it will replace its implementation of `apply`.
     name
         If not `None`, name of the operator.
     """
 
-    def __init__(self, operator, name=None):
+    def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
         name or operator.name + '_inverse'
 
@@ -1069,7 +1027,7 @@ class InverseOperator(Operator):
 
     @property
     def H(self):
-        return InverseAdjointOperator(self.operator)
+        return InverseAdjointOperator(self.operator, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -1079,15 +1037,11 @@ class InverseOperator(Operator):
         assert V in self.range
         return self.operator.apply_inverse_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        return self.operator.apply(V, mu=mu)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.operator.apply(V, mu=mu), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        return self.operator.apply_adjoint(U, mu=mu)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return self.operator.apply_adjoint(U, mu=mu), {}
 
 
 class InverseAdjointOperator(Operator):
@@ -1097,13 +1051,17 @@ class InverseAdjointOperator(Operator):
     ----------
     operator
         The |Operator| of which the inverse adjoint is formed.
+    solver
+        The |Solver| for the operator. Note that setting `solver`
+        here will not override the solver for the wrapped operator.
+        Rather it will replace its implementation of `apply`.
     name
         If not `None`, name of the operator.
     """
 
     linear = True
 
-    def __init__(self, operator, name=None):
+    def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
         name = name or operator.name + '_inverse_adjoint'
@@ -1114,7 +1072,7 @@ class InverseAdjointOperator(Operator):
 
     @property
     def H(self):
-        return InverseOperator(self.operator)
+        return InverseOperator(self.operator, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -1124,13 +1082,11 @@ class InverseAdjointOperator(Operator):
         assert V in self.range
         return self.operator.apply_inverse(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        return self.operator.apply_adjoint(V, mu=mu)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.operator.apply_adjoint(V, mu=mu), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        return self.operator.apply(U, mu=mu)
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return self.operator.apply(U, mu=mu), {}
 
 
 class AdjointOperator(Operator):
@@ -1160,26 +1116,24 @@ class AdjointOperator(Operator):
     range_product
         If not `None`, inner product |Operator| for the range |VectorSpace|
         w.r.t. which to take the adjoint.
-    name
-        If not `None`, name of the operator.
     with_apply_inverse
         If `True`, provide own :meth:`~pymor.operators.interface.Operator.apply_inverse`
         and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
         and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
-    solver_options
-        When `with_apply_inverse` is `False`, the |solver_options| to use for
-        the `apply_inverse` default implementation.
+    solver
+        The |Solver| for the operator.
+    name
+        If not `None`, name of the operator.
     """
 
     linear = True
 
-    def __init__(self, operator, source_product=None, range_product=None, name=None,
-                 with_apply_inverse=True, solver_options=None):
+    def __init__(self, operator, source_product=None, range_product=None, with_apply_inverse=True,
+                 solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
-        assert not with_apply_inverse or solver_options is None
         name or operator.name + '_adjoint'
 
         self.__auto_init(locals())
@@ -1189,12 +1143,14 @@ class AdjointOperator(Operator):
     @property
     def H(self):
         if not self.source_product and not self.range_product:
-            return self.operator
+            adj = self.operator
+            if adj_solver := self._adjoint_solver:
+                adj = adj.with_(solver=adj_solver)
+            return adj
         else:
-            options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                       'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
             return AdjointOperator(self.operator.H, source_product=self.range_product,
-                                   range_product=self.source_product, solver_options=options)
+                                   range_product=self.source_product,
+                                   solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -1214,33 +1170,23 @@ class AdjointOperator(Operator):
             U = self.range_product.apply(U)
         return U
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        if not self.with_apply_inverse:
-            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-
-        assert V in self.range
+    def _apply_inverse(self, V, mu, initial_guess):
         if self.source_product:
             V = self.source_product(V)
         U = self.operator.apply_inverse_adjoint(V, mu=mu,
-                                                initial_guess=initial_guess if not self.range_product else None,
-                                                least_squares=least_squares)
+                                                initial_guess=initial_guess if not self.range_product else None)
         if self.range_product:
             U = self.range_product.apply_inverse(U)
-        return U
+        return U, {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        if not self.with_apply_inverse:
-            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-
-        assert U in self.source
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
         if self.range_product:
             U = self.range_product.apply_inverse(U)
         V = self.operator.apply_inverse(U, mu=mu,
-                                        initial_guess=initial_guess if not self.source_product else None,
-                                        least_squares=least_squares)
+                                        initial_guess=initial_guess if not self.source_product else None)
         if self.source_product:
             V = self.source_product.apply(V)
-        return V
+        return V, {}
 
 
 class SelectionOperator(Operator):
@@ -1263,11 +1209,13 @@ class SelectionOperator(Operator):
         The |ParameterFunctional| used for the selection of one |Operator|.
     boundaries
         The interval boundaries as defined above.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, operators, parameter_functional, boundaries, name=None):
+    def __init__(self, operators, parameter_functional, boundaries, solver=None, name=None):
         assert len(operators) > 0
         assert len(boundaries) == len(operators) - 1
         # check that boundaries are ascending:
@@ -1287,6 +1235,7 @@ class SelectionOperator(Operator):
     @property
     def H(self):
         return self.with_(operators=[op.H for op in self.operators],
+                          solver=self._adjoint_solver,
                           name=self.name + '_adjoint')
 
     def _get_operator_number(self, mu):
@@ -1299,7 +1248,10 @@ class SelectionOperator(Operator):
     def assemble(self, mu=None):
         assert self.parameters.assert_compatible(mu)
         op = self.operators[self._get_operator_number(mu)]
-        return op.assemble(mu)
+        op = op.assemble(mu)
+        if self.solver:
+            op = op.with_(solver=self.solver)
+        return op
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -1450,11 +1402,15 @@ class NumpyConversionOperator(Operator):
         a |NumpyVectorArray|. In case of `'from_numpy'`, :meth:`apply`
         takes a |NumpyVectorArray| and returns a |VectorArray| from
         `space`.
+    solver
+        The |Solver| for the operator.
+    name
+        Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, space, direction='to_numpy'):
+    def __init__(self, space, direction='to_numpy', solver=None, name=None):
         assert direction in ('to_numpy', 'from_numpy')
         self.__auto_init(locals())
         if direction == 'to_numpy':
@@ -1466,23 +1422,22 @@ class NumpyConversionOperator(Operator):
 
     @property
     def H(self):
-        return self.with_(direction='from_numpy' if self.direction == 'to_numpy' else 'to_numpy')
+        return self.with_(direction='from_numpy' if self.direction == 'to_numpy' else 'to_numpy',
+                          solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
         return self.range.from_numpy(U.to_numpy())
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        return self.source.from_numpy(V.to_numpy())
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.source.from_numpy(V.to_numpy()), {}
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.source.from_numpy(V.to_numpy())
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        return self.range.from_numpy(U.to_numpy())
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
+        return self.range.from_numpy(U.to_numpy()), {}
 
 
 class LinearInputOperator(Operator):
@@ -1492,11 +1447,15 @@ class LinearInputOperator(Operator):
     ----------
     B
         The input |Operator|.
+    solver
+        The |Solver| for the operator.
+    name
+        Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, B):
+    def __init__(self, B, solver=None, name=None):
         self.B = B
         self.source = NumpyVectorSpace(1)
         self.range = B.range
@@ -1521,12 +1480,16 @@ class QuadraticFunctional(Operator):
     ----------
     operator
         The |Operator| defining the quadratic functional.
+    solver
+        The |Solver| for the operator.
+    name
+        Name of the operator.
     """
 
     linear = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, operator, name=None):
+    def __init__(self, operator, solver=None, name=None):
         assert operator.linear
         assert operator.source == operator.range
         self.__auto_init(locals())
@@ -1538,11 +1501,11 @@ class QuadraticFunctional(Operator):
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
-        return VectorFunctional(inner_vec, name=self.name + '_jacobian')
+        return VectorFunctional(inner_vec, solver=self._jacobian_solver, name=self.name + '_jacobian')
 
     def d_mu(self, parameter, index=1):
         # the parameter derivative only takes effect on the inner operator
-        return QuadraticFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')
+        return QuadraticFunctional(self.operator.d_mu(parameter, index), solver=self.solver, name=self.name + '_d_mu')
 
 
 class QuadraticProductFunctional(QuadraticFunctional):
@@ -1561,12 +1524,16 @@ class QuadraticProductFunctional(QuadraticFunctional):
         The |Operator| that defines the right operator of the quadratic functional.
     product
         The |Operator| that defines the inner product.
+    solver
+        The |Solver| for the operator.
+    name
+        Name of the operator.
     """
 
     linear = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, left, right, product=None, name=None):
+    def __init__(self, left, right, product=None, solver=None, name=None):
         assert left.source == right.source
         assert left.range == right.range
         assert product is None or (

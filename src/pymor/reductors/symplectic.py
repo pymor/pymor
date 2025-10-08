@@ -70,9 +70,12 @@ class QuadraticHamiltonianRBReductor(BasicObject):
             }
 
         with self.logger.block('Building ROM ...'):
+            # solvers attached to the time stepper will probably be unsuitable for the ROM
+            if (time_stepper := fom.time_stepper) and getattr(time_stepper, 'solver', None):
+                time_stepper = time_stepper.with_(solver=None)
             rom = ReducedQuadraticHamiltonianModel(
                 fom.T,
-                time_stepper=fom.time_stepper,
+                time_stepper=time_stepper,
                 num_values=fom.num_values,
                 name=None if fom.name is None else 'reduced_' + fom.name,
                 **projected_operators

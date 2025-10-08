@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.newton import NewtonError, newton
+from pymor.solvers.newton import NewtonError, NewtonSolver
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
@@ -14,20 +14,20 @@ from pymortests.fixtures.operator import MonomOperator
 pytestmark = pytest.mark.builtin
 
 
-def _newton(mop, initial_value=1.0, **kwargs):
+def _newton(mop, initial_value=1.0, return_info=False, **kwargs):
     rhs = NumpyVectorSpace.from_numpy([0.0])
     guess = NumpyVectorSpace.from_numpy([initial_value])
-    return newton(mop, rhs, initial_guess=guess, **kwargs)
+    return NewtonSolver(**kwargs).solve(mop, rhs, initial_guess=guess)
 
 
 @pytest.mark.parametrize('order', list(range(1, 8)))
 @pytest.mark.parametrize('error_measure', ['update', 'residual'])
 def test_newton(order, error_measure):
     mop = MonomOperator(order)
-    U, _ = _newton(mop,
-                   atol=1e-15 if error_measure == 'residual' else 1e-7,
-                   rtol=0.,
-                   error_measure=error_measure)
+    U = _newton(mop,
+                atol=1e-15 if error_measure == 'residual' else 1e-7,
+                rtol=0.,
+                error_measure=error_measure)
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
@@ -39,7 +39,7 @@ def test_newton_fail():
 
 def test_newton_with_line_search():
     mop = MonomOperator(3) - 2 * MonomOperator(1) + 2 * MonomOperator(0)
-    U, _ = _newton(mop, initial_value=0.0, atol=1e-15, relax='armijo')
+    U = _newton(mop, initial_value=0.0, atol=1e-15, relax='armijo')
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
@@ -57,7 +57,7 @@ def test_newton_unknown_line_search():
 
 def test_newton_residual_is_zero(order=5):  # noqa: PT028
     mop = MonomOperator(order)
-    U, _ = _newton(mop, initial_value=0.0)
+    U = _newton(mop, initial_value=0.0)
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 

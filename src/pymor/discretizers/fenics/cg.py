@@ -19,7 +19,7 @@ from pymor.operators.block import BlockColumnOperator
 from pymor.operators.constructions import LincombOperator, NumpyConversionOperator
 
 
-def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preassemble=True):
+def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preassemble=True, solver=None):
     """Discretizes a |StationaryProblem| with finite elements using FEniCS.
 
     Parameters
@@ -32,6 +32,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
         polynomial degree of the finite element.
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
+    solver
+        The |Solver| to be used.
 
     Returns
     -------
@@ -99,7 +101,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
         Li, coefficients,
     )
 
-    L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
+    L = LincombOperator(operators=Li, coefficients=coefficients, solver=solver, name='ellipticOperator')
 
     # right-hand side
     Fi = []
@@ -119,11 +121,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
     F = LincombOperator(operators=Fi, coefficients=coefficients_F, name='rhsOperator')
 
     h1_0_semi_product = FenicsMatrixBasedOperator(df.inner(df.grad(u), df.grad(v))*dx, {}, bc, bc_zero=False,
-                                                  name='h1_0_semi')
-    l2_product = FenicsMatrixBasedOperator(u*v*dx, {}, name='l2')
+                                                  solver=solver, name='h1_0_semi')
+    l2_product = FenicsMatrixBasedOperator(u*v*dx, {}, solver=solver, name='l2')
     h1_semi_product = FenicsMatrixBasedOperator(df.inner(df.grad(u), df.grad(v))*dx, {}, bc, bc_zero=False,
                                                 name='h1_0_semi')
-    h1_product = l2_product + h1_semi_product
+    h1_product = (l2_product + h1_semi_product).with_(solver=solver)
 
     products = {
         'l2': l2_product,

@@ -75,8 +75,9 @@ operating on objects of the following types:
     |VectorArrays| resulting in a new |VectorArray|. For this operation to be
     allowed, the operator's |source| |VectorSpace| must be identical with the
     |VectorSpace| of the given array. The result will be a vector array from
-    the |range| space. An operator can be |linear| or not.  The |apply_inverse|
-    method provides an interface for (linear) solvers.
+    the |range| space. An operator can be |linear| or not. |Solvers| provide
+    an interface for (linear) solvers, which are accessed by calling the
+    |apply_inverse| method.
 
     Operators in pyMOR are also used to represent bilinear forms via the
     |apply2| method. A functional in pyMOR is simply an operator with

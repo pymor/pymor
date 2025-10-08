@@ -5,9 +5,9 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
+from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
@@ -15,11 +15,12 @@ from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-@defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'hamiltonian_shifts_init_maxiter',
-          'hamiltonian_shifts_subspace_columns')
+@defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',
+          'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
 def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                              lrradi_maxiter=500,
                              lrradi_shifts='hamiltonian_shifts',
+                             shifted_system_solver=None,
                              hamiltonian_shifts_init_maxiter=20,
                              hamiltonian_shifts_subspace_columns=6):
     """Returns available Riccati equation solvers with default solver options.
@@ -32,6 +33,8 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
         See :func:`solve_ricc_lrcf`.
     lrradi_shifts
         See :func:`solve_ricc_lrcf`.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
     hamiltonian_shifts_init_maxiter
         See :func:`hamiltonian_shifts_init`.
     hamiltonian_shifts_subspace_columns
@@ -45,6 +48,7 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                        'tol': lrradi_tol,
                        'maxiter': lrradi_maxiter,
                        'shifts': lrradi_shifts,
+                       'shifted_system_solver': shifted_system_solver,
                        'shift_options':
                        {'hamiltonian_shifts': {'type': 'hamiltonian_shifts',
                                                'init_maxiter': hamiltonian_shifts_init_maxiter,
@@ -99,6 +103,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     else:
         raise ValueError('Unknown lrradi shift strategy.')
 
+    solver = options['shifted_system_solver']
+
     if E is None:
         E = IdentityOperator(A.source)
 
@@ -134,14 +140,14 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             AsE = A + np.conj(shifts[j_shift]) * E
         if j == 0:
             if not trans:
-                V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse_adjoint(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
         else:
             if not trans:
-                LN = AsE.apply_inverse(cat_arrays([RF, K]))
+                LN = AsE.apply_inverse(cat_arrays([RF, K]), solver=solver)
             else:
-                LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]))
+                LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]), solver=solver)
             L = LN[:len(RF)]
             N = LN[-len(K):]
             ImBN = np.eye(len(K)) - B.inner(N)
