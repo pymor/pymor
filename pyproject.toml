@@ -27,7 +27,7 @@ classifiers = [
 dependencies = [
   "diskcache",
   "matplotlib>=3.5.0",
-  "numpy>=1.20.3,!=1.25.0", # 1.25.0 crashes CI
+  "numpy>=1.21,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
   "pygments",

@@ -282,7 +282,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==1.20.3
+numpy==1.21.6
     # via
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
