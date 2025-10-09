@@ -80,7 +80,7 @@ def fom_properties_param(fom, w, mus):
     # System poles
     if fig_poles is not None:
         ax = fig_poles.subplots()
-        for mu, marker in zip(mus, markers, strict=True):
+        for mu, marker in zip(mus, markers, strict=False):
             poles = fom.poles(mu=mu)
             ax.plot(poles.real, poles.imag, marker, fillstyle='none', label=fr'$\mu = {mu}$')
         ax.set_title('System poles')
@@ -91,7 +91,7 @@ def fom_properties_param(fom, w, mus):
     # Hankel singular values
     if isinstance(fom, LTIModel):
         ax = fig_sv.subplots()
-        for mu, marker in zip(mus, markers, strict=True):
+        for mu, marker in zip(mus, markers, strict=False):
             hsv = fom.hsv(mu=mu)
             ax.semilogy(range(1, len(hsv) + 1), hsv, f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
         ax.set_title('Hankel singular values')
@@ -124,7 +124,7 @@ def fom_properties_param(fom, w, mus):
         axs_i = fig_i.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
         axs_s = fig_s.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
         times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
-        for mu, marker in zip(mus, markers, strict=True):
+        for mu, marker in zip(mus, markers, strict=False):
             y_i = fom.impulse_resp(mu=mu)
             y_s = fom.step_resp(mu=mu)
             for i in range(fom.dim_output):
@@ -169,7 +169,7 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
         roms.append(rom)
 
     # Errors
-    for mu, rom in zip(mus, roms, strict=True):
+    for mu, rom in zip(mus, roms, strict=False):
         err = fom - rom
         print(f'mu = {mu}')
         if not isinstance(fom, TransferFunction):
@@ -206,14 +206,14 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
     # Bode plots of reduced-order models
     axs = fig_bode.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
-    for mu, rom in zip(mus, roms, strict=True):
+    for mu, rom in zip(mus, roms, strict=False):
         rom.transfer_function.bode_plot(w, ax=axs, label=fr'$\mu = {mu}$')
     for ax in axs.flat:
         ax.legend()
 
     # Poles
     ax = fig_poles.subplots()
-    for mu, rom, marker in zip(mus, roms, markers, strict=True):
+    for mu, rom, marker in zip(mus, roms, markers, strict=False):
         poles_rom = rom.poles()
         ax.plot(poles_rom.real, poles_rom.imag, marker, fillstyle='none', label=fr'$\mu = {mu}$')
     ax.set_title("ROM's poles")
@@ -223,7 +223,7 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
     # Magnitude plot of the error systems
     ax = fig_mag.subplots()
-    for mu, rom in zip(mus, roms, strict=True):
+    for mu, rom in zip(mus, roms, strict=False):
         if isinstance(fom, TransferFunction):
             (fom - rom).mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
         else:
@@ -239,7 +239,7 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
         axs_i = fig_i.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
         axs_s = fig_s.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
         times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
-        for mu, rom, marker in zip(mus, roms, markers, strict=True):
+        for mu, rom, marker in zip(mus, roms, markers, strict=False):
             y_i = rom.impulse_resp()
             y_s = rom.step_resp()
             for i in range(fom.dim_output):

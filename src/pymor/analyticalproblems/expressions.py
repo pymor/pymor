@@ -595,7 +595,7 @@ class UnaryReductionCall(UnaryFunctionCall):
 
 
 def _broadcastable_shapes(first, second):
-    return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1], strict=True))
+    return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1], strict=False))
 
 
 class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add;     fenics_conditional=False  # noqa: E701, E702

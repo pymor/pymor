@@ -113,6 +113,6 @@ class Matplotlib1DAxes:
                     self.lines[i].set_ydata(u)
             else:
                 self.lines[i].set_ydata(np.repeat(u, 2))
-        for ax, mi, ma in zip(self.ax, vmin, vmax, strict=True):
+        for ax, mi, ma in zip(self.ax, vmin, vmax, strict=False):
             pad = (ma - mi) * 0.1
             ax.set_ylim(mi - pad, ma + pad)

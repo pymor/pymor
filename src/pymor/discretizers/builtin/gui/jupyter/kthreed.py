@@ -268,11 +268,11 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     rows = int(np.ceil(len(plots) / columns))
     if legend is None:
         plot_widget = GridspecLayout(rows, columns if len(U) > 1 else 1, width='100%')
-        for (i, j), p in zip(np.ndindex(rows, columns), plots, strict=True):
+        for (i, j), p in zip(np.ndindex(rows, columns), plots, strict=False):
             plot_widget[i, j] = p
     else:
         plot_widget = GridspecLayout(rows*2, columns if len(U) > 1 else 1, width='100%')
-        for (i, j), p, l in zip(np.ndindex(rows, columns), plots, legend, strict=True):
+        for (i, j), p, l in zip(np.ndindex(rows, columns), plots, legend, strict=False):
             p.layout.width = '100%'
             plot_widget[2*i,   j] = Label(l, layout=Layout(display='flex', justify_content='center',
                                                            justify_self='center'))
