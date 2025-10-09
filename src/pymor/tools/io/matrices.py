@@ -81,7 +81,7 @@ def _load(path, key=None):
         data = np.load(path)
     except Exception as e:
         raise OSError(e) from e
-    if isinstance(data, (dict, np.lib.npyio.NpzFile)):
+    if isinstance(data, dict | np.lib.npyio.NpzFile):
         if key:
             try:
                 matrix = data[key]

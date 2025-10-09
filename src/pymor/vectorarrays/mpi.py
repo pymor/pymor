@@ -156,7 +156,7 @@ class MPIVectorSpace(VectorSpace):
     def __eq__(self, other):
         return type(other) is MPIVectorSpace and \
             len(self.local_spaces) == len(other.local_spaces) and \
-            all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces))
+            all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces, strict=True))
 
     def __repr__(self):
         return f'{self.__class__}({self.local_spaces})'

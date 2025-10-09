@@ -99,12 +99,12 @@ class DWRCoerciveRBReductor(BasicObject):
             raise ValueError('Reduced state dimension must be non-negative')
         if primal_dim > len(self.primal_reductor.bases['RB']) or \
                 any(dim > len(dual_reductor.bases['RB'])
-                    for dim, dual_reductor in zip(dual_dims, self.dual_reductors)):
+                    for dim, dual_reductor in zip(dual_dims, self.dual_reductors, strict=True)):
             raise ValueError('Specified reduced state dimension larger than reduced basis')
 
         dims = [primal_dim] + dual_dims
         if self._last_rom is None or any((dim > last_rom_dim)
-                                         for dim, last_rom_dim in zip(dims, self._last_rom_dims)):
+                                         for dim, last_rom_dim in zip(dims, self._last_rom_dims, strict=True)):
             self._last_rom = self._reduce()
             self._last_rom_dims = dims
 
@@ -134,7 +134,7 @@ class DWRCoerciveRBReductor(BasicObject):
 
     def _reduce_to_subbasis(self, primal_dim, dual_dims):
         primal_rom = self.primal_reductor.reduce(primal_dim)
-        dual_roms = [red.reduce(dim) for red, dim in zip(self.dual_reductors, dual_dims)]
+        dual_roms = [red.reduce(dim) for red, dim in zip(self.dual_reductors, dual_dims, strict=True)]
         corrected_output = self._build_corrected_output(primal_rom, dual_roms, primal_dim, dual_dims)
         error_estimator = self.assemble_error_estimator_for_subbasis(dual_roms, primal_dim, dual_dims)
         rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
@@ -143,7 +143,7 @@ class DWRCoerciveRBReductor(BasicObject):
     def _build_corrected_output(self, primal_rom, dual_roms, primal_dim=None, dual_dims=None):
         dual_projected_primal_residuals = []
         dual_dims = dual_dims or [None for _ in range(self.fom.dim_output)]
-        for dual_reductor, dual_dim in zip(self.dual_reductors, dual_dims):
+        for dual_reductor, dual_dim in zip(self.dual_reductors, dual_dims, strict=True):
             dual_basis = dual_reductor.bases['RB'][:dual_dim]
             op = project(self.fom.operator, dual_basis,
                          self.primal_reductor.bases['RB'][:primal_dim])
@@ -235,7 +235,7 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     def restricted_to_subbasis(self, dual_roms, primal_dim, dual_dims, m):
         primal_estimator = self.primal_estimator.restricted_to_subbasis(primal_dim, m)
         dual_estimators = [dual_estimator.restricted_to_subbasis(dim, m) for
-                           dual_estimator, dim in zip(self.dual_estimators, dual_dims)]
+                           dual_estimator, dim in zip(self.dual_estimators, dual_dims, strict=True)]
         return DWRCoerciveRBEstimator(primal_estimator, dual_estimators, dual_roms)
 
 
@@ -264,7 +264,8 @@ class CorrectedOutputFunctional(Operator):
         # compute corrected output functional
         output = self.output_functional.apply(solution, mu=mu).to_numpy()
         correction = np.empty((self.range.dim, len(solution)))
-        for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals)):
+        for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals,
+                                                   strict=True)):
             dual_solution = dual_m.solve(mu)
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
             correction[d] = dual_correction

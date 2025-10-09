@@ -126,7 +126,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
             # store points and their ids
             point_ids = dict(zip([str(p) for ps in points for p in ps],
-                                 range(1, len([p for ps in points for p in ps])+1)))
+                                 range(1, len([p for ps in points for p in ps])+1), strict=True))
             # shift points 1 entry to the left.
             points_deque = [collections.deque(ps) for ps in points]
             for ps_d in points_deque:
@@ -134,7 +134,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             # create lines by connecting the points with shifted points,
             # such that they form a polygonal chains.
             lines = [[point_ids[str(p0)], point_ids[str(p1)]]
-                     for ps, ps_d in zip(points, points_deque) for p0, p1 in zip(ps, ps_d)]
+                     for ps, ps_d in zip(points, points_deque, strict=True) for p0, p1 in zip(ps, ps_d, strict=True)]
             # assign ids to all lines and write them to the GEO-file.
             for l_id, l in enumerate(lines):
                 geo_file.write('Line('+str(l_id+1)+')'+' = '+str(l).replace('[', '{').replace(']', '}')+';\n')
@@ -142,7 +142,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             # form line_loops (polygonal chains), create ids and write them to file.
             line_loops = [[point_ids[str(p)] for p in ps] for ps in points]
             line_loop_ids = range(len(lines)+1, len(lines)+len(line_loops)+1)
-            for ll_id, ll in zip(line_loop_ids, line_loops):
+            for ll_id, ll in zip(line_loop_ids, line_loops, strict=True):
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
             # set this here explicitly for string conversion to make sense

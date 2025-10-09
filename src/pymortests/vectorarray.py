@@ -636,7 +636,7 @@ def test_lincomb_1d(vectors_and_indices, data):
     assert lc.space == v.space
     assert len(lc) == 1
     lc2 = v.zeros()
-    for coeff, i in zip(coeffs, ind_to_list(v, ind)):
+    for coeff, i in zip(coeffs, ind_to_list(v, ind), strict=True):
         lc2.axpy(coeff, v[i])
     assert np.all(almost_equal(lc, lc2))
 
@@ -795,7 +795,7 @@ def test_amax(vectors_and_indices):
     assume(v.dim > 0)
     max_inds, max_vals = v[ind].amax()
     assert np.allclose(max_vals, v[ind].sup_norm())
-    for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
+    for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals, strict=True):
         assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
 
 

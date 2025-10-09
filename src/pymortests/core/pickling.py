@@ -64,7 +64,7 @@ def assert_is_equal(first, second):
         if isinstance(first, np.ndarray):
             if first.dtype == object:
                 assert first.shape == second.shape
-                [_assert_is_equal(f, s) for f, s in zip(first.ravel(), second.ravel())]
+                [_assert_is_equal(f, s) for f, s in zip(first.ravel(), second.ravel(), strict=True)]
             else:
                 assert np.all(first == second)
         elif issparse(first):
@@ -73,9 +73,9 @@ def assert_is_equal(first, second):
                 return not ne
             else:
                 assert not np.any(ne.data)
-        elif isinstance(first, (list, tuple)):
+        elif isinstance(first, list | tuple):
             assert len(first) == len(second)
-            for u, v in zip(first, second):
+            for u, v in zip(first, second, strict=True):
                 _assert_is_equal(u, v)
         elif isinstance(first, dict):
             assert set(first.keys()) == set(second.keys())

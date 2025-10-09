@@ -33,7 +33,7 @@ def flatten_grid(grid):
         grid to the indices of the corresponding entities in the original grid.
     """
     # special handling of known flat grids
-    if isinstance(grid, (RectGrid, TriaGrid)) and not grid.identify_left_right and not grid.identify_bottom_top:
+    if isinstance(grid, RectGrid | TriaGrid) and not grid.identify_left_right and not grid.identify_bottom_top:
         subentities = grid.subentities(0, grid.dim)
         coordinates = grid.centers(grid.dim)
         entity_map = np.arange(grid.size(grid.dim), dtype=np.int32)

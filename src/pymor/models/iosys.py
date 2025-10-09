@@ -321,12 +321,12 @@ class LTIModel(Model):
         lti
             The |LTIModel| with operators A, B, C, D, and E.
         """
-        assert isinstance(A, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(C, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(D, (np.ndarray, sps.spmatrix, sparray, type(None)))
-        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray, type(None)))
-        assert isinstance(initial_data, (np.ndarray, type(None)))
+        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(B, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(C, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(D, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(initial_data, np.ndarray | type(None))
 
         A = NumpyMatrixOperator(A)
         B = NumpyMatrixOperator(B)
@@ -1845,14 +1845,14 @@ class PHLTIModel(LTIModel):
         phlti
             The |PHLTIModel| with operators J, R, G, P, S, N, and E.
         """
-        assert isinstance(J, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(R, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(G, (np.ndarray, sps.spmatrix, sparray))
-        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix, sparray))
-        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix, sparray))
-        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix, sparray))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix, sparray))
-        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(J, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(R, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(G, np.ndarray | sps.spmatrix | sparray)
+        assert P is None or isinstance(P, np.ndarray | sps.spmatrix | sparray)
+        assert S is None or isinstance(S, np.ndarray | sps.spmatrix | sparray)
+        assert N is None or isinstance(N, np.ndarray | sps.spmatrix | sparray)
+        assert E is None or isinstance(E, np.ndarray | sps.spmatrix | sparray)
+        assert Q is None or isinstance(Q, np.ndarray | sps.spmatrix | sparray)
 
         J = NumpyMatrixOperator(J)
         R = NumpyMatrixOperator(R)
@@ -2168,13 +2168,13 @@ class SecondOrderModel(Model):
         lti
             The SecondOrderModel with operators M, E, K, B, Cp, Cv, and D.
         """
-        assert isinstance(M, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(K, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
-        assert isinstance(Cp, (np.ndarray, sps.spmatrix, sparray))
-        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix, sparray))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(M, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(E, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(K, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(B, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(Cp, np.ndarray | sps.spmatrix | sparray)
+        assert Cv is None or isinstance(Cv, np.ndarray | sps.spmatrix | sparray)
+        assert D is None or isinstance(D, np.ndarray | sps.spmatrix | sparray)
 
         M = NumpyMatrixOperator(M)
         E = NumpyMatrixOperator(E)
@@ -2862,7 +2862,7 @@ class LinearDelayModel(Model):
         """Add to an |LTIModel|, a |SecondOrderModel|, or a |PHLTIModel|."""
         if isinstance(other, LTIModel):
             return self + other
-        elif isinstance(other, (SecondOrderModel, PHLTIModel)):
+        elif isinstance(other, SecondOrderModel | PHLTIModel):
             return self + other.to_lti()
         else:
             return NotImplemented
@@ -2873,7 +2873,7 @@ class LinearDelayModel(Model):
 
     def __rsub__(self, other):
         """Subtract from an |LTIModel| or a |SecondOrderModel|."""
-        if isinstance(other, (LTIModel, SecondOrderModel)):
+        if isinstance(other, LTIModel | SecondOrderModel):
             return -(self - other)
         else:
             return NotImplemented

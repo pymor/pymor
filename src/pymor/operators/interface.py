@@ -536,7 +536,7 @@ class Operator(ParametricObject):
         return self._radd_sub(other, -1.)
 
     def __mul__(self, other):
-        assert isinstance(other, (Number, ParameterFunctional))
+        assert isinstance(other, Number | ParameterFunctional)
         from pymor.operators.constructions import LincombOperator
         if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
             return LincombOperator((self,), (other,))

@@ -958,7 +958,7 @@ class VectorFittingReductor(BasicObject):
             ones = np.ones(r)
             phis_real = np.empty(r)
             k = 0
-            for lam, phi in zip(lambdas, phis):
+            for lam, phi in zip(lambdas, phis, strict=True):
                 if lam.imag == 0:
                     A_zeros[k, k] = lam.real
                     phis_real[k] = phi.real

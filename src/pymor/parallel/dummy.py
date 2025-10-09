@@ -42,7 +42,7 @@ class DummyPool(WorkerPool):
 
     def map(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
-        result = [function(*a, **kwargs) for a in zip(*args)]
+        result = [function(*a, **kwargs) for a in zip(*args, strict=True)]
         return result
 
     def __bool__(self):

@@ -238,7 +238,7 @@ class VectorArray(BasicObject):
                 ind = slice(start, None if stop == -1 else stop, step)
                 view_len = len(range(start, stop, step))
         else:
-            assert isinstance(ind, (list, np.ndarray))
+            assert isinstance(ind, list | np.ndarray)
             assert all(-l <= i < l for i in ind)
             ind = [i if 0 <= i else l+i for i in ind]
             view_len = len(ind)
@@ -732,7 +732,7 @@ class VectorArray(BasicObject):
         l = len(self)
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
-                or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
+                or isinstance(ind, list | np.ndarray) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
         """Check if index is admissible and unique.
@@ -743,7 +743,7 @@ class VectorArray(BasicObject):
         l = len(self)
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
-                or isinstance(ind, (list, np.ndarray))
+                or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
     def len_ind(self, ind):

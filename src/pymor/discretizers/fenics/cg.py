@@ -90,7 +90,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
                        Li, coefficients)
 
     _assemble_operator(
-        p.advection, lambda c: u * sum(ci * gi for ci, gi in zip(c, df.grad(v))) * dx,
+        p.advection, lambda c: u * sum(ci * gi for ci, gi in zip(c, df.grad(v), strict=True)) * dx,
         mesh, bc, True, 'advection',
         Li, coefficients
     )

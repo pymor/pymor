@@ -220,7 +220,7 @@ class FenicsMatrixBasedOperator(Operator):
         assert self.parameters.assert_compatible(mu)
         # update coefficients in form
         for k, coeffs in self.params.items():
-            for c, v in zip(coeffs, mu[k]):
+            for c, v in zip(coeffs, mu[k], strict=True):
                 c.assign(v)
         # assemble matrix
         mat = df.assemble(self.form, keep_diagonal=True)
@@ -347,7 +347,7 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
             matrix = operators[0].matrix.copy()
         else:
             matrix = operators[0].matrix * coefficients[0]
-        for op, c in zip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:], strict=True):
             matrix.axpy(c, op.matrix, False)
             # in general, we cannot assume the same nonzero pattern for
             # all matrices. how to improve this?
@@ -538,11 +538,11 @@ class RestrictedFenicsOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         UU = self.op.source.zeros(len(U))
-        for uu, u in zip(UU.vectors, U.to_numpy().T):
+        for uu, u in zip(UU.vectors, U.to_numpy().T, strict=True):
             uu.real_part.impl[:] = np.ascontiguousarray(u)
         VV = self.op.apply(UU, mu=mu)
         V = self.range.zeros(len(VV))
-        for v, vv in zip(V.to_numpy().T, VV.vectors):
+        for v, vv in zip(V.to_numpy().T, VV.vectors, strict=True):
             v[:] = vv.real_part.impl[self.restricted_range_dofs]
         return V
 

@@ -180,7 +180,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                 basis_sizes = rom.solution_space.dim + 1
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
             basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
-    elif isinstance(basis_sizes, (list, tuple)):
+    elif isinstance(basis_sizes, list | tuple):
         assert all(isinstance(sz, Number) for sz in basis_sizes)
         basis_sizes = np.array(basis_sizes)
     if error_norm_names is None:
@@ -188,7 +188,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
     norms, error_estimates, errors, conditions, custom_values = \
         list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, error_estimator=error_estimator,
-                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
+                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes),
+                 strict=True))
     print()
 
     result = {}
@@ -215,7 +216,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         result['max_rel_error_mus'] = test_mus[np.argmax(rel_errors, axis=0)]
         for name, norm, norm_mu, error, error_mu in zip(error_norm_names,
                                                         max_norms, max_norm_mus,
-                                                        max_errors[:, -1], max_error_mus[:, -1]):
+                                                        max_errors[:, -1], max_error_mus[:, -1], strict=True):
             summary.append((f'maximum {name}-norm',
                             f'{norm:.7e} (mu = {error_mu})'))
             summary.append((f'maximum {name}-error',
@@ -252,7 +253,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         result['custom_values'] = custom_values = np.array(custom_values)
         result['max_custom_values'] = max_custom_values = np.max(custom_values, axis=0)
         result['max_custom_values_mus'] = max_custom_values_mus = test_mus[np.argmax(custom_values, axis=0)]
-        for i, (value, mu) in enumerate(zip(max_custom_values[:, -1], max_custom_values_mus[:, -1])):
+        for i, (value, mu) in enumerate(zip(max_custom_values[:, -1], max_custom_values_mus[:, -1], strict=True)):
             summary.append((f'maximum {custom_names[i]}',
                             f'{value:.7e} (mu = {mu})'))
 
@@ -260,10 +261,10 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     result['time'] = toc - tic
     summary.append(('elapsed time', str(toc - tic)))
 
-    summary_fields, summary_values = list(zip(*summary))
+    summary_fields, summary_values = list(zip(*summary, strict=True))
     summary_field_width = np.max(list(map(len, summary_fields))) + 2
     summary_lines = [f'    {field+":":{summary_field_width}} {value}'
-                     for field, value in zip(summary_fields, summary_values)]
+                     for field, value in zip(summary_fields, summary_values, strict=True)]
     summary = 'Stochastic error estimation:\n' + '\n'.join(summary_lines)
     result['summary'] = summary
 
@@ -329,7 +330,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         ax = fig.add_subplot(1, num_plots, current_plot)
         legend = []
         if error_norms:
-            for name, errors in zip(error_norm_names, max_errors):
+            for name, errors in zip(error_norm_names, max_errors, strict=True):
                 ax.semilogy(basis_sizes[:max_basis_size], errors[:max_basis_size], color=next(colors))
                 legend.append(name)
         if error_estimator:

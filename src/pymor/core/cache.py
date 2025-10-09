@@ -417,7 +417,7 @@ class CacheableObject(ImmutableObject):
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
         # ensure that passing a value as positional or keyword argument does not matter
-        kwargs.update(zip(argnames, args))
+        kwargs.update(zip(argnames, args, strict=True))
 
         # ensure the values of optional parameters enter the cache key
         if defaults:

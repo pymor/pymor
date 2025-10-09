@@ -45,7 +45,7 @@ class LincombOperator(Operator):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, Operator) for op in operators)
-        assert all(isinstance(c, (ParameterFunctional, Number)) for c in coefficients)
+        assert all(isinstance(c, ParameterFunctional | Number) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
         operators = tuple(operators)
@@ -85,7 +85,7 @@ class LincombOperator(Operator):
             R.scal(coeffs[0])
         else:
             R = self.range.zeros(len(U))
-        for op, c in zip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:], strict=True):
             if c:
                 R.axpy(c, op.apply(U, mu=mu))
         return R
@@ -97,12 +97,12 @@ class LincombOperator(Operator):
         if not coeffs_and_matrices:
             return np.zeros((len(V), len(U)))
         else:
-            coeffs, matrices = zip(*coeffs_and_matrices)
+            coeffs, matrices = zip(*coeffs_and_matrices, strict=True)
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
         matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
         common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
         R = (coeffs[0] * matrices[0]).astype(common_dtype, copy=False)
-        for m, c in zip(matrices[1:], coeffs[1:]):
+        for m, c in zip(matrices[1:], coeffs[1:], strict=True):
             R += c * m
         return R
 
@@ -113,12 +113,12 @@ class LincombOperator(Operator):
         if not coeffs_and_matrices:
             return np.zeros((len(V), len(U)))
         else:
-            coeffs, matrices = zip(*coeffs_and_matrices)
+            coeffs, matrices = zip(*coeffs_and_matrices, strict=True)
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
         matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
         common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
         R = (coeffs[0] * matrices[0]).astype(common_dtype, copy=False)
-        for m, c in zip(matrices[1:], coeffs[1:]):
+        for m, c in zip(matrices[1:], coeffs[1:], strict=True):
             R += c * m
         return R
 
@@ -129,7 +129,7 @@ class LincombOperator(Operator):
             R.scal(np.conj(coeffs[0]))
         else:
             R = self.source.zeros(len(V))
-        for op, c in zip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:], strict=True):
             if c:
                 R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
         return R
@@ -201,7 +201,7 @@ class LincombOperator(Operator):
         arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
         R = arrays[0]
         R.scal(coefficients[0])
-        for c, v in zip(coefficients[1:], arrays[1:]):
+        for c, v in zip(coefficients[1:], arrays[1:], strict=True):
             R.axpy(c, v)
         return R
 
@@ -260,7 +260,8 @@ class ConcatenationOperator(Operator):
         Us = [U]
         for op in self.operators[:0:-1]:
             Us.append(op.apply(Us[-1], mu=mu))
-        return ConcatenationOperator(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
+        return ConcatenationOperator(tuple(op.jacobian(U, mu=mu)
+                                           for op, U in zip(self.operators, Us[::-1], strict=True)),
                                      solver=self._jacobian_solver,
                                      name=self.name + '_jacobian')
 

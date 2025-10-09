@@ -171,8 +171,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
         assert isinstance(A, Operator)
-        assert isinstance(F, (type(None), Operator, VectorArray))
-        assert isinstance(M, (type(None), Operator))
+        assert isinstance(F, type(None) | Operator | VectorArray)
+        assert isinstance(M, type(None) | Operator)
         assert A.source == A.range
 
         if mu is None:
@@ -262,7 +262,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
             raise NotImplementedError
         A, F, U0, t0, t1, nt = operator, rhs, initial_data, initial_time, end_time, self.nt
         assert isinstance(A, Operator)
-        assert F is None or isinstance(F, (Operator, VectorArray))
+        assert F is None or isinstance(F, Operator | VectorArray)
         assert A.source == A.range
 
         if mu is None:
@@ -352,8 +352,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             raise NotImplementedError
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
         assert isinstance(A, Operator)
-        assert isinstance(F, (type(None), Operator, VectorArray))
-        assert isinstance(M, (type(None), Operator))
+        assert isinstance(F, type(None) | Operator | VectorArray)
+        assert isinstance(M, type(None) | Operator)
         assert A.source == A.range
 
         if mu is None:
@@ -439,8 +439,8 @@ class DiscreteTimeStepper(TimeStepper):
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
         assert isinstance(A, Operator)
-        assert isinstance(F, (type(None), Operator, VectorArray))
-        assert isinstance(M, (type(None), Operator))
+        assert isinstance(F, type(None) | Operator | VectorArray)
+        assert isinstance(M, type(None) | Operator)
         assert A.source == A.range
 
         if mu is None:

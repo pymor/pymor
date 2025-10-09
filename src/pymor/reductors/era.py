@@ -75,7 +75,7 @@ class ERAReductor(CacheableObject):
 
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
         assert sampling_time >= 0
-        assert feedthrough is None or isinstance(feedthrough, (np.ndarray, Operator))
+        assert feedthrough is None or isinstance(feedthrough, np.ndarray | Operator)
         assert np.isrealobj(data)
         if data.ndim == 1:
             data = data.reshape(-1, 1, 1)

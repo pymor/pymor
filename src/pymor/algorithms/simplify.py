@@ -87,7 +87,7 @@ class ExpandRules(RuleTable):
         # merge child LincombOperators
         if any(isinstance(o, LincombOperator) for o in op.operators):
             ops, coeffs = [], []
-            for c, o in zip(op.coefficients, op.operators):
+            for c, o in zip(op.coefficients, op.operators, strict=True):
                 if isinstance(o, LincombOperator):
                     coeffs.extend(c * cc for cc in o.coefficients)
                     ops.extend(o.operators)
@@ -142,7 +142,7 @@ class ContractRules(RuleTable):
         # merge non-parametric part
         param_ops, param_coeffs = [], []
         non_param_ops, non_param_coeffs = [], []
-        for o, c in zip(op.operators, op.coefficients):
+        for o, c in zip(op.operators, op.coefficients, strict=True):
             if o.parametric or isinstance(c, ParameterFunctional):
                 param_ops.append(o)
                 param_coeffs.append(c)
