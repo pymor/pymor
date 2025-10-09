@@ -53,7 +53,8 @@ import pkgutil
 import textwrap
 import threading
 from collections import OrderedDict, defaultdict
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from pymor.core.exceptions import DependencyMissingError
 from pymor.tools.table import format_table

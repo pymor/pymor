@@ -69,11 +69,12 @@ import inspect
 import os
 import tempfile
 from collections import OrderedDict, defaultdict
+from collections.abc import Callable
 from copy import deepcopy
 from numbers import Number
 from textwrap import wrap
 from types import MethodType
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import diskcache
 import numpy as np
