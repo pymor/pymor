@@ -1148,9 +1148,7 @@ class AdjointOperator(Operator):
                 adj = adj.with_(solver=adj_solver)
             return adj
         else:
-            return AdjointOperator(self.operator.H, source_product=self.range_product,
-                                   range_product=self.source_product,
-                                   solver=self._adjoint_solver)
+            return super().H
 
     def apply(self, U, mu=None):
         assert U in self.source
