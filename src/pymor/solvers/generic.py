@@ -243,7 +243,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
 
         # -- GMRES terminated: eval solution
         dx = ws[0]*y[0]
-        for w, yc in zip(ws[1:], y[1:]):
+        for w, yc in zip(ws[1:], y[1:], strict=True):
             dx.axpy(yc, w)  # dx += w*yc
 
         # -- Store LGMRES augmentation vectors
@@ -251,7 +251,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         if store_outer_Av:
             q = np.dot(hess, y)
             ax = vs[0]*q[0]
-            for v, qc in zip(vs[1:], q[1:]):
+            for v, qc in zip(vs[1:], q[1:], strict=True):
                 ax.axpy(qc, v)
             outer_v.append((dx * (1./nx), ax * (1./nx)))
         else:

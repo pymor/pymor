@@ -131,9 +131,9 @@ class Function(ParametricObject):
         return self._radd_sub(other, -1.)
 
     def __mul__(self, other):
-        if not isinstance(other, (Number, ParameterFunctional, Function)):
+        if not isinstance(other, Number | ParameterFunctional | Function):
             return NotImplemented
-        if isinstance(other, (Number, ParameterFunctional)):
+        if isinstance(other, Number | ParameterFunctional):
             return LincombFunction([self], [other])
         if self.name != 'ProductFunction' or not isinstance(self, ProductFunction):
             if isinstance(other, ProductFunction) and other.name == 'ProductFunction':
@@ -171,7 +171,7 @@ class ConstantFunction(Function):
 
     def __init__(self, value=np.array(1.0), dim_domain=1, name=None):
         assert dim_domain > 0
-        assert isinstance(value, (Number, np.ndarray))
+        assert isinstance(value, Number | np.ndarray)
         value = np.array(value)
         self.__auto_init(locals())
         self.shape_range = value.shape
@@ -226,7 +226,7 @@ class GenericFunction(Function):
 
     def __init__(self, mapping, dim_domain=1, shape_range=(), parameters={}, name=None):
         assert dim_domain > 0
-        assert isinstance(shape_range, (Number, tuple))
+        assert isinstance(shape_range, Number | tuple)
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
         self.parameters_own = parameters
@@ -360,7 +360,7 @@ class LincombFunction(Function):
         assert len(functions) > 0
         assert len(functions) == len(coefficients)
         assert all(isinstance(f, Function) for f in functions)
-        assert all(isinstance(c, (ParameterFunctional, Number)) for c in coefficients)
+        assert all(isinstance(c, ParameterFunctional | Number) for c in coefficients)
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         functions = tuple(functions)
@@ -378,7 +378,7 @@ class LincombFunction(Function):
     def evaluate(self, x, mu=None):
         assert self.parameters.assert_compatible(mu)
         coeffs = self.evaluate_coefficients(mu)
-        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
+        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions, strict=True))
 
 
 class ProductFunction(Function):

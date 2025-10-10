@@ -55,7 +55,7 @@ def test_ei_rom(stationary_models):
     rb, svals = pod(U, rtol=1e-7)
     reductor = StationaryRBReductor(ei_fom, rb)
     rom = reductor.reduce()
-    for mu, u in zip(base_mus, U):
+    for mu, u in zip(base_mus, U, strict=True):
         ru = rom.solve(mu)
         ru_rec = reductor.reconstruct(ru)
         assert_all_almost_equal(u, ru_rec, rtol=1e-10)

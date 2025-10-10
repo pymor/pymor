@@ -70,7 +70,7 @@ def _MPIVisualizer_visualize(m, U, ind, **kwargs):
     m = mpi.get_object(m)
     if isinstance(U, tuple):
         U = tuple(mpi.get_object(u) for u in U)
-        U = tuple(u[i] if i is not None else u for u, i in zip(U, ind))
+        U = tuple(u[i] if i is not None else u for u, i in zip(U, ind, strict=True))
     else:
         U = mpi.get_object(U)
         if ind is not None:
@@ -189,7 +189,7 @@ def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
 def _map_children(f, obj):
     if isinstance(obj, dict):
         return {k: f(v) for k, v in sorted(obj.items())}
-    elif isinstance(obj, (list, tuple, set)) and not isinstance(obj, _OperatorToWrap):
+    elif isinstance(obj, list | tuple | set) and not isinstance(obj, _OperatorToWrap):
         return type(obj)(f(v) for v in obj)
     else:
         return f(obj)

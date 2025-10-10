@@ -232,9 +232,9 @@ class TriaGrid(GridWithOrthogonalCenters):
         from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace
-        if isinstance(U, (np.ndarray, VectorArray)):
+        if isinstance(U, np.ndarray | VectorArray):
             U = (U,)
-        assert all(isinstance(u, (np.ndarray, VectorArray)) for u in U)
+        assert all(isinstance(u, np.ndarray | VectorArray) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u.space, NumpyVectorSpace) else
                   NumpyVectorSpace.make_array(u.to_numpy())

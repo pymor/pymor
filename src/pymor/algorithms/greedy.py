@@ -248,7 +248,7 @@ class RBSurrogate(WeakGreedySurrogate):
         if return_all_values:
             return np.hstack(result)
         else:
-            errs, max_err_mus = list(zip(*result))
+            errs, max_err_mus = list(zip(*result, strict=True))
             max_err_ind = np.argmax(errs)
             return errs[max_err_ind], max_err_mus[max_err_ind]
 

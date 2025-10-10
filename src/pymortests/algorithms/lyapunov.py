@@ -158,7 +158,7 @@ def test_cont_lrcf(n, m, with_E, trans, solver, rng):
     Z = Zva.to_numpy()
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=True) < 1e-10
 
-    for mat1, mat2 in zip(mat_old, mat_new):
+    for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
@@ -202,7 +202,7 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
     Z = Zva.to_numpy()
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=False) < 1e-10
 
-    for mat1, mat2 in zip(mat_old, mat_new):
+    for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
@@ -239,7 +239,7 @@ def test_cont_dense(n, m, with_E, trans, solver, rng):
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=True) < 1e-10
 
-    for mat1, mat2 in zip(mat_old, mat_new):
+    for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)
 
@@ -273,6 +273,6 @@ def test_disc_dense(n, m, with_E, trans, solver, rng):
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=False) < 1e-10
 
-    for mat1, mat2 in zip(mat_old, mat_new):
+    for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)

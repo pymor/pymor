@@ -77,7 +77,7 @@ def check_results(test_name, params, results, *args):
 def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
     cmp_array = almost_equal(U, V, product=product, sup_norm=sup_norm, rtol=rtol, atol=atol)
     too_large_relative_errors = {i: relative_error(u, v, product=product)
-                                     for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f}
+                                 for i, (u, v, f) in enumerate(zip(U, V, cmp_array, strict=True)) if not f}
     assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
 
 def skip_if_missing(config_name):

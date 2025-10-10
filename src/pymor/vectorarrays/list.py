@@ -393,7 +393,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
     def scal(self, alpha, ind):
         if type(alpha) is np.ndarray:
-            for a, v in zip(alpha, self._indexed(ind)):
+            for a, v in zip(alpha, self._indexed(ind), strict=True):
                 v.scal(a)
         else:
             for v in self._indexed(ind):
@@ -411,17 +411,17 @@ class ListVectorArrayImpl(VectorArrayImpl):
         if x.len_ind(xind) == 1:
             xx = next(iter(x_list))
             if type(alpha) is np.ndarray:
-                for a, y in zip(alpha, self._indexed(ind)):
+                for a, y in zip(alpha, self._indexed(ind), strict=True):
                     y.axpy(a, xx)
             else:
                 for y in self._indexed(ind):
                     y.axpy(alpha, xx)
         else:
             if type(alpha) is np.ndarray:
-                for a, xx, y in zip(alpha, x_list, self._indexed(ind)):
+                for a, xx, y in zip(alpha, x_list, self._indexed(ind), strict=True):
                     y.axpy(a, xx)
             else:
-                for xx, y in zip(x_list, self._indexed(ind)):
+                for xx, y in zip(x_list, self._indexed(ind), strict=True):
                     y.axpy(alpha, xx)
 
     def inner(self, other, ind, oind):
@@ -429,7 +429,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
                   .reshape((self.len_ind(ind), other.len_ind(oind))))
 
     def pairwise_inner(self, other, ind, oind):
-        return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind))])
+        return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind), strict=True)])
 
     def gramian(self, ind):
         self_list = self._indexed(ind)
@@ -451,7 +451,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         RL = []
         for coeffs in coefficients.T:
             R = self.space.zero_vector()
-            for v, c in zip(self._indexed(ind), coeffs):
+            for v, c in zip(self._indexed(ind), coeffs, strict=True):
                 R.axpy(c, v)
             RL.append(R)
 

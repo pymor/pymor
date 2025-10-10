@@ -117,17 +117,17 @@ class StationaryProblem(ParametricObject):
                        and v[0] in ('l2', 'l2_boundary', 'quadratic')
                        and v[1].dim_domain == domain.dim and v[1].shape_range == () for v in outputs))
         assert (parameter_ranges is None
-                or (isinstance(parameter_ranges, (list, tuple))
+                or (isinstance(parameter_ranges, list | tuple)
                     and len(parameter_ranges) == 2
                     and parameter_ranges[0] <= parameter_ranges[1])
                 or (isinstance(parameter_ranges, dict)
-                    and all(isinstance(v, (list, tuple)) and len(v) == 2 and v[0] <= v[1]
+                    and all(isinstance(v, list | tuple) and len(v) == 2 and v[0] <= v[1]
                             for v in parameter_ranges.values())))
 
         outputs = tuple(outputs) if outputs is not None else None
         parameter_ranges = (
             None if parameter_ranges is None else
-            tuple(parameter_ranges) if isinstance(parameter_ranges, (list, tuple)) else
+            tuple(parameter_ranges) if isinstance(parameter_ranges, list | tuple) else
             FrozenDict((k, tuple(v)) for k, v in parameter_ranges.items())
         )
 

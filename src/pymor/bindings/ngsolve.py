@@ -167,7 +167,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
         matrix = operators[0].matrix.CreateMatrix()
         matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
-        for op, c in zip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:], strict=True):
             matrix.AsVector().data += float(c) * op.matrix.AsVector()
         return NGSolveMatrixOperator(matrix, self.range, self.source, name=name)
 
@@ -215,5 +215,5 @@ class NGSolveVisualizer(ImmutableObject):
             if not separate_colorbars:
                 raise NotImplementedError
 
-            for u, name in zip(U, legend):
+            for u, name in zip(U, legend, strict=True):
                 ngs.Draw(u.vectors[0].real_part.impl, self.mesh, name=name)

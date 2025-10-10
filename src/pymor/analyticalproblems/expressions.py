@@ -204,7 +204,7 @@ class Expression(ParametricObject):
                                      for s in zip_longest(*(a.shape[-2::-1] for a in args),
                                                           fillvalue=1)))[::-1]
             all_args = dict(mu) if mu else {}
-            all_args.update(dict(zip(variables, args)))
+            all_args.update(dict(zip(variables, args, strict=True)))
             result = np.broadcast_to(eval(code,
                                           _numpy_functions,
                                           all_args),
@@ -379,7 +379,7 @@ class Array(Expression):
         array = [a.tolist() if isinstance(a, np.ndarray) else a for a in array]
         A = np.array(array)
         for i, v in np.ndenumerate(A):
-            if isinstance(v, (np.ndarray, list)):
+            if isinstance(v, np.ndarray | list):
                 raise ValueError(f'Malformed Array construction {array} does not give ndarray of Expressions.')
             if not isinstance(v, Expression):
                 raise ValueError(f'Entry "{v}" at index {i} of Array {array} is not an Expression '
@@ -502,7 +502,7 @@ class Indexed(Expression):
         if not len(index) == len(base.shape):
             raise ValueError(f'Wrong number of indices for index expression {base}[{index}] '
                              f'(given {len(index)} indices for expression of shape {base.shape}).')
-        for i, (ind, s) in enumerate(zip(index, base.shape)):
+        for i, (ind, s) in enumerate(zip(index, base.shape, strict=True)):
             if not 0 <= ind < s:
                 raise ValueError(f'Invalid index for index expression {base}[{index}] '
                                  f'(given index {ind} for axis {i} of dimension {s}).')
@@ -595,7 +595,7 @@ class UnaryReductionCall(UnaryFunctionCall):
 
 
 def _broadcastable_shapes(first, second):
-    return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
+    return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1], strict=False))
 
 
 class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add;     fenics_conditional=False  # noqa: E701, E702

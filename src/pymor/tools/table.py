@@ -28,7 +28,7 @@ def format_table(rows, width='AUTO', title=None):
         except ImportError:
             width = 1000000
     rows = list(rows)
-    column_widths = [max(map(len, c)) for c in zip(*rows)]
+    column_widths = [max(map(len, c)) for c in zip(*rows, strict=False)]
     if sum(column_widths) + 2*(len(column_widths) - 1) > width:
         largest_column = np.argmax(column_widths)
         column_widths[largest_column] = 0
@@ -38,7 +38,7 @@ def format_table(rows, width='AUTO', title=None):
 
     wrapped_rows = []
     for row in rows:
-        cols = [_wrap_entry(c, width=cw) for c, cw in zip(row, column_widths)]
+        cols = [_wrap_entry(c, width=cw) for c, cw in zip(row, column_widths, strict=False)]
         for r in zip_longest(*cols, fillvalue=''):
             wrapped_rows.append(r)
     rows = wrapped_rows
@@ -52,5 +52,5 @@ def format_table(rows, width='AUTO', title=None):
     else:
         title = ''
 
-    return title + '\n'.join('  '.join(f'{c:<{cw}}' for c, cw in zip(r, column_widths))
+    return title + '\n'.join('  '.join(f'{c:<{cw}}' for c, cw in zip(r, column_widths, strict=False))
                              for r in rows)

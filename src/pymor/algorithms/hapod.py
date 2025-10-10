@@ -182,9 +182,9 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
         if node.children:
             modes, svals, snap_counts = zip(
-                *await asyncio.gather(*(spawn_rng(hapod_step(c)) for c in node.children))
+                *await asyncio.gather(*(spawn_rng(hapod_step(c)) for c in node.children)), strict=True
             )
-            for m, sv in zip(modes, svals):
+            for m, sv in zip(modes, svals, strict=True):
                 m.scal(sv)
             U = modes[0]
             for V in modes[1:]:

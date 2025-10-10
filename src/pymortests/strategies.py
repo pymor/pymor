@@ -75,11 +75,11 @@ def _np_arrays(length, dim, dtype=None):
 
 
 def _numpy_vector_spaces(draw, np_data_list, compatible, count, dims):
-    return [(NumpyVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
+    return [(NumpyVectorSpace(d), ar) for d, ar in zip(dims, np_data_list, strict=True)]
 
 
 def _numpy_list_vector_spaces(draw, np_data_list, compatible, count, dims):
-    return [(NumpyListVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
+    return [(NumpyListVectorSpace(d), ar) for d, ar in zip(dims, np_data_list, strict=True)]
 
 
 def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
@@ -96,7 +96,7 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
             bd.append(d)
         return bd
 
-    for c, (d, ar) in enumerate(zip(dims, np_data_list)):
+    for c, (d, ar) in enumerate(zip(dims, np_data_list, strict=True)):
         # only redraw after initial for (potentially) incompatible arrays
         if c == 0 or (not compatible and c > 0):
             block_dims = _block_dims(d)
@@ -114,7 +114,7 @@ if config.HAVE_FENICS:
 
     def _fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
         ret = []
-        for d, ar in zip(dims, np_data_list):
+        for d, ar in zip(dims, np_data_list, strict=True):
             assume(d > 1)
             if d not in _FENICS_spaces:
                 _FENICS_spaces[d] = FenicsVectorSpace(df.FunctionSpace(df.UnitIntervalMesh(d - 1), 'Lagrange', 1))
@@ -138,12 +138,12 @@ if config.HAVE_NGSOLVE:
         return _NGSOLVE_spaces[dim]
 
     def _ngsolve_vector_spaces(draw, np_data_list, compatible, count, dims):
-        return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
+        return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list, strict=True)]
     _other_vector_space_types.append('ngsolve')
 
 if config.HAVE_DEALII:
     def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
-        return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
+        return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list, strict=True)]
     _other_vector_space_types.append('dealii')
 
 
@@ -158,7 +158,7 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
         lngs = draw(length)
     else:
         lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
-    np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
+    np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims, strict=True)]
     space_type = draw(hyst.sampled_from(space_types))
     space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
     ret = [sp.from_numpy(d) for sp, d in space_data]

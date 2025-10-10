@@ -174,7 +174,8 @@ class IPythonPool(WorkerPoolBase):
         if defaults.defaults_changes() > self._updated_defaults:
             self._update_defaults()
         result = self.view.map_sync(_worker_call_function,
-                                    *zip(*((function, True, a, kwargs) for a in zip(*chunks))))
+                                    *zip(*((function, True, a, kwargs) for a in zip(*chunks, strict=True)),
+                                         strict=True))
         return list(chain(*result))
 
     def _remove_object(self, remote_id):
@@ -194,7 +195,7 @@ def _worker_call_function(function, loop, args, kwargs):
     kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else v)
               for k, v in kwargs.items()}
     if loop:
-        return [function(*a, **kwargs) for a in zip(*args)]
+        return [function(*a, **kwargs) for a in zip(*args, strict=True)]
     else:
         return function(*args, **kwargs)
 

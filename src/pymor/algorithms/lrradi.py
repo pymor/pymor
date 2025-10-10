@@ -250,7 +250,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         Ep = E.apply2(Q, Q)
         EEp = spla.block_diag(Ep, Ep.T)
         eigvals, eigvecs = spla.eig(Hp, EEp)
-        eigpairs = zip(eigvals, eigvecs)
+        eigpairs = zip(eigvals, eigvecs, strict=True)
         # filter stable eigenvalues
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         if len(eigpairs) == 0:
@@ -331,7 +331,7 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     Ep = E.apply2(Q, Q)
     EEp = spla.block_diag(Ep, Ep.T)
     eigvals, eigvecs = spla.eig(Hp, EEp)
-    eigpairs = zip(eigvals, eigvecs)
+    eigpairs = zip(eigvals, eigvecs, strict=True)
     # filter stable eigenvalues
     eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
     # find shift with most impact on convergence

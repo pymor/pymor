@@ -388,7 +388,7 @@ class AdaptiveSampleSet(BasicObject):
 
             # draw volumes
             rects = []
-            for leaf, level in zip(self.vertex_ids, self.levels):
+            for leaf, level in zip(self.vertex_ids, self.levels, strict=True):
                 size = 1. / 2**level
                 ll = self.vertices[leaf[0]] * self.dimensions + self.ranges[:, 0]
                 rects.append(Rectangle(ll, size * self.dimensions[0], size * self.dimensions[1],
@@ -446,7 +446,7 @@ class AdaptiveSampleSet(BasicObject):
             ax = plt.gca()
 
             # draw cells
-            for leaf, level in zip(self.vertex_ids, self.levels):
+            for leaf, level in zip(self.vertex_ids, self.levels, strict=True):
                 size = 1. / 2**level
                 ll = self.vertices[leaf[0]] * self.dimensions + self.ranges[:, 0]
                 c = cube * self.dimensions * size + ll
@@ -485,7 +485,8 @@ class AdaptiveSampleSet(BasicObject):
 
     def _update(self):
         self.levels, self.centers, vertex_ids, creation_times = \
-            list(zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs())))
+            list(zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs()),
+                     strict=True))
         self.levels = np.array(self.levels)
         self.volumes = self.total_volume / ((2**self.dim)**self.levels)
         self.vertex_ids = np.array(vertex_ids)

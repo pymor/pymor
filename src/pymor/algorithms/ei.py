@@ -86,7 +86,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     """
     assert not isinstance(error_norm, str) or error_norm == 'sup'
     if pool:  # dispatch to parallel implementation
-        assert isinstance(U, (VectorArray, RemoteObject))
+        assert isinstance(U, VectorArray | RemoteObject)
         with RemoteObjectManager() as rom:
             if isinstance(U, VectorArray):
                 U = rom.manage(pool.scatter_array(U))
@@ -362,7 +362,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
             assert False
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
-                    for name, operator in zip(operator_names, operators)}
+                    for name, operator in zip(operator_names, operators, strict=True)}
     eim = fom.with_(name=f'{fom.name}_ei', **ei_operators)
 
     data.update({'dofs': dofs, 'basis': basis})
@@ -455,7 +455,8 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
 
     with pool.push({}) as distributed_data:
         errs, snapshot_counts = zip(
-            *pool.apply(_parallel_ei_greedy_initialize, U=U, error_norm=error_norm, copy=copy, data=distributed_data)
+            *pool.apply(_parallel_ei_greedy_initialize, U=U, error_norm=error_norm, copy=copy, data=distributed_data),
+            strict=True
         )
         snapshot_count = sum(snapshot_counts)
         cum_snapshot_counts = np.hstack(([0], np.cumsum(snapshot_counts)))
@@ -502,7 +503,8 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             max_errs.append(max_err)
 
             errs, new_dof_values = zip(
-                *pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+                *pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data),
+                strict=True
             )
             new_dof_values = np.hstack(new_dof_values)
             K -= K[:, global_max_err_ind:global_max_err_ind+1] @ (new_dof_values[np.newaxis, :] / new_dof_value)

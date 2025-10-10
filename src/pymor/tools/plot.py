@@ -148,7 +148,7 @@ class _Adaptive(BasicObject):
                     axis=-1,
                 ))
             unwrapped_angle = np.unwrap([y[..., 1] for y in self.y], axis=0)
-            for y, new_angle in zip(self.y, unwrapped_angle):
+            for y, new_angle in zip(self.y, unwrapped_angle, strict=True):
                 y[..., 1] = new_angle
         self.y_min = np.min(self.y, axis=0, keepdims=True)
         self.y_max = np.max(self.y, axis=0, keepdims=True)

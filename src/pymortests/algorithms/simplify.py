@@ -20,7 +20,7 @@ pytestmark = pytest.mark.builtin
 def test_expand():
     ops = [NumpyMatrixOperator(np.eye(1) * i) for i in range(8)]
     pfs = [ProjectionParameterFunctional('p', 9, i) for i in range(8)]
-    prods = [o * p for o, p in zip(ops, pfs)]
+    prods = [o * p for o, p in zip(ops, pfs, strict=True)]
 
     op = ((prods[0] + prods[1] + prods[2]) @ (prods[3] + prods[4] + prods[5]) @
           (prods[6] + prods[7]))

@@ -161,14 +161,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         return grid, bi
 
     if not isinstance(domain_description,
-                      (RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain, PolygonalDomain)):
+                      RectDomain | CylindricalDomain | TorusDomain | LineDomain | CircleDomain | PolygonalDomain):
         raise NotImplementedError(f'I do not know how to discretize {domain_description}')
     if isinstance(domain_description, RectDomain):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):
             raise NotImplementedError(f'I do not know how to discretize RectDomain with {grid_type}')
         return discretize_RectDomain()
-    elif isinstance(domain_description, (CylindricalDomain, TorusDomain)):
+    elif isinstance(domain_description, CylindricalDomain | TorusDomain):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):
             raise NotImplementedError(f'I do not know how to discretize {type(domain_description)} with {grid_type}')

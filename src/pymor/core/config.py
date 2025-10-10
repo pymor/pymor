@@ -22,7 +22,7 @@ def _can_import(module):
         except ImportError:
             pass
         return False
-    if not isinstance(module, (list, tuple)):
+    if not isinstance(module, list | tuple):
         module = [module]
     return all(_can_import_single(m) for m in module)
 

@@ -27,7 +27,7 @@ def test_linear_function_fitting(rng):
     points = rng.random((n, d_in))
     vals = points.dot(a) + b
 
-    data = list(zip(points, vals))
+    data = list(zip(points, vals, strict=True))
 
     validation_ratio = 0.1
 

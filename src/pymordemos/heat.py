@@ -61,7 +61,7 @@ def fom_properties(fom, w, stable_lti=True):
         fig_poles = subfigs1[0]
         fig_sv = subfigs1[1]
         fig_time = subfigs[2]
-    elif isinstance(fom, (LTIModel, SecondOrderModel)):
+    elif isinstance(fom, LTIModel | SecondOrderModel):
         fig = plt.figure(figsize=(10, 8), constrained_layout=True)
         fig.suptitle('Full-order model')
         subfigs = fig.subfigures(1, 2)

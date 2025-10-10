@@ -63,7 +63,7 @@ def histogram(
             fom, reductor = load(f)
 
         errs = []
-        for u, mu in zip(us, mus):
+        for u, mu in zip(us, mus, strict=True):
             print(f'Calculating error for {mu} ... ')
             sys.stdout.flush()
             err = fom.solve(mu) - reductor.reconstruct(u)
@@ -208,7 +208,7 @@ def convergence(
         print('errors', end='')
         sys.stdout.flush()
         errs = []
-        for u, mu in zip(us, mus):
+        for u, mu in zip(us, mus, strict=True):
             err = fom.solve(mu) - reductor.reconstruct(u)
             if error_norm:
                 errs.append(np.max(getattr(fom, error_norm + '_norm')(err)))

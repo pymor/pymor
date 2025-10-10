@@ -84,7 +84,7 @@ class PAAAReductor(BasicObject):
             self.samples = np.empty([len(sv) for sv in sampling_values] + [fom.dim_output, fom.dim_input],
                                     dtype=sampling_values[0].dtype)
             for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
-                                 itertools.product(*sampling_values)):
+                                 itertools.product(*sampling_values), strict=True):
                 params = fom.parameters.parse(vals[1:])
                 self.samples[idx] = fom.eval_tf(vals[0], mu=params)
             if fom.dim_input == fom.dim_output == 1:
@@ -185,11 +185,11 @@ class PAAAReductor(BasicObject):
         # iteration counter
         j = 0
 
-        while any(len(i) < mi for i, mi in zip(self.itpl_part, max_itpl)):
+        while any(len(i) < mi for i, mi in zip(self.itpl_part, max_itpl, strict=True)):
 
             # compute approximation error over entire sampled data set
             err_mat = np.empty(samples.shape)
-            for idx, vals in zip(np.ndindex(*[len(sv) for sv in svs]), itertools.product(*svs)):
+            for idx, vals in zip(np.ndindex(*[len(sv) for sv in svs]), itertools.product(*svs), strict=True):
                 err_mat[idx] = np.abs(np.squeeze(bary_func(*vals)) - samples[idx])
 
             # set errors to zero such that new interpolation points are consistent with max_itpl
@@ -244,7 +244,7 @@ class PAAAReductor(BasicObject):
             # update barycentric form
             itpl_samples = samples[np.ix_(*self.itpl_part)]
             itpl_samples = np.reshape(itpl_samples, -1)
-            itpl_nodes = [sv[lp] for sv, lp in zip(svs, self.itpl_part)]
+            itpl_nodes = [sv[lp] for sv, lp in zip(svs, self.itpl_part, strict=True)]
             bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs)
 
             if self.post_process and d_nsp >= 1:
@@ -328,7 +328,7 @@ def nd_loewner(samples, svs, itpl_part):
         (Parametric) Loewner matrix based only on LS partition.
     """
     d = len(samples.shape)
-    ls_part = [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs)]
+    ls_part = [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs, strict=True)]
 
     sdpd = 1
     for i in range(d):
@@ -436,7 +436,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
     def bary_func(*args):
         pd = 1
         # this loop is for pole cancellation which occurs at interpolation nodes
-        for arg, itpl_node in zip(args, itpl_nodes):
+        for arg, itpl_node in zip(args, itpl_nodes, strict=True):
             d = arg - itpl_node
             d_zero = d[np.abs(d) < removable_singularity_tol]
             if len(d_zero) > 0:

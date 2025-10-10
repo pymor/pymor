@@ -40,14 +40,15 @@ def _format_generic(obj, max_width, verbosity, override={}):
             vals.append(_recurse(val, max_width - len(key) - 4, verbosity))
         keys.append(key)
 
-    if verbosity > 0 and (sum(len(k) + len(v) + 2 for k, v in zip(keys, vals)) + len(type(obj).__name__) > max_width
+    if verbosity > 0 and (sum(len(k) + len(v) + 2 for k, v in zip(keys, vals, strict=True))
+                          + len(type(obj).__name__) > max_width
                           or any('\n' in v for v in vals)):
-        args = [f'    {k}{indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
+        args = [f'    {k}{indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals, strict=True)]
         args = ',\n'.join(args)
         return f"""{type(obj).__name__}(
 {args})"""
     else:
-        args = [f'{k}{v}' for k, v in zip(keys, vals)]
+        args = [f'{k}{v}' for k, v in zip(keys, vals, strict=True)]
         return f'{type(obj).__name__}({", ".join(args)})'
 
 
@@ -64,14 +65,14 @@ def _format_list_tuple(val, max_width, verbosity):
 def _format_dict(val, max_width, verbosity):
     if not val:
         return '{}'
-    keys, vals = zip(*val.items())
+    keys, vals = zip(*val.items(), strict=True)
     reprs = [repr(v) for v in vals]
     if verbosity > 0 and (any('\n' in r for r in reprs)
-                          or sum(len(k) + len(r) + 4 for k, r in zip(keys, reprs)) + 2 > max_width):
-        reprs = ',\n '.join(indent_value(f'{k}: {r}', 1) for k, r in zip(keys, reprs))
+                          or sum(len(k) + len(r) + 4 for k, r in zip(keys, reprs, strict=True)) + 2 > max_width):
+        reprs = ',\n '.join(indent_value(f'{k}: {r}', 1) for k, r in zip(keys, reprs, strict=True))
         return '{' + reprs + '}'
     else:
-        return '{' + ', '.join(f'{k}: {r}' for k, r in zip(keys, reprs)) + '}'
+        return '{' + ', '.join(f'{k}: {r}' for k, r in zip(keys, reprs, strict=True)) + '}'
 
 
 def _format_array(val, max_width, verbosity):

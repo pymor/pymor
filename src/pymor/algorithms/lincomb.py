@@ -86,23 +86,23 @@ class AssembleLincombRules(RuleTable):
         if all(coeff != 0 for coeff in self.coefficients):
             raise RuleNotMatchingError
         without_zero = [(op, coeff)
-                        for op, coeff in zip(ops, self.coefficients)
+                        for op, coeff in zip(ops, self.coefficients, strict=True)
                         if coeff != 0]
         if len(without_zero) == 0:
             return ZeroOperator(ops[0].range, ops[0].source, name=self.name)
         else:
-            new_ops, new_coeffs = zip(*without_zero)
+            new_ops, new_coeffs = zip(*without_zero, strict=True)
             return assemble_lincomb(new_ops, new_coeffs, name=self.name)
 
     @match_class_any(ZeroOperator)
     def action_ZeroOperator(self, ops):
         without_zero = [(op, coeff)
-                        for op, coeff in zip(ops, self.coefficients)
+                        for op, coeff in zip(ops, self.coefficients, strict=True)
                         if not isinstance(op, ZeroOperator)]
         if len(without_zero) == 0:
             return ZeroOperator(ops[0].range, ops[0].source, name=self.name)
         else:
-            new_ops, new_coeffs = zip(*without_zero)
+            new_ops, new_coeffs = zip(*without_zero, strict=True)
             return assemble_lincomb(new_ops, new_coeffs, name=self.name)
 
     @match_class_all(IdentityOperator)
@@ -137,7 +137,7 @@ class AssembleLincombRules(RuleTable):
             array = ops[0].array.copy()
         else:
             array = ops[0].array * coeffs[0]
-        for op, c in zip(ops[1:], coeffs[1:]):
+        for op, c in zip(ops[1:], coeffs[1:], strict=True):
             array.axpy(c, op.array)
 
         return VectorArrayOperator(array, adjoint=adjoint, name=self.name)
@@ -145,7 +145,7 @@ class AssembleLincombRules(RuleTable):
     @match_class_any(SecondOrderModelOperator)
     def action_SecondOrderModelOperator(self, ops):
         def is_scaled_iden_like(op):
-            if isinstance(op, (ZeroOperator, IdentityOperator)):
+            if isinstance(op, ZeroOperator | IdentityOperator):
                 return True
             if (isinstance(op, LincombOperator)
                     and len(op.operators) == 1
@@ -179,9 +179,9 @@ class AssembleLincombRules(RuleTable):
                     op.blocks[1, 1],
                     op.blocks[1, 0])
 
-        alphas, betas, As, Bs = zip(*(so_op_parts(op) for op in ops))
-        alpha = sum(a * b for a, b in zip(self.coefficients, alphas))
-        beta = sum(a * b for a, b in zip(self.coefficients, betas))
+        alphas, betas, As, Bs = zip(*(so_op_parts(op) for op in ops), strict=True)
+        alpha = sum(a * b for a, b in zip(self.coefficients, alphas, strict=True))
+        beta = sum(a * b for a, b in zip(self.coefficients, betas, strict=True))
         A = assemble_lincomb(As, self.coefficients)
         B = assemble_lincomb(Bs, self.coefficients)
         so_op = SecondOrderModelOperator(alpha, beta, A, B)
@@ -233,7 +233,7 @@ class AssembleLincombRules(RuleTable):
     def action_merge_low_rank_operators(self, ops):
         low_rank = []
         not_low_rank = []
-        for op, coeff in zip(ops, self.coefficients):
+        for op, coeff in zip(ops, self.coefficients, strict=True):
             if isinstance(op, LowRankOperator):
                 low_rank.append((op, coeff))
             else:
@@ -256,7 +256,7 @@ class AssembleLincombRules(RuleTable):
         if len(not_low_rank) == 0:
             return new_low_rank_op
         else:
-            new_ops, new_coeffs = zip(*not_low_rank)
+            new_ops, new_coeffs = zip(*not_low_rank, strict=True)
             return assemble_lincomb(chain(new_ops, [new_low_rank_op]), chain(new_coeffs, [1]), name=self.name)
 
     @match_generic(lambda ops: len(ops) >= 2)
@@ -266,7 +266,7 @@ class AssembleLincombRules(RuleTable):
         new_lr_ops = []
         new_coeffs = []
         new_lr_coeffs = []
-        for op, coeff in zip(ops, self.coefficients):
+        for op, coeff in zip(ops, self.coefficients, strict=True):
             if isinstance(op, LowRankOperator):
                 new_lr_ops.append(op)
                 new_lr_coeffs.append(coeff)
@@ -288,7 +288,7 @@ class AssembleLincombRules(RuleTable):
     @match_always
     def action_call_assemble_lincomb_method(self, ops):
         id_coeffs, ops_without_id, coeffs_without_id = [], [], []
-        for op, coeff in zip(ops, self.coefficients):
+        for op, coeff in zip(ops, self.coefficients, strict=True):
             if isinstance(op, IdentityOperator):
                 id_coeffs.append(coeff)
             else:
