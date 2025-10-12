@@ -347,7 +347,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
             c = getattr(obj, child)
             if isinstance(c, dict):
                 result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
-            elif isinstance(c, (list, tuple)):
+            elif isinstance(c, list | tuple):
                 result[child] = tuple(self.apply(v) if v is not None else v for v in c)
             elif isinstance(c, np.ndarray):
                 new = c.copy()
@@ -399,7 +399,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
     def _is_operator_container(v):
         if isinstance(v, dict):
             it = v.values()
-        elif isinstance(v, (list, tuple)):
+        elif isinstance(v, list | tuple):
             it = v
         elif isinstance(v, np.ndarray) and v.dtype == object:
             it = v.flat

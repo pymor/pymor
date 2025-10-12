@@ -69,11 +69,12 @@ import inspect
 import os
 import tempfile
 from collections import OrderedDict, defaultdict
+from collections.abc import Callable
 from copy import deepcopy
 from numbers import Number
 from textwrap import wrap
 from types import MethodType
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import diskcache
 import numpy as np
@@ -417,7 +418,7 @@ class CacheableObject(ImmutableObject):
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
         # ensure that passing a value as positional or keyword argument does not matter
-        kwargs.update(zip(argnames, args))
+        kwargs.update(zip(argnames, args, strict=False))
 
         # ensure the values of optional parameters enter the cache key
         if defaults:

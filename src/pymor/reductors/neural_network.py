@@ -366,7 +366,7 @@ class NeuralNetworkReductor(BasicObject):
             sample = sample[0]
 
         def prepare_datum(datum):
-            if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
+            if not (isinstance(datum, torch.DoubleTensor | np.ndarray)):
                 return datum.to_numpy()
             return datum
         sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
@@ -423,7 +423,7 @@ class NeuralNetworkReductor(BasicObject):
         # conditional expression to check for instationary solution to return self.nt solutions
         parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
-                   zip(parameters, u)]
+                   zip(parameters, u, strict=True)]
 
         return samples
 
@@ -622,7 +622,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         else:
             # conditional expression to check for instationary solution to return self.nt solutions
             parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
-            samples = [(param, out) for param, out in zip(parameters, output.T)]
+            samples = [(param, out) for param, out in zip(parameters, output.T, strict=True)]
         return samples
 
     def _compute_layer_sizes(self, hidden_layers):
@@ -938,7 +938,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
 
     def prepare_datum(datum):
-        if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
+        if not (isinstance(datum, torch.DoubleTensor | np.ndarray)):
             return datum.to_numpy()
         return datum
 

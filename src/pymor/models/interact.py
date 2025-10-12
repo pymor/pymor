@@ -80,7 +80,7 @@ class ParameterSelector(BasicObject):
             def _values_changed(self, change):
                 was_valid = self.valid
                 new_values = [t.value if c.value else s.value
-                              for s, t, c in zip(self._sliders, self._texts, self._checkboxes)]
+                              for s, t, c in zip(self._sliders, self._texts, self._checkboxes, strict=True)]
                 # do nothing if new values are invalid
                 try:
                     Parameters(p=len(self._sliders)).parse(new_values)
@@ -233,13 +233,13 @@ def interact(model, parameter_space, show_solution=True, visualizer=None, transf
         if has_output:
             output = data['output']
             if output.shape[1] > 1:
-                for l, o in zip(output_lines, output):
+                for l, o in zip(output_lines, output, strict=True):
                     l.set_ydata(o)
                 low, high = ax.get_ylim()
                 ax.set_ylim(min(low, np.min(output)), max(high, np.max(output)))
                 output_widget.draw_idle()
             else:
-                for l, o in zip(output_widget.children, output.ravel()):
+                for l, o in zip(output_widget.children, output.ravel(), strict=True):
                     l.value = str(o)
         sim_time_widget.value = f'{sim_time}s'
 

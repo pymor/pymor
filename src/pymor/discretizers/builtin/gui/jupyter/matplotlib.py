@@ -72,7 +72,7 @@ class PatchVisualizer(BasicObject):
             from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
             self.vmins, self.vmaxs = _vmins_vmaxs(U, self.separate_colorbars, self.rescale_colorbars)
 
-        for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots):
+        for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots, strict=True):
             plot.set(u[:, idx], vmin=vmin[idx], vmax=vmax[idx])
         self.fig.canvas.draw_idle()
 

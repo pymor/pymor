@@ -53,7 +53,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
     def append(self, other, remove_from_other, oind):
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
-        for block, other_block in zip(self._blocks, other._blocks):
+        for block, other_block in zip(self._blocks, other._blocks, strict=True):
             block.append(_indexed(other_block, oind), remove_from_other)
 
     def copy(self, deep, ind):
@@ -75,7 +75,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
     def axpy(self, alpha, x, ind, xind):
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
-        for block, x_block in zip(self._blocks, x._blocks):
+        for block, x_block in zip(self._blocks, x._blocks, strict=True):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
     def axpy_copy(self, alpha, x, ind, xind):
@@ -84,11 +84,11 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         if isinstance(alpha, Number):
             if alpha == 1:
                 return type(self)([_indexed(block, ind) + _indexed(x_block, xind)
-                                   for block, x_block in zip(self._blocks, x._blocks)],
+                                   for block, x_block in zip(self._blocks, x._blocks, strict=True)],
                                   self.space)
             elif alpha == -1:
                 return type(self)([_indexed(block, ind) - _indexed(x_block, xind)
-                                   for block, x_block in zip(self._blocks, x._blocks)],
+                                   for block, x_block in zip(self._blocks, x._blocks, strict=True)],
                                   self.space)
         return super().axpy_copy(alpha, x, ind, xind)
 
@@ -96,7 +96,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).inner(_indexed(other_block, oind))
-                 for block, other_block in zip(self._blocks, other._blocks)]
+                 for block, other_block in zip(self._blocks, other._blocks, strict=True)]
         assert all(prod.shape == prods[0].shape for prod in prods)
         common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
         ret = np.zeros(prods[0].shape, dtype=common_dtype)
@@ -108,7 +108,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).pairwise_inner(_indexed(other_block, oind))
-                 for block, other_block in zip(self._blocks, other._blocks)]
+                 for block, other_block in zip(self._blocks, other._blocks, strict=True)]
         assert all(prod.shape == prods[0].shape for prod in prods)
         common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
         ret = np.zeros(prods[0].shape, dtype=common_dtype)
@@ -136,13 +136,13 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         block_inds = self._bin_map[block_inds]
         blocks = [_indexed(b, ind) for b in self._blocks]
         return np.array([blocks[bi].dofs([ci])[0, :]
-                         for bi, ci in zip(block_inds, dof_indices)])
+                         for bi, ci in zip(block_inds, dof_indices, strict=True)])
 
     def amax(self, ind):
         assert self._blocks_are_valid()
         self._compute_bins()
         blocks = [_indexed(b, ind) for b in self._blocks]
-        inds, vals = zip(*(blocks[bi].amax() for bi in self._bin_map))
+        inds, vals = zip(*(blocks[bi].amax() for bi in self._bin_map), strict=True)
         inds, vals = np.array(inds), np.array(vals)
         inds += self._bins[:-1][..., np.newaxis]
         block_inds = np.argmax(vals, axis=0)
@@ -214,7 +214,8 @@ class BlockVectorSpace(VectorSpace):
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace
                 and len(self.subspaces) == len(other.subspaces)
-                and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
+                and all(space == other_space
+                        for space, other_space in zip(self.subspaces, other.subspaces, strict=True)))
 
     def __hash__(self):
         return sum(hash(s) for s in self.subspaces)
@@ -241,12 +242,12 @@ class BlockVectorSpace(VectorSpace):
     def make_array(self, obj):
         """:noindex:"""  # noqa: D400
         assert len(obj) == len(self.subspaces)
-        assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
+        assert all(block in subspace for block, subspace in zip(obj, self.subspaces, strict=True))
         return BlockVectorArray(self, BlockVectorArrayImpl(obj, self))
 
     def make_block_diagonal_array(self, obj):
         assert len(obj) == len(self.subspaces)
-        assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
+        assert all(block in subspace for block, subspace in zip(obj, self.subspaces, strict=True))
         U = self.empty(reserve=sum(len(UU) for UU in obj))
         for i, UU in enumerate(obj):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))

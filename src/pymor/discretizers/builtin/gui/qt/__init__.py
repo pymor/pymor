@@ -366,7 +366,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                     for _ in range(len(U))]
             plots = [widget(self, grid, bounding_box=bounding_box, codim=codim) for _ in range(len(U))]
             if legend:
-                for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
+                for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend, strict=True):
                     subplot_layout = QVBoxLayout()
                     caption = QLabel(l)
                     caption.setAlignment(Qt.AlignHCenter)
@@ -381,7 +381,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                         subplot_layout.addLayout(hlayout)
                     plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
             else:
-                for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
+                for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets, strict=True):
                     if not separate_colorbars or backend == 'matplotlib':
                         plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
                     else:
@@ -399,7 +399,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.plots = plots
 
         def set(self, U, vmins, vmaxs):
-            for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, vmins, vmaxs):
+            for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, vmins, vmaxs, strict=True):
                 plot.set(u, vmin, vmax)
                 if colorbar:
                     colorbar.set(vmin, vmax)

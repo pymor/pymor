@@ -66,7 +66,7 @@ ci_current_requirements:
 ci_oldest_requirements:
 	uv pip compile  \
 		$(CI_EXTRAS) \
-		--python-version 3.9 \
+		--python-version 3.10 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \

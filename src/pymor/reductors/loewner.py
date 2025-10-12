@@ -50,7 +50,7 @@ class LoewnerReductor(CacheableObject):
         assert isinstance(s, np.ndarray)
         if hasattr(Hs, 'transfer_function'):
             Hs = Hs.transfer_function
-        assert isinstance(Hs, (TransferFunction, np.ndarray, list))
+        assert isinstance(Hs, TransferFunction | np.ndarray | list)
 
         assert partitioning in ('even-odd', 'half-half') \
             or len(partitioning) == 2 \

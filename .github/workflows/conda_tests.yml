@@ -45,7 +45,7 @@ jobs:
           - macos-13
           - windows-2022
         python:
-          - '3.9'
+          - '3.10'
           - '3.13'
         include:
           - os: ubuntu-22.04
@@ -55,7 +55,7 @@ jobs:
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
           - os: macos-13
-            python: 3.9
+            python: 3.10
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
           - os: windows-2022

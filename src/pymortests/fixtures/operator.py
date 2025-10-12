@@ -136,6 +136,7 @@ numpy_matrix_operator_with_arrays_factory_arguments = list(product(
         [0, 1, 4, 10],       # dim_range
         [3, 3, 3, 3],        # count_source
         [3, 3, 3, 3],        # count_range
+        strict=True
     ),
     [{'sparse': opt} for opt in _sparse_opts],
 ))

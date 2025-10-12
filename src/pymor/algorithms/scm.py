@@ -112,7 +112,7 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
                             for f in operator.coefficients)
 
     def evaluate(self, mu=None):
-        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, mins)])
+        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, mins, strict=True)])
                             for mins in self.minimizers]
         return np.min(objective_values)
 

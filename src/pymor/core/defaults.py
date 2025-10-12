@@ -53,7 +53,8 @@ import pkgutil
 import textwrap
 import threading
 from collections import OrderedDict, defaultdict
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from pymor.core.exceptions import DependencyMissingError
 from pymor.tools.table import format_table
@@ -232,7 +233,7 @@ def defaults(*args):
         _default_container._add_defaults_for_function(decorated_function, args=args)
 
         def set_default_values(*wrapper_args, **wrapper_kwargs):
-            for k, v in zip(decorated_function.argnames, wrapper_args):
+            for k, v in zip(decorated_function.argnames, wrapper_args, strict=False):
                 if k in wrapper_kwargs:
                     raise TypeError(f"{decorated_function.__name__} got multiple values for argument '{k}'")
                 wrapper_kwargs[k] = v
@@ -308,7 +309,7 @@ def print_defaults(import_all=True, shorten_paths=0):
         comments.append(c)
     key_string = 'path (shortened)' if shorten_paths else 'path'
 
-    rows = [[key_string, 'value', 'source']] + list(zip(keys, values, comments))
+    rows = [[key_string, 'value', 'source']] + list(zip(keys, values, comments, strict=True))
     print(format_table(rows, title='pyMOR defaults'))
     print()
 
@@ -357,7 +358,7 @@ d = {}
 """[1:], file=f)
 
         lks = keys[0].split('.')[:-1] if keys else ''
-        for c, k, v in zip(as_comment, keys, values):
+        for c, k, v in zip(as_comment, keys, values, strict=True):
             ks = k.split('.')[:-1]
             if lks != ks:
                 print('', file=f)

@@ -99,7 +99,7 @@ class Matplotlib1DAxes:
             self.lines = [self.ax[0].plot(xs, np.zeros_like(xs))[0] for _ in range(count)]
         if legend:
             if separate_plots:
-                for ax, l in zip(self.ax, legend):
+                for ax, l in zip(self.ax, legend, strict=True):
                     ax.legend([l])
             else:
                 self.ax[0].legend(legend)
@@ -113,6 +113,6 @@ class Matplotlib1DAxes:
                     self.lines[i].set_ydata(u)
             else:
                 self.lines[i].set_ydata(np.repeat(u, 2))
-        for ax, mi, ma in zip(self.ax, vmin, vmax):
+        for ax, mi, ma in zip(self.ax, vmin, vmax, strict=False):
             pad = (ma - mi) * 0.1
             ax.set_ylim(mi - pad, ma + pad)

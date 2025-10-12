@@ -129,7 +129,7 @@ class BlockOperatorBase(Operator):
             return R
 
         subspaces = self.range.subspaces if self.blocked_range else [self.range]
-        blocks = [process_row(row, space) for row, space in zip(self.blocks, subspaces)]
+        blocks = [process_row(row, space) for row, space in zip(self.blocks, subspaces, strict=True)]
         return self.range.make_array(blocks) if self.blocked_range else blocks[0]
 
     def as_source_array(self, mu=None):
@@ -141,7 +141,7 @@ class BlockOperatorBase(Operator):
             return R
 
         subspaces = self.source.subspaces if self.blocked_source else [self.source]
-        blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces)]
+        blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces, strict=True)]
         return self.source.make_array(blocks) if self.blocked_source else blocks[0]
 
     def d_mu(self, parameter, index=0):

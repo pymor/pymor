@@ -248,7 +248,7 @@ def test_unit_outer_normals_neighbors(grid):
     SEI = g.superentity_indices(1, 0)
     if SE.shape[1] < 2:
         return
-    for se, sei in zip(SE, SEI):
+    for se, sei in zip(SE, SEI, strict=True):
         if se[0] == -1 or se[1] == -1:
             continue
         np.testing.assert_allclose(UON[se[0], sei[0]], -UON[se[1], sei[1]])
@@ -331,7 +331,7 @@ def test_quadrature_points_shape(grid):
     for d in range(g.dim):
         os, ps = g.reference_element(d).quadrature_info()
         for t in os:
-            for o, p in zip(os[t], ps[t]):
+            for o, p in zip(os[t], ps[t], strict=True):
                 assert g.quadrature_points(d, order=o, quadrature_type=t).shape == (g.size(d), p, g.dim)
                 assert g.quadrature_points(d, npoints=p, quadrature_type=t).shape == (g.size(d), p, g.dim)
 
@@ -343,7 +343,7 @@ def test_quadrature_points_values(grid):
         A, B = g.embeddings(d)
         os, ps = g.reference_element(d).quadrature_info()
         for t in os:
-            for o, p in zip(os[t], ps[t]):
+            for o, p in zip(os[t], ps[t], strict=True):
                 Q = g.quadrature_points(d, order=o, quadrature_type=t)
                 q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)
                 np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
