@@ -75,8 +75,8 @@ def test_adjoint_distributes_over_concatenationr():
     B = NumpyMatrixOperator(np.array([[0, 1], [-1, 0], [0, 0]]))
     C = NumpyMatrixOperator(np.array([[2, 0], [0, 4]]))
 
-    range_product = NumpyMatrixOperator(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
-    source_product = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))
+    range_product = NumpyMatrixOperator(np.eye(3))
+    source_product = NumpyMatrixOperator(np.eye(2))
 
     concat = ConcatenationOperator([A, B, C])
     adj = AdjointOperator(concat, source_product=source_product, range_product=range_product)
