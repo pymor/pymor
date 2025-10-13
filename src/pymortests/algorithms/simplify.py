@@ -75,8 +75,11 @@ def test_adjoint_distributes_over_concatenationr():
     B = NumpyMatrixOperator(np.array([[0, 1], [-1, 0], [0, 0]]))
     C = NumpyMatrixOperator(np.array([[2, 0], [0, 4]]))
 
+    range_product = NumpyMatrixOperator(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    source_product = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))
+
     concat = ConcatenationOperator([A, B, C])
-    adj = AdjointOperator(concat)
+    adj = AdjointOperator(concat, source_product=source_product, range_product=range_product)
     E = expand(adj)
 
     assert isinstance(E, ConcatenationOperator)
@@ -84,8 +87,7 @@ def test_adjoint_distributes_over_concatenationr():
     assert len(ops) == 3
     assert isinstance(ops[0], AdjointOperator)
     assert np.allclose(ops[0].operator.matrix, C.matrix)
-    assert isinstance(ops[1], AdjointOperator)
-    assert np.allclose(ops[1].operator.matrix, B.matrix)
+    assert np.allclose(ops[1].matrix.T, B.matrix)
     assert isinstance(ops[2], AdjointOperator)
     assert np.allclose(ops[2].operator.matrix, A.matrix)
 
