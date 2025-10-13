@@ -134,32 +134,15 @@ class ExpandRules(RuleTable):
         # If the inside is a ConcatenationOperator, distribute adjoint over the concatenation:
         # (A @ B @ C)^* = C^* @ B^* @ A^*
         if isinstance(inner, ConcatenationOperator):
-            return self._adjoint_of_concatenation(inner, outer_source_product=op.source_product,
-                                                outer_range_product=op.range_product)
+            if len(inner.operators) >= 2:
+                last, *middle, first = inner.operators[::-1]
+                adj_factors = ([AdjointOperator(last, source_product=op.source_product)] +
+                            [op.H for op in middle] +
+                            [AdjointOperator(first, range_product=op.range_product)])
+
+                return ConcatenationOperator(adj_factors)
 
         return AdjointOperator(inner, source_product=op.source_product, range_product=op.range_product)
-
-    def _adjoint_of_concatenation(self, inner_concat, outer_source_product, outer_range_product):
-        ops = inner_concat.operators
-        k = len(ops)
-
-        adj_factors = []
-        for i_rev, A_i in enumerate(reversed(ops), start=1):
-            j = k - i_rev
-            s_prod = None
-            r_prod = None
-            if j == 0:
-                s_prod = outer_source_product
-            if j == k - 1:
-                r_prod = outer_range_product
-            if s_prod is None:
-                s_prod = getattr(A_i, 'source_product', None)
-            if r_prod is None:
-                r_prod = getattr(A_i, 'range_product', None)
-
-            adj_factors.append(AdjointOperator(A_i, source_product=s_prod, range_product=r_prod))
-
-        return ConcatenationOperator(adj_factors)
 
     @match_class(BlockOperator)
     def action_BlockOperator(self, op):
