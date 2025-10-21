@@ -353,7 +353,7 @@ class ProjectedOperator(Operator):
             source_basis = VectorArrayBasis(None, operator.source)
         elif isinstance(source_basis, VectorArray):
             source_basis = VectorArrayBasis(source_basis, operator.source)
-        elif isinstance(source_basis, (list, tuple)):
+        elif isinstance(source_basis, list | tuple):
             assert isinstance(operator.source, BlockVectorSpace)
             source_basis = BlockedBasis(source_basis, operator.source.subspaces)
         assert isinstance(source_basis, AbstractBasis)
@@ -1598,19 +1598,19 @@ class MutableStateOperator(Operator):
             ms.add_state_change_callback(self._state_change_callback)
 
     @abstractmethod
-    def _apply(self, U, mu=None):
+    def _mutable_apply(self, U, mu=None):
         pass
 
-    def _apply_adjoint(self, V, mu=None):
+    def _mutable_apply_adjoint(self, V, mu=None):
         raise NotImplementedError
 
-    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse(self, V, mu, initial_guess):
         raise NotImplementedError
 
-    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse_adjoint(self, U, mu, initial_guess):
         raise NotImplementedError
 
-    def _jacobian(self, U, mu=None):
+    def _mutable_jacobian(self, U, mu=None):
         raise NotImplementedError
 
     def apply(self, U, mu=None):
@@ -1620,19 +1620,19 @@ class MutableStateOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         raise NotImplementedError
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse(self, V, mu, initial_guess):
         raise NotImplementedError
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
         assert U in self.source
         return self.fix_states(U.blocks[:-1]) \
-            .apply_inverse_adjoint(U.blocks[-1], mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+            .apply_inverse_adjoint(U.blocks[-1], mu=mu, initial_guess=initial_guess)
 
     def jacobian(self, U, mu=None):
         raise NotImplementedError
 
     def fix_states(self, fixed_states):
-        assert all(fs in ms.space for ms, fs in zip(self.mutable_states, fixed_states))
+        assert all(fs in ms.space for ms, fs in zip(self.mutable_states, fixed_states, strict=True))
         return FixedMutableStateOperator(self, tuple(fs.copy() for fs in fixed_states))
 
     def _state_change_callback(self):
@@ -1647,34 +1647,34 @@ class FixedMutableStateOperator(Operator):
         self.linear = operator.linear_in_op_source
 
     def _set_states(self):
-        for ms, fs in zip(self.operator.mutable_states, self.fixed_states):
+        for ms, fs in zip(self.operator.mutable_states, self.fixed_states, strict=True):
             ms.set(fs)
 
     def apply(self, U, mu=None):
         assert U in self.source
         self._set_states()
-        return self.operator._apply(U, mu=mu)
+        return self.operator._mutable_apply(U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         self._set_states()
-        return self.operator._apply_adjoint(V, mu=mu)
+        return self.operator._mutable_apply_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _apply_inverse(self, V, mu, initial_guess):
         assert V in self.range
         self._set_states()
-        return self.operator._apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+        return self.operator._mutable_apply_inverse(V, mu=mu, initial_guess=initial_guess)
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _apply_inverse_adjoint(self, U, mu, initial_guess):
         assert U in self.source
         self._set_states()
-        return self.operator._apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+        return self.operator._mutable_apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess)
 
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
         self._set_states()
-        return self.operator._jacobian(U, mu=mu)
+        return self.operator._mutable_jacobian(U, mu=mu)
 
     # TODO: as_range_array, assemble
 
@@ -1716,56 +1716,55 @@ class ProjectedMutableStateOperator(MutableStateOperator):
         op_range = NumpyVectorSpace(len(op_range_basis)) if op_range_basis is not None else operator.op_range
         op_source = NumpyVectorSpace(len(op_source_basis)) if op_source_basis is not None else operator.op_source
         mutable_states = [s if b is None else ProjectedMutableState(s, b)
-                          for s, b in zip(operator.mutable_states, mutable_state_bases)]
+                          for s, b in zip(operator.mutable_states, mutable_state_bases, strict=False)]
         self.linear_in_mutable_state = operator.linear_in_mutable_state
         self.linear_in_op_source = operator.linear_in_op_source
         super().__init__(mutable_states, op_range, op_source)
 
-    def _apply(self, U, mu=None):
+    def _mutable_apply(self, U, mu=None):
         if self.op_source_basis is not None:
             U = self.op_source_basis.lincomb(U.to_numpy())
-        V = self.operator._apply(U, mu=mu)
+        V = self.operator._mutable_apply(U, mu=mu)
         if self.op_range_basis is not None:
             V = self.op_range.make_array(self.op_range_basis.inner(V, product=self.product))
         return V
 
-    def _apply_adjoint(self, V, mu=None):
+    def _mutable_apply_adjoint(self, V, mu=None):
         if self.op_range_basis is not None:
             V = self.op_range_basis.lincomb(V.to_numpy())
-        U = self.operator._apply_adjoint(V, mu)
+        U = self.operator._mutable_apply_adjoint(V, mu)
         if self.op_source_basis is not None:
             U = self.op_source.make_array(self.op_source_basis.inner(U))
         return U
 
-    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse(self, V, mu, initial_guess):
         if self.op_range_basis is None and self.op_source_basis is None:
-            return self.operator._apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+            return self.operator._mutable_apply_inverse(V, mu=mu, initial_guess=initial_guess)
 
         if self.linear_in_op_source and self.op_range_basis is not None and self.op_source_basis is not None:
             from pymor.operators.numpy import NumpyMatrixOperator
-            mat = self.op_range_basis.inner(self.operator._apply(self.op_source_basis, mu=mu),
+            mat = self.op_range_basis.inner(self.operator._mutable_apply(self.op_source_basis, mu=mu),
                                             product=self.product)
-            return NumpyMatrixOperator(mat).apply_inverse(V, least_squares=least_squares)
+            return NumpyMatrixOperator(mat).apply_inverse(V)
 
         raise NotImplementedError
 
-    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse_adjoint(self, U, mu, initial_guess):
         if self.op_range_basis is None and self.op_source_basis is None:
-            return self.operator._apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess,
-                                                        least_squares=least_squares)
+            return self.operator._mutable_apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess)
 
         if self.linear_in_op_source and self.op_range_basis is not None and self.op_source_basis is not None:
             from pymor.operators.numpy import NumpyMatrixOperator
-            mat = self.op_range_basis.inner(self.operator._apply(self.op_source_basis, mu=mu),
+            mat = self.op_range_basis.inner(self.operator._mutable_apply(self.op_source_basis, mu=mu),
                                             product=self.product)
-            return NumpyMatrixOperator(mat).apply_inverse_adjoint(U, least_squares=least_squares)
+            return NumpyMatrixOperator(mat).apply_inverse_adjoint(U)
 
         raise NotImplementedError
 
     def _jacobian(self, U, mu=None):
         if self.op_source_basis is not None:
             U = self.op_source_basis.lincomb(U.to_numpy())
-        J = self.operator._jacobian(U, mu=mu)
+        J = self.operator._mutable_jacobian(U, mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.op_range_basis, source_basis=self.op_source_basis,
                       product=self.product)

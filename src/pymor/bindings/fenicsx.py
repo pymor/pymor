@@ -20,6 +20,7 @@ from pymor.core.pickle import unpicklable
 from pymor.operators.constructions import MutableState, MutableStateOperator, VectorFunctional, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+from pymor.solvers.list import ComplexifiedListVectorArrayBasedSolver
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
@@ -164,15 +165,15 @@ class FenicsxMatrixBasedOperator(Operator):
     functional
         If `True` return a |VectorFunctional| instead of a |VectorOperator| in case
         `form` is a linear form.
-    solver_options
-        The |solver_options| for the assembled :class:`FenicsMatrixOperator`.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, form, params=None, bcs=None, lifting_form=None, functional=False, solver_options=None,
+    def __init__(self, form, params=None, bcs=None, lifting_form=None, functional=False, solver=None,
                  name=None):
         assert 1 <= form.rank <= 2
         params = params or {}
@@ -201,8 +202,8 @@ class FenicsxMatrixBasedOperator(Operator):
         if self.form.rank == 2:
             mat = assemble_matrix(self.form, self.bcs)
             mat.assemble()
-            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, self.solver_options,
-                                         self.name + '_assembled')
+            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver,
+                                         name=self.name + '_assembled')
         elif self.functional:
             vec = assemble_vector(self.form)
             vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
@@ -232,51 +233,74 @@ class FenicsxMatrixBasedOperator(Operator):
         return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
 
-class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
-    """Wraps a FEniCSx matrix as an |Operator|."""
+class FenicsxLinearSolver(ComplexifiedListVectorArrayBasedSolver):
 
-    def __init__(self, matrix, range_space, source_space, solver_options=None, name=None):
+    @defaults('method', 'preconditioner', 'keep_solver')
+    def __init__(self, comm, method=PETSc.KSP.Type.PREONLY, preconditioner=PETSc.PC.Type.LU, keep_solver=True):
         self.__auto_init(locals())
-        self.range = FenicsxVectorSpace(range_space)
-        self.source = FenicsxVectorSpace(source_space)
+        if keep_solver:  # not thread safe
+            self._solver = self._create_solver()
+            self._adjoint_solver = self._create_solver()
+            self._last_operator = None
+            self._last_adjoint_operator = None
 
-    def _solver_options(self, adjoint=False):
-        if adjoint:
-            options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
-            if options is None:
-                options = self.solver_options.get('inverse') if self.solver_options else None
-        else:
-            options = self.solver_options.get('inverse') if self.solver_options else None
-        return options or _solver_options()
-
-    def _create_solver(self, adjoint=False):
-        options = self._solver_options(adjoint)
-        if adjoint:
-            try:
-                matrix = self._matrix_transpose
-            except AttributeError as e:
-                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.') from e
-        else:
-            matrix = self.matrix
-        method = options.get('solver')
-        preconditioner = options.get('preconditioner')
-        solver = PETSc.KSP().create(self.source.V.mesh.comm)
-        solver.setOperators(matrix)
+    def _create_solver(self):
+        method, preconditioner = self.method, self.preconditioner
+        solver = PETSc.KSP().create(self.comm)
         solver.setType(method)
         solver.getPC().setType(preconditioner)
         return solver
 
-    def _apply_inverse(self, r, v, adjoint=False):
-        try:
-            solver = self._adjoint_solver if adjoint else self._solver
-        except AttributeError:
-            solver = self._create_solver(adjoint)
-        solver.solve(v, r)  # TODO: might overwrite v
-        if _solver_options()['keep_solver']:
+    def _prepare(self, operator, U, mu, adjoint):
+        operator = operator.assemble(mu)
+
+        if adjoint and not hasattr(operator, '_matrix_transpose'):
+            # since dolfin does not have "apply_inverse_adjoint", we assume
+            # PETSc is used as backend and transpose the matrix
+            operator._matrix_transpose = PETSc.Mat()
+            operator.matrix.transpose(operator._matrix_transpose)
+
+        if self.keep_solver:
             if adjoint:
-                self._adjoint_solver = solver
+                solver = self._adjoint_solver
+                if operator.uid != self._last_adjoint_operator:
+                    solver.setOperators(operator._matrix_transpose)
+                    self._last_adjoint_operator = operator.uid
             else:
-                self._solver = solver
+                solver = self._solver
+                if operator.uid != self._last_operator:
+                    solver.setOperators(operator.matrix)
+                    self._last_operator = operator.uid
+        else:
+            solver = self._create_solver()
+            solver.setOperators(operator._matrix_transpose if adjoint else operator.matrix)
+        return solver
+
+    def _real_solve_one_vector(self, operator, v, mu, initial_guess, prepare_data):
+        solver = prepare_data
+        r = (operator.source.real_zero_vector() if initial_guess is None else
+             initial_guess.copy(deep=True))
+        solver.setInitialGuessNonzero(initial_guess is not None)
+        solver.solve(v.impl, r.impl)
+        return r
+
+    def _real_solve_adjoint_one_vector(self, operator, u, mu, initial_guess, prepare_data):
+        solver = prepare_data
+        r = (operator.range.real_zero_vector() if initial_guess is None else
+             initial_guess.copy(deep=True))
+        solver.setInitialGuessNonzero(initial_guess is not None)
+        solver.solve(u.impl, r.impl)
+        return r
+
+
+class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
+    """Wraps a FEniCSx matrix as an |Operator|."""
+
+    def __init__(self, matrix, range_space, source_space, solver=None, name=None):
+        solver = solver or FenicsxLinearSolver(source_space.mesh.comm)
+        self.__auto_init(locals())
+        self.range = FenicsxVectorSpace(range_space)
+        self.source = FenicsxVectorSpace(source_space)
 
     def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
         r = self.range.real_zero_vector()
@@ -288,31 +312,7 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         self.matrix.multTranspose(v.impl, r.impl)
         return r
 
-    def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
-                                       least_squares=False, prepare_data=None):
-        if least_squares:
-            raise NotImplementedError
-        r = (self.source.real_zero_vector() if initial_guess is None else
-             initial_guess.copy(deep=True))
-        self._apply_inverse(r.impl, v.impl)
-        return r
-
-    def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None,
-                                               least_squares=False, prepare_data=None):
-        if least_squares:
-            raise NotImplementedError
-        r = (self.range.real_zero_vector() if initial_guess is None else
-             initial_guess.copy(deep=True))
-
-        # since dolfin does not have "apply_inverse_adjoint", we assume
-        # PETSc is used as backend and transpose the matrix
-        if not hasattr(self, '_matrix_transpose'):
-            self._matrix_transpose = PETSc.Mat()
-            self.matrix.transpose(self._matrix_transpose)
-        self._apply_inverse(r.impl, u.impl, adjoint=True)
-        return r
-
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, FenicsxMatrixOperator) for op in operators):
             return None
         if identity_shift != 0:
@@ -324,17 +324,17 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
             matrix = operators[0].matrix.copy()
         else:
             matrix = operators[0].matrix * coefficients[0]
-        for op, c in zip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:], strict=True):
             matrix.axpy(c, op.matrix)
             # in general, we cannot assume the same nonzero pattern for
             # all matrices. how to improve this?
 
-        return FenicsxMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
+        return FenicsxMatrixOperator(matrix, self.source.V, self.range.V, name=name)
 
 
 class FenicsxOperator(Operator):
 
-    def __init__(self, form, source_states, params=None, bcs=(), lifting_form=None, linear=False, solver_options=None,
+    def __init__(self, form, source_states, params=None, bcs=(), lifting_form=None, linear=False, solver=None,
                  name=None):
         assert form.rank == 1
         params = params or {}
@@ -358,7 +358,7 @@ class FenicsxOperator(Operator):
         self._set_mu(mu)
         R = []
         for u in U:
-            for s, uu in zip(self.source_states, [u] if len(self.source_states) == 1 else u.blocks):
+            for s, uu in zip(self.source_states, [u] if len(self.source_states) == 1 else u.blocks, strict=True):
                 s.set(uu)
             vec = assemble_vector(self.form)
             if self.lifting_form is not None:
@@ -367,12 +367,6 @@ class FenicsxOperator(Operator):
                 set_bc(vec, self.bcs)
             R.append(vec)
         return self.range.make_array(R)
-
-
-@defaults('solver', 'preconditioner', 'keep_solver')
-def _solver_options(solver=PETSc.KSP.Type.PREONLY,
-                    preconditioner=PETSc.PC.Type.LU, keep_solver=True):
-    return {'solver': solver, 'preconditioner': preconditioner, 'keep_solver': keep_solver}
 
 
 class FenicsxVisualizer(ImmutableObject):
@@ -430,7 +424,7 @@ class FenicsxVisualizer(ImmutableObject):
             cols = int(np.ceil(len(U) / rows))
             plotter = pyvista.Plotter(shape=(rows, cols))
             mesh_data = vtk_mesh(self.space.V)
-            for i, (u, l) in enumerate(zip(U, legend)):
+            for i, (u, l) in enumerate(zip(U, legend, strict=True)):
                 row = i // cols
                 col = i - row*cols
                 plotter.subplot(row, col)
@@ -460,10 +454,10 @@ class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
     _last_mu = None
 
     def __init__(self, mutable_states, form, params,
-                 bcs=None, lifting_form=None, functional=False, solver_options=None, name=None):
+                 bcs=None, lifting_form=None, functional=False, solver=None, name=None):
         self._matrix_based_op = FenicsxMatrixBasedOperator(
             form, params,
-            bcs=bcs, lifting_form=lifting_form, functional=functional, solver_options=solver_options, name=name)
+            bcs=bcs, lifting_form=lifting_form, functional=functional, solver=solver, name=name)
         mutable_states = tuple(FenicsxMutableState.create(ms) for ms in mutable_states)
         super().__init__(mutable_states, self._matrix_based_op.range, self._matrix_based_op.source)
         self.__auto_init(locals())
@@ -474,19 +468,19 @@ class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
             self._matrix_op = self._matrix_based_op.assemble(mu)
             self._last_mu = mu
 
-    def _apply(self, U, mu=None):
+    def _mutable_apply(self, U, mu=None):
         self._assemble_matrix_if_needed(mu=mu)
         return self._matrix_op.apply(U)
 
-    def _apply_adjoint(self, V, mu=None):
+    def _mutable_apply_adjoint(self, V, mu=None):
         self._assemble_matrix_if_needed(mu=mu)
         return self._matrix_op.apply_adjoint(V)
 
-    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         self._assemble_matrix_if_needed(mu=mu)
         return self._matrix_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
-    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         self._assemble_matrix_if_needed(mu=mu)
         return self._matrix_op.apply_inverse_adjoint(U, initial_guess=initial_guess, least_squares=least_squares)
 
