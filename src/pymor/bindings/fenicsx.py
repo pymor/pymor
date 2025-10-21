@@ -229,8 +229,8 @@ class FenicsxMatrixBasedOperator(Operator):
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, return_info=True)
 
 
 class FenicsxLinearSolver(ComplexifiedListVectorArrayBasedSolver):
@@ -476,13 +476,13 @@ class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
         self._assemble_matrix_if_needed(mu=mu)
         return self._matrix_op.apply_adjoint(V)
 
-    def _mutable_apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse(self, V, mu, initial_guess):
         self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+        return self._matrix_op.apply_inverse(V, initial_guess=initial_guess, return_info=True)
 
-    def _mutable_apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _mutable_apply_inverse_adjoint(self, U, mu, initial_guess):
         self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply_inverse_adjoint(U, initial_guess=initial_guess, least_squares=least_squares)
+        return self._matrix_op.apply_inverse_adjoint(U, initial_guess=initial_guess, return_info=True)
 
     def _jacobian(self, U, mu=None):
         self._assemble_matrix_if_needed(mu=mu)
@@ -519,5 +519,5 @@ class FenicsxInterpolationOperator(Operator):
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+    def _apply_inverse(self, V, mu, initial_guess):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, return_info=True)

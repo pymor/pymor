@@ -1626,7 +1626,7 @@ class MutableStateOperator(Operator):
     def _apply_inverse_adjoint(self, U, mu, initial_guess):
         assert U in self.source
         return self.fix_states(U.blocks[:-1]) \
-            .apply_inverse_adjoint(U.blocks[-1], mu=mu, initial_guess=initial_guess)
+            .apply_inverse_adjoint(U.blocks[-1], mu=mu, initial_guess=initial_guess, return_info=True)
 
     def jacobian(self, U, mu=None):
         raise NotImplementedError
@@ -1745,7 +1745,7 @@ class ProjectedMutableStateOperator(MutableStateOperator):
             from pymor.operators.numpy import NumpyMatrixOperator
             mat = self.op_range_basis.inner(self.operator._mutable_apply(self.op_source_basis, mu=mu),
                                             product=self.product)
-            return NumpyMatrixOperator(mat).apply_inverse(V)
+            return NumpyMatrixOperator(mat).apply_inverse(V, return_info=True)
 
         raise NotImplementedError
 
@@ -1757,7 +1757,7 @@ class ProjectedMutableStateOperator(MutableStateOperator):
             from pymor.operators.numpy import NumpyMatrixOperator
             mat = self.op_range_basis.inner(self.operator._mutable_apply(self.op_source_basis, mu=mu),
                                             product=self.product)
-            return NumpyMatrixOperator(mat).apply_inverse_adjoint(U)
+            return NumpyMatrixOperator(mat).apply_inverse_adjoint(U, return_info=True)
 
         raise NotImplementedError
 
