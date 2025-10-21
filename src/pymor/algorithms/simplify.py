@@ -161,7 +161,7 @@ class ExpandRules(RuleTable):
         for (i, j), b in np.ndenumerate(op.blocks):
             if not isinstance(b, LincombOperator):
                 continue
-            for c_k, a_k in zip(b.coefficients, b.operators):
+            for c_k, a_k in zip(b.coefficients, b.operators, strict=False):
                 if isinstance(c_k, ParameterFunctional):
                     blocks_k = np.full((nrows, ncols), None, dtype=object)
                     blocks_k[i, j] = a_k
@@ -176,7 +176,7 @@ class ExpandRules(RuleTable):
 
         const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
 
-        coeffs, ops = zip(*expanded_terms)
+        coeffs, ops = zip(*expanded_terms, strict=False)
         if const_blocks.any():
             ops = [const_part] + list(ops)
             coeffs = [1.] + list(coeffs)
