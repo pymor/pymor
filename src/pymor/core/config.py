@@ -149,7 +149,7 @@ def is_jupyter():
 _PACKAGES = {
     'DEALII': _get_version('pymor_dealii'),
     'FENICS': _get_fenics_version,
-    'FENICSX': lambda: import_module('dolfinx').__version__,
+    'FENICSX': _get_version('dolfinx'),
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYPARALLEL': _get_version('ipyparallel'),
     'IPYTHON': _get_version('IPython'),
