@@ -273,6 +273,7 @@ ignore = [
   "RUF005", # consider unpacking instead of concatenation
   "RUF021", # parenthesize a and b expressions when chaining and and or together, to make the precedence clear
   "RUF023", # __slots__ is not sorted
+  "RUF059", # Unpacked variable is never used
   "SIM102", # use a single if statement instead of nested if statements
   "SIM103", # return the condition directly
   "SIM105", # use contextlib.suppress instead of try-except-pass
