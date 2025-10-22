@@ -51,9 +51,7 @@ def expand(obj):
           (A @ B @ C)^* = C^* @ B^* @ A^*.
 
     - |BlockOperators| are expanded block-wise. Further, |LincombOperator| blocks are expanded
-      into a single |LincombOperator| of |BlockOperators|. Constant coefficient parts are merged
-      into a single operator using :func:`contract <pymor.algorithms.simplify.contract>`,
-      while parametric coefficients remain as coefficients of the resulting |LincombOperator|.
+      into a single |LincombOperator| of |BlockOperators|.
 
     Parameters
     ----------
@@ -135,7 +133,10 @@ class ExpandRules(RuleTable):
         # If the inside is a ConcatenationOperator, distribute adjoint over the concatenation:
         # (A @ B @ C)^* = C^* @ B^* @ A^*
         if isinstance(inner, ConcatenationOperator):
-            if len(inner.operators) >= 2:
+            if len(inner.operators) == 1:
+                return AdjointOperator(inner.operators[0], source_product=op.source_product,
+                                       range_product=op.range_product)
+            else:
                 last, *middle, first = inner.operators[::-1]
                 adj_factors = ([AdjointOperator(last, source_product=op.source_product)] +
                             [op.H for op in middle] +
@@ -149,7 +150,6 @@ class ExpandRules(RuleTable):
     def action_BlockOperator(self, op):
         # recursively expand all children
         op = self.replace_children(op)
-
         nrows, ncols = op.blocks.shape
 
         # Build the constant part: copy non-Lincomb blocks; Lincomb blocks start as zero
@@ -171,13 +171,13 @@ class ExpandRules(RuleTable):
                 else:
                     cur = const_blocks[i, j]
                     if cur is None:
-                        const_blocks[i, j] = contract(c_k * a_k)
+                        const_blocks[i, j] = c_k * a_k
                     else:
-                        const_blocks[i, j] += contract(c_k * a_k)
+                        const_blocks[i, j] += c_k * a_k
 
         const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
 
-        coeffs, ops = zip(*expanded_terms, strict=True)
+        coeffs, ops = zip(*expanded_terms, strict=True) if expanded_terms else ((), ())
         if const_blocks.any():
             ops = [const_part] + list(ops)
             coeffs = [1.] + list(coeffs)
