@@ -334,7 +334,7 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
 class FenicsxOperator(Operator):
 
-    def __init__(self, form, source_states, params=None, bcs=(), lifting_form=None, linear=False, solver=None,
+    def __init__(self, form, source_states, params=None, bcs=(), alpha=1., lifting_form=None, linear=False, solver=None,
                  name=None):
         assert form.rank == 1
         params = params or {}
@@ -364,7 +364,8 @@ class FenicsxOperator(Operator):
             if self.lifting_form is not None:
                 apply_lifting(vec, [self.lifting_form], [self.bcs])
                 vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
-                set_bc(vec, self.bcs)
+            if self.bcs:
+                set_bc(vec, self.bcs, alpha=self.alpha)
             R.append(vec)
         return self.range.make_array(R)
 
