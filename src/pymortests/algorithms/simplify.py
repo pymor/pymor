@@ -160,35 +160,43 @@ def test_block_lincomb_expand():
     # Expand
     bop_exp = expand(bop)
 
-    # The expanded object should be a LincombOperator with:
-    # - constant part collecting numeric contributions (a*A, D, E)
-    # - one term per param coeff (pf * Block with B in (0,0))
     assert isinstance(bop_exp, LincombOperator)
-    assert len(bop_exp.operators) == 2
+    assert len(bop_exp.operators) == 3
 
-    const_op = bop_exp.operators[0]
-    pf_op = bop_exp.operators[1]
+    non_lincomb_blocks = bop_exp.operators[0]
+    a_lincomb_block = bop_exp.operators[1]
+    pf_op = bop_exp.operators[2]
+
     assert np.isclose(bop_exp.coefficients[0], 1.0)
-    assert bop_exp.coefficients[1] is pf
+    assert np.isclose(bop_exp.coefficients[1], a)
+    assert bop_exp.coefficients[2] is pf
 
     # constant part
-    assert isinstance(const_op, BlockOperator)
-    c00 = const_op.blocks[0, 0]
-    assert isinstance(c00, LincombOperator)
-    assert np.allclose(c00.operators[0].matrix, A.matrix)
-    assert np.allclose(c00.coefficients[0], a)
+    assert isinstance(non_lincomb_blocks, BlockOperator)
+    assert isinstance(non_lincomb_blocks.blocks[0, 0], ZeroOperator)
+    assert isinstance(non_lincomb_blocks.blocks[0, 1], NumpyMatrixOperator)
+    assert isinstance(non_lincomb_blocks.blocks[1, 0], ZeroOperator)
+    assert isinstance(non_lincomb_blocks.blocks[1, 1], NumpyMatrixOperator)
+    assert np.allclose(non_lincomb_blocks.blocks[0, 1].matrix, D.matrix)
+    assert np.allclose(non_lincomb_blocks.blocks[1, 1].matrix, E.matrix)
 
-    assert np.allclose(const_op.blocks[0, 1].matrix, D.matrix)
-    assert isinstance(const_op.blocks[1, 0], ZeroOperator)
-    assert np.allclose(const_op.blocks[1, 1].matrix, E.matrix)
+    # "a" coefficient part
+    assert isinstance(a_lincomb_block, BlockOperator)
+    assert isinstance(a_lincomb_block.blocks[0, 0], NumpyMatrixOperator)
+    assert isinstance(a_lincomb_block.blocks[1, 0], ZeroOperator)
+    assert isinstance(a_lincomb_block.blocks[0, 1], ZeroOperator)
+    assert isinstance(a_lincomb_block.blocks[1, 1], ZeroOperator)
+    assert np.allclose(a_lincomb_block.blocks[0, 0].matrix, A.matrix)
 
-    # parametric part: block with B at (0,0) and Nones elsewhere
+    # parameter functional part
     assert isinstance(pf_op, BlockOperator)
-    assert np.allclose(pf_op.blocks[0, 0].matrix, B.matrix)
-    assert isinstance(pf_op.blocks[0, 1], ZeroOperator)
+    assert isinstance(pf_op.blocks[0, 0], NumpyMatrixOperator)
     assert isinstance(pf_op.blocks[1, 0], ZeroOperator)
+    assert isinstance(pf_op.blocks[0, 1], ZeroOperator)
     assert isinstance(pf_op.blocks[1, 1], ZeroOperator)
+    assert np.allclose(pf_op.blocks[0, 0].matrix, B.matrix)
 
+    # action check
     mu = Mu({'mu': np.array([3.5])})
     block_space = BlockVectorSpace([V2, V3])
     x0 = V2.from_numpy(np.array([1, 2]))
@@ -221,24 +229,44 @@ def test_block_expand_only_constant_blocks():
 
     # Expand
     const_op = expand(bop)
-    assert isinstance(const_op, BlockOperator)
-    c00 = const_op.blocks[0, 0]
-    assert isinstance(c00, LincombOperator)
-    assert isinstance(c00.operators[0], NumpyMatrixOperator)
-    assert isinstance(c00.operators[1], NumpyMatrixOperator)
-    assert isinstance(c00.operators[2], NumpyMatrixOperator)
+    assert isinstance(const_op, LincombOperator)
+    assert len(const_op.operators) == 4
 
-    assert np.allclose(c00.operators[0].matrix, F.matrix)
-    assert np.allclose(c00.coefficients[0], 6)
-    assert np.allclose(c00.operators[1].matrix, G.matrix)
-    assert np.allclose(c00.coefficients[1], 8)
-    assert np.allclose(c00.operators[2].matrix, B.matrix)
-    assert np.allclose(c00.coefficients[2], 1)
+    non_lincomb_part = const_op.operators[0]
+    assert isinstance(non_lincomb_part, BlockOperator)
+    assert isinstance(non_lincomb_part.blocks[0, 0], ZeroOperator)
+    assert isinstance(non_lincomb_part.blocks[0, 1], NumpyMatrixOperator)
+    assert isinstance(non_lincomb_part.blocks[1, 1], NumpyMatrixOperator)
+    assert isinstance(non_lincomb_part.blocks[1, 0], ZeroOperator)
 
-    assert np.allclose(const_op.blocks[0, 1].matrix, D.matrix)
-    assert isinstance(const_op.blocks[1, 0], ZeroOperator)
-    assert np.allclose(const_op.blocks[1, 1].matrix, E.matrix)
+    first_lincomb_block = const_op.operators[1]
+    assert isinstance(first_lincomb_block, BlockOperator)
+    assert isinstance(first_lincomb_block.blocks[0, 0], NumpyMatrixOperator)
+    assert np.allclose(first_lincomb_block.blocks[0, 0].matrix, F.matrix)
+    assert np.allclose(const_op.coefficients[1], 6)
+    assert isinstance(first_lincomb_block.blocks[1, 0], ZeroOperator)
+    assert isinstance(first_lincomb_block.blocks[0, 1], ZeroOperator)
+    assert isinstance(first_lincomb_block.blocks[1, 1], ZeroOperator)
 
+    second_lincomb_block = const_op.operators[2]
+    assert isinstance(second_lincomb_block, BlockOperator)
+    assert isinstance(second_lincomb_block.blocks[0, 0], NumpyMatrixOperator)
+    assert np.allclose(second_lincomb_block.blocks[0, 0].matrix, G.matrix)
+    assert np.allclose(const_op.coefficients[2], 8)
+    assert isinstance(second_lincomb_block.blocks[1, 0], ZeroOperator)
+    assert isinstance(second_lincomb_block.blocks[0, 1], ZeroOperator)
+    assert isinstance(second_lincomb_block.blocks[1, 1], ZeroOperator)
+
+    third_lincomb_block = const_op.operators[3]
+    assert isinstance(third_lincomb_block, BlockOperator)
+    assert isinstance(third_lincomb_block.blocks[0, 0], NumpyMatrixOperator)
+    assert np.allclose(third_lincomb_block.blocks[0, 0].matrix, B.matrix)
+    assert np.allclose(const_op.coefficients[3], 1)
+    assert isinstance(third_lincomb_block.blocks[1, 0], ZeroOperator)
+    assert isinstance(third_lincomb_block.blocks[0, 1], ZeroOperator)
+    assert isinstance(third_lincomb_block.blocks[1, 1], ZeroOperator)
+
+    # action check
     block_space = BlockVectorSpace([V2, V3])
     x0 = V2.from_numpy(np.array([1, 2]))
     x1 = V3.from_numpy(np.array([3, 4, 5]))
