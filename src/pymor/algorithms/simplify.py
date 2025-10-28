@@ -2,9 +2,18 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, LincombOperator, VectorArrayOperator
+from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    ConcatenationOperator,
+    IdentityOperator,
+    LincombOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
@@ -12,7 +21,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def expand(obj):
-    """Expand concatenations of LincombOperators.
+    """Expand concatenations of |LincombOperators|.
 
     To any given |Operator| or |Model|, the following
     transformations are applied recursively:
@@ -27,10 +36,22 @@ def expand(obj):
           O1 @ O3 + O1 @ O4 + O2 @ O3 + O2 @ O4
 
     - |LincombOperators| inside |LincombOperators| are merged into a single
-      |LincombOperator|
+      |LincombOperator|.
 
     - |ConcatenationOperators| inside |ConcatenationOperators| are merged into a
       single |ConcatenationOperator|.
+
+    - :class:`Adjoints <pymor.operators.constructions.AdjointOperator>` of |LincombOperators|
+      are distributed over the linear combination ::
+
+          (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*.
+
+    - |ConcatenationOperators| inside |AdjointOperators| are reversed ::
+
+          (A @ B @ C)^* = C^* @ B^* @ A^*.
+
+    - |BlockOperators| are expanded block-wise. Further, |LincombOperator| blocks are expanded
+      into a single |LincombOperator| of |BlockOperators|.
 
     Parameters
     ----------
@@ -96,6 +117,64 @@ class ExpandRules(RuleTable):
                     ops.append(o)
             op = op.with_(operators=ops, coefficients=coeffs)
         return op
+
+    @match_class(AdjointOperator)
+    def action_AdjointOperator(self, op):
+        inner = self.apply(op.operator)
+
+        # If the inside is a LincombOperator, distribute adjoint over the sum:
+        # (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*
+        if isinstance(inner, LincombOperator):
+            ops = [AdjointOperator(o, source_product=op.source_product, range_product=op.range_product)
+                   for o in inner.operators]
+            coeffs = [c.conjugate() for c in inner.coefficients]
+            return LincombOperator(ops, coeffs)
+
+        # If the inside is a ConcatenationOperator, distribute adjoint over the concatenation:
+        # (A @ B @ C)^* = C^* @ B^* @ A^*
+        if isinstance(inner, ConcatenationOperator):
+            if len(inner.operators) == 1:
+                return AdjointOperator(inner.operators[0], source_product=op.source_product,
+                                       range_product=op.range_product)
+            else:
+                last, *middle, first = inner.operators[::-1]
+                adj_factors = ([AdjointOperator(last, source_product=op.source_product)] +
+                            [op.H for op in middle] +
+                            [AdjointOperator(first, range_product=op.range_product)])
+
+                return ConcatenationOperator(adj_factors)
+
+        return AdjointOperator(inner, source_product=op.source_product, range_product=op.range_product)
+
+    @match_class(BlockOperator)
+    def action_BlockOperator(self, op):
+        # recursively expand all children
+        op = self.replace_children(op)
+        nrows, ncols = op.blocks.shape
+
+        const_blocks = np.full((nrows, ncols), None, dtype=object)
+        expanded_terms = []
+        for (i, j), b in np.ndenumerate(op.blocks):
+            if isinstance(b, LincombOperator):
+                for c_k, a_k in zip(b.coefficients, b.operators, strict=True):
+                    blocks_k = np.full((nrows, ncols), None, dtype=object)
+                    blocks_k[i, j] = a_k
+                    expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces,
+                                                                source_spaces=op.source.subspaces)))
+            else:
+                const_blocks[i, j] = b
+
+        const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
+
+        coeffs, ops = zip(*expanded_terms, strict=True) if expanded_terms else ((), ())
+        if const_blocks.any():
+            ops = [const_part] + list(ops)
+            coeffs = [1.] + list(coeffs)
+
+        if len(ops) == 1 and list(coeffs) == [1.]:
+            return ops[0]
+
+        return LincombOperator(ops, coeffs)
 
     @match_class(ConcatenationOperator)
     def action_ConcatenationOperator(self, op):
