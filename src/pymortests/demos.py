@@ -163,6 +163,15 @@ SYMPLECTIC_WAVE_ARGS = (
     ('symplectic_wave_equation', [1., 10]),
 )
 
+VKOGA_ARGS = (
+    ('vkoga', ['--greedy_criterion=fp', '--kernel=non-diagonal']),
+    ('vkoga', ['--greedy_criterion=fp', '--kernel=diagonal']),
+    ('vkoga', ['--greedy_criterion=f', '--kernel=non-diagonal']),
+    ('vkoga', ['--greedy_criterion=f', '--kernel=diagonal']),
+    ('vkoga', ['--greedy_criterion=p', '--kernel=non-diagonal']),
+    ('vkoga', ['--greedy_criterion=p', '--kernel=diagonal']),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
@@ -181,6 +190,7 @@ DEMO_ARGS = (
     + DMD_ARGS
     + PHLTI_ARGS
     + SYMPLECTIC_WAVE_ARGS
+    + VKOGA_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
