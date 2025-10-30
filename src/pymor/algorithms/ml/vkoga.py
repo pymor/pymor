@@ -255,7 +255,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
 
 class VKOGAEstimator(BasicObject):
-    """Scikit-learn-style estimator using :class:`~pymor.algorithms.ml.vkoga.VKOGASurrogate`.
+    """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
 
     The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit` method
     to select centers according to the given criterion.
