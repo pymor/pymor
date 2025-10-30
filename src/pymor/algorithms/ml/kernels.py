@@ -72,6 +72,8 @@ class DiagonalVectorValuedKernel:
         If `base_kernel(X, Y)` has shape :math:`(n, n')`, the returned matrix
         has shape :math:`(n\cdot m, n'\cdot m)`, where `m = n_outputs`.
         """
+        X = np.atleast_2d(X)
+        Y = np.atleast_2d(Y)
         K_scalar = self.base_kernel(X, Y)
 
         # efficient block-diagonal expansion: kron(I_m, K_scalar)
