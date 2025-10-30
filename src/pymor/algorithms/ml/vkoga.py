@@ -275,7 +275,7 @@ class VKOGAEstimator(BasicObject):
     @defaults('criterion', 'max_centers', 'tol', 'reg')
     def __init__(self, kernel, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
-        self.surrogate_ = None
+        self._surrogate = None
 
     def fit(self, X, Y):
         """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
