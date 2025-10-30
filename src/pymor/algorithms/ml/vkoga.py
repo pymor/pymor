@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from scipy.linalg import solve_triangular
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
 from pymor.core.base import BasicObject
@@ -25,7 +26,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._centers = None
         self._centers_idx = None
         self._coefficients = None
-        self.L = None  # block-Cholesky factor of the kernel matrix used for the Newton basis
+        self.L = None  # block-Cholesky factor of the kernel matrix
 
     def _stack_block_column(self, X_centers, x_new):
         """Stack K(c_j, x_new) for j over X_centers in order. Result shape (n*m, m)."""
@@ -37,20 +38,13 @@ class VKOGASurrogate(WeakGreedySurrogate):
             B[j*self.m:(j+1)*self.m, :] = self.kernel(cj, x_new)
         return B
 
-    def _stack_rhs_from_indices(self, centers_idx):
-        """Stack F_train[centers_idx] in same order => (n*m,)."""
-        if len(centers_idx) == 0:
-            return np.zeros((0,))
-        blocks = [self.F_train[idx].reshape(self.m,) for idx in centers_idx]
-        return np.concatenate(blocks, axis=0)
-
     def predict(self, X):
         X = np.asarray(X)
         if self._centers is None:
             return np.zeros((X.shape[0], self.m))
         y = np.zeros((X.shape[0], self.m))
         for j, cj in enumerate(self._centers):
-            K_vals = np.array([self.kernel(x, cj) for x in X])  # (N_new, m, m)
+            K_vals = np.array([self.kernel(x, cj) for x in X])
             y += np.einsum('nij,j->ni', K_vals, self._coefficients[j])
         return y
 
@@ -62,7 +56,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         for i, x in enumerate(X):
             B_col = self._stack_block_column(self._centers, x)
             K_xx = self.kernel(x, x)
-            v = np.linalg.solve(self.L, B_col)
+            v = solve_triangular(self.L, B_col, lower=True)
             S = K_xx - v.T @ v
             P[i] = np.sqrt(max(0.0, np.linalg.norm(S, ord='fro')))
         return P
@@ -79,6 +73,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 # fallback to nearest but warn once
                 idx_nn = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
                 idxs.append(idx_nn)
+                self.logger.warn('Parameter not in the training set, falling back to nearest.')
 
         idxs = np.array(idxs, dtype=int)
         Xc = mus
@@ -102,72 +97,161 @@ class VKOGASurrogate(WeakGreedySurrogate):
         return float(scores[idx]), mus[idx]
 
     def extend(self, mu):
+        r"""Extends the kernel interpolant by adding a new center and updating all quantities.
+
+        Incrementally add a new center `mu` with corresponding function value
+        from the training data. This function updates
+
+        * _centers
+        * _centers_idx
+        * L (block-Cholesky factor)
+        * _coefficients
+
+        using a numerically stable Newton-basis expansion.
+
+        In the following derivation we leave out the regularization term for simplicity.
+        If :math:`K_n` denotes the full block kernel matrix, we can write :math:`K_{n+1}` as
+
+        .. math::
+            K_{n+1} = \begin{bmatrix}
+                K_n & B \\
+                B^\top K_{nn}
+            \end{bmatrix},
+
+        where :math:`B=k(X_n,x_{n+1})` and :math:`K_{nn}=k(x_{n+1},x_{n+1})`. Since :math:`K_n`
+        is a kernel matrix, it is in particular positive-definite, so it has a Cholesky
+        decomposition, i.e. :math:`K_n=L_nL_n^\top`. For :math:`K_{n+1}`, we can compute the
+        Cholesky decomposition by a suitable update of :math:`L_n`:
+
+        .. math::
+            L_{n+1} = \begin{bmatrix}
+                L_n & 0 \\
+                W^\top & L_{22}
+            \end{bmatrix},
+
+        where :math:`W=L_n^{-1}B` and :math:`L_{22}` is the Cholesky decomposition
+        of :math:`K_{nn}-W^\top W`.
+
+        It is further possible to update the coefficient vector in a suitable way by reusing
+        the old coefficients and without solving the whole system again:
+        Let :math:`c_n\in\mathbb{R}^n` denote the coefficients associated to the interpolant
+        for the first :math:`n` selected centers, i.e.
+
+        .. math::
+            K_n c_n = f_n,
+
+        where :math:`f_n\in\mathbb{R}^n` corresponds to the vector of target values at the
+        selected centers. The interpolant is then given as
+
+        .. math::
+            \sum\limits_{i=1}^{n} (c_n)_i k(\,\cdot\,,x_i),
+
+        where :math:`x_1,\dots,x_n\in\mathbb{R}^d` are the :math:`n` selected centers.
+        When adding :math:`x_{n+1}\in\mathbb{R}^d` as new center, we can compute
+        :math:`c_{n+1}\in\mathbb{R}^{n+1}` in the following way: Let us write
+
+        .. math::
+            c_{n+1} = \begin{bmatrix}
+                a_1 \\
+                a_2
+            \end{bmatrix}
+
+        for unknown coefficients :math:`a_1\in\mathbb{R}^n` and :math:`a_2\in\mathbb{R}`.
+        We then have (by splitting the right-hand side :math:`f_{n+1}` accordingly)
+
+        .. math::
+            \begin{align*}
+                K_na_1+Ba_2 &= f_1, \\
+                B^\top a_1+K_{nn}a_2 &= f_2.
+            \end{align*}
+
+        One can now solve for :math:`a_1` and :math:`a_2` in the following way:
+
+        .. math::
+            \begin{align*}
+                y_1 &= L_n^{-1} f_1,\\
+                y_2 &= L_{22}^{-1}(f_2-W^\top y_1),\\
+                a_1 &= L_n^{-\top}(y_1-Wy_2) = c_n - L_n^{-\top}Wy_2,\\
+                a_2 &= L_{22}^{-\top}y_2,
+            \end{align*}
+
+        where we observe that :math:`y_1` is given by the last iteration and therefore
+        the update of :math:`a_1` and the computation of :math:`a_2` are
+        relatively cheap.
+
+        Parameters
+        ----------
+        mu
+            Parameter (center) to add.
+        """
         mu = np.asarray(mu)
 
-        # find matching training index
+        # --- Find corresponding training index (exact or nearest match) ---
+        # this is mainly required since we do not enforce that `mu` is in the training set;
+        # when introducing a suitable `Dataset` class, this should be handled by the dataset
         matches = np.where(np.all(np.isclose(self.X_train, mu), axis=1))[0]
         if matches.size > 0:
             idx_in_X = int(matches[0])
         else:
             idx_in_X = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
-            self.logger.warn(f'mu={mu} not in X_train; using nearest neighbor index {idx_in_X}')
 
-        # build the new block column and diagonal
-        B_col = self._stack_block_column(self._centers, mu)  # shape (n*m, m)
-        K_nn = self.kernel(mu, mu)
+        f_new = self.F_train[idx_in_X].reshape(self.m,)
 
-        # compute W and L22 incrementally
-        if self.L is None:
-            S = K_nn + self.reg * np.eye(self.m)
-            L22 = np.linalg.cholesky(S)
+        # --- Case 1: first center ---
+        if self.L is None or self._centers is None:
+            K_nn = self.kernel(mu, mu) + self.reg * np.eye(self.m)
+            L22 = np.linalg.cholesky(K_nn)
+            y_new = solve_triangular(L22, f_new, lower=True)
+            a2 = solve_triangular(L22.T, y_new, lower=False)
             self.L = L22
-            y_new = np.linalg.solve(L22, self.F_train[idx_in_X])
-            coefficient_new = np.linalg.solve(L22.T, y_new).reshape(1, -1)
-            self._centers = mu[None, :]
+            self._centers = np.array([mu])
             self._centers_idx = np.array([idx_in_X], dtype=int)
-            self._coefficients = coefficient_new
+            self._coefficients = a2.reshape(1, self.m)
+            self.y = y_new  # store y for reuse
             return
 
-        # otherwise: incremental update
+        # --- Case 2: incremental update ---
+        n = len(self._centers)
+        p = n * self.m
         L_old = self.L
-        p = L_old.shape[0]
-        # solve for W
-        W = np.linalg.solve(L_old, B_col)
-        # compute Schur complement
+
+        # build B_col
+        B_col = np.zeros((p, self.m))
+        for j, cj in enumerate(self._centers):
+            B_col[j * self.m:(j + 1) * self.m, :] = self.kernel(cj, mu)
+
+        K_nn = self.kernel(mu, mu)
+        W = solve_triangular(L_old, B_col, lower=True)
+
+        # Schur complement and its Cholesky decomposition (small, only for the new block)
         S = K_nn - W.T @ W + self.reg * np.eye(self.m)
         L22 = np.linalg.cholesky(S)
 
-        # update L
+        # extend L
         new_p = p + self.m
-        new_L = np.zeros((new_p, new_p))
-        new_L[:p, :p] = L_old
-        new_L[p:new_p, :p] = W.T
-        new_L[p:new_p, p:new_p] = L22
-        self.L = new_L
+        L_new = np.zeros((new_p, new_p))
+        L_new[:p, :p] = L_old
+        L_new[p:new_p, :p] = W.T
+        L_new[p:new_p, p:new_p] = L22
+        self.L = L_new
 
-        # incremental coefficient update (no recomputation)
-        # old system: L_old L_old^T coefficients_flat_old = rhs_old
-        # new system:
-        # [L_old   0  ][L_old^T  W ][coefficients_old]   = [rhs_old]
-        # [ W^T  L22 ][W^T  L22^T][coefficient_new]     [f_new]
+        # incremental update of y
+        rhs_proj = f_new - W.T @ self.y
+        y_new = solve_triangular(L22, rhs_proj, lower=True)
+        self.y = np.concatenate([self.y, y_new])  # store for next iteration
 
-        rhs_old = self._stack_rhs_from_indices(self._centers_idx)
-        f_new = self.F_train[idx_in_X].reshape(self.m,)
+        # incremental update of coefficients
+        a2 = solve_triangular(L22.T, y_new, lower=False)
+        delta_vec = solve_triangular(L_old.T, W @ a2, lower=False)
 
-        # solve for y_old = L_old^{-1} rhs_old
-        y_old = np.linalg.solve(L_old, rhs_old)
-        # compute the new projected residual
-        rhs_proj = f_new - W.T @ y_old
-        y_new = np.linalg.solve(L22, rhs_proj)
+        a1_flat_old = self._coefficients.reshape(p,)
+        a1_flat_new = a1_flat_old - delta_vec
+        a_flat_new = np.concatenate([a1_flat_new, a2.reshape(self.m,)])
+        self._coefficients = a_flat_new.reshape(n + 1, self.m)
 
-        # now update y_full and back-substitute to get _coefficients
-        y_full = np.concatenate([y_old, y_new])
-        coefficients_flat = np.linalg.solve(self.L.T, y_full)
-        self._coefficients = coefficients_flat.reshape(-1, self.m)
-
-        # append the new center
+        # update centers and indices
         self._centers = np.vstack([self._centers, mu])
-        self._centers_idx = np.concatenate([self._centers_idx, [idx_in_X]])
+        self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
 
 
 class VKOGAEstimator(BasicObject):
