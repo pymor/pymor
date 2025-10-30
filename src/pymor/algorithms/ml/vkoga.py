@@ -216,9 +216,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         L_old = self.L
 
         # build B_col
-        B_col = np.zeros((p, self.m))
-        for j, cj in enumerate(self._centers):
-            B_col[j * self.m:(j + 1) * self.m, :] = self.kernel(cj, mu)
+        B_col = self._stack_block_column(self._centers, mu)
 
         K_nn = self.kernel(mu, mu)
         W = solve_triangular(L_old, B_col, lower=True)
