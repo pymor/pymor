@@ -21,6 +21,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self.__auto_init(locals())
         self.X_train = np.asarray(X_train)
         self.F_train = np.asarray(F_train)
+        if self.F_train.ndim == 1:
+            self.F_train = self.F_train.reshape((-1, 1))
         self.N, self.m = self.F_train.shape
 
         self._centers = None
