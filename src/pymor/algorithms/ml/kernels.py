@@ -13,7 +13,7 @@ class GaussianKernel:
 
     Parameters
     ----------
-    length_scale : float, default=1.0
+    length_scale
         The length scale parameter of the kernel.
     """
 
