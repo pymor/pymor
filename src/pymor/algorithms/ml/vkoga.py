@@ -28,17 +28,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._centers = None
         self._centers_idx = None
         self._coefficients = None
-        self.L = None  # block-Cholesky factor of the kernel matrix
-
-    def _stack_block_column(self, X_centers, x_new):
-        """Stack K(c_j, x_new) for j over X_centers in order. Result shape (n*m, m)."""
-        if X_centers is None:
-            return np.zeros((0, self.m))
-        n = len(X_centers)
-        B = np.zeros((n * self.m, self.m))
-        for j, cj in enumerate(X_centers):
-            B[j*self.m:(j+1)*self.m, :] = self.kernel(cj, x_new)
-        return B
+        self._L = None  # block-Cholesky factor of the kernel matrix
+        self._init_power_function_evals()
 
     def predict(self, X):
         X = np.asarray(X)
@@ -49,19 +40,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
             K_vals = np.array([self.kernel(x, cj) for x in X])
             y += np.einsum('nij,j->ni', K_vals, self._coefficients[j])
         return y
-
-    def power_function(self, X):
-        X = np.asarray(X)
-        if self.L is None:
-            return np.ones(X.shape[0])
-        P = np.zeros(X.shape[0])
-        for i, x in enumerate(X):
-            B_col = self._stack_block_column(self._centers, x)
-            K_xx = self.kernel(x, x)
-            v = solve_triangular(self.L, B_col, lower=True)
-            S = K_xx - v.T @ v
-            P[i] = np.sqrt(max(0.0, np.linalg.norm(S, ord='fro')))
-        return P
 
     def evaluate(self, mus, return_all_values=False):
         mus = np.asarray(mus)
@@ -85,13 +63,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
             Fres = self.F_train[idxs] - Ypred
             res_norms = np.linalg.norm(Fres, axis=1)
             if self.criterion == 'fp':
-                P = self.power_function(Xc)
-                scores = res_norms * P
+                scores = res_norms * np.sqrt(self._power2)
             elif self.criterion == 'f':
                 scores = res_norms
         elif self.criterion == 'p':
-            P = self.power_function(Xc)
-            scores = P
+            scores = np.sqrt(self._power2)
 
         if return_all_values:
             return scores
@@ -104,12 +80,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
         Incrementally add a new center `mu` with corresponding function value
         from the training data. This function updates
 
-        * _centers
-        * _centers_idx
-        * L (block-Cholesky factor)
-        * _coefficients
+        * the selected centers (`self._centers`)
+        * the indices of the selected centers in the training set (`self._centers_idx`)
+        * the block-Cholesky factor of the kernel matrix for the selected centers (`self._L`)
+        * the coefficients of the interpolant (`self._coefficients`)
+        * the power function evaluations on the training set (`self._power2`)
+        * the Newton basis evaluations on the training set (`self._V`)
 
-        using a numerically stable Newton-basis expansion.
+        using a numerically stable Newton basis expansion.
 
         In the following derivation we leave out the regularization term for simplicity.
         If :math:`K_n` denotes the full block kernel matrix, we can write :math:`K_{n+1}` as
@@ -181,6 +159,65 @@ class VKOGASurrogate(WeakGreedySurrogate):
         the update of :math:`a_1` and the computation of :math:`a_2` are
         relatively cheap.
 
+        Regarding the power function (measuring for :math:`x\in\mathbb{R}^d` how well
+        the current subspace can represent :math:`k(\,\cdot\,,x)`, i.e. the projection
+        error in the reproducing kernel Hilbert space):
+        The power function in matrix form is defined as
+
+        .. math::
+            \begin{align*}
+                P_n^2(x) = k(x,x) - k(x,X_n)k(X_n,X_n)^{-1}k(X_n,x).
+            \end{align*}
+
+        Since we would like to use the power function as selection criterion for centers
+        within the greedy iteration, we consider a scalar version by taking the trace:
+
+        .. math::
+            \begin{align*}
+                p_n^2(x) = \operatorname{trace}(P_n^2(x)).
+            \end{align*}
+
+        We are going to track this quantity evaluated at all training points during the
+        iterations of the greedy algorithm. In order to do so, we also maintain an array
+        storing the Newton basis evaluations of the current basis at the training points:
+
+        .. math::
+            \begin{align*}
+                V_{n,i} = L_n^{-1}k(X_n,y_i)
+            \end{align*}
+
+        for all training points :math:`y_i`.
+
+        Given the first center :math:`x_1`, we initialize the (squared) power function
+        values as
+
+        .. math::
+            \begin{align*}
+                p_n^2(y_i) = \operatorname{trace}(k(y_i,y_i)-V_{1,i}^\top V_{1,i}),
+            \end{align*}
+
+        where :math:`V_{1,i} = L_{22}^{-1}k(x_1,y_i)`.
+
+        The incremental updates of :math:`V_{n,i}` to :math:`V_{n+1,i}` and the power
+        function values is then performed in the following way:
+        Define :math:`\Delta_i=k(x_{n+1},y_i)-W^\top V_i` :math:`\Xi=L_{22}^{-1}\Delta_i`.
+        Then, we have
+
+        .. math::
+            \begin{align*}
+                p_{n+1}^2(y_i) = p_n^2(y_i) - \lVert \Xi_i\rVert_F^2
+            \end{align*}
+
+        and
+
+        .. math::
+            \begin{align*}
+                V_{n+1,i} = \begin{bmatrix}
+                    V_{n,i} \\
+                    \Xi_i
+                \end{bmatrix}.
+            \end{align*}
+
         Parameters
         ----------
         mu
@@ -200,25 +237,28 @@ class VKOGASurrogate(WeakGreedySurrogate):
         f_new = self.F_train[idx_in_X].reshape(self.m,)
 
         # --- Case 1: first center ---
-        if self.L is None or self._centers is None:
+        if self._L is None or self._centers is None:
             K_nn = self.kernel(mu, mu) + self.reg * np.eye(self.m)
             L22 = np.linalg.cholesky(K_nn)
             y_new = solve_triangular(L22, f_new, lower=True)
             a2 = solve_triangular(L22.T, y_new, lower=False)
-            self.L = L22
+            self._L = L22
             self._centers = np.array([mu])
             self._centers_idx = np.array([idx_in_X], dtype=int)
             self._coefficients = a2.reshape(1, self.m)
             self.y = y_new  # store y for reuse
+            self._init_power_function_evals_after_first_center(mu, L22)
             return
 
         # --- Case 2: incremental update ---
         n = len(self._centers)
         p = n * self.m
-        L_old = self.L
+        L_old = self._L
 
         # build B_col
-        B_col = self._stack_block_column(self._centers, mu)
+        B_col = np.zeros((n * self.m, self.m))
+        for j, cj in enumerate(self._centers):
+            B_col[j*self.m:(j+1)*self.m, :] = self.kernel(cj, mu)
 
         K_nn = self.kernel(mu, mu)
         W = solve_triangular(L_old, B_col, lower=True)
@@ -233,7 +273,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         L_new[:p, :p] = L_old
         L_new[p:new_p, :p] = W.T
         L_new[p:new_p, p:new_p] = L22
-        self.L = L_new
+        self._L = L_new
 
         # incremental update of y
         rhs_proj = f_new - W.T @ self.y
@@ -249,9 +289,70 @@ class VKOGASurrogate(WeakGreedySurrogate):
         a_flat_new = np.concatenate([a1_flat_new, a2.reshape(self.m,)])
         self._coefficients = a_flat_new.reshape(n + 1, self.m)
 
+        # update power function evaluations on training set
+        self._update_power_function_evals(mu, W, L22)
+
         # update centers and indices
         self._centers = np.vstack([self._centers, mu])
         self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
+
+    def _init_power_function_evals(self):
+        """Initialize power2 and V when no centers were selected yet."""
+        # power2 = trace(k(x,x)) for each training point
+        self._power2 = np.empty(len(self.X_train))
+        for i, x in enumerate(self.X_train):
+            self._power2[i] = np.trace(self.kernel(x, x)) + self.m * self.reg
+        # no V yet, we will create V after the first center is added
+        self._V = None
+
+    def _init_power_function_evals_after_first_center(self, mu, L22):
+        """After adding the first center, compute V and power2."""
+        N = len(self.X_train)
+        m = self.m
+        K_mu_X = np.array([self.kernel(mu, x) for x in self.X_train])
+        # V_i = L22^{-1} k(mu, y_i) for each i.
+        rhs = K_mu_X.transpose(1, 0, 2).reshape(m, N * m)
+        sol = solve_triangular(L22, rhs, lower=True)
+        V_new = sol.reshape(m, N, m).transpose(1, 0, 2)
+
+        # compute power2[i]: trace(K_xx - V_i.T @ V_i)
+        power2 = np.empty(N)
+        for i, x in enumerate(self.X_train):
+            S = self.kernel(x, x) - V_new[i].T @ V_new[i]
+            power2[i] = np.trace(S) + self.reg * m
+
+        self._V = V_new.reshape(N, m, m)
+        self._power2 = np.maximum(power2, 0.0)
+
+    def _update_power_function_evals(self, mu, W, L22):
+        """Incrementally update self._power2 and self._V when adding center mu."""
+        N = len(self.X_train)
+        m = self.m
+        V_old = self._V
+        p_old = V_old.shape[1]
+        # compute k(mu, y_i) for all training points y_i
+        K_mu_X = np.array([self.kernel(mu, x) for x in self.X_train])
+
+        # Delta_i = k(mu,y_i) - M_i
+        Delta = K_mu_X - np.einsum('ap,npj->naj', W.T, V_old)
+
+        # for each i, compute Xi_i = solve(L22, Delta_i)
+        rhs = Delta.transpose(1, 0, 2).reshape(m, N * m)
+        sol = solve_triangular(L22, rhs, lower=True, check_finite=False)
+        Xi = sol.reshape(m, N, m).transpose(1, 0, 2)
+
+        # reduction: norms = ||Xi||_F^2 = sum over entries^2
+        norms = np.sum(Xi * Xi, axis=(1, 2))
+
+        # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
+        self._power2 = np.maximum(self._power2 - norms, 0.0)
+
+        # update V: append Xi as the last block of rows
+        p_new = p_old + m
+        V_new = np.zeros((N, p_new, m))
+        V_new[:, :p_old, :] = V_old
+        V_new[:, p_old:p_old + m, :] = Xi
+        self._V = V_new
 
 
 class VKOGAEstimator(BasicObject):

@@ -9,7 +9,7 @@ class GaussianKernel:
     r"""Standalone Gaussian (RBF) kernel with scikit-learn-like interface.
 
     .. math::
-        k(x, y) = exp(-||x - y||^2 / (2 * length_scale^2))
+        k(x, y) = \exp(-||x - y||_2^2 / (2 \cdot \text{length_scale}^2))
 
     Parameters
     ----------
@@ -52,7 +52,8 @@ class DiagonalVectorValuedKernel:
     r"""A simple vector-valued kernel built from a scalar base kernel.
 
     Produces a block-diagonal kernel matrix of shape :math:`(n\cdot m, n'\cdot m)`,
-    where `m` is the number of outputs and `n` and `n'` are the numbers of inputs.
+    where :math:`m` is the number of outputs and :math:`n` and :math:`n'` are
+    the numbers of inputs.
 
     Parameters
     ----------
