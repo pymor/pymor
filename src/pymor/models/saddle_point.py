@@ -4,7 +4,7 @@
 
 from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockColumnOperator, BlockOperator
-from pymor.operators.constructions import VectorOperator
+from pymor.operators.constructions import AdjointOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.interface import VectorArray
@@ -73,7 +73,7 @@ class StationarySaddelPointModel(StationaryModel):
         if isinstance(C, Operator):
             assert C.source == C.range == B.range
 
-        operator = BlockOperator([[A, B.H], [B, C]])
+        operator = BlockOperator([[A, AdjointOperator(B)], [B, C]])
 
         if isinstance(rhs, BlockColumnOperator):
             assert rhs.blocks.shape == (2,1)
@@ -90,7 +90,11 @@ class StationarySaddelPointModel(StationaryModel):
 
         assert isinstance(products, dict | type(None))
 
-        if products:
+        if isinstance(products, dict):
+            allowed = {'u', 'p'}
+            unknown = set(products.keys()) - allowed
+            assert not unknown, f'Unknown product keys: {unknown}. Allowed: {allowed}'
+
             assert len(products) <= 2
             it = iter(products)
             key1 = next(it, None)
@@ -108,7 +112,13 @@ class StationarySaddelPointModel(StationaryModel):
             if isinstance(product_2, Operator):
                 assert product_2.range == product_2.source == B.range
 
-            products = {'u': product_1, 'p': product_2}
+            tmp = {}
+            if product_1 is not None:
+                tmp['u'] = product_1
+            if product_2 is not None:
+                tmp['p'] = product_2
+
+            products = tmp if tmp else None
 
         self.__auto_init(locals())
         super().__init__(operator=operator, rhs=rhs, products=products, visualizer=visualizer, name=name)
