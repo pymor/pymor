@@ -307,7 +307,7 @@ class ScipyLSTSQSolver(ScipyLinearSolver):
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         try:
-            R, _, _, _ = lstsq(self.matrix, V)
+            R, _, _, _ = lstsq(matrix, V)
         except np.linalg.LinAlgError as e:
             raise InversionError(f'{type(e)!s}: {e!s}') from e
         return R
