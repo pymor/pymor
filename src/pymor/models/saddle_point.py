@@ -51,7 +51,7 @@ class SaddlePointModel(StationaryModel):
         - |VectorOperator| on the ``p``-space.
         - |VectorArray| on the ``p``-space.
         - ``None``, then ``g`` is set to zero.
-    u_products
+    u_product
         Inner product |Operator| acting on the ``u``-space.
     p_product
         Inner product |Operator| acting on the ``p``-space.
