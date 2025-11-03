@@ -6,11 +6,11 @@ import numpy as np
 import pytest
 
 from pymor.models.basic import StationaryModel
-from pymor.models.saddle_point import StationarySaddelPointModel
+from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockColumnOperator, BlockOperator
 from pymor.operators.constructions import AdjointOperator, VectorOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 pytestmark = pytest.mark.builtin
@@ -46,12 +46,13 @@ def vectors(spaces):
 
 
 @pytest.mark.parametrize('use_C', [True, False])
-def test_rhs_BlockColumnOperator(operators, vectors, use_C):
+def test_f_g_VectorOperator(operators, vectors, use_C):
     A, B, C = operators
     f_u, g_p = vectors
 
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)], name='rhs')
-    model = StationarySaddelPointModel(A=A, B=B, rhs=rhs, C=(C if use_C else None))
+    f = VectorOperator(f_u)
+    g = VectorOperator(g_p)
+    model = SaddlePointModel(A=A, B=B, f=f, g=g, C=(C if use_C else None))
 
     assert isinstance(model, StationaryModel)
     assert isinstance(model.operator, BlockOperator)
@@ -83,14 +84,11 @@ def test_rhs_BlockColumnOperator(operators, vectors, use_C):
 
 
 @pytest.mark.parametrize('use_C', [True, False])
-def test_rhs_BlockVectorArray(operators, vectors, spaces, use_C):
+def test_f_g_VectorArray(operators, vectors, use_C):
     A, B, C = operators
     f_u, g_p = vectors
-    U, P = spaces
 
-    block_vector_space = BlockVectorSpace([U, P])
-    rhs_bva = block_vector_space.make_array([f_u, g_p])
-    model = StationarySaddelPointModel(A=A, B=B, C=(C if use_C else None), rhs=rhs_bva)
+    model = SaddlePointModel(A=A, B=B, f=f_u, g=g_p, C=(C if use_C else None))
 
     # should coerce to BlockColumnOperator([VectorOperator(f), VectorOperator(g)])
     assert isinstance(model.rhs, BlockColumnOperator)
@@ -100,13 +98,13 @@ def test_rhs_BlockVectorArray(operators, vectors, spaces, use_C):
 
 
 @pytest.mark.parametrize('use_C', [True, False])
-def test_rhs_VectorOperator_on_u_sets_g_zero(operators, spaces, use_C):
+def test_f_VectorOperator_g_none_sets_g_zero(operators, spaces, use_C):
     A, B, C = operators
     U, P = spaces
 
     f_u = U.ones()
-    rhs_vo = VectorOperator(f_u)
-    model = StationarySaddelPointModel(A=A, B=B, rhs=rhs_vo, C=(C if use_C else None))
+    f = VectorOperator(f_u)
+    model = SaddlePointModel(A=A, B=B, f=f, g=None, C=(C if use_C else None))
 
     assert isinstance(model.rhs, BlockColumnOperator)
     out = model.rhs.as_range_array()
@@ -116,13 +114,13 @@ def test_rhs_VectorOperator_on_u_sets_g_zero(operators, spaces, use_C):
 
 
 @pytest.mark.parametrize('use_C', [True, False])
-def test_rhs_VectorArray_on_u_sets_g_zero(operators, spaces, use_C):
+def test_f_VectorArray_g_none_sets_g_zero(operators, spaces, use_C):
     A, B, C = operators
     U, P = spaces
 
     f_u = U.ones()
     # pass VectorArray directly
-    model = StationarySaddelPointModel(A=A, B=B, rhs=f_u, C=(C if use_C else None))
+    model = SaddlePointModel(A=A, B=B, f=f_u, g=None, C=(C if use_C else None))
 
     assert isinstance(model.rhs, BlockColumnOperator)
     out = model.rhs.as_range_array()
@@ -133,13 +131,10 @@ def test_rhs_VectorArray_on_u_sets_g_zero(operators, spaces, use_C):
 def test_products_none_or_empty(operators, vectors):
     A, B, C = operators
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
-    m1 = StationarySaddelPointModel(A=A, B=B, rhs=rhs, C=C, products=None)
-    assert m1.products is None
-
-    m2 = StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs, products={})
-    assert m2.products is None
+    m1 = SaddlePointModel(A=A, B=B, f=f_u, g=g_p, C=C, u_product=None, p_product=None)
+    assert isinstance(m1.products, FrozenDict)
+    assert len(m1.products) == 0
 
 
 def test_products_with_both_keys_correct_mapping(operators, vectors):
@@ -147,13 +142,11 @@ def test_products_with_both_keys_correct_mapping(operators, vectors):
     U = A.range
     P = B.range
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     Pu = NumpyMatrixOperator(np.eye(U.dim))
     Pp = NumpyMatrixOperator(np.eye(P.dim))
 
-    products = {'u': Pu, 'p': Pp}
-    model = StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs, products=products)
+    model = SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product=Pu, p_product=Pp)
 
     assert model.products['u'] == Pu
     assert model.products['p'] == Pp
@@ -169,10 +162,9 @@ def test_products_single_key_allowed(operators, vectors):
     A, B, C = operators
     U = A.range
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     Pu = NumpyMatrixOperator(np.eye(U.dim))
-    model = StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs, products={'u': Pu})
+    model = SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product=Pu)
     assert model.products['u'] is Pu
 
 
@@ -181,10 +173,9 @@ def test_assert_mismatched_A_source_range(spaces, operators, vectors):
     A_bad = NumpyMatrixOperator(np.ones((U.dim, U.dim + 1)))  # not square -> wrong spaces
     _, B_good, C = operators
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A_bad, B=B_good, C=C, rhs=rhs)
+        SaddlePointModel(A=A_bad, B=B_good, C=C, f=f_u, g=g_p)
 
 
 def test_assert_mismatched_B_source(spaces, operators, vectors):
@@ -193,10 +184,9 @@ def test_assert_mismatched_B_source(spaces, operators, vectors):
     # Make B with wrong source (P -> P instead of U -> P)
     B_bad = NumpyMatrixOperator(np.ones((P.dim, P.dim)))
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A, B=B_bad, C=C, rhs=rhs)
+        SaddlePointModel(A=A, B=B_bad, C=C, f=f_u, g=g_p)
 
 
 def test_assert_C_space(spaces, operators, vectors):
@@ -205,36 +195,52 @@ def test_assert_C_space(spaces, operators, vectors):
     # wrong C: acts on U instead of P
     C_bad = NumpyMatrixOperator(np.eye(U.dim))
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A, B=B, C=C_bad, rhs=rhs)
+        SaddlePointModel(A=A, B=B, C=C_bad, f=f_u, g=g_p)
 
 
-def test_assert_rhs_blockcolumn_shape(spaces, operators):
-    A, B, C = operators
-    U, P = spaces
-    # bad RHS: 2x2 instead of (2,1)
-    rhs_bad = BlockOperator([[VectorOperator(U.ones()), VectorOperator(U.ones())],
-                             [VectorOperator(P.zeros()), VectorOperator(P.zeros())]])
-
-    with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs_bad)  # not a BlockColumnOperator of shape (2,1)
-
-
-def test_assert_rhs_vector_spaces(operators, spaces):
+def test_assert_f_VectorOperator_wrong_space(operators, spaces):
     A, B, C = operators
     _, P = spaces
-    # RHS VectorOperator in wrong space (P instead of U for the single-vector case)
-    rhs_vo_wrong = VectorOperator(P.ones())
+    # f VectorOperator in wrong space (P instead of U)
+    f_wrong = VectorOperator(P.ones())
     with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs_vo_wrong)
+        SaddlePointModel(A=A, B=B, C=C, f=f_wrong)
+
+
+def test_assert_f_VectorArray_wrong_space(operators, spaces):
+    A, B, C = operators
+    _, P = spaces
+    # f VectorArray in wrong space (P instead of U)
+    f_wrong = P.ones()
+    with pytest.raises(AssertionError):
+        SaddlePointModel(A=A, B=B, C=C, f=f_wrong)
+
+
+def test_assert_g_VectorOperator_wrong_space(operators, spaces):
+    A, B, C = operators
+    U, _ = spaces
+    f_u = U.ones()
+    # g VectorOperator in wrong space (U instead of P)
+    g_wrong = VectorOperator(U.ones())
+    with pytest.raises(AssertionError):
+        SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_wrong)
+
+
+def test_assert_g_VectorArray_wrong_space(operators, spaces):
+    A, B, C = operators
+    U, _ = spaces
+    f_u = U.ones()
+    # g VectorArray in wrong space (U instead of P)
+    g_wrong = U.ones()
+    with pytest.raises(AssertionError):
+        SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_wrong)
 
 
 def test_assert_products_type_check(operators, vectors):
     A, B, C = operators
     f_u, g_p = vectors
-    rhs = BlockColumnOperator([VectorOperator(f_u), VectorOperator(g_p)])
 
     with pytest.raises(AssertionError):
-        StationarySaddelPointModel(A=A, B=B, C=C, rhs=rhs, products={'u': 'not an operator'})
+        SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product='not an operator')

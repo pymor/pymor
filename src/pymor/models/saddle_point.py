@@ -6,119 +6,109 @@ from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockColumnOperator, BlockOperator
 from pymor.operators.constructions import AdjointOperator, VectorOperator
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.interface import VectorArray
 
 
-class StationarySaddelPointModel(StationaryModel):
-    r"""Generic class for Saddel point models.
+class SaddlePointModel(StationaryModel):
+    r"""Generic class for saddle-point models.
 
-    Constructs a stationary model for a linear saddle-point problems
-    using a 2x2 |BlockOperator|:
+    Defines a stationary saddle-point model using a 2x2 |BlockOperator|:
 
     .. math::
         \begin{bmatrix}
             A & B^\ast \\
             B & C
-        \\end{bmatrix}
+        \end{bmatrix}
         \begin{bmatrix}
             u \\ p
-        \\end{bmatrix}
+        \end{bmatrix}
         =
         \begin{bmatrix}
             f \\ g
-        \\end{bmatrix},
+        \end{bmatrix},
 
-    Here, ``A`` is square on the ``u``-space, ``B`` maps from the ``u``-space
-    to the ``p``-space, and ``C`` is optional (stabilization/mass) on the``p``-space.
-    Typical example: Stokes equation with velocity (``u``) and pressure (``p``).
+    Here, ``A`` maps the ``u``-space into itself, ``B`` maps from the ``u``-space
+    to the ``p``-space, and ``C`` is optional. If ``C`` is provided, it maps the
+    ``p``-space into itself. Typical example: Stokes equation with velocity (``u``)
+    and pressure (``p``).
 
     Parameters
     ----------
     A
         |Operator| on the ``u``-space with ``A.source == A.range``.
     B
-        Coupling |Operator| between ``u`` and ``p``-space with ``B.source == A.source``.
+        Coupling |Operator| between the ``u`` and ``p``-space with ``B.source == A.source``.
     C
-        Optional mass |Operator| on the ``p``-space. One of:
+        Optional |Operator| on the ``p``-space. One of:
         - |Operator| with ``C.source == C.range == B.range``.
         - ``None``, which yields a |ZeroOperator|.
-    rhs
-        Right-hand side. Several forms are supported and coerced to a
-        |BlockColumnOperator| of shape ``(2, 1)``:
-        - |BlockColumnOperator| with blocks ``[f, g]``.
-        - |BlockVectorArray| with blocks ``[f, g]``.
-        - |VectorOperator| on the ``u``-space. Then ``g`` is set to zero.
-        - |VectorArray| on the ``u``-space. Then ``g`` is set to zero.
-
-    products
-        A dict of inner product |Operators| for the ``u`` and ``p`` space.
-        Entries (when given) are |Operators| and stored under the keys
-        ``'u'`` (velocity) and ``'p'`` (pressure). Missing entries remain ``None``.
+    f
+        ``f`` of the right-hand side. Either:
+        - |VectorOperator| on the ``u``-space.
+        - |VectorArray| on the ``u``-space.
+    g
+        ``g`` of the right-hand side. Either
+        - |VectorOperator| on the ``p``-space.
+        - |VectorArray| on the ``p``-space.
+        - ``None``, then ``g`` is set to zero.
+    u_products
+        Inner product |Operator| acting on the ``u``-space.
+    p_product
+        Inner product |Operator| acting on the ``p``-space.
+    error_estimator
+        See :class:`~pymor.models.basic.StationaryModel`.
     visualizer
         See :class:`~pymor.models.basic.StationaryModel`.
     name
         See :class:`~pymor.models.basic.StationaryModel`.
     """
 
-    def __init__(self, A, B, rhs, C=None, products=None, visualizer=None, name=None):
+    def __init__(self, A, B, f, g=None, C=None, u_product=None, p_product=None,
+                 error_estimator=None, visualizer=None, name=None):
         assert isinstance(A, Operator)
         assert isinstance(B, Operator)
-        assert isinstance(rhs, BlockColumnOperator | VectorOperator | VectorArray | BlockVectorArray)
-        assert isinstance(C, Operator | type(None))
+        assert isinstance(f, VectorOperator | VectorArray)
+        assert isinstance(g, VectorOperator | VectorArray | None)
+        assert isinstance(C, Operator | None)
 
         assert A.range == A.source
         assert A.source == B.source
 
-        if isinstance(C, Operator):
+        if C is not None:
             assert C.source == C.range == B.range
 
         operator = BlockOperator([[A, AdjointOperator(B)], [B, C]])
 
-        if isinstance(rhs, BlockColumnOperator):
-            assert rhs.blocks.shape == (2,1)
-            assert rhs.range == operator.source
-        elif isinstance(rhs, BlockVectorArray):
-            assert rhs in operator.source
-            rhs = BlockColumnOperator([VectorOperator(rhs.blocks[0]), VectorOperator(rhs.blocks[1])], name='rhs')
-        elif isinstance(rhs, VectorOperator):
-            assert rhs.range == A.source
-            rhs = BlockColumnOperator([rhs, VectorOperator(B.range.zeros())], name='rhs')
+        if isinstance(f, VectorOperator):
+            assert f.range == A.source
         else:
-            assert rhs in A.source
-            rhs = BlockColumnOperator([VectorOperator(rhs), VectorOperator(B.range.zeros())], name='rhs')
+            assert f in A.source
+            f = VectorOperator(f)
 
-        assert isinstance(products, dict | type(None))
+        if isinstance(g, VectorOperator):
+            assert g.range == B.range
+        elif isinstance(g, VectorArray):
+            assert g in B.range
+            g = VectorOperator(g)
+        else:
+            g = VectorOperator(B.range.zeros())
 
-        if isinstance(products, dict):
-            allowed = {'u', 'p'}
-            unknown = set(products.keys()) - allowed
-            assert not unknown, f'Unknown product keys: {unknown}. Allowed: {allowed}'
+        rhs = BlockColumnOperator([f, g], name='rhs')
 
-            assert len(products) <= 2
-            it = iter(products)
-            key1 = next(it, None)
-            key2 = next(it, None)
+        assert isinstance(u_product, Operator | None)
+        assert isinstance(p_product, Operator | None)
+        tmp_products = {}
 
-            product_1 = products[key1] if key1 else None
-            product_2 = products[key2] if key2 else None
+        if u_product is not None:
+            assert u_product.range == u_product.source == A.range
+            tmp_products['u'] = u_product
 
-            assert isinstance(product_1, Operator | type(None))
-            assert isinstance(product_2, Operator | type(None))
+        if p_product is not None:
+            assert p_product.range == p_product.source == B.range
+            tmp_products['p'] = p_product
 
-            if isinstance(product_1, Operator):
-                assert product_1.range == product_1.source == A.range
-
-            if isinstance(product_2, Operator):
-                assert product_2.range == product_2.source == B.range
-
-            tmp = {}
-            if product_1 is not None:
-                tmp['u'] = product_1
-            if product_2 is not None:
-                tmp['p'] = product_2
-
-            products = tmp if tmp else None
+        products = tmp_products or None
 
         self.__auto_init(locals())
-        super().__init__(operator=operator, rhs=rhs, products=products, visualizer=visualizer, name=name)
+        super().__init__(operator=operator, rhs=rhs, products=products, error_estimator=error_estimator,
+                         visualizer=visualizer, name=name)
