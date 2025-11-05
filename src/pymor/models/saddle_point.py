@@ -44,11 +44,11 @@ class SaddlePointModel(StationaryModel):
         - ``None``, which yields a |ZeroOperator|.
     f
         ``f`` of the right-hand side. Either:
-        - |VectorOperator| on the ``u``-space.
+        - Linear |Operator| acting on the ``u``-space with a scalar source space.
         - |VectorArray| on the ``u``-space.
     g
         ``g`` of the right-hand side. Either
-        - |VectorOperator| on the ``p``-space.
+        - Linear |Operator| acting on the ``p``-space with a scalar source space.
         - |VectorArray| on the ``p``-space.
         - ``None``, then ``g`` is set to zero.
     u_product
@@ -67,8 +67,8 @@ class SaddlePointModel(StationaryModel):
                  error_estimator=None, visualizer=None, name=None):
         assert isinstance(A, Operator)
         assert isinstance(B, Operator)
-        assert isinstance(f, VectorOperator | VectorArray)
-        assert isinstance(g, VectorOperator | VectorArray | None)
+        assert isinstance(f, Operator | VectorArray)
+        assert isinstance(g, Operator | VectorArray | None)
         assert isinstance(C, Operator | None)
 
         assert A.range == A.source
@@ -79,14 +79,18 @@ class SaddlePointModel(StationaryModel):
 
         operator = BlockOperator([[A, AdjointOperator(B)], [B, C]])
 
-        if isinstance(f, VectorOperator):
+        if isinstance(f, Operator):
             assert f.range == A.source
+            assert f.linear
+            assert f.source.is_scalar
         else:
             assert f in A.source
             f = VectorOperator(f)
 
-        if isinstance(g, VectorOperator):
+        if isinstance(g, Operator):
             assert g.range == B.range
+            assert g.linear
+            assert g.source.is_scalar
         elif isinstance(g, VectorArray):
             assert g in B.range
             g = VectorOperator(g)

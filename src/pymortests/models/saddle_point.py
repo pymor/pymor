@@ -8,8 +8,9 @@ import pytest
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockColumnOperator, BlockOperator
-from pymor.operators.constructions import AdjointOperator, VectorOperator, ZeroOperator
+from pymor.operators.constructions import AdjointOperator, LincombOperator, VectorOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -244,3 +245,64 @@ def test_assert_products_type_check(operators, vectors):
 
     with pytest.raises(AssertionError):
         SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product='not an operator')
+
+
+def test_parametric_f_g_linear_scalar_source(operators, spaces):
+    """Test that parametric operators work when linear with scalar source."""
+    A, B, C = operators
+    U, P = spaces
+
+    # Parametric f: projects parameter and maps to U-space
+    f_base = VectorOperator(U.ones())
+    f_parametric = LincombOperator([f_base], [ProjectionParameterFunctional('mu')])
+
+    # Parametric g: projects parameter and maps to P-space
+    g_base = VectorOperator(P.ones())
+    g_parametric = LincombOperator([g_base], [ProjectionParameterFunctional('mu')])
+
+    # Should work: both are linear and have scalar source
+    model = SaddlePointModel(A=A, B=B, C=C, f=f_parametric, g=g_parametric)
+
+    assert isinstance(model.rhs, BlockColumnOperator)
+    assert model.rhs.blocks[0, 0] is f_parametric
+    assert model.rhs.blocks[1, 0] is g_parametric
+
+
+def test_assert_f_not_linear(operators, spaces):
+    """Test that non-linear f operator raises AssertionError."""
+    A, B, C = operators
+    U, P = spaces
+
+    # Create a non-linear operator (e.g., mock with linear=False)
+    from pymor.operators.interface import Operator
+
+    class NonLinearOperator(Operator):
+        linear = False
+        source = NumpyVectorSpace(1)  # scalar source
+        range = U
+
+        def apply(self, U, mu=None):
+            return self.range.ones()
+
+    f_nonlinear = NonLinearOperator()
+    g_p = P.zeros()
+
+    with pytest.raises(AssertionError):
+        SaddlePointModel(A=A, B=B, C=C, f=f_nonlinear, g=g_p)
+
+
+def test_assert_g_not_scalar_source(operators, spaces):
+    """Test that g operator with non-scalar source raises AssertionError."""
+    A, B, C = operators
+    U, P = spaces
+
+    # Create a linear operator with non-scalar source (e.g., from U to P)
+    g_nonscalar = NumpyMatrixOperator(np.ones((P.dim, U.dim)))
+    assert g_nonscalar.linear
+    assert not g_nonscalar.source.is_scalar
+    assert g_nonscalar.range == P
+
+    f_u = U.ones()
+
+    with pytest.raises(AssertionError):
+        SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_nonscalar)
