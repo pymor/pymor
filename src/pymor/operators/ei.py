@@ -5,7 +5,7 @@
 import weakref
 
 import numpy as np
-from scipy.linalg import solve, solve_triangular
+from scipy.linalg import lstsq, solve, solve_triangular
 
 from pymor.operators.constructions import (
     ComponentProjectionOperator,
@@ -63,11 +63,11 @@ class EmpiricalInterpolatedOperator(Operator):
     """
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular,
-                 solver=None, name=None):
+                 least_squares=False, solver=None, name=None):
         assert isinstance(operator, Operator)
         assert isinstance(collateral_basis, VectorArray)
         assert collateral_basis in operator.range
-        assert len(interpolation_dofs) == len(collateral_basis)
+        assert (len(interpolation_dofs) == len(collateral_basis)) or least_squares
 
         self.source = operator.source
         self.range = operator.range
@@ -79,6 +79,7 @@ class EmpiricalInterpolatedOperator(Operator):
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
         self.interpolation_dofs = interpolation_dofs
         self.triangular = triangular
+        self.least_squares = least_squares
 
         if len(interpolation_dofs) > 0:
             try:
@@ -108,7 +109,9 @@ class EmpiricalInterpolatedOperator(Operator):
         else:
             AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).dofs(self.interpolation_dofs))
         try:
-            if self.triangular:
+            if self.least_squares:
+                interpolation_coefficients = lstsq(self.interpolation_matrix, AU.to_numpy())[0]
+            elif self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:
