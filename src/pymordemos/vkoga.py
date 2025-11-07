@@ -23,14 +23,24 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
          reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
          length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
                                                 'Only used when `kernel = diagonal`.')):
+    m = 2
     assert kernel in ('non-diagonal', 'diagonal')
     if kernel == 'non-diagonal':
-        def kernel(x, y, sigma=0.12, coupling=0.3):
-            k = np.exp(-np.linalg.norm(x - y)**2 / (2 * sigma**2))
-            m = 2
-            return k * ((1 - coupling) * np.eye(m) + coupling * np.ones((m, m)))
+        class NonDiagonalKernel:
+            def __init__(self, sigma=0.12, coupling=0.3):
+                self.sigma = sigma
+                self.coupling = coupling
+
+            def __call__(self, X, Y):
+                k = np.exp(-np.linalg.norm(X - Y)**2 / (2 * self.sigma**2))
+                return k * ((1 - self.coupling) * np.eye(m) + self.coupling * np.ones((m, m)))
+
+            def diag(self, X):
+                X = np.atleast_2d(X)
+                return np.ones(X.shape[0])
+        kernel = NonDiagonalKernel()
     elif kernel == 'diagonal':
-        kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), 2)
+        kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), m)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':
