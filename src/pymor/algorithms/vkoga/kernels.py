@@ -45,6 +45,11 @@ class GaussianKernel:
         # Gaussian kernel
         return np.exp(-0.5 * sqdist / (self.length_scale ** 2))
 
+    def diag(self, X):
+        """Return the diagonal of the kernel matrix."""
+        X = np.atleast_2d(X)
+        return np.ones(X.shape[0])
+
 
 class DiagonalVectorValuedKernel:
     r"""A simple vector-valued kernel built from a scalar base kernel.
@@ -80,3 +85,9 @@ class DiagonalVectorValuedKernel:
         K_block = np.kron(np.eye(self.n_outputs), K_scalar)
 
         return K_block
+
+    def diag(self, X):
+        """Return the diagonal of the kernel matrix."""
+        X = np.atleast_2d(X)
+        k_diag = self.base_kernel.diag(X)
+        return np.kron(np.ones(self.n_outputs), k_diag)
