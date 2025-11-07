@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.ml.kernels import DiagonalVectorValuedKernel, GaussianKernel
-from pymor.algorithms.ml.vkoga import VKOGAEstimator
+from pymor.algorithms.vkoga import DiagonalVectorValuedKernel, GaussianKernel, VKOGAEstimator
 from pymor.tools.random import new_rng
 from pymor.tools.typer import Choices
 
