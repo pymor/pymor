@@ -170,6 +170,8 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=f', '--kernel=diagonal']),
     ('vkoga', ['--greedy-criterion=p', '--kernel=non-diagonal']),
     ('vkoga', ['--greedy-criterion=p', '--kernel=diagonal']),
+    ('vkoga', ['--greedy-criterion=f/p', '--kernel=non-diagonal']),
+    ('vkoga', ['--greedy-criterion=f/p', '--kernel=diagonal']),
 )
 
 DEMO_ARGS = (

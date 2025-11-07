@@ -39,13 +39,11 @@ class GaussianKernel:
         X = np.atleast_2d(X)
         Y = X if Y is None else np.atleast_2d(Y)
 
-        # Compute squared Euclidean distances
-        diff = X[:, None, :] - Y[None, :, :]
-        sqdist = np.sum(diff**2, axis=-1)
+        # compute squared Euclidean distances
+        sqdist = np.sum((X[:, None, :] - Y[None, :, :])**2, axis=-1)
 
         # Gaussian kernel
-        K = np.exp(-0.5 * sqdist / (self.length_scale ** 2))
-        return K
+        return np.exp(-0.5 * sqdist / (self.length_scale ** 2))
 
 
 class DiagonalVectorValuedKernel:
@@ -67,14 +65,14 @@ class DiagonalVectorValuedKernel:
         self.base_kernel = base_kernel
         self.n_outputs = n_outputs
 
-    def __call__(self, X, Y):
+    def __call__(self, X, Y=None):
         r"""Compute blockified vector-valued kernel between `X` and `Y`.
 
         If `base_kernel(X, Y)` has shape :math:`(n, n')`, the returned matrix
         has shape :math:`(n\cdot m, n'\cdot m)`, where `m = n_outputs`.
         """
         X = np.atleast_2d(X)
-        Y = np.atleast_2d(Y)
+        Y = X if Y is None else np.atleast_2d(Y)
         K_scalar = self.base_kernel(X, Y)
 
         # efficient block-diagonal expansion: kron(I_m, K_scalar)

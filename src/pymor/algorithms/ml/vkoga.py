@@ -17,7 +17,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
     """
 
     def __init__(self, kernel, X_train, F_train, criterion='fp', reg=1e-12):
-        assert criterion in ('fp', 'f', 'p')
+        assert criterion in ('fp', 'f', 'p', 'f/p')
         self.__auto_init(locals())
         self.X_train = np.asarray(X_train)
         self.F_train = np.asarray(F_train)
@@ -58,7 +58,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         idxs = np.array(idxs, dtype=int)
         Xc = mus
 
-        if self.criterion in ('fp', 'f'):
+        if self.criterion in ('fp', 'f/p', 'f'):
             Ypred = self.predict(Xc)
             Fres = self.F_train[idxs] - Ypred
             res_norms = np.linalg.norm(Fres, axis=1)
@@ -66,6 +66,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 scores = res_norms * np.sqrt(self._power2)
             elif self.criterion == 'f':
                 scores = res_norms
+            elif self.criterion == 'f/p':
+                scores = np.zeros_like(res_norms)
+                nonzero_power = np.nonzero(self._power2)
+                scores[nonzero_power] = res_norms[nonzero_power] / np.sqrt(self._power2[nonzero_power])
         elif self.criterion == 'p':
             scores = np.sqrt(self._power2)
 
@@ -95,10 +99,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         .. math::
             K_{n+1} = \begin{bmatrix}
                 K_n & B \\
-                B^\top K_{nn}
+                B^\top & k_{n+1,n+1}
             \end{bmatrix},
 
-        where :math:`B=k(X_n,x_{n+1})` and :math:`K_{nn}=k(x_{n+1},x_{n+1})`. Since :math:`K_n`
+        where :math:`B=k(X_n,x_{n+1})` and :math:`k_{n+1,n+1}=k(x_{n+1},x_{n+1})`. Since :math:`K_n`
         is a kernel matrix, it is in particular positive-definite, so it has a Cholesky
         decomposition, i.e. :math:`K_n=L_nL_n^\top`. For :math:`K_{n+1}`, we can compute the
         Cholesky decomposition by a suitable update of :math:`L_n`:
@@ -110,7 +114,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
             \end{bmatrix},
 
         where :math:`W=L_n^{-1}B` and :math:`L_{22}` is the Cholesky decomposition
-        of :math:`K_{nn}-W^\top W`.
+        of :math:`k_{n+1,n+1}-W^\top W`.
 
         It is further possible to update the coefficient vector in a suitable way by reusing
         the old coefficients and without solving the whole system again:
@@ -142,7 +146,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         .. math::
             \begin{align*}
                 K_na_1+Ba_2 &= f_1, \\
-                B^\top a_1+K_{nn}a_2 &= f_2.
+                B^\top a_1+k_{n+1,n+1}a_2 &= f_2.
             \end{align*}
 
         One can now solve for :math:`a_1` and :math:`a_2` in the following way:
@@ -200,7 +204,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         The incremental updates of :math:`V_{n,i}` to :math:`V_{n+1,i}` and the power
         function values is then performed in the following way:
-        Define :math:`\Delta_i=k(x_{n+1},y_i)-W^\top V_i` :math:`\Xi=L_{22}^{-1}\Delta_i`.
+        Define :math:`\Delta_i=k(x_{n+1},y_i)-W^\top V_{n,i}`
+        and :math:`\Xi=L_{22}^{-1}\Delta_i`.
         Then, we have
 
         .. math::
