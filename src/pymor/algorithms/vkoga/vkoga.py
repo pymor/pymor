@@ -304,9 +304,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _init_power_function_evals(self):
         """Initialize power2 and V when no centers were selected yet."""
         # power2 = trace(k(x,x)) for each training point
-        self._power2 = np.empty(len(self.X_train))
-        for i, x in enumerate(self.X_train):
-            self._power2[i] = np.trace(self.kernel(x, x)) + self.m * self.reg
+        diag = self.kernel.diag(self.X_train)
+        self._power2 = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
         # no V yet, we will create V after the first center is added
         self._V = None
 
