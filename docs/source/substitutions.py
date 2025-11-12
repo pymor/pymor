@@ -131,6 +131,7 @@ common = """
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
 .. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
 .. |QuadraticHamiltonianModel| replace:: :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`
+.. |SaddlePointModel| replace:: :class:`~pymor.models.saddle_point.SaddlePointModel`
 
 .. |MoebiusTransformation| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
 .. |MoebiusTransformations| replace:: :class:`MoebiusTransformations <pymor.models.transforms.MoebiusTransformation>`
