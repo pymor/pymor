@@ -60,7 +60,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, least_squares=False, visualizer=None, output_d_mu_use_adjoint=None,
+                 error_estimator=None, visualizer=None, output_d_mu_use_adjoint=None,
                  name=None):
 
         if isinstance(rhs, VectorArray):
@@ -81,7 +81,6 @@ class StationaryModel(Model):
         self.solution_space = operator.source
         self.linear = operator.linear and output_functional.linear
         self.dim_output = output_functional.range.dim
-        self.least_squares = least_squares
 
     def __str__(self):
         return (
@@ -94,10 +93,7 @@ class StationaryModel(Model):
 
     def _compute(self, quantities, data, mu=None):
         if 'solution' in quantities:
-            if self.least_squares:
-                data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu, least_squares=True)
-            else:
-                data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+            data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
             quantities.remove('solution')
 
         for _, param, idx in [q for q in quantities if isinstance(q, tuple) and q[0] == 'solution_d_mu']:

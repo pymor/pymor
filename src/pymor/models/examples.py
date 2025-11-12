@@ -362,9 +362,8 @@ def stokes_2Dexample(rhs=None):
     from skfem.utils import bmat, condense
 
     from pymor.analyticalproblems.functions import Function
-    from pymor.models.basic import StationaryModel
-    from pymor.operators.block import BlockColumnOperator, BlockOperator
-    from pymor.operators.constructions import LincombOperator, VectorOperator, ZeroOperator
+    from pymor.models.saddle_point import SaddlePointModel
+    from pymor.operators.constructions import LincombOperator
     from pymor.operators.numpy import NumpyMatrixOperator
     from pymor.parameters.base import Parameters
     from pymor.parameters.functionals import ExpressionParameterFunctional
@@ -426,24 +425,17 @@ def stokes_2Dexample(rhs=None):
     product_u_c = product_u[free_idx_u][:, free_idx_u]
     product_p_c = product_p[free_idx_p][:, free_idx_p]
 
-    # build BlockOperator
     U_space = NumpyVectorSpace(free_u)
     P_space = NumpyVectorSpace(free_p)
     nu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
     A_op = NumpyMatrixOperator(A_c)
     A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
     B_op = NumpyMatrixOperator(B_c)
-    B_op_T = NumpyMatrixOperator(B_c.T)
-    Z_op = ZeroOperator(range=P_space, source=P_space)
 
-    K_op = BlockOperator([[A_op_nu, B_op_T], [B_op, Z_op]])
-    F_op = BlockColumnOperator([VectorOperator(U_space.make_array(f_c[:free_u])),
-                               VectorOperator(P_space.make_array(f_c[free_u:]))])
+    f = U_space.make_array(f_c[:free_u])
+    g = P_space.make_array(f_c[free_u:])
 
-    fom = StationaryModel(operator=K_op,
-                          rhs=F_op,
-                          products={'u': NumpyMatrixOperator(product_u_c),
-                                    'p': NumpyMatrixOperator(product_p_c)},
-                          name='Stokes-TH')
+    fom = SaddlePointModel(A=A_op_nu, B=B_op, f=f, g=g, u_product=NumpyMatrixOperator(product_u_c),
+                           p_product=NumpyMatrixOperator(product_p_c))
 
     return fom
