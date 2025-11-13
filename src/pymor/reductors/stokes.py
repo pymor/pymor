@@ -7,7 +7,7 @@ from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
-from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor
+from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -69,14 +69,10 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
             trial_space = BlockVectorSpace((RB_u_enriched.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u_enriched, RB_p))
+            projected_operators = StationaryRBReductor(fom, RB=V_block, check_orthonormality=False).project_operators()
 
-            projected_operators = {
-                'operator':          project(fom.operator, range_basis=V_block, source_basis=V_block),
-                'rhs':               project(fom.rhs, range_basis=V_block, source_basis=None),
-                'products':          {'u': project(fom.products['u'], RB_u_enriched, RB_u_enriched),
-                                      'p': project(fom.products['p'], RB_p, RB_p)},
-                'output_functional': project(fom.output_functional, None, V_block)
-            }
+            projected_operators['products'] = {'u': project(fom.products['u'], RB_u_enriched, RB_u_enriched),
+                                               'p': project(fom.products['p'], RB_p, RB_p)}
 
         elif self.projection_method == 'ls-normal':
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
@@ -91,13 +87,11 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             else:
                 mixed_product = None
 
-            # the helper_fom is required as the StationaryLSRBReductor needs
-            # a single product dict for the whole blocked space
-            helper_fom = StationaryModel(operator=fom.operator, rhs=fom.rhs, products={'mixed': mixed_product})
-            projected_operators = StationaryLSRBReductor(helper_fom, RB=V_block, product=mixed_product,
-                                                         use_normal_equations=True).project_operators()
+            projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
+                                                         use_normal_equations=True,
+                                                         check_orthonormality=False).project_operators()
 
-            # project the products again to retrieve the correct blocks
+            # project the products to retrieve the correct blocks
             projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
                                                'p': project(fom.products['p'], RB_p, RB_p)}
 
@@ -114,13 +108,10 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             else:
                 mixed_product = None
 
-            # the helper_fom is required as the StationaryLSRBReductor needs
-            # a single product dict for the whole blocked space
-            helper_fom = StationaryModel(operator=fom.operator, rhs=fom.rhs, products={'mixed': mixed_product})
-            projected_operators = StationaryLSRBReductor(helper_fom, RB=V_block,
-                                                         product=mixed_product).project_operators()
+            projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
+                                                         check_orthonormality=False).project_operators()
 
-            # project the products again to retrieve the correct blocks
+            # project the products to retrieve the correct blocks
             projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
                                                'p': project(fom.products['p'], RB_p, RB_p)}
 
