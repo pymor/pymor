@@ -180,7 +180,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
-            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
+            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
+                                  if RB in v.source and RB in v.range},
             'output_functional': project(fom.output_functional, None, RB)
         }
         return projected_operators
@@ -346,7 +347,8 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                                              range_basis=RB, source_basis=RB),
                 'rhs':               project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs,
                                              range_basis=RB, source_basis=None),
-                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
+                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
+                                      if RB in v.source and RB in v.range},
                 'output_functional': project(fom.output_functional, None, RB)
             }
         else:
@@ -360,7 +362,8 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'operator':          project(fom.operator, range_basis=test_space,
                                              source_basis=RB).with_(solver=ScipyLSTSQSolver()),
                 'rhs':               project(fom.rhs, range_basis=test_space, source_basis=None),
-                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
+                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
+                                      if RB in v.source and RB in v.range},
                 'output_functional': project(fom.output_functional, None, RB)
             }
 
