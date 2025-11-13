@@ -14,7 +14,7 @@ from pymor.models.examples import stokes_2Dexample
 from pymor.reductors.stokes import StationaryRBStokesReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-PROJECTION_METHODS = ['Galerkin', 'ls-normal', 'ls-ls']
+PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
 def main(
     mu_low: float = Argument(0.01),
@@ -27,7 +27,7 @@ def main(
     The :class:`~pymor.reductors.stokes.StationaryRBStokesReductor` supports three
     different projection methods:
 
-        - ``'Galerkin'``
+        - ``'supremizer_galerkin'``
         - ``'ls-normal'``
         - ``'ls-ls'``
 
@@ -67,12 +67,14 @@ def main(
                                                      RB_u=basis_u,
                                                      RB_p=basis_p,
                                                      projection_method=method,
-                                                     product_u = fom_stokes.u_product,
-                                                     product_p=fom_stokes.p_product)
+                                                     u_product = fom_stokes.u_product,
+                                                     p_product=fom_stokes.p_product)
         rom = reductor_stokes.reduce()
 
         results_rom = [evaluate_rom_once(rom, reductor_stokes, mu) for mu in mus]
-        if method == 'Galerkin':
+
+        #evaluate fom as reference solution only once
+        if method == 'supremizer_galerkin':
             results_fom = [evaluate_fom_once(fom_stokes, mu) for mu in mus]
 
         results = compute_speedup_and_errros(results_fom, results_rom)
@@ -129,10 +131,10 @@ def compute_speedup_and_errros(fom_results, rom_results):
 
 def print_results(speedups, errors_u, errors_p):
     print('\n======== ROM Evaluation Results ========\n')
-    print(f"{'Method':<12} | {'Speedup':>10} | {'Error u':>12} | {'Error p':>12}")
+    print(f"{'Method':<20} | {'Speedup':>10} | {'Error u':>12} | {'Error p':>12}")
     print('-' * 56)
     for method in speedups:
-        print(f'{method:<12} | {speedups[method]:10.2f} | {errors_u[method]:12.2e} | {errors_p[method]:12.2e}')
+        print(f'{method:<20} | {speedups[method]:10.2f} | {errors_u[method]:12.2e} | {errors_p[method]:12.2e}')
     print()
 
 if __name__ == '__main__':
