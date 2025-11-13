@@ -7,7 +7,7 @@ import numpy.typing as npt
 from pymor.core.base import BasicObject
 from pymor.core.cache import build_cache_key
 from pymor.core.pickle import dump, load
-from pymor.models.compute import ComputeModel
+from pymor.models.generic import ComputeModel
 from pymor.parameters.base import Parameters
 from pymor.vectorarrays.interface import VectorArray
 

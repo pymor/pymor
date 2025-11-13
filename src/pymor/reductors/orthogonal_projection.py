@@ -2,7 +2,7 @@ import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
-from pymor.models.compute import ComputeModel
+from pymor.models.generic import GenericModel
 from pymor.reductors.basic import ProjectionBasedReductor
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -56,7 +56,7 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
             return np.linalg.solve(G, R).T
 
         rom_space = NumpyVectorSpace(dim)
-        rom = ComputeModel(
+        rom = GenericModel(
             parameters=self.fom.parameters,
             computers={
                 "solution": (
