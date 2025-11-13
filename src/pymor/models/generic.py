@@ -10,7 +10,7 @@ from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
-class ComputeModel(Model):
+class GenericModel(Model):
 
     def __init__(
         self,
