@@ -8,10 +8,10 @@ from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class BestApproximationReductor(ProjectionBasedReductor):
-    """Generic reductor using best-approximation onto a reduced basis.
+class OrthogonalProjectionReductor(ProjectionBasedReductor):
+    """Reductor performing an orthogonal projection onto a reduced basis.
 
-    _Note_ that the resulting model does does not bring any computational benefits.
+    _Note_ that the resulting model does not bring any computational benefits.
 
     We achieve restriction to sub-basis by using the projected operators as a dimension tag.
     """
