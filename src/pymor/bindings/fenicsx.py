@@ -334,18 +334,15 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
 class FenicsxOperator(Operator):
 
-    def __init__(self, form, source_states, params=None, bcs=(), alpha=1., lifting_form=None, linear=False, solver=None,
+    def __init__(self, form, source_function, params=None, bcs=(), alpha=1., lifting_form=None, linear=False, solver=None,
                  name=None):
         assert form.rank == 1
         params = params or {}
         bcs = bcs or tuple()
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
-        source_states = tuple(FenicsxMutableState.create(s) for s in source_states)
-        assert len(source_states) >= 1
         self.__auto_init(locals())
         self.range = FenicsxVectorSpace(form.function_spaces[0])
-        self.source = source_states[0].space if len(source_states) == 1 \
-            else BlockVectorSpace([s.space for s in source_states])
+        self.source = FenicsxVectorSpace(source_function.function_space)
         self.parameters_own = {k: v.ufl_shape[0] if len(v.ufl_shape) == 1 else 1 for k, v in params.items()}
 
     def _set_mu(self, mu=None):
@@ -358,8 +355,10 @@ class FenicsxOperator(Operator):
         self._set_mu(mu)
         R = []
         for u in U:
-            for s, uu in zip(self.source_states, [u] if len(self.source_states) == 1 else u.blocks, strict=True):
-                s.set(uu)
+            assert u.vectors[0].imag_part is None
+            with (u.vectors[0].real_part.impl.localForm() as loc_u,
+                  self.source_function.x.petsc_vec.localForm() as loc_source_func):
+                loc_u.copy(loc_source_func)
             vec = assemble_vector(self.form)
             if self.lifting_form is not None:
                 apply_lifting(vec, [self.lifting_form], [self.bcs])
@@ -436,58 +435,6 @@ class FenicsxVisualizer(ImmutableObject):
                 plotter.add_scalar_bar(l)
                 plotter.view_xy()
             plotter.show()
-
-
-class FenicsxMutableState(MutableState):
-    def __init__(self, f):
-        self.f = f
-        super().__init__(FenicsxVectorSpace(f.function_space))
-
-    def _set(self, state):
-        assert state.vectors[0].imag_part is None
-        with state.vectors[0].real_part.impl.localForm() as loc_state, self.f.x.petsc_vec.localForm() as loc_f:
-            loc_state.copy(loc_f)
-
-
-class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
-
-    linear_in_op_source = True
-    _last_mu = None
-
-    def __init__(self, mutable_states, form, params,
-                 bcs=None, lifting_form=None, functional=False, solver=None, name=None):
-        self._matrix_based_op = FenicsxMatrixBasedOperator(
-            form, params,
-            bcs=bcs, lifting_form=lifting_form, functional=functional, solver=solver, name=name)
-        mutable_states = tuple(FenicsxMutableState.create(ms) for ms in mutable_states)
-        super().__init__(mutable_states, self._matrix_based_op.range, self._matrix_based_op.source)
-        self.__auto_init(locals())
-        self.parameters_own = self._matrix_based_op.parameters
-
-    def _assemble_matrix_if_needed(self, mu=None):
-        if self._state_changed or mu is not self._last_mu:
-            self._matrix_op = self._matrix_based_op.assemble(mu)
-            self._last_mu = mu
-
-    def _mutable_apply(self, U, mu=None):
-        self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply(U)
-
-    def _mutable_apply_adjoint(self, V, mu=None):
-        self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply_adjoint(V)
-
-    def _mutable_apply_inverse(self, V, mu, initial_guess):
-        self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply_inverse(V, initial_guess=initial_guess, return_info=True)
-
-    def _mutable_apply_inverse_adjoint(self, U, mu, initial_guess):
-        self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op.apply_inverse_adjoint(U, initial_guess=initial_guess, return_info=True)
-
-    def _jacobian(self, U, mu=None):
-        self._assemble_matrix_if_needed(mu=mu)
-        return self._matrix_op
 
 
 class FenicsxInterpolationOperator(Operator):
