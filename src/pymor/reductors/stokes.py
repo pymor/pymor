@@ -6,9 +6,8 @@ from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import AdjointOperator, InverseOperator
-from pymor.reductors.basic import ProjectionBasedReductor
-from pymor.solvers.least_squares import QRLeastSquaresSolver
+from pymor.operators.constructions import IdentityOperator
+from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -26,10 +25,10 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         The basis of the redcued pressure space onto which to project.
         If `None` an empty basis is used.
     projection_method
-        'Galerkin', 'ls-ls' or 'ls-normal'. Default is 'Galerkin', which uses a supremizer
-        enrichment strategy for the velocity space in order to guarantee inf-sup stability.
-        'ls-ls' solves the least-squares problem directly using a least-squares solver.
-        'ls-normal' solves the least-squares problem via the normal equation.
+        'supremizer_galerkin', 'ls-ls' or 'ls-normal'. Default is 'supremizer_galerkin', which uses
+        a supremizer enrichment strategy for the velocity space in order to guarantee
+        inf-sup stability. 'ls-ls' solves the least-squares problem directly using a
+        least-squares solver. 'ls-normal' solves the least-squares problem via the normal equation.
     u_product
         Inner product |Operator| w.r.t. which `RB_u` is orthonormalized.
         If `None`, the Euclidean inner product is used.
@@ -42,7 +41,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='Galerkin',
+    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='supremizer_galerkin',
                  u_product=None, p_product=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, SaddlePointModel)
         RB_u = fom.solution_space.subspaces[0].empty() if RB_u is None else RB_u
@@ -63,7 +62,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         u_product = self.products['RB_u']
         p_product = self.products['RB_p']
 
-        if self.projection_method == 'Galerkin':
+        if self.projection_method == 'supremizer_galerkin':
             supremizers = self.compute_supremizers()
             self.extend_basis(supremizers, 'RB_u')
             RB_u_enriched = self.bases['RB_u']
@@ -71,14 +70,12 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             trial_space = BlockVectorSpace((RB_u_enriched.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u_enriched, RB_p))
 
-            proj_op = project(fom.operator, range_basis=V_block, source_basis=V_block)
-            proj_rhs = project(fom.rhs, range_basis=V_block, source_basis=None)
-
             projected_operators = {
-                'operator': proj_op,
-                'rhs': proj_rhs,
-                'products': {'u': project(fom.products['u'], RB_u_enriched, RB_u_enriched),
-                             'p': project(fom.products['p'], RB_p, RB_p)}
+                'operator':          project(fom.operator, range_basis=V_block, source_basis=V_block),
+                'rhs':               project(fom.rhs, range_basis=V_block, source_basis=None),
+                'products':          {'u': project(fom.products['u'], RB_u_enriched, RB_u_enriched),
+                                      'p': project(fom.products['p'], RB_p, RB_p)},
+                'output_functional': project(fom.output_functional, None, V_block)
             }
 
         elif self.projection_method == 'ls-normal':
@@ -87,48 +84,45 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
             if u_product and p_product:
                 mixed_product = BlockDiagonalOperator(blocks=[u_product, p_product])
-                X_h_inv = InverseOperator(mixed_product)
+            elif u_product and p_product is None:
+                mixed_product = BlockDiagonalOperator(blocks=[u_product, IdentityOperator(fom.products['p'].range)])
+            elif u_product is None and p_product:
+                mixed_product = BlockDiagonalOperator(blocks=[IdentityOperator(fom.products['u'].range), p_product])
             else:
-                X_h_inv = None
+                mixed_product = None
 
-            proj_op = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.operator,
-                              range_basis=V_block, source_basis=V_block)
-            proj_rhs = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs,
-                               range_basis=V_block, source_basis=None)
+            # the helper_fom is required as the StationaryLSRBReductor needs
+            # a single product dict for the whole blocked space
+            helper_fom = StationaryModel(operator=fom.operator, rhs=fom.rhs, products={'mixed': mixed_product})
+            projected_operators = StationaryLSRBReductor(helper_fom, RB=V_block, product=mixed_product,
+                                                         use_normal_equations=True).project_operators()
 
-            projected_operators = {
-                'operator':         proj_op,
-                'rhs':              proj_rhs,
-                'products':         {'u': project(fom.products['u'], RB_u, RB_u),
-                                     'p': project(fom.products['p'], RB_p, RB_p)}
-            }
+            # project the products again to retrieve the correct blocks
+            projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
+                                               'p': project(fom.products['p'], RB_p, RB_p)}
 
         elif self.projection_method == 'ls-ls':
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
 
-            from pymor.algorithms.simplify import expand
-            # moves the parameter out of the block and creates a LincombOperator
-            expanded_op = expand(fom.operator)
-
             if u_product and p_product:
                 mixed_product = BlockDiagonalOperator(blocks=[u_product, p_product])
-                X_h_inv = InverseOperator(mixed_product)
+            elif u_product and p_product is None:
+                mixed_product = BlockDiagonalOperator(blocks=[u_product, IdentityOperator(fom.products['p'].range)])
+            elif u_product is None and p_product:
+                mixed_product = BlockDiagonalOperator(blocks=[IdentityOperator(fom.products['u'].range), p_product])
             else:
-                X_h_inv = None
+                mixed_product = None
 
-            from pymor.algorithms.image import estimate_image
-            test_space = estimate_image(operators=[expanded_op], domain=V_block, orthonormalize=True, product=X_h_inv)
+            # the helper_fom is required as the StationaryLSRBReductor needs
+            # a single product dict for the whole blocked space
+            helper_fom = StationaryModel(operator=fom.operator, rhs=fom.rhs, products={'mixed': mixed_product})
+            projected_operators = StationaryLSRBReductor(helper_fom, RB=V_block,
+                                                         product=mixed_product).project_operators()
 
-            proj_op = project(fom.operator, range_basis=test_space, source_basis=V_block)
-            proj_rhs = project(fom.rhs, range_basis=test_space, source_basis=None)
-
-            projected_operators = {
-                'operator':         proj_op.with_(solver=QRLeastSquaresSolver()),
-                'rhs':              proj_rhs,
-                'products':         {'u': project(fom.products['u'], RB_u, RB_u),
-                                     'p': project(fom.products['p'], RB_p, RB_p)}
-            }
+            # project the products again to retrieve the correct blocks
+            projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
+                                               'p': project(fom.products['p'], RB_p, RB_p)}
 
         else:
             raise NotImplementedError
@@ -158,14 +152,15 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         dim_u = dims['RB_u']
         dim_p = dims['RB_p']
 
-        if self.projection_method == 'Galerkin':
+        if self.projection_method == 'supremizer_galerkin':
             dim_u = dims['RB_u_enriched']
 
         projected_operators = {
-            'operator': project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
-            'rhs': project_to_subbasis(rom.rhs, dim_u + dim_p, None),
-            'products': {'u': project_to_subbasis(rom.products['u'], dim_u, dim_u),
-                            'p': project_to_subbasis(rom.products['p'], dim_p, dim_p)}
+            'operator':          project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
+            'rhs':               project_to_subbasis(rom.rhs, dim_u + dim_p, None),
+            'products':          {'u': project_to_subbasis(rom.products['u'], dim_u, dim_u),
+                                  'p': project_to_subbasis(rom.products['p'], dim_p, dim_p)},
+            'output_functional': project_to_subbasis(rom.output_functional, None, dim_u + dim_p)
         }
 
         return projected_operators
