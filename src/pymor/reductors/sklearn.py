@@ -12,7 +12,7 @@ from vkoga.kernels import Gaussian, Matern
 from vkoga.vkoga import VKOGA
 
 from pymor.core.base import BasicObject
-from pymor.models.compute import ComputeModel
+from pymor.models.generic import GenericModel
 from pymor.parameters.base import Mu, ParameterSpace, Parameters
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.interface import VectorSpace, VectorArray
@@ -95,14 +95,14 @@ class VKOGAEstimator(VKOGA, BasicObject):
         }
 
 
-class ScikitLearnComputeModel(ComputeModel):
+class ScikitLearnComputeModel(GenericModel):
     def __init__(
         self,
         parameters,
         parameter_scaling,
         compute_shapes,
         estimators,
-        name: Optional[str] = "ScikitLearnComputeModel",
+        name: Optional[str] = "GenericModel",
     ):
         self.__auto_init(locals())
         computers = {}
@@ -235,7 +235,7 @@ class ScikitLearnComputeReductor(BasicObject):
     def reconstruct(self, u, basis=None):
         return u
 
-    def reduce(self, data_size: Optional[Number] = None) -> ComputeModel:
+    def reduce(self, data_size: Optional[Number] = None) -> GenericModel:
         """Fits the estimator to the amount of data specified by data_size."""
         if data_size is None:
             data_size = len(self._data[0])
@@ -328,7 +328,7 @@ class ScikitLearnComputeReductor(BasicObject):
                         return Y.reshape((data_dim, data_length))
 
                 computers[compute_id] = (data_dim, predict)
-        rom = ComputeModel(
+        rom = GenericModel(
             parameters=self.parameters,
             computers=computers,
             name=self.rom_name,
