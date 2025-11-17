@@ -332,16 +332,17 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
 
     return fom
 
-def stokes_2Dexample(rhs=None):
+def stokes_2Dexample(rhs):
     """Return a discretization of the parametric, stationary Stokes equation on the unit circle.
 
-    The problem consists in solving ::
+    Discretizes the following Stokes equation ::
 
         - μ Δ u(x, μ) + ∇ p(x, μ) = f(x)  in Ω
         ∇ ⋅ u(x, μ) = 0  in Ω
 
-    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity.
-    To eliminate the singularity of the saddle-point system, one pressure node is set to zero.
+    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity
+    and Ω is the unit circle. To eliminate the singularity of the saddle-point system,
+    one pressure node is set to zero.
 
     Parameters
     ----------
@@ -351,7 +352,7 @@ def stokes_2Dexample(rhs=None):
     Returns
     -------
     fom
-        Stokes equation problem as a |StationaryModel|.
+        Stokes equation problem as a |SaddlePointModel|.
     """
     import numpy as np
     from skfem.assembly import Basis, asm
