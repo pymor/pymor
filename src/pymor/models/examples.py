@@ -398,7 +398,7 @@ def stokes_2Dexample(rhs):
     D_all = np.concatenate([D_u, D_p + A.shape[0]])
 
     # condense
-    K_c, rhs_c, _, I = condense(K, f, D=D_all, expand=True)
+    K_c, rhs_c, _, I = condense(K, rhs, D=D_all, expand=True)
     free_u = len(I[I < A.shape[0]])
 
     # extract blocks
