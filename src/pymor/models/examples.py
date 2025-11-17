@@ -384,8 +384,8 @@ def stokes_2Dexample(rhs=None):
     A = asm(vector_laplace, basis['u'])
     B = (-1) * asm(divergence, basis['u'], basis['p'])
     C = asm(mass, basis['p'])
-    product_u = A
-    product_p = C
+    u_product = A
+    p_product = C
 
     K = bmat([[A, B.T], [B, 0 * C]], 'csr')
     f = VectorL2Functional(basis['u'], rhs).assemble().as_range_array().to_numpy().reshape(-1)
@@ -404,24 +404,24 @@ def stokes_2Dexample(rhs=None):
     A_c = K_c[:free_u, :free_u]
     B_c = K_c[free_u:, :free_u]
 
-    all_u = np.arange(product_u.shape[0])
+    all_u = np.arange(u_product.shape[0])
     free_idx_u = np.setdiff1d(all_u, D_u)
-    all_p = np.arange(product_p.shape[0])
+    all_p = np.arange(p_product.shape[0])
     free_idx_p = np.setdiff1d(all_p, D_p)
 
-    product_u_c = product_u[free_idx_u][:, free_idx_u]
-    product_p_c = product_p[free_idx_p][:, free_idx_p]
+    u_product_c = u_product[free_idx_u][:, free_idx_u]
+    p_product_c = p_product[free_idx_p][:, free_idx_p]
 
     # build operators and fom
-    nu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
-    A = LincombOperator(operators=[NumpyMatrixOperator(A_c)], coefficients=[nu])
+    mu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    A = LincombOperator(operators=[NumpyMatrixOperator(A_c)], coefficients=[mu])
     B = NumpyMatrixOperator(B_c)
 
     U_space = NumpyVectorSpace(free_u)
     f = U_space.make_array(rhs_c[:free_u])
 
-    u_product = NumpyMatrixOperator(product_u_c)
-    p_product = NumpyMatrixOperator(product_p_c)
+    u_product = NumpyMatrixOperator(u_product_c)
+    p_product = NumpyMatrixOperator(p_product_c)
 
     fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product)
 
