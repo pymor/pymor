@@ -180,10 +180,16 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
-            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
-                                  if RB in v.source and RB in v.range},
             'output_functional': project(fom.output_functional, None, RB)
         }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
+
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -192,9 +198,15 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
-            'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
+
+        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('ROM has no products to project.')
+
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
@@ -258,9 +270,15 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
-            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB)
         }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
 
         return projected_operators
 
@@ -285,9 +303,15 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'initial_data':      projected_initial_data,
-            'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
+
+        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('ROM has no products to project.')
+
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
@@ -347,10 +371,9 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                                              range_basis=RB, source_basis=RB),
                 'rhs':               project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs,
                                              range_basis=RB, source_basis=None),
-                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
-                                      if RB in v.source and RB in v.range},
                 'output_functional': project(fom.output_functional, None, RB)
             }
+
         else:
             expanded_op = expand(fom.operator)
             X_h_inv = None
@@ -362,10 +385,15 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'operator':          project(fom.operator, range_basis=test_space,
                                              source_basis=RB).with_(solver=ScipyLSTSQSolver()),
                 'rhs':               project(fom.rhs, range_basis=test_space, source_basis=None),
-                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()
-                                      if RB in v.source and RB in v.range},
                 'output_functional': project(fom.output_functional, None, RB)
             }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
 
         return projected_operators
 
@@ -375,9 +403,15 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
-            'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
+
+        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('ROM has no products to project.')
+
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
