@@ -136,6 +136,20 @@ class L2Functional(SKFemLinearFormOperator):
         return lf
 
 
+class VectorL2Functional(SKFemLinearFormOperator):
+
+    def __init__(self, basis, function, dirichlet_dofs=None, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, name=name)
+        assert function.shape_range[0] > 1
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def lf(u, w):
+            f = _eval_pymor_function(self.function, w.x, mu)
+            return np.sum(f*u, axis=0)
+        return lf
+
+
 class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
