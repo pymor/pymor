@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.projection import project_to_subbasis
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
@@ -71,9 +71,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             V_block = trial_space.make_block_diagonal_array((RB_u_enriched, RB_p))
             projected_operators = StationaryRBReductor(fom, RB=V_block, check_orthonormality=False).project_operators()
 
-            projected_operators['products'] = {'u': project(fom.products['u'], RB_u_enriched, RB_u_enriched),
-                                               'p': project(fom.products['p'], RB_p, RB_p)}
-
         elif self.projection_method == 'ls-normal':
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
@@ -91,10 +88,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
                                                          use_normal_equations=True,
                                                          check_orthonormality=False).project_operators()
 
-            # project the products to retrieve the correct blocks
-            projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
-                                               'p': project(fom.products['p'], RB_p, RB_p)}
-
         elif self.projection_method == 'ls-ls':
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
@@ -110,10 +103,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
             projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
                                                          check_orthonormality=False).project_operators()
-
-            # project the products to retrieve the correct blocks
-            projected_operators['products'] = {'u': project(fom.products['u'], RB_u, RB_u),
-                                               'p': project(fom.products['p'], RB_p, RB_p)}
 
         else:
             raise NotImplementedError
@@ -149,8 +138,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
             'rhs':               project_to_subbasis(rom.rhs, dim_u + dim_p, None),
-            'products':          {'u': project_to_subbasis(rom.products['u'], dim_u, dim_u),
-                                  'p': project_to_subbasis(rom.products['p'], dim_p, dim_p)},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim_u + dim_p)
         }
 
