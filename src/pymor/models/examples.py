@@ -354,7 +354,7 @@ def stokes_2Dexample(rhs=None):
         Stokes equation problem as a |StationaryModel|.
     """
     import numpy as np
-    from skfem.assembly import Basis, LinearForm, asm
+    from skfem.assembly import Basis, asm
     from skfem.element import ElementTriP1, ElementTriP2, ElementVector
     from skfem.mesh import MeshTri
     from skfem.models.general import divergence
@@ -362,6 +362,7 @@ def stokes_2Dexample(rhs=None):
     from skfem.utils import bmat, condense
 
     from pymor.analyticalproblems.functions import Function
+    from pymor.discretizers.skfem.cg import VectorL2Functional
     from pymor.models.saddle_point import SaddlePointModel
     from pymor.operators.constructions import LincombOperator
     from pymor.operators.numpy import NumpyMatrixOperator
@@ -379,20 +380,6 @@ def stokes_2Dexample(rhs=None):
     element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
     basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
 
-    def make_body_force(rhs):
-        def integrand(v, w):
-            K, Q = w.x.shape[1], w.x.shape[2]
-            x, y = w.x[0], w.x[1]
-
-            vals = rhs(np.array([x.reshape(-1), y.reshape(-1)]).T)
-            vals = vals.reshape(K, Q, 2)
-            f_x = vals[:, :, 0]
-            f_y = vals[:, :, 1]
-
-            return f_x * v[0] + f_y * v[1]
-
-        return LinearForm(integrand)
-
     # assemble
     A = asm(vector_laplace, basis['u'])
     B = (-1) * asm(divergence, basis['u'], basis['p'])
@@ -401,7 +388,8 @@ def stokes_2Dexample(rhs=None):
     product_p = C
 
     K = bmat([[A, B.T], [B, 0 * C]], 'csr')
-    f = np.concatenate([asm(make_body_force(rhs), basis['u']), basis['p'].zeros()])
+    f = VectorL2Functional(basis['u'], rhs).assemble().as_range_array().to_numpy().reshape(-1)
+    rhs = np.concatenate([f, basis['p'].zeros()])
 
     # dirichlet boundary values, fix one pressure node to zero
     D_u = basis['u'].get_dofs().flatten()
@@ -409,9 +397,8 @@ def stokes_2Dexample(rhs=None):
     D_all = np.concatenate([D_u, D_p + A.shape[0]])
 
     # condense
-    K_c, f_c, _, I = condense(K, f, D=D_all, expand=True)
+    K_c, rhs_c, _, I = condense(K, f, D=D_all, expand=True)
     free_u = len(I[I < A.shape[0]])
-    free_p = len(I[I >= A.shape[0]] - A.shape[0])
 
     # extract blocks
     A_c = K_c[:free_u, :free_u]
@@ -425,17 +412,17 @@ def stokes_2Dexample(rhs=None):
     product_u_c = product_u[free_idx_u][:, free_idx_u]
     product_p_c = product_p[free_idx_p][:, free_idx_p]
 
-    U_space = NumpyVectorSpace(free_u)
-    P_space = NumpyVectorSpace(free_p)
+    # build operators and fom
     nu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
-    A_op = NumpyMatrixOperator(A_c)
-    A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
-    B_op = NumpyMatrixOperator(B_c)
+    A = LincombOperator(operators=[NumpyMatrixOperator(A_c)], coefficients=[nu])
+    B = NumpyMatrixOperator(B_c)
 
-    f = U_space.make_array(f_c[:free_u])
-    g = P_space.make_array(f_c[free_u:])
+    U_space = NumpyVectorSpace(free_u)
+    f = U_space.make_array(rhs_c[:free_u])
 
-    fom = SaddlePointModel(A=A_op_nu, B=B_op, f=f, g=g, u_product=NumpyMatrixOperator(product_u_c),
-                           p_product=NumpyMatrixOperator(product_p_c))
+    u_product = NumpyMatrixOperator(product_u_c)
+    p_product = NumpyMatrixOperator(product_p_c)
+
+    fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product)
 
     return fom
