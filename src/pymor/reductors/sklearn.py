@@ -8,7 +8,7 @@ from numbers import Number
 
 import numpy as np
 import numpy.typing as npt
-from vkoga.kernels import Gaussian
+from vkoga.kernels import Gaussian, Matern
 from vkoga.vkoga import VKOGA
 
 from pymor.core.base import BasicObject
@@ -21,7 +21,7 @@ from pymor.vectorarrays.interface import VectorSpace, VectorArray
 class VKOGAEstimator(VKOGA, BasicObject):
     def __init__(
         self,
-        kernel_generator=lambda ls: Gaussian(ls),
+        kernel_type="gaussian",
         kernel_lenght_scale=1.0,
         greedy_type="p_greedy",
         greedy_tol=1e-10,
@@ -30,8 +30,15 @@ class VKOGAEstimator(VKOGA, BasicObject):
         selection_threshold=0.0,
         verbose=False,
     ):
+        if kernel_type == "gaussian":
+            kernel = Gaussian(ep=kernel_lenght_scale)
+        elif kernel_type[:6] == "matern":
+            order = int(kernel_type[7:]) if len(kernel_type) > 6 else 1
+            kernel = Matern(ep=kernel_lenght_scale, k=order)
+        else:
+            raise ValueError(f"Unknown kernel: {kernel_type}")
         super().__init__(
-            kernel=kernel_generator(kernel_lenght_scale),
+            kernel=kernel,
             kernel_par=1,  # unsused?
             verbose=verbose,
             n_report=10,
@@ -190,6 +197,9 @@ class ScikitLearnComputeReductor(BasicObject):
             for i, k in enumerate(self._data[1])
         }
         self._data = [reordered_inputs, reordered_outputs]
+
+    def reconstruct(self, u, basis=None):
+        return u
 
     def reduce(self, data_size: Optional[Number] = None) -> ComputeModel:
         """Fits the estimator to the amount of data specified by data_size."""
