@@ -95,7 +95,7 @@ class VKOGAEstimator(VKOGA, BasicObject):
         }
 
 
-class ScikitLearnComputeModel(GenericModel):
+class DataDrivenModel(GenericModel):
     def __init__(
         self,
         parameters,
@@ -139,7 +139,7 @@ class ScikitLearnComputeModel(GenericModel):
         super().__init__(parameters=parameters, computers=computers, name=name)
 
 
-class ScikitLearnComputeReductor(BasicObject):
+class DataDrivenReductor(BasicObject):
     def __init__(
         self,
         *,
@@ -153,7 +153,7 @@ class ScikitLearnComputeReductor(BasicObject):
             tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | npt.ArrayLike]]]
         ] = None,
         shuffle_mode: str = "sort+shuffle",  # highly recommended, possible values are None, 'sort', 'shuffle', 'sort+shuffle'
-        rom_name: str = "SkLearnReducedModel",
+        rom_name: str = "DataDrivenModel",
     ):
         assert isinstance(parameters, Parameters)
         assert isinstance(compute_shapes, dict)
@@ -257,7 +257,7 @@ class ScikitLearnComputeReductor(BasicObject):
                         f'Fitting estimator for {compute_id} to {"all" if data_size == len(self._data[0]) else "first"} {data_size} samples ...'
                     ):
                         estimator.fit(X, Y)
-            self._roms[data_size] = ScikitLearnComputeModel(
+            self._roms[data_size] = DataDrivenModel(
                 parameters=self.parameters,
                 parameter_scaling=self.parameter_scaling,
                 compute_shapes=self.compute_shapes,
