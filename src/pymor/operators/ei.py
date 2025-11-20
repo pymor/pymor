@@ -165,7 +165,7 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
     """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
-                 projected_collateral_basis, triangular, solver=None, name=None):
+                 projected_collateral_basis, triangular, least_squares=False, solver=None, name=None):
 
         name = name or f'{restricted_operator.name}_projected'
 
@@ -179,7 +179,9 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         U_dofs = self.source_basis_dofs.lincomb(U.to_numpy())
         AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
-            if self.triangular:
+            if self.least_squares:
+                interpolation_coefficients = lstsq(self.interpolation_matrix, AU.to_numpy())[0]
+            elif self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:

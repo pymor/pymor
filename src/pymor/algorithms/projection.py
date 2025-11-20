@@ -206,7 +206,8 @@ class ProjectRules(RuleTable):
 
         return ProjectedEmpiricalInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
                                                       NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
-                                                      projected_collateral_basis, op.triangular, None)
+                                                      projected_collateral_basis, op.triangular,
+                                                      least_squares=op.least_squares)
 
     @match_class(AffineOperator)
     def action_AffineOperator(self, op):
