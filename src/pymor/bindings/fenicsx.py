@@ -8,20 +8,22 @@ config.require('FENICSX')
 
 
 import numpy as np
-from dolfinx.fem import Constant, Function
+from dolfinx.fem import Constant, Function, IntegralType, create_interpolation_data, dirichletbc, form, functionspace
 from dolfinx.fem.petsc import apply_lifting, assemble_matrix, assemble_vector, set_bc
 from dolfinx.la import create_petsc_vector
+from dolfinx.mesh import create_submesh
 from dolfinx.plot import vtk_mesh
 from petsc4py import PETSc
+from ufl import Argument, Form, derivative, replace
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import MutableState, MutableStateOperator, VectorFunctional, VectorOperator
+from pymor.operators.constructions import VectorFunctional, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.list import ComplexifiedListVectorArrayBasedSolver
-from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -136,9 +138,9 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
         v.impl.set(value)
         return v
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
+    def real_random_vector(self, distribution, **kwargs):
         v = self.real_zero_vector()
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)  # TODO: parallel?
+        values = _create_random_values(self.dim, distribution, **kwargs)  # TODO: parallel?
         v.to_numpy()[:] = values
         return v
 
@@ -334,15 +336,20 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
 class FenicsxOperator(Operator):
 
-    def __init__(self, form, source_function, params=None, bcs=(), alpha=1., lifting_form=None, linear=False, solver=None,
-                 name=None):
-        assert form.rank == 1
+    def __init__(self, ufl_form, source_function, params=None, bcs=(), alpha=None, linear=False,
+                 apply_lifting_with_jacobian=False, solver=None, name=None):
+        assert len(ufl_form.arguments()) == 1
+        compiled_form = form(ufl_form)
         params = params or {}
         bcs = bcs or tuple()
+        if alpha is None:
+            alpha = -1 if apply_lifting_with_jacobian else 1
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
         self.__auto_init(locals())
-        self.range = FenicsxVectorSpace(form.function_spaces[0])
-        self.source = FenicsxVectorSpace(source_function.function_space)
+        self.range = FenicsxVectorSpace(ufl_form.arguments()[0].ufl_function_space())
+        self.source = FenicsxVectorSpace(source_function.ufl_function_space())
+        self.compiled_form = compiled_form
+        self.compiled_derivative = form(derivative(self.ufl_form, self.source_function))
         self.parameters_own = {k: v.ufl_shape[0] if len(v.ufl_shape) == 1 else 1 for k, v in params.items()}
 
     def _set_mu(self, mu=None):
@@ -350,23 +357,229 @@ class FenicsxOperator(Operator):
         for k, v in self.params.items():
             v.value = mu[k]
 
+    def _set_source_function(self, U):
+        assert len(U) == 1
+        assert U.vectors[0].imag_part is None
+        with (U.vectors[0].real_part.impl.localForm() as loc_u,
+              self.source_function.x.petsc_vec.localForm() as loc_source_func):
+            loc_u.copy(loc_source_func)
+
     def apply(self, U, mu=None):
         assert U in self.source
         self._set_mu(mu)
         R = []
         for u in U:
-            assert u.vectors[0].imag_part is None
-            with (u.vectors[0].real_part.impl.localForm() as loc_u,
-                  self.source_function.x.petsc_vec.localForm() as loc_source_func):
-                loc_u.copy(loc_source_func)
-            vec = assemble_vector(self.form)
-            if self.lifting_form is not None:
-                apply_lifting(vec, [self.lifting_form], [self.bcs])
+            self._set_source_function(u)
+            vec = assemble_vector(self.compiled_form)
+            if self.apply_lifting_with_jacobian:
+                apply_lifting(vec, [self.compiled_derivative], bcs=[self.bcs], x0=[self.source_function.x.petsc_vec],
+                              alpha=self.alpha)
                 vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
             if self.bcs:
-                set_bc(vec, self.bcs, alpha=self.alpha)
+                set_bc(vec, self.bcs, x0=self.source_function.x.petsc_vec, alpha=self.alpha)
             R.append(vec)
         return self.range.make_array(R)
+
+    def jacobian(self, U, mu=None):
+        assert U in self.source
+        assert len(U) == 1
+        self._set_mu(mu)
+        self._set_source_function(U)
+        mat = assemble_matrix(self.compiled_derivative, self.bcs)
+        mat.assemble()
+        return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self._jacobian_solver,
+                                     name=self.name + '_jacobian')
+
+    def restricted(self, dofs):
+        from pymor.tools.mpi import parallel
+        if parallel:
+            raise NotImplementedError
+        with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
+            if len(dofs) == 0:
+                return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=int)
+
+            if self.source.V.mesh != self.range.V.mesh:
+                assert False
+                raise NotImplementedError
+
+            self.logger.info('Computing affected cells ...')
+            mesh = self.source.V.mesh
+            range_dofmap = self.range.V.dofmap
+            affected_cells = set()
+            num_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+            for c in range(num_cells):
+                local_dofs = range_dofmap.cell_dofs(c)
+                for ld in local_dofs:
+                    if ld in dofs:
+                        affected_cells.add(c)
+                        continue
+            affected_cells = sorted(affected_cells)
+
+            if not self.compiled_form.integral_types <= {IntegralType.cell, IntegralType.exterior_facet}:
+                # enlarge affected_cell_indices if needed
+                raise NotImplementedError
+
+            self.logger.info('Computing source DOFs ...')
+            source_dofmap = self.source.V.dofmap
+            source_dofs = set()
+            for c in affected_cells:
+                local_dofs = source_dofmap.cell_dofs(c)
+                source_dofs.update(local_dofs)
+            source_dofs = np.array(sorted(source_dofs), dtype=np.intc)
+
+            self.logger.info('Building submesh ...')
+            submesh, _, _, _ = create_submesh(mesh, mesh.topology.dim, np.array(affected_cells))
+
+            self.logger.info('Building UFL form on submesh ...')
+            form_r, source_function_r, params = self._restrict_form(submesh)
+            V_r_source = source_function_r.ufl_function_space()
+            V_r_range = form_r.arguments()[0].ufl_function_space()
+
+            self.logger.info('Computing source DOF mapping ...')
+            restricted_source_dofs = self._build_dof_map(self.source.V, V_r_source, source_dofs)
+
+            self.logger.info('Computing range DOF mapping ...')
+            restricted_range_dofs = self._build_dof_map(self.range.V, V_r_range, dofs)
+
+            self.logger.info('Building DirichletBCs on submesh ...')
+            bc_r = self._restrict_dirichlet_bcs(self.source.V, V_r_source, self.bcs, source_dofs,
+                                                restricted_source_dofs)
+
+            op_r = FenicsxOperator(form_r, source_function_r, params=params, bcs=bc_r, alpha=self.alpha,
+                                   linear=self.linear, apply_lifting_with_jacobian=self.apply_lifting_with_jacobian)
+
+            return (RestrictedFenicsxOperator(op_r, restricted_range_dofs),
+                    source_dofs[np.argsort(restricted_source_dofs)])
+
+    def _restrict_form(self, submesh):
+        V_r_source = functionspace(submesh, self.source.V.ufl_element())
+        if self.source == self.range:
+            V_r_range = V_r_source
+        else:
+            assert False
+            V_r_range = functionspace(submesh, self.range.V.ufl_element())
+        assert V_r_source.dofmap.index_map.size_global * V_r_source.dofmap.index_map_bs
+
+        if len(self.ufl_form.ufl_domains()) != 1:
+            assert False
+            raise NotImplementedError
+
+        assert len(self.ufl_form.arguments()) == 1
+        orig_args = self.ufl_form.arguments()
+        args = tuple(Argument(V_r_range, arg.number(), arg.part()) for arg in orig_args)
+
+        assert len(self.ufl_form.coefficients()) == 1
+        orig_coeffs = self.ufl_form.coefficients()
+        coeffs = (Function(V_r_source),)
+
+        form_r = replace(self.ufl_form,
+                         dict(zip(orig_args, args, strict=True)) | dict(zip(orig_coeffs, coeffs, strict=True)))
+
+        integrals = [i.reconstruct(domain=submesh.ufl_domain()) for i in form_r.integrals()]
+        form_r = Form(integrals)
+
+        return form_r, coeffs[0], self.params
+
+    @staticmethod
+    def _restrict_dirichlet_bcs(V, V_r, bcs, source_dofs, restricted_source_dofs):
+        u = Function(V)
+        U = u.x.array
+
+        restricted_bcs = []
+        for bc in bcs:
+            bc_dofs = bc.dof_indices()[0]
+            U[:] = 0.
+            bc.set(U)
+            u_r = Function(V_r)
+            u_r.x.array[restricted_source_dofs] = U[source_dofs]
+            dofs = []
+            for sd, rsd in zip(source_dofs, restricted_source_dofs, strict=True):
+                if sd in bc_dofs:
+                    dofs.append(rsd)
+            if dofs:
+                restricted_bcs.append(dirichletbc(u_r, np.array(dofs)))
+
+        return tuple(restricted_bcs)
+
+    @staticmethod
+    def _build_dof_map(V, V_r, dofs):
+        submesh = V_r.mesh
+        cells = np.arange(submesh.topology.index_map(submesh.topology.dim).size_local)
+        u = Function(V)
+        u_r = Function(V_r)
+        u.x.array[dofs] = np.arange(1, len(dofs)+1)
+        if V.num_sub_spaces > 0:
+            for i in range(V.num_sub_spaces):
+                interpolation_data = create_interpolation_data(V_r.sub(i), V.sub(i), cells)
+                u_r.sub(i).interpolate_nonmatching(u.sub(i), cells, interpolation_data=interpolation_data)
+        else:
+            interpolation_data = create_interpolation_data(V_r, V, cells)
+            u_r.interpolate_nonmatching(u, cells, interpolation_data=interpolation_data)
+        sorted_ind = np.argsort(u_r.x.array)
+        u_r_sorted = u_r.x.array[sorted_ind]
+        if abs(u_r_sorted[0]) > 1e-7:
+            first_nonzero = None
+            if len(u_r_sorted) != len(dofs):
+                raise NotImplementedError
+        else:
+            first_nonzero = np.searchsorted(u_r_sorted, 1, side='left')
+            if len(u_r_sorted) - first_nonzero != len(dofs):
+                raise NotImplementedError
+        if not np.all(np.abs(u_r_sorted[first_nonzero:] - np.arange(1, len(dofs)+1)) < 1e-7):
+            raise NotImplementedError
+        restricted_dofs = sorted_ind[first_nonzero:]
+        return restricted_dofs
+        # restricted_dofs = []
+        # for dof in dofs:
+        #     u.x.array[:] = 0.
+        #     u.x.array[dof] = 1
+        #     if V.num_sub_spaces > 0:
+        #         for i in range(V.num_sub_spaces):
+        #             u_r.sub(i).interpolate_nonmatching(u.sub(i), cells,
+        #                                                interpolation_data=interpolation_data[i])
+        #     else:
+        #         u_r.interpolate_nonmatching(u, cells, interpolation_data=interpolation_data)
+        #     if not np.all(np.logical_or(np.abs(u_r.x.array) < 1e-10,
+        #                   np.abs(u_r.x.array - 1.) < 1e-10)):
+        #         raise NotImplementedError
+        #     r_dof = np.where(np.abs(u_r.x.array - 1.) < 1e-10)[0]
+        #     if not len(r_dof) == 1:
+        #         raise NotImplementedError
+        #     restricted_dofs.append(r_dof[0])
+        # restricted_dofs = np.array(restricted_dofs, dtype=np.int32)
+        # assert len(set(restricted_dofs)) == len(set(dofs))
+        # return restricted_dofs
+
+
+class RestrictedFenicsxOperator(Operator):
+    """Restricted :class:`FenicsOperator`."""
+
+    linear = False
+
+    def __init__(self, op, restricted_range_dofs, solver=None):
+        self.__auto_init(locals())
+        self.source = NumpyVectorSpace(op.source.dim)
+        self.range = NumpyVectorSpace(len(restricted_range_dofs))
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        UU = self.op.source.zeros(len(U))
+        for uu, u in zip(UU.vectors, U.to_numpy().T, strict=True):
+            uu.real_part.impl[:] = np.ascontiguousarray(u)
+        VV = self.op.apply(UU, mu=mu)
+        V = VV.to_numpy()[self.restricted_range_dofs, :]
+        return self.range.from_numpy(V)
+
+    def jacobian(self, U, mu=None):
+        assert U in self.source
+        assert len(U) == 1
+        UU = self.op.source.zeros()
+        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[:, 0])
+        JJ = self.op.jacobian(UU, mu=mu)
+        dense_mat = JJ.matrix.convert('dense')
+        array = dense_mat.getDenseArray()
+        return NumpyMatrixOperator(array[self.restricted_range_dofs, :],
+                                   solver=self._jacobian_solver)
 
 
 class FenicsxVisualizer(ImmutableObject):
@@ -434,6 +647,7 @@ class FenicsxVisualizer(ImmutableObject):
                 plotter.add_mesh(u_grid, show_edges=False)
                 plotter.add_scalar_bar(l)
                 plotter.view_xy()
+                plotter.add_title(title)
             plotter.show()
 
 
