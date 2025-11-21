@@ -9,8 +9,7 @@ config.require('FENICSX')
 
 import numpy as np
 from dolfinx.fem import Constant, Function, IntegralType, create_interpolation_data, dirichletbc, form, functionspace
-from dolfinx.fem.petsc import apply_lifting, assemble_matrix, assemble_vector, set_bc
-from dolfinx.la import create_petsc_vector
+from dolfinx.fem.petsc import apply_lifting, assemble_matrix, assemble_vector, create_vector, set_bc
 from dolfinx.mesh import create_submesh
 from dolfinx.plot import vtk_mesh
 from petsc4py import PETSc
@@ -130,7 +129,7 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
         return id(self.V)
 
     def real_zero_vector(self):
-        impl = create_petsc_vector(self.V.dofmap.index_map, self.V.dofmap.index_map_bs)
+        impl = create_vector(self.V)
         return FenicsxVector(impl)
 
     def real_full_vector(self, value):
@@ -526,7 +525,7 @@ class FenicsxOperator(Operator):
             if len(u_r_sorted) != len(dofs):
                 raise NotImplementedError
         else:
-            first_nonzero = np.searchsorted(u_r_sorted, 1, side='left')
+            first_nonzero = (u_r_sorted > (1. - 1e-7)).nonzero()[0][0]
             if len(u_r_sorted) - first_nonzero != len(dofs):
                 raise NotImplementedError
         if not np.all(np.abs(u_r_sorted[first_nonzero:] - np.arange(1, len(dofs)+1)) < 1e-7):

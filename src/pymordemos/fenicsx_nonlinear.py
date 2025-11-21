@@ -87,8 +87,6 @@ def discretize(dim, n, order):
     import numpy as np
     import ufl
     from dolfinx import fem, mesh
-    from dolfinx.fem.petsc import NonlinearProblem
-    from dolfinx.nls.petsc import NewtonSolver
     from mpi4py import MPI
 
     if dim == 2:
@@ -115,25 +113,6 @@ def discretize(dim, n, order):
     x = ufl.SpatialCoordinate(mesh)
     f = x[0]*ufl.sin(x[1])
     F = ufl.inner((1 + c*u**2)*ufl.grad(u), ufl.grad(v))*ufl.dx - f*v*ufl.dx
-
-    problem = NonlinearProblem(F, u, bcs=[bc])
-
-    solver = NewtonSolver(MPI.COMM_WORLD, problem)
-    solver.convergence_criterion = 'incremental'
-    solver.rtol = 1e-6
-    solver.report = True
-    ksp = solver.krylov_solver
-    from petsc4py import PETSc
-    opts = PETSc.Options()
-    option_prefix = ksp.getOptionsPrefix()
-    opts[f'{option_prefix}ksp_type'] = 'gmres'
-    opts[f'{option_prefix}ksp_rtol'] = 1.0e-8
-    opts[f'{option_prefix}pc_type'] = 'hypre'
-    opts[f'{option_prefix}pc_hypre_type'] = 'boomeramg'
-    opts[f'{option_prefix}pc_hypre_boomeramg_max_iter'] = 1
-    opts[f'{option_prefix}pc_hypre_boomeramg_cycle_type'] = 'v'
-    ksp.setFromOptions()
-    solver.solve(u)
 
     # ### pyMOR wrapping
     from pymor.bindings.fenicsx import FenicsxOperator, FenicsxVectorSpace, FenicsxVisualizer
