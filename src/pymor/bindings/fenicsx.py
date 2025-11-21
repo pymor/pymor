@@ -478,7 +478,11 @@ class FenicsxOperator(Operator):
         integrals = [i.reconstruct(domain=submesh.ufl_domain()) for i in form_r.integrals()]
         form_r = Form(integrals)
 
-        return form_r, coeffs[0], self.params
+        # Reusing the original ufl Constant, even though it is defined over the original mesh
+        # seems to work, even though redefining the form with the old Constant fails.
+        params = self.params
+
+        return form_r, coeffs[0], params
 
     @staticmethod
     def _restrict_dirichlet_bcs(V, V_r, bcs, source_dofs, restricted_source_dofs):
@@ -529,26 +533,6 @@ class FenicsxOperator(Operator):
             raise NotImplementedError
         restricted_dofs = sorted_ind[first_nonzero:]
         return restricted_dofs
-        # restricted_dofs = []
-        # for dof in dofs:
-        #     u.x.array[:] = 0.
-        #     u.x.array[dof] = 1
-        #     if V.num_sub_spaces > 0:
-        #         for i in range(V.num_sub_spaces):
-        #             u_r.sub(i).interpolate_nonmatching(u.sub(i), cells,
-        #                                                interpolation_data=interpolation_data[i])
-        #     else:
-        #         u_r.interpolate_nonmatching(u, cells, interpolation_data=interpolation_data)
-        #     if not np.all(np.logical_or(np.abs(u_r.x.array) < 1e-10,
-        #                   np.abs(u_r.x.array - 1.) < 1e-10)):
-        #         raise NotImplementedError
-        #     r_dof = np.where(np.abs(u_r.x.array - 1.) < 1e-10)[0]
-        #     if not len(r_dof) == 1:
-        #         raise NotImplementedError
-        #     restricted_dofs.append(r_dof[0])
-        # restricted_dofs = np.array(restricted_dofs, dtype=np.int32)
-        # assert len(set(restricted_dofs)) == len(set(dofs))
-        # return restricted_dofs
 
 
 class RestrictedFenicsxOperator(Operator):
