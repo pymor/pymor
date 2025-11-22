@@ -198,15 +198,9 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
+            'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
-
-        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
-        if products:
-            projected_operators['products'] = products
-        else:
-            self.logger.warning('ROM has no products to project.')
-
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
@@ -303,15 +297,9 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'initial_data':      projected_initial_data,
+            'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
-
-        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
-        if products:
-            projected_operators['products'] = products
-        else:
-            self.logger.warning('ROM has no products to project.')
-
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
@@ -361,25 +349,25 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         RB = self.bases['RB']
 
         if self.use_normal_equations:
-            X_h_inv = None
-            if self.product:
-                X_h_inv = InverseOperator(self.product)
+            # Solve LS problem argmin||Ax - b||_{W} via the normal equation: (A^* W A) x = A^* W b
+            # Note: we assume that A maps to the dual of the test space, therefore due to
+            # Riesz the inverse operator is required to compute the norm on the dual space.
+            W = InverseOperator(self.product) if self.product else None
 
-            # Solve normal equations: (A^* W A) x = A^* W b
             projected_operators = {
-                'operator':          project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.operator,
+                'operator':          project(AdjointOperator(fom.operator, range_product=W) @ fom.operator,
                                              range_basis=RB, source_basis=RB),
-                'rhs':               project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs,
+                'rhs':               project(AdjointOperator(fom.operator, range_product=W) @ fom.rhs,
                                              range_basis=RB, source_basis=None),
                 'output_functional': project(fom.output_functional, None, RB)
             }
 
         else:
             expanded_op = expand(fom.operator)
-            X_h_inv = None
-            if self.product:
-                X_h_inv = InverseOperator(self.product)
-            test_space = estimate_image(operators=[expanded_op], domain=RB, orthonormalize=True, product=X_h_inv)
+            # See comment in self.use_normal_equations == True: The inverse of self.product is used
+            # in estimate_image if riesz_representative == True.
+            test_space = estimate_image(operators=[expanded_op], domain=RB, orthonormalize=True,
+                                        product=self.product, riesz_representatives=True)
 
             projected_operators = {
                 'operator':          project(fom.operator, range_basis=test_space,
@@ -400,18 +388,23 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
     def project_operators_to_subbasis(self, dims):
         rom = self._last_rom
         dim = dims['RB']
-        projected_operators = {
-            'operator':          project_to_subbasis(rom.operator, dim, dim),
-            'rhs':               project_to_subbasis(rom.rhs, dim, None),
-            'output_functional': project_to_subbasis(rom.output_functional, None, dim)
-        }
 
-        products = {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}
-        if products:
-            projected_operators['products'] = products
+        if self.use_normal_equations:
+            # Square system: both dimensions are the same
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, dim, None),
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
         else:
-            self.logger.warning('ROM has no products to project.')
-
+            # Rectangular system: test space (range) is larger than trial space (source)
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, rom.operator.range.dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, rom.operator.range.dim, None),
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
