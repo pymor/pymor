@@ -331,3 +331,99 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
 
     return fom
+
+def stokes_2Dexample(rhs):
+    """Return a discretization of the parametric, stationary Stokes equation on the unit circle.
+
+    Discretizes the following Stokes equation ::
+
+        - μ Δ u(x, μ) + ∇ p(x, μ) = f(x)  in Ω
+        ∇ ⋅ u(x, μ) = 0  in Ω
+
+    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity
+    and Ω is the unit circle. To eliminate the singularity of the saddle-point system,
+    one pressure node is set to zero.
+
+    Parameters
+    ----------
+    rhs
+        The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
+
+    Returns
+    -------
+    fom
+        Discretized Stokes equation as a |SaddlePointModel|.
+    """
+    import numpy as np
+    from skfem.assembly import Basis, asm
+    from skfem.element import ElementTriP1, ElementTriP2, ElementVector
+    from skfem.mesh import MeshTri
+    from skfem.models.general import divergence
+    from skfem.models.poisson import mass, vector_laplace
+    from skfem.utils import bmat, condense
+
+    from pymor.analyticalproblems.functions import Function
+    from pymor.discretizers.skfem.cg import VectorL2Functional
+    from pymor.models.saddle_point import SaddlePointModel
+    from pymor.operators.constructions import LincombOperator
+    from pymor.operators.numpy import NumpyMatrixOperator
+    from pymor.parameters.base import Parameters
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+    assert isinstance(rhs, Function)
+    assert rhs.dim_domain == 2
+    assert rhs.shape_range == (2,)
+
+    mesh = MeshTri.init_circle(4)
+
+    # Taylor-Hood discretization
+    element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
+    basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
+
+    # assemble
+    A = asm(vector_laplace, basis['u'])
+    B = (-1) * asm(divergence, basis['u'], basis['p'])
+    C = asm(mass, basis['p'])
+    u_product = A
+    p_product = C
+
+    K = bmat([[A, B.T], [B, 0 * C]], 'csr')
+    f = VectorL2Functional(basis['u'], rhs).assemble().as_range_array().to_numpy().reshape(-1)
+    rhs = np.concatenate([f, basis['p'].zeros()])
+
+    # dirichlet boundary values, fix one pressure node to zero
+    D_u = basis['u'].get_dofs().flatten()
+    D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
+    D_all = np.concatenate([D_u, D_p + A.shape[0]])
+
+    # condense
+    K_c, rhs_c, _, I = condense(K, rhs, D=D_all, expand=True)
+    free_u = len(I[I < A.shape[0]])
+
+    # extract blocks
+    A_c = K_c[:free_u, :free_u]
+    B_c = K_c[free_u:, :free_u]
+
+    all_u = np.arange(u_product.shape[0])
+    free_idx_u = np.setdiff1d(all_u, D_u)
+    all_p = np.arange(p_product.shape[0])
+    free_idx_p = np.setdiff1d(all_p, D_p)
+
+    u_product_c = u_product[free_idx_u][:, free_idx_u]
+    p_product_c = p_product[free_idx_p][:, free_idx_p]
+
+    # build operators and fom
+    mu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    A = LincombOperator(operators=[NumpyMatrixOperator(A_c)], coefficients=[mu])
+    B = NumpyMatrixOperator(B_c)
+
+    U_space = NumpyVectorSpace(free_u)
+    f = U_space.make_array(rhs_c[:free_u])
+
+    u_product = NumpyMatrixOperator(u_product_c)
+    p_product = NumpyMatrixOperator(p_product_c)
+
+    fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product)
+
+    return fom

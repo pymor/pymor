@@ -8,14 +8,17 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.image import estimate_image
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.simplify import expand
+from pymor.bindings.scipy import ScipyLSTSQSolver
 from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
-from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, InverseOperator
+from pymor.operators.constructions import AdjointOperator, ConcatenationOperator, IdentityOperator, InverseOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -70,10 +73,10 @@ class ProjectionBasedReductor(BasicObject):
             self._last_rom = self._reduce()
             self._last_rom_dims = {k: len(v) for k, v in self.bases.items()}
 
-        if dims == self._last_rom_dims:
-            return self._last_rom
-        else:
+        elif dims != self._last_rom_dims:
             return self._reduce_to_subbasis(dims)
+
+        return self._last_rom
 
     def _reduce(self):
         with self.logger.block('Operator projection ...'):
@@ -177,9 +180,16 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
-            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB)
         }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
+
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -254,9 +264,15 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
-            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB)
         }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
 
         return projected_operators
 
@@ -293,6 +309,106 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             time_stepper = time_stepper.with_(solver=None)
         return InstationaryModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
                                  error_estimator=error_estimator, **projected_operators)
+
+
+class StationaryLSRBReductor(ProjectionBasedReductor):
+    """Least-squares projection based reductor for stationary problems.
+
+    This reductor uses least-squares projection instead of Galerkin projection.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None` an empty basis is used.
+    product
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
+        inner product is used.
+    use_normal_equations
+        If `True`, solve the normal equations (A^* W A x = A^* b) instead of using a least-squares
+        solver. If `False`, equip the operator with a least-squares solver.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    """
+
+    def __init__(self, fom, RB=None, product=None, use_normal_equations=False,
+                 check_orthonormality=None, check_tol=None):
+        assert isinstance(fom, StationaryModel)
+        RB = fom.solution_space.empty() if RB is None else RB
+        assert RB in fom.solution_space
+        super().__init__(fom, {'RB': RB}, {'RB': product},
+                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+        self.use_normal_equations = use_normal_equations
+        self.product = product
+
+    def project_operators(self):
+        fom = self.fom
+        RB = self.bases['RB']
+
+        if self.use_normal_equations:
+            # Solve LS problem argmin||Ax - b||_{W} via the normal equation: (A^* W A) x = A^* W b
+            # Note: we assume that A maps to the dual of the test space, therefore due to
+            # Riesz the inverse operator is required to compute the norm on the dual space.
+            W = InverseOperator(self.product) if self.product else None
+
+            projected_operators = {
+                'operator':          project(AdjointOperator(fom.operator, range_product=W) @ fom.operator,
+                                             range_basis=RB, source_basis=RB),
+                'rhs':               project(AdjointOperator(fom.operator, range_product=W) @ fom.rhs,
+                                             range_basis=RB, source_basis=None),
+                'output_functional': project(fom.output_functional, None, RB)
+            }
+
+        else:
+            expanded_op = expand(fom.operator)
+            # See comment in self.use_normal_equations == True: The inverse of self.product is used
+            # in estimate_image if riesz_representative == True.
+            test_space = estimate_image(operators=[expanded_op], domain=RB, orthonormalize=True,
+                                        product=self.product, riesz_representatives=True)
+
+            projected_operators = {
+                'operator':          project(fom.operator, range_basis=test_space,
+                                             source_basis=RB).with_(solver=ScipyLSTSQSolver()),
+                'rhs':               project(fom.rhs, range_basis=test_space, source_basis=None),
+                'output_functional': project(fom.output_functional, None, RB)
+            }
+
+        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
+        if products:
+            projected_operators['products'] = products
+        else:
+            self.logger.warning('FOM has no products that are compatible with RB. '
+                                'ROM will use Euclidean inner product.')
+
+        return projected_operators
+
+    def project_operators_to_subbasis(self, dims):
+        rom = self._last_rom
+        dim = dims['RB']
+
+        if self.use_normal_equations:
+            # Square system: both dimensions are the same
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, dim, None),
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
+        else:
+            # Rectangular system: test space (range) is larger than trial space (source)
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, rom.operator.range.dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, rom.operator.range.dim, None),
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
+        return projected_operators
+
+    def build_rom(self, projected_operators, error_estimator):
+        return StationaryModel(error_estimator=error_estimator, **projected_operators)
 
 
 class LTIPGReductor(ProjectionBasedReductor):
