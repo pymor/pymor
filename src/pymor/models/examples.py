@@ -352,7 +352,7 @@ def stokes_2Dexample(rhs):
     Returns
     -------
     fom
-        Stokes equation problem as a |SaddlePointModel|.
+        Discretized Stokes equation as a |SaddlePointModel|.
     """
     import numpy as np
     from skfem.assembly import Basis, asm

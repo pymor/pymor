@@ -8,7 +8,6 @@ from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
-from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class StationaryRBStokesReductor(ProjectionBasedReductor):
@@ -65,15 +64,11 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         if self.projection_method == 'supremizer_galerkin':
             supremizers = self.compute_supremizers()
             self.extend_basis(supremizers, 'RB_u')
-            RB_u_enriched = self.bases['RB_u']
-
-            trial_space = BlockVectorSpace((RB_u_enriched.space, RB_p.space))
-            V_block = trial_space.make_block_diagonal_array((RB_u_enriched, RB_p))
+            V_block = fom.solution_space.make_block_diagonal_array((self.bases['RB_u'], RB_p))
             projected_operators = StationaryRBReductor(fom, RB=V_block, check_orthonormality=False).project_operators()
 
-        elif self.projection_method == 'ls-normal':
-            trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
-            V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
+        elif self.projection_method == 'ls-normal' or self.projection_method == 'ls-ls':
+            V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
 
             if u_product and p_product:
                 mixed_product = BlockDiagonalOperator(blocks=[u_product, p_product])
@@ -84,25 +79,13 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             else:
                 mixed_product = None
 
-            projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
-                                                         use_normal_equations=True,
-                                                         check_orthonormality=False).project_operators()
-
-        elif self.projection_method == 'ls-ls':
-            trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
-            V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
-
-            if u_product and p_product:
-                mixed_product = BlockDiagonalOperator(blocks=[u_product, p_product])
-            elif u_product and p_product is None:
-                mixed_product = BlockDiagonalOperator(blocks=[u_product, IdentityOperator(fom.products['p'].range)])
-            elif u_product is None and p_product:
-                mixed_product = BlockDiagonalOperator(blocks=[IdentityOperator(fom.products['u'].range), p_product])
+            if self.projection_method == 'ls-normal':
+                projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
+                                                             use_normal_equations=True,
+                                                             check_orthonormality=False).project_operators()
             else:
-                mixed_product = None
-
-            projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
-                                                         check_orthonormality=False).project_operators()
+                projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
+                                                             check_orthonormality=False).project_operators()
 
         else:
             raise NotImplementedError
@@ -123,6 +106,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         else:
             supremizer_vector = supremizer_rhs
 
+        norm = supremizer_vector.norm()
+        supremizer_vector = supremizer_vector.scal(1 / norm)
         supremizers.append(supremizer_vector)
 
         return supremizers
@@ -131,16 +116,28 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         rom = self._last_rom
         dim_u = dims['RB_u']
         dim_p = dims['RB_p']
+        dim_trial = dim_u + dim_p
 
         if self.projection_method == 'supremizer_galerkin':
-            dim_u = dims['RB_u_enriched']
+            dim_u_enriched = dims['RB_u_enriched']
+            dim_trial = dim_u_enriched + dim_p
 
-        projected_operators = {
-            'operator':          project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
-            'rhs':               project_to_subbasis(rom.rhs, dim_u + dim_p, None),
-            'output_functional': project_to_subbasis(rom.output_functional, None, dim_u + dim_p)
-        }
+        if self.projection_method == 'supremizer_galerkin' or self.projection_method == 'ls-normal':
+            # Square system: both dimensions are the same
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, dim_trial, dim_trial),
+                'rhs':               project_to_subbasis(rom.rhs, dim_trial, None),
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim_trial)
+            }
 
+        else:
+            # Rectangular system: test space (range) is larger than trial space (source)
+            dim_test = rom.operator.range.dim
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, dim_test, dim_trial),
+                'rhs':               project_to_subbasis(rom.rhs, dim_test, None),
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim_trial)
+            }
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
