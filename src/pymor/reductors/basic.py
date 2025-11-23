@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.image import estimate_image
+from pymor.algorithms.image import estimate_image, estimate_image_hierarchical
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
@@ -359,7 +359,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'operator':          project(fom.operator, range_basis=test_space,
                                              source_basis=RB).with_(solver=ScipyLSTSQSolver()),
                 'rhs':               project(fom.rhs, range_basis=test_space, source_basis=None),
-                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
+                'products':          {k: project(v, test_space, RB) for k, v in fom.products.items()},
                 'output_functional': project(fom.output_functional, None, RB)
             }
         return projected_operators
@@ -378,10 +378,17 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
             }
         else:
             # Rectangular system: test space (range) is larger than trial space (source)
+            expanded_op = expand(self.fom.operator)
+            _, image_dims = estimate_image_hierarchical(operators=[expanded_op],
+                                                        domain=self.RB,
+                                                        orthonormalize=True,
+                                                        product=self.product)
+            range_dims = image_dims[:dim + 1]
+
             projected_operators = {
-                'operator':          project_to_subbasis(rom.operator, rom.operator.range.dim, dim),
-                'rhs':               project_to_subbasis(rom.rhs, rom.operator.range.dim, None),
-                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'operator':          project_to_subbasis(rom.operator, range_dims[-1], dim),
+                'rhs':               project_to_subbasis(rom.rhs, range_dims[-1], None),
+                'products':          {k: project_to_subbasis(v, range_dims[-1], dim) for k, v in rom.products.items()},
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim)
             }
         return projected_operators

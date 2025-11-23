@@ -2,7 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project_to_subbasis
+from pymor.algorithms.simplify import expand
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
@@ -47,25 +49,32 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         assert RB_p in fom.solution_space.subspaces[1]
 
         self.projection_method = projection_method
+        self.V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
+        self.mixed_product = fom.products['mixed'] if fom.products else None
 
         super().__init__(fom, {'RB_u': RB_u, 'RB_p': RB_p}, {'RB_u': u_product, 'RB_p': p_product},
                         check_orthonormality=check_orthonormality, check_tol=check_tol)
 
     def project_operators(self):
         fom = self.fom
-        RB_u = self.bases['RB_u']
         RB_p = self.bases['RB_p']
+        V_block = self.V_block
+        mixed_product = self.mixed_product
 
         if self.projection_method == 'supremizer_galerkin':
-            supremizers = self.compute_supremizers()
-            self.extend_basis(supremizers, 'RB_u')
+            # Enrich velocity basis RB_u with one supremizer per pressure basis vector:
+            # len(RB_u) <- len(RB_u) + len(RB_p)
+            with self.logger.block(
+                f'Enriching RB_u with supremizers: len(RB_u) += len(RB_p) = {len(RB_p)}'
+            ):
+                supremizers = self.compute_supremizers()
+                self.extend_basis(supremizers, 'RB_u')
+
+            # build V_block again as it changed due to supremizer enrichment
             V_block = fom.solution_space.make_block_diagonal_array((self.bases['RB_u'], RB_p))
             projected_operators = StationaryRBReductor(fom, RB=V_block, check_orthonormality=False).project_operators()
 
         elif self.projection_method == 'ls-normal' or self.projection_method == 'ls-ls':
-            V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
-            mixed_product = fom.products['mixed'] if fom.products else None
-
             if self.projection_method == 'ls-normal':
                 projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
                                                              use_normal_equations=True,
@@ -105,24 +114,30 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         dim_p = dims['RB_p']
         dim_trial = dim_u + dim_p
 
-        if self.projection_method == 'supremizer_galerkin':
-            dim_u_enriched = dims['RB_u_enriched']
-            dim_trial = dim_u_enriched + dim_p
-
         if self.projection_method == 'supremizer_galerkin' or self.projection_method == 'ls-normal':
             # Square system: both dimensions are the same
             projected_operators = {
                 'operator':          project_to_subbasis(rom.operator, dim_trial, dim_trial),
                 'rhs':               project_to_subbasis(rom.rhs, dim_trial, None),
+                'products':          {k: project_to_subbasis(v, dim_trial, dim_trial)
+                                      for k, v in rom.products.items()},
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim_trial)
             }
 
         else:
             # Rectangular system: test space (range) is larger than trial space (source)
-            dim_test = rom.operator.range.dim
+            expanded_op = expand(self.fom.operator)
+            _, image_dims = estimate_image_hierarchical(operators=[expanded_op],
+                                                        domain=self.V_block,
+                                                        orthonormalize=True,
+                                                        product=self.mixed_product)
+            range_dims = image_dims[:dim_trial + 1]
+
             projected_operators = {
-                'operator':          project_to_subbasis(rom.operator, dim_test, dim_trial),
-                'rhs':               project_to_subbasis(rom.rhs, dim_test, None),
+                'operator':          project_to_subbasis(rom.operator, range_dims[-1], dim_trial),
+                'rhs':               project_to_subbasis(rom.rhs, range_dims[-1], None),
+                'products':          {k: project_to_subbasis(v, range_dims[-1], dim_trial)
+                                      for k, v in rom.products.items()},
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim_trial)
             }
         return projected_operators
