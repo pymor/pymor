@@ -5,8 +5,6 @@
 from pymor.algorithms.projection import project_to_subbasis
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
-from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
 
 
@@ -58,9 +56,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         RB_u = self.bases['RB_u']
         RB_p = self.bases['RB_p']
 
-        u_product = self.products['RB_u']
-        p_product = self.products['RB_p']
-
         if self.projection_method == 'supremizer_galerkin':
             supremizers = self.compute_supremizers()
             self.extend_basis(supremizers, 'RB_u')
@@ -69,15 +64,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
         elif self.projection_method == 'ls-normal' or self.projection_method == 'ls-ls':
             V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
-
-            if u_product and p_product:
-                mixed_product = BlockDiagonalOperator(blocks=[u_product, p_product])
-            elif u_product and p_product is None:
-                mixed_product = BlockDiagonalOperator(blocks=[u_product, IdentityOperator(fom.products['p'].range)])
-            elif u_product is None and p_product:
-                mixed_product = BlockDiagonalOperator(blocks=[IdentityOperator(fom.products['u'].range), p_product])
-            else:
-                mixed_product = None
+            mixed_product = fom.products['mixed'] if fom.products else None
 
             if self.projection_method == 'ls-normal':
                 projected_operators = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
@@ -95,7 +82,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
     def compute_supremizers(self):
         fom = self.fom
         RB_p = self.bases['RB_p']
-        u_product = self.products['RB_u']
+        u_product = fom.u_product
 
         block_pu = fom.operator.blocks[1,0]
         supremizers = fom.solution_space.subspaces[0].empty()
@@ -107,7 +94,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             supremizer_vector = supremizer_rhs
 
         norm = supremizer_vector.norm()
-        supremizer_vector = supremizer_vector.scal(1 / norm)
+        supremizer_vector.scal(1 / norm)
         supremizers.append(supremizer_vector)
 
         return supremizers

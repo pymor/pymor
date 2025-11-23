@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.models.basic import StationaryModel
-from pymor.operators.block import BlockColumnOperator, BlockOperator
-from pymor.operators.constructions import AdjointOperator, VectorOperator
+from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator
+from pymor.operators.constructions import AdjointOperator, IdentityOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
 
@@ -101,17 +101,20 @@ class SaddlePointModel(StationaryModel):
 
         assert isinstance(u_product, Operator | None)
         assert isinstance(p_product, Operator | None)
-        tmp_products = {}
 
         if u_product is not None:
             assert u_product.range == u_product.source == A.range
-            tmp_products['u'] = u_product
-
         if p_product is not None:
             assert p_product.range == p_product.source == B.range
-            tmp_products['p'] = p_product
 
-        products = tmp_products or None
+        if u_product or p_product:
+            blocks = [
+                u_product if u_product else IdentityOperator(A.range),
+                p_product if p_product else IdentityOperator(B.range)
+            ]
+            products = {'mixed': BlockDiagonalOperator(blocks=blocks)}
+        else:
+            products = None
 
         self.__auto_init(locals())
         super().__init__(operator=operator, rhs=rhs, products=products, error_estimator=error_estimator,

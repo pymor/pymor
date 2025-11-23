@@ -180,16 +180,9 @@ class StationaryRBReductor(ProjectionBasedReductor):
         projected_operators = {
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
+            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB)
         }
-
-        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
-        if products:
-            projected_operators['products'] = products
-        else:
-            self.logger.warning('FOM has no products that are compatible with RB. '
-                                'ROM will use Euclidean inner product.')
-
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -264,16 +257,9 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
+            'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB)
         }
-
-        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
-        if products:
-            projected_operators['products'] = products
-        else:
-            self.logger.warning('FOM has no products that are compatible with RB. '
-                                'ROM will use Euclidean inner product.')
-
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -351,7 +337,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         if self.use_normal_equations:
             # Solve LS problem argmin||Ax - b||_{W} via the normal equation: (A^* W A) x = A^* W b
             # Note: we assume that A maps to the dual of the test space, therefore due to
-            # Riesz the inverse operator is required to compute the norm on the dual space.
+            # Riesz the inverse operator is required to compute the norm in the dual space.
             W = InverseOperator(self.product) if self.product else None
 
             projected_operators = {
@@ -373,16 +359,9 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'operator':          project(fom.operator, range_basis=test_space,
                                              source_basis=RB).with_(solver=ScipyLSTSQSolver()),
                 'rhs':               project(fom.rhs, range_basis=test_space, source_basis=None),
+                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
                 'output_functional': project(fom.output_functional, None, RB)
             }
-
-        products = {k: project(v, RB, RB) for k, v in fom.products.items() if RB in v.source and RB in v.range}
-        if products:
-            projected_operators['products'] = products
-        else:
-            self.logger.warning('FOM has no products that are compatible with RB. '
-                                'ROM will use Euclidean inner product.')
-
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
