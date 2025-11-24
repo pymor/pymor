@@ -1,4 +1,4 @@
-from typing import Optional, Union, Tuple, Iterable
+from typing import Optional, Union, Iterable
 
 import sklearn.base as skbase
 import sklearn.utils as skutils
@@ -7,13 +7,12 @@ from collections.abc import Callable
 from numbers import Number
 
 import numpy as np
-import numpy.typing as npt
 from vkoga.kernels import Gaussian, Matern
 from vkoga.vkoga import VKOGA
 
 from pymor.core.base import BasicObject
 from pymor.models.generic import GenericModel
-from pymor.parameters.base import Mu, ParameterSpace, Parameters
+from pymor.parameters.base import Mu, Parameters
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.interface import VectorSpace, VectorArray
 
@@ -150,7 +149,7 @@ class DataDrivenReductor(BasicObject):
         estimators: Union[skbase.BaseEstimator, dict[str, skbase.BaseEstimator]],
         parameter_scaling: Optional[Callable[[Mu], Mu]] = None,
         training_data: Optional[
-            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | npt.ArrayLike]]]
+            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]]
         ] = None,
         shuffle_mode: str = "sort+shuffle",  # highly recommended, possible values are None, 'sort', 'shuffle', 'sort+shuffle'
         rom_name: str = "DataDrivenModel",
@@ -268,7 +267,7 @@ class DataDrivenReductor(BasicObject):
 
     def data_as_X_y(
         self, quantity=None, data_size: Number = None
-    ) -> tuple[npt.NDArray, dict[str, npt.NDArray]]:
+    ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         if quantity is None:
             assert len(self.reducable_computes) == 1
             quantity = next(iter(self.reducable_computes))
@@ -339,7 +338,7 @@ class DataDrivenReductor(BasicObject):
     def _parse_data(
         self,
         mus_and_data: Optional[
-            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | npt.ArrayLike]]]
+            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]]
         ] = None,
     ):
         parsed_new_data = [[], {compute_id: [] for compute_id in self.compute_shapes}]
@@ -368,7 +367,7 @@ class DataDrivenReductor(BasicObject):
                 parsed_data[compute_id] = [v.to_numpy().ravel() for v in computed_data]
             else:
                 assert isinstance(data_dim, Number) and data_dim >= 0
-                assert all(isinstance(v, npt.ArrayLike) for v in computed_data)
+                assert all(isinstance(v, np.ndarray) for v in computed_data)
                 computed_data = [
                     np.asarray(v).reshape(data_dim, data_length) for v in computed_data
                 ]
