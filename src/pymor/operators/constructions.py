@@ -21,7 +21,6 @@ from pymor.parameters.functionals import (
     ProjectionParameterFunctional,
 )
 from pymor.vectorarrays.block import BlockVectorSpace
-from pymor.vectorarrays.constructions import AbstractBasis, BlockedBasis, VectorArrayBasis
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -349,25 +348,19 @@ class ProjectedOperator(Operator):
 
     def __init__(self, operator, range_basis, source_basis, product=None, solver=None, name=None):
         assert isinstance(operator, Operator)
-        if source_basis is None:
-            source_basis = VectorArrayBasis(None, operator.source)
-        elif isinstance(source_basis, VectorArray):
-            source_basis = VectorArrayBasis(source_basis, operator.source)
-        elif isinstance(source_basis, list | tuple):
-            assert isinstance(operator.source, BlockVectorSpace)
-            source_basis = BlockedBasis(source_basis, operator.source.subspaces)
-        assert isinstance(source_basis, AbstractBasis)
-        assert source_basis.space == operator.source
+        assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
         assert (product is None
                 or (isinstance(product, Operator)
                     and range_basis is not None
                     and operator.range == product.source
                     and product.range == product.source))
+        if source_basis is not None:
+            source_basis = source_basis.copy()
         if range_basis is not None:
             range_basis = range_basis.copy()
         self.__auto_init(locals())
-        self.source = source_basis.reduced_space
+        self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.linear = operator.linear
 
@@ -381,22 +374,33 @@ class ProjectedOperator(Operator):
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
-        UU = self.source_basis.reconstruct(U)
-        if self.range_basis is None:
-            return self.operator.apply(UU, mu=mu)
-        elif self.product is None:
-            return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu))
+        if self.source_basis is None:
+            if self.range_basis is None:
+                return self.operator.apply(U, mu=mu)
+            elif self.product is None:
+                return self.range.make_array(self.operator.apply2(self.range_basis, U, mu=mu))
+            else:
+                V = self.operator.apply(U, mu=mu)
+                return self.range.make_array(self.product.apply2(self.range_basis, V))
         else:
-            V = self.operator.apply(UU, mu=mu)
-            return self.range.make_array(self.product.apply2(self.range_basis, V))
+            UU = self.source_basis.lincomb(U.to_numpy())
+            if self.range_basis is None:
+                return self.operator.apply(UU, mu=mu)
+            elif self.product is None:
+                return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu))
+            else:
+                V = self.operator.apply(UU, mu=mu)
+                return self.range.make_array(self.product.apply2(self.range_basis, V))
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
         assert self.parameters.assert_compatible(mu)
         if self.linear:
             return self.assemble(mu)
-        UU = self.source_basis.reconstruct(U)
-        J = self.operator.jacobian(UU, mu=mu)
+        if self.source_basis is None:
+            J = self.operator.jacobian(U, mu=mu)
+        else:
+            J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
@@ -420,8 +424,9 @@ class ProjectedOperator(Operator):
         if self.range_basis is not None:
             V = self.range_basis.lincomb(V.to_numpy())
         U = self.operator.apply_adjoint(V, mu)
-        UU = self.source_basis.project(U)
-        return UU
+        if self.source_basis is not None:
+            U = self.source.make_array(self.source_basis.inner(U))
+        return U
 
 
 class LowRankOperator(Operator):
