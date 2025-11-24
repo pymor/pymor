@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.image import estimate_image, estimate_image_hierarchical
+from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
@@ -185,8 +185,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
         }
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
-        rom = self._last_rom
+    def project_operators_to_subbasis(self, dims, last_rom=None):
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['RB']
         projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim, dim),
@@ -262,8 +262,8 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         }
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
-        rom = self._last_rom
+    def project_operators_to_subbasis(self, dims, last_rom=None):
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['RB']
         product = self.products['RB']
 
@@ -298,16 +298,18 @@ class InstationaryRBReductor(ProjectionBasedReductor):
 
 
 class StationaryLSRBReductor(ProjectionBasedReductor):
-    """Least-squares projection based reductor for stationary problems.
+    """Least-squares Petrov-Galerkin projection based reductor for stationary problems.
 
-    This reductor uses least-squares projection instead of Galerkin projection.
+    This reductor solves a least-squares problem either by Galerkin projection of the normal
+    equations (`use_normal_equations = True`) or by Petrov-Galerkin projection of the
+    least-squares residual.
 
     Parameters
     ----------
     fom
         The full order |Model| to reduce.
     RB
-        The basis of the reduced space onto which to project. If `None` an empty basis is used.
+        The basis of the reduced space onto which to project. If `None`, an empty basis is used.
     product
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
         inner product is used.
@@ -351,9 +353,12 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         else:
             expanded_op = expand(fom.operator)
             # See comment in self.use_normal_equations == True: The inverse of self.product is used
-            # in estimate_image if riesz_representative == True.
-            test_space = estimate_image(operators=[expanded_op], domain=RB, orthonormalize=True,
-                                        product=self.product, riesz_representatives=True)
+            # in estimate_image_hierarchical if riesz_representative == True.
+            test_space, test_space_dims = estimate_image_hierarchical(operators=[expanded_op],
+                                                                      domain=RB,
+                                                                      orthonormalize=True,
+                                                                      product=self.product)
+            self.test_space_dims = test_space_dims
 
             projected_operators = {
                 'operator':          project(fom.operator, range_basis=test_space,
@@ -364,8 +369,8 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
             }
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
-        rom = self._last_rom
+    def project_operators_to_subbasis(self, dims, last_rom=None):
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['RB']
 
         if self.use_normal_equations:
@@ -378,17 +383,11 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
             }
         else:
             # Rectangular system: test space (range) is larger than trial space (source)
-            expanded_op = expand(self.fom.operator)
-            _, image_dims = estimate_image_hierarchical(operators=[expanded_op],
-                                                        domain=self.RB,
-                                                        orthonormalize=True,
-                                                        product=self.product)
-            range_dims = image_dims[:dim + 1]
-
+            range_dim = self.test_space_dims[dim]
             projected_operators = {
-                'operator':          project_to_subbasis(rom.operator, range_dims[-1], dim),
-                'rhs':               project_to_subbasis(rom.rhs, range_dims[-1], None),
-                'products':          {k: project_to_subbasis(v, range_dims[-1], dim) for k, v in rom.products.items()},
+                'operator':          project_to_subbasis(rom.operator, range_dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, range_dim, None),
+                'products':          {k: project_to_subbasis(v, range_dim, dim) for k, v in rom.products.items()},
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim)
             }
         return projected_operators
@@ -429,10 +428,10 @@ class LTIPGReductor(ProjectionBasedReductor):
                                'E': None if self.E_biorthonormal else project(fom.E, W, V)}
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
+    def project_operators_to_subbasis(self, dims, last_rom=None):
         if dims['W'] != dims['V']:
             raise ValueError
-        rom = self._last_rom
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['V']
         projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
                                'B': project_to_subbasis(rom.B, dim, None),
@@ -490,10 +489,10 @@ class SOLTIPGReductor(ProjectionBasedReductor):
                                'D':  fom.D}
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
+    def project_operators_to_subbasis(self, dims, last_rom=None):
         if dims['W'] != dims['V']:
             raise ValueError
-        rom = self._last_rom
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['V']
         projected_operators = {'M':  None if self.M_biorthonormal else project_to_subbasis(rom.M, dim, dim),
                                'E':  project_to_subbasis(rom.E, dim, dim),
@@ -547,10 +546,10 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
                                'E': None if self.E_biorthonormal else project(fom.E, W, V)}
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
+    def project_operators_to_subbasis(self, dims, last_rom=None):
         if dims['W'] != dims['V']:
             raise ValueError
-        rom = self._last_rom
+        rom = last_rom if last_rom is not None else self._last_rom
         dim = dims['V']
         projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
                                'Ad': tuple(project_to_subbasis(op, dim, dim) for op in rom.Ad),
