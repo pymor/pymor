@@ -7,7 +7,7 @@ import numpy.typing as npt
 from pymor.core.base import BasicObject
 from pymor.core.cache import build_cache_key
 from pymor.core.pickle import dump, load
-from pymor.models.generic import ComputeModel
+from pymor.models.generic import GenericModel
 from pymor.parameters.base import Parameters
 from pymor.vectorarrays.interface import VectorArray
 
@@ -86,7 +86,7 @@ class DataSetReader(BasicObject):
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or npt.ArrayLike!')
 
-        return ComputeModel(
+        return GenericModel(
             parameters=self.parameters,
             computers={
                 q: (
