@@ -58,10 +58,10 @@ class GenericModel(Model):
                         data[quantity] = computed_data
                 else:  # this needs to be the numpy case
                     if target_shape == 0:
-                        data[quantity] = np.zeros((1, target_shape))
+                        data[quantity] = np.zeros((target_shape, 1))
                     else:
                         computed_data = computer(mu)
-                        computed_data = computed_data.reshape(-1, target_shape)
+                        computed_data = computed_data.reshape(target_shape, -1)
                         data[quantity] = computed_data
                 quantities.remove(quantity)
         # ... and delegate the rest to the parent class
