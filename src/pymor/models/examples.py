@@ -337,8 +337,8 @@ def stokes_2Dexample(rhs):
 
     Discretizes the following Stokes equation .. math::
 
-        \mu \Delta u(x, \mu) + \nabla p(x, \mu) = f(x) \text{ in } \Omega
-        \nabla \cdot u(x, \mu) = 0 \text{ in } \\Omega
+        - \mu \Delta u(x, \mu) + \nabla p(x, \mu) & = f(x) \text{ in } \Omega \\
+        \nabla \cdot u(x, \mu) & = 0 \text{ in } \Omega
 
     with homogenous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
     and :math:`\Omega` is the unit circle. To eliminate the singularity of the saddle-point system,
