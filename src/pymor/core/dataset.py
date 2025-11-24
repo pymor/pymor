@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
-import numpy.typing as npt
 
 from pymor.core.base import BasicObject
 from pymor.core.cache import build_cache_key
@@ -81,10 +80,10 @@ class DataSetReader(BasicObject):
         def parse_shape(v):
             if isinstance(v, VectorArray):
                 return v.space
-            elif isinstance(v, npt.ArrayLike):
+            elif isinstance(v, np.ndarray):
                 return v.shape
             else:
-                raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or npt.ArrayLike!')
+                raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or np.ndarray!')
 
         return GenericModel(
             parameters=self.parameters,
@@ -131,7 +130,7 @@ class DataSet(DataSetReader):
                     self._seen_quantities[q] = v.shape
                 assert v.shape == self._seen_quantities[q]
             else:
-                raise TypeError(f'Unsupported type {type(v)} for quantity {q}. Expected VectorArray or npt.ArrayLike!')
+                raise TypeError(f'Unsupported type {type(v)} for quantity {q}. Expected VectorArray or np.ndarray!')
             quantities_to_write[q] = v
         self.logger.debug(f"Adding '{quantities_to_write.keys()}' for {mu} ...")
         for q, v in quantities_to_write.items():
