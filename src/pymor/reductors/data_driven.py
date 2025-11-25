@@ -295,46 +295,6 @@ class DataDrivenReductor(BasicObject):
     #     assert len(u) == self.solution_length
     #     return u.copy()
 
-    def _build_rom(self, estimators):
-        computers = {}
-        for compute_id, estimator in estimators.items():
-            data_dim, data_length = self.compute_shapes[compute_id]
-            if not skutils.validation._is_fitted(estimator):
-                if isinstance(data_dim, VectorSpace):
-
-                    def trivial_solution(mu):
-                        return data_dim.zeros(data_length)
-                else:
-
-                    def trivial_solution(mu):
-                        return np.zeros((data_dim, data_length))
-
-                computers[compute_id] = (data_dim, trivial_solution)
-            else:
-                if isinstance(data_dim, VectorSpace):
-
-                    def predict(mu):
-                        mu = self.parameter_scaling(mu)
-                        X = mu.to_numpy().reshape(1, -1)
-                        Y = estimator.predict(X)
-                        return data_dim.from_numpy(Y.reshape(data_dim.dim, data_length))
-                else:
-
-                    def predict(mu):
-                        mu = self.parameter_scaling(mu)
-                        X = mu.to_numpy().reshape(1, -1)
-                        Y = estimator.predict(X)
-                        return Y.reshape((data_dim, data_length))
-
-                computers[compute_id] = (data_dim, predict)
-        rom = GenericModel(
-            parameters=self.parameters,
-            computers=computers,
-            name=self.rom_name,
-        )
-        rom.disable_logging()
-        return rom
-
     def _parse_data(
         self,
         mus_and_data: Optional[
