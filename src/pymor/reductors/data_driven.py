@@ -101,7 +101,7 @@ class DataDrivenModel(GenericModel):
         parameter_scaling,
         compute_shapes,
         estimators,
-        name: Optional[str] = "GenericModel",
+        name: Optional[str] = "DataDrivenModel",
     ):
         self.__auto_init(locals())
         computers = {}
@@ -263,6 +263,7 @@ class DataDrivenReductor(BasicObject):
                 estimators=self._fitted_estimators[data_size],
                 name=self.rom_name,
             )
+            self._roms[data_size].disable_logging()
         return self._roms[data_size]
 
     def data_as_X_y(
@@ -287,13 +288,6 @@ class DataDrivenReductor(BasicObject):
         X = np.stack(X)
         y = np.stack(self._data[1][quantity][:data_size])
         return X, y
-
-    # def reconstruct(self, u, basis='DATA'):
-    #     """Returns an identical copy of the MLM prediction within the solution_space."""
-    #     assert basis in self.bases
-    #     assert u in self.solution_space
-    #     assert len(u) == self.solution_length
-    #     return u.copy()
 
     def _parse_data(
         self,
