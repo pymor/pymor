@@ -234,7 +234,7 @@ class DataDrivenReductor(BasicObject):
     def reconstruct(self, u, basis=None):
         return u
 
-    def reduce(self, data_size: Optional[Number] = None) -> GenericModel:
+    def reduce(self, data_size: Optional[Number] = None) -> DataDrivenModel:
         """Fits the estimator to the amount of data specified by data_size."""
         if data_size is None:
             data_size = len(self._data[0])
