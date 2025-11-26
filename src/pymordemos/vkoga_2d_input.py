@@ -13,7 +13,7 @@ from pymor.tools.typer import Choices
 
 
 def main(num_training_points: int = Option(100, help='Number of training points in the weak greedy algorithm.'),
-         greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
+         greedy_criterion: Choices('fp f p f/p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
          max_centers: int = Option(40, help='Maximum number of selected centers in the greedy algorithm.'),
          tol: float = Option(1e-6, help='Tolerance for the weak greedy algorithm.'),
          reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
