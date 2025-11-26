@@ -81,7 +81,7 @@ class DataSetReader(BasicObject):
             if isinstance(v, VectorArray):
                 return v.space
             elif isinstance(v, np.ndarray):
-                return v.shape
+                return v.shape[0]
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or np.ndarray!')
 
