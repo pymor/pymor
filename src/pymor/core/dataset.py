@@ -84,16 +84,20 @@ class DataSetReader(BasicObject):
                 return v.shape[0]
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or np.ndarray!')
+            
+        def make_extractor(key):
+            key = str(key)  # need to make a copy of the changing loop variable here
+            return lambda mu: self.get(mu, key)
 
         return GenericModel(
             parameters=self.parameters,
             computers={
                 q: (
                     parse_shape(v),
-                    lambda mu: self.get(mu, q),
+                    make_extractor(q),
                 ) for q, v in data.items()
             },
-            name=name or f'{self.id}Model',
+            name=name or f'{self.id}FromDataSet',
         )
 
 class DataSet(DataSetReader):
