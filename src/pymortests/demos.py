@@ -164,14 +164,10 @@ SYMPLECTIC_WAVE_ARGS = (
 )
 
 VKOGA_ARGS = (
-    ('vkoga', ['--greedy-criterion=fp', '--kernel=non-diagonal']),
-    ('vkoga', ['--greedy-criterion=fp', '--kernel=diagonal']),
-    ('vkoga', ['--greedy-criterion=f', '--kernel=non-diagonal']),
-    ('vkoga', ['--greedy-criterion=f', '--kernel=diagonal']),
-    ('vkoga', ['--greedy-criterion=p', '--kernel=non-diagonal']),
-    ('vkoga', ['--greedy-criterion=p', '--kernel=diagonal']),
-    ('vkoga', ['--greedy-criterion=f/p', '--kernel=non-diagonal']),
-    ('vkoga', ['--greedy-criterion=f/p', '--kernel=diagonal']),
+    ('vkoga', ['--greedy-criterion=fp']),
+    ('vkoga', ['--greedy-criterion=f']),
+    ('vkoga', ['--greedy-criterion=p']),
+    ('vkoga', ['--greedy-criterion=f/p']),
 )
 
 DEMO_ARGS = (
