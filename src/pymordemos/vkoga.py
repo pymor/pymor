@@ -17,30 +17,13 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                                       help='Method for sampling the training points'),
          num_training_points: int = Option(40, help='Number of training points in the weak greedy algorithm.'),
          greedy_criterion: Choices('fp f p f/p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
-         kernel: Choices('non-diagonal diagonal') = Option('non-diagonal', help='Choice of the kernel.'),
          max_centers: int = Option(20, help='Maximum number of selected centers in the greedy algorithm.'),
          tol: float = Option(1e-6, help='Tolerance for the weak greedy algorithm.'),
          reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
          length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
                                                 'Only used when `kernel = diagonal`.')):
     m = 2
-    assert kernel in ('non-diagonal', 'diagonal')
-    if kernel == 'non-diagonal':
-        class NonDiagonalKernel:
-            def __init__(self, sigma=0.12, coupling=0.3):
-                self.sigma = sigma
-                self.coupling = coupling
-
-            def __call__(self, X, Y):
-                k = np.exp(-np.linalg.norm(X - Y)**2 / (2 * self.sigma**2))
-                return k * ((1 - self.coupling) * np.eye(m) + self.coupling * np.ones((m, m)))
-
-            def diag(self, X):
-                X = np.atleast_2d(X)
-                return np.ones(X.shape[0])
-        kernel = NonDiagonalKernel()
-    elif kernel == 'diagonal':
-        kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), m)
+    kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), m)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':
@@ -65,7 +48,7 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
         fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
         titles = [r'$f_1(x)$', r'$f_2(x)$']
-        for i in range(2):
+        for i in range(m):
             axs[i].plot(X_dense, F_pred[:, i], 'r-', lw=2, label='VKOGA surrogate')
             axs[i].scatter(X_train, F_train[:, i], c='k', s=30, label='Training data', alpha=0.6)
             axs[i].scatter(vkoga._surrogate._centers[:, 0],
