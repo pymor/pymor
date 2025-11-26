@@ -250,7 +250,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self._V is None and self._z is None:
             self.res = self.F_train
         else:
-            self.res = self.res - np.einsum('nij, i->nj', self._V[:, -self.m:, :], self._z[-self.m:])
+            self.res = self.res - np.einsum('nij, i->nj', self._V[:, -self.m:], self._z[-self.m:])
 
         if self._L is None or self._centers is None:
             self._extend_first_center(mu, idx_in_X)
@@ -284,53 +284,42 @@ class VKOGASurrogate(WeakGreedySurrogate):
         """Incrementally add a new center to the existing interpolant."""
         n = len(self._centers)
 
-        # Compute kernel matrix blocks and Cholesky update
+        # compute kernel matrix blocks and Cholesky update
         B_col = np.zeros((n * self.m, self.m))
         for j, cj in enumerate(self._centers):
-           B_col[j*self.m:(j+1)*self.m, :] = self.kernel(cj, mu)
+            B_col[j*self.m:(j+1)*self.m] = self.kernel(cj, mu)
 
-        # Compute Cholesky update
+        # compute Cholesky update
         k_nn = self.kernel(mu, mu)
         W = solve_triangular(self._L, B_col, lower=True)
         S = k_nn - W.T @ W + self.reg * np.eye(self.m)
         l_nn = np.linalg.cholesky(S)
         self._update_cholesky_factor(W, l_nn)
 
-        #update coefficient:
-        z_new = (self.res[idx_in_X] * np.sqrt(self.m) / np.sqrt(self._power2[idx_in_X])).reshape(self.m, )
+        # update coefficient
+        z_new = (self.res[idx_in_X] * np.sqrt(self.m) / np.sqrt(self._power2[idx_in_X])).reshape(self.m)
         self._z = np.hstack([self._z, z_new])
 
-        # Update power function, Newton basis and the transformation matrix C
+        # update power function, Newton basis and the transformation matrix C
         self._update_cholesky_inverse(W, l_nn)
         self._update_newton_basis(mu)
         self._update_power_function_evals()
 
-        # Update centers and final coefficients
+        # update centers and final coefficients
         self._coefficients = (self._C.T @ self._z).reshape(n + 1, self.m)
         self._centers = np.vstack([self._centers, mu])
         self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
 
     def _update_cholesky_factor(self, W, l_nn):
         """Extend the Cholesky factor with the new block."""
-        p = self._L.shape[0]
-        new_p = p + self.m
-        L_new = np.zeros((new_p, new_p))
-        L_new[:p, :p] = self._L
-        L_new[p:new_p, :p] = W.T
-        L_new[p:new_p, p:new_p] = l_nn
-        self._L = L_new
+        self._L = np.block([[self._L, np.zeros((self._L.shape[0], self.m))],
+                            [W.T, l_nn]])
 
     def _update_cholesky_inverse(self, W, l_nn):
         """Extend the inverse of the Choleksky matrix with the new block."""
         c_nn = solve_triangular(l_nn, np.eye(l_nn.shape[0]), lower=True, check_finite=False)
-        C_old = self._C
-        p_old = C_old.shape[0]
-        new_p = p_old + self.m
-        C_new = np.zeros((new_p, new_p))
-        C_new[:p_old, :p_old] = C_old
-        C_new[p_old:new_p, :p_old] = - c_nn.T @ W.T @ C_old
-        C_new[p_old:new_p, p_old:new_p] = c_nn
-        self._C = C_new
+        self._C = np.block([[self._C, np.zeros((self._C.shape[0], self.m))],
+                            [- c_nn.T @ W.T @ self._C, c_nn]])
 
     def _update_newton_basis(self, mu):
         """Append Xi as the last block to the Newton basis V."""
@@ -341,23 +330,24 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         # compute k(mu, y_i) for all training points y_i
         K_stack_new = np.zeros((N, p_old + m, m))
-        K_stack_new[:, :-m, :] = self._K_stack
-        K_stack_new[:, -m:, :] = np.array([self.kernel(x, mu) for x in self.X_train])
+        K_stack_new[:, :-m] = self._K_stack
+        K_stack_new[:, -m:] = np.array([self.kernel(x, mu) for x in self.X_train])
         self._K_stack = K_stack_new
 
         # update Newton basis
-        Xi = np.einsum('ij,Njk->Nik', self._C[-m:, :], self._K_stack)
+        Xi = np.einsum('ij,Njk->Nik', self._C[-m:], self._K_stack)
         V_new = np.zeros((N, p_old + m, m))
-        V_new[:, :p_old, :] = V_old
-        V_new[:, p_old:p_old + m, :] = Xi
+        V_new[:, :p_old] = V_old
+        V_new[:, p_old:p_old + m] = Xi
         self._V = V_new
 
     def _update_power_function_evals(self):
-        """Incrementally update self._power2 and self._V when adding center mu."""
+        """Incrementally update self._power2 after adding new center."""
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
-        Xi = self._V[:, -self.m:, :]
+        Xi = self._V[:, -self.m:]
         norms = np.sum(Xi * Xi, axis=(1, 2))
         self._power2 = np.maximum(self._power2 - norms, 0.0)
+
 
 class VKOGAEstimator(BasicObject):
     """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
