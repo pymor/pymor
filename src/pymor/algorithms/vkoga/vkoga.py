@@ -101,12 +101,12 @@ class VKOGASurrogate(WeakGreedySurrogate):
         * the power function evaluations on the training set (`self._power2`)
         * the Newton basis evaluations on the training set (`self._V`)
         * the residual :math:`f - s_f` (`self.res`)
-        * the inverse of the Cholesky matrix (`self._C)
+        * the inverse of the Cholesky matrix (`self._C`)
 
         using a numerically stable Newton basis expansion.
 
         In the following derivation we leave out the regularization term for simplicity.
-        If :math:`K_n` denotes the full block kernel  for :math:`X_n`, we can write :math:`K_{n+1}`
+        If :math:`K_n` denotes the full block kernel for :math:`X_n`, we can write :math:`K_{n+1}`
         as
 
         .. math::
@@ -213,7 +213,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         The incremental updates of :math:`V_{n,i}` to :math:`V_{n+1,i}` and the power
         function values is then performed in the following way: Compute the latest
-        Newton basis via :math:`\Xi_i = C_{n+1}_{-m:, :} \cdot k(X_{n+1}, y_i)`
+        Newton basis via :math:`\Xi_i = C_{n+1}[-m:, :] \cdot k(X_{n+1}, y_i)`
 
         .. math::
             \begin{align*}
