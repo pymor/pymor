@@ -82,7 +82,22 @@ class DiagonalVectorValuedKernel:
 
         # efficient block-diagonal expansion: kron(I_m, K_scalar)
         # each block corresponds to one output dimension
-        K_block = np.kron(np.eye(self.n_outputs), K_scalar)
+        #K_block = np.kron(np.eye(self.n_outputs), K_scalar)
+        K_block = K_scalar[..., None, None] * np.eye(self.n_outputs)[None, None, :, :]
+
+
+        if self.n_outputs == 1:
+            K_block = np.squeeze(K_block, axis=(2,3))
+        else:
+            n, m = X.shape[0], Y.shape[0]
+            axes_to_squeeze = []
+            if n == 1:
+                axes_to_squeeze.append(0)
+            if m == 1:
+                axes_to_squeeze.append(1)
+
+            if axes_to_squeeze:
+                K_block = np.squeeze(K_block, axis=tuple(axes_to_squeeze))
 
         return K_block
 
