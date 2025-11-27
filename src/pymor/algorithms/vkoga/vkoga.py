@@ -45,10 +45,19 @@ class VKOGASurrogate(WeakGreedySurrogate):
         X = np.asarray(X)
         if self._centers is None:
             return np.zeros((X.shape[0], self.m))
-        y = np.zeros((X.shape[0], self.m))
-        for j, cj in enumerate(self._centers):
-            K_vals = np.array([self.kernel(x, cj) for x in X])
-            y += np.einsum('nij,j->ni', K_vals, self._coefficients[j])
+
+        K = self.kernel(X, self._centers)
+        coeff = self._coefficients
+
+        if K.ndim == 3:
+            if self._centers.shape[0] == 1:
+                K = K[:, None, :, :]
+            else:
+                K = K[None, :, :, :]
+        elif K.ndim == 2:
+            K = K[:, :, None, None]
+
+        y = np.einsum('ncab,cb->na', K, coeff)
         return y
 
     def evaluate(self, mus, return_all_values=False):
@@ -267,12 +276,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._init_power_function_evals_after_first_center(mu, l_nn)
 
         self._coefficients = (self._C.T @ self._z).reshape(1, self.m)
-        self._centers = np.array([mu])
+        self._centers = np.atleast_2d(mu)
         self._centers_idx = np.array([idx_in_X], dtype=int)
 
     def _init_power_function_evals_after_first_center(self, mu, l_nn):
-        K_mu_X = np.array([self.kernel(mu, x) for x in self.X_train])
-        self._K_stack = K_mu_X
+        K_X_mu = self.kernel(self.X_train, mu)
+        if K_X_mu.ndim == 2:
+            K_X_mu = K_X_mu[:, :, None]
+        self._K_stack = K_X_mu
         self._C = solve_triangular(l_nn, np.eye(l_nn.shape[0]), lower=True)
         self._V = np.einsum('ij, Njk->Nik', self._C, self._K_stack)
 
@@ -283,21 +294,28 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
         n = len(self._centers)
+        N = len(self.X_train)
+        m = self.m
 
-        # compute kernel matrix blocks and Cholesky update
-        B_col = np.zeros((n * self.m, self.m))
-        for j, cj in enumerate(self._centers):
-            B_col[j*self.m:(j+1)*self.m] = self.kernel(cj, mu)
+        # compute k(mu, y_i) for all training points y_i
+        K_stack_new = np.zeros((N, n * m + m, m))
+        K_stack_new[:, :-m] = self._K_stack
+        K_X_mu= self.kernel(self.X_train, mu)
+        if K_X_mu.ndim == 2:
+            K_X_mu = K_X_mu[:, :, None]
+        K_stack_new[:, -m:] = K_X_mu
+        self._K_stack = K_stack_new
 
         # compute Cholesky update
         k_nn = self.kernel(mu, mu)
+        B_col = self._K_stack[self._centers_idx, -m:].reshape(-1, m)
         W = solve_triangular(self._L, B_col, lower=True)
-        S = k_nn - W.T @ W + self.reg * np.eye(self.m)
+        S = k_nn - W.T @ W + self.reg * np.eye(m)
         l_nn = np.linalg.cholesky(S)
         self._update_cholesky_factor(W, l_nn)
 
         # update coefficient
-        z_new = (self.res[idx_in_X] * np.sqrt(self.m) / np.sqrt(self._power2[idx_in_X])).reshape(self.m)
+        z_new = (self.res[idx_in_X] * np.sqrt(m) / np.sqrt(self._power2[idx_in_X])).reshape(m)
         self._z = np.hstack([self._z, z_new])
 
         # update power function, Newton basis and the transformation matrix C
@@ -306,9 +324,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._update_power_function_evals()
 
         # update centers and final coefficients
-        self._coefficients = (self._C.T @ self._z).reshape(n + 1, self.m)
+        self._coefficients = (self._C.T @ self._z).reshape(n + 1, m)
         self._centers = np.vstack([self._centers, mu])
         self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
+
 
     def _update_cholesky_factor(self, W, l_nn):
         """Extend the Cholesky factor with the new block."""
@@ -327,12 +346,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         m = self.m
         V_old = self._V
         p_old = V_old.shape[1]
-
-        # compute k(mu, y_i) for all training points y_i
-        K_stack_new = np.zeros((N, p_old + m, m))
-        K_stack_new[:, :-m] = self._K_stack
-        K_stack_new[:, -m:] = np.array([self.kernel(x, mu) for x in self.X_train])
-        self._K_stack = K_stack_new
 
         # update Newton basis
         Xi = np.einsum('ij,Njk->Nik', self._C[-m:], self._K_stack)
