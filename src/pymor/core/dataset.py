@@ -84,7 +84,7 @@ class DataSetReader(BasicObject):
                 return v.shape[0]
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or np.ndarray!')
-            
+
         def make_extractor(key):
             key = str(key)  # need to make a copy of the changing loop variable here
             return lambda mu: self.get(mu, key)
@@ -108,7 +108,7 @@ class DataSet(DataSetReader):
         assert isinstance(path, Path)
         path.mkdir(parents=True, exist_ok=True)
         super().__init__(path, id, parameters, quantities)
-        self._seen_quantities = {q: None for q in self.quantities}
+        self._seen_quantities = dict.fromkeys(self.quantities)
         self.__auto_init(locals())
 
     def _dump(self, v, filename):
