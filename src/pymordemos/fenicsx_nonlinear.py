@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typer import Argument, run
+from typer import Argument, Option, run
 
 from pymor.core.config import config
 
@@ -11,6 +11,7 @@ def main(
     dim: int = Argument(..., help='Spatial dimension of the problem.'),
     n: int = Argument(..., help='Number of mesh intervals per spatial dimension.'),
     order: int = Argument(..., help='Finite element order.'),
+    visualize: bool = Option(True, help='Visualize solution and reduczed solution'),
 ):
     """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
     from pymor.tools import mpi
@@ -76,10 +77,11 @@ def main(
     print(f'Maximum relative ROM error: {max(errs)}')
     print(f'Median of ROM speedup: {np.median(speedups)}')
 
-    mu = mus[np.argmax(errs)]
-    U = fom.solve(mu)
-    U_red = reductor.reconstruct(rom.solve(mu))
-    fom.visualize((U, U_red, U-U_red), legend=('FOM', 'ROM', 'Error'), title=f'c={mu["c"]}')
+    if visualize:
+        mu = mus[np.argmax(errs)]
+        U = fom.solve(mu)
+        U_red = reductor.reconstruct(rom.solve(mu))
+        fom.visualize((U, U_red, U-U_red), legend=('FOM', 'ROM', 'Error'), title=f'c={mu["c"]}')
 
 
 def discretize(dim, n, order):

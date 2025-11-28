@@ -10,7 +10,7 @@ Usage:
 Arguments:
 """
 
-from typer import Argument, run
+from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -41,6 +41,7 @@ def main(
     ),
     rbsize: int = Argument(..., help='Size of the reduced basis.'),
     test: int = Argument(..., help='Number of parameters for stochastic error estimation.'),
+    visualize: bool = Option(True, help='Visualize solution and reduczed solution'),
 ):
     # discretize
     ############
@@ -98,11 +99,12 @@ def main(
 
     # visualize reduction error for worst-approximated mu
     #####################################################
-    mumax = results['max_error_mus'][0, -1]
-    U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rom.solve(mumax))
-    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                  separate_colorbars=True, block=True)
+    if visualize:
+        mumax = results['max_error_mus'][0, -1]
+        U = fom.solve(mumax)
+        U_RB = reductor.reconstruct(rom.solve(mumax))
+        fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                      separate_colorbars=True, block=True)
 
 
 ####################################################################################################

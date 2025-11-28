@@ -88,6 +88,7 @@ THERMALBLOCK_ADAPTIVE_ARGS = (
 THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
+    ('thermalblock_simple', ['fenicsx', 'greedy', 2, 5, 5, '--no-visualize']),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
@@ -129,6 +130,8 @@ HAPOD_ARGS = (
 FENICS_NONLINEAR_ARGS = (
     ('fenics_nonlinear', [2, 10, 2]),
     ('fenics_nonlinear', [3, 5, 1]),
+    ('fenicsx_nonlinear', [2, 10, 2, '--no-visualize']),
+    ('fenicsx_nonlinear', [3, 5, 1, '--no-visualize']),
 )
 
 FUNCTION_EI_ARGS = (
@@ -188,14 +191,19 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 def _skip_if_no_solver(param):
     demo, args = param
+    full_str = ' '.join(str(x) for x in [demo] + args)
     builtin = True
     from pymor.core.config import config
-    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH'),
-                            ('neural_networks_instationary', 'FENICS')]:
-        package = package or solver.upper()
-        needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
+    for check, package in [
+            (lambda s: 'fenics' in s and 'fenicsx' not in s, 'FENICS'),
+            (lambda s: 'ngsolve' in s, 'NGSOLVE'),
+            (lambda s: 'neural_' in s, 'TORCH'),
+            (lambda s: 'neural_networks_instationary' in s, 'FENICS')
+    ]:
+        needs_solver = check(full_str)
         has_solver = getattr(config, f'HAVE_{package}')
-        builtin = builtin and (not needs_solver or package == 'TORCH')
+        if needs_solver and package != 'TORCH':
+            builtin = False
         if needs_solver and not has_solver:
             pytest.skip('skipped test due to missing ' + package)
     if builtin and BUILTIN_DISABLED:
