@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from numbers import Number
-from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +18,7 @@ class GenericModel(Model):
         computers: dict[str, tuple[VectorSpace | Number, Callable[[Mu], VectorArray | npt.ArrayLike]]],
         output_functional=None,
         visualizer=None,
-        name: Optional[str] = None,
+        name: str | None=None,
         ):
         assert isinstance(parameters, Parameters)
 
