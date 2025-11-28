@@ -1,12 +1,9 @@
-from typing import Optional, Union, Iterable
-
-import sklearn.base as skbase
-import sklearn.utils as skutils
-
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from numbers import Number
 
 import numpy as np
+import sklearn.base as skbase
+import sklearn.utils as skutils
 from vkoga.kernels import Gaussian, Matern
 from vkoga.vkoga import VKOGA
 
@@ -14,28 +11,28 @@ from pymor.core.base import BasicObject
 from pymor.models.generic import GenericModel
 from pymor.parameters.base import Mu, Parameters
 from pymor.tools.random import get_rng
-from pymor.vectorarrays.interface import VectorSpace, VectorArray
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
 class VKOGAEstimator(VKOGA, BasicObject):
     def __init__(
         self,
-        kernel_type="gaussian",
+        kernel_type='gaussian',
         kernel_length_scale=1.0,
-        greedy_type="p_greedy",
+        greedy_type='p_greedy',
         greedy_tol=1e-10,
         greedy_max_iter=100,
         regularisation_parameter=0.0,
         selection_threshold=0.0,
         verbose=False,
     ):
-        if kernel_type == "gaussian":
+        if kernel_type == 'gaussian':
             kernel = Gaussian(ep=kernel_length_scale)
-        elif kernel_type[:6] == "matern":
+        elif kernel_type[:6] == 'matern':
             order = int(kernel_type[7:]) if len(kernel_type) > 6 else 1
             kernel = Matern(ep=kernel_length_scale, k=order)
         else:
-            raise ValueError(f"Unknown kernel: {kernel_type}")
+            raise ValueError(f'Unknown kernel: {kernel_type}')
         super().__init__(
             kernel=kernel,
             kernel_par=1,  # unsused?
@@ -57,7 +54,7 @@ class VKOGAEstimator(VKOGA, BasicObject):
         super().fit(X, y, maxIter=max_iter)
 
     def __sklearn_is_fitted__(self):
-        return hasattr(self, "ctrs_") and self.ctrs_ is not None
+        return hasattr(self, 'ctrs_') and self.ctrs_ is not None
 
     def set_params(self, **params):
         """Set parameters - required for sklearn compatibility"""
@@ -65,10 +62,10 @@ class VKOGAEstimator(VKOGA, BasicObject):
             setattr(self, key, value)
 
         # Reinitialize kernel when parameters change
-        if "kernel_type" in params or "kernel_length_scale" in params:
-            if self.kernel_type == "gaussian":
+        if 'kernel_type' in params or 'kernel_length_scale' in params:
+            if self.kernel_type == 'gaussian':
                 self.kernel = Gaussian(ep=self.kernel_length_scale)
-            elif self.kernel_type[:6] == "matern":
+            elif self.kernel_type[:6] == 'matern':
                 order = int(self.kernel_type[7:]) if len(self.kernel_type) > 6 else 1
                 self.kernel = Matern(ep=self.kernel_length_scale, k=order)
 
@@ -83,15 +80,18 @@ class VKOGAEstimator(VKOGA, BasicObject):
     def get_params(self, deep=True):
         """Get parameters - required for sklearn compatibility"""
         return {
-            "kernel_type": self.kernel_type,
-            "kernel_length_scale": self.kernel_length_scale,
-            "greedy_type": self.greedy_type,
-            "greedy_tol": self.greedy_tol,
-            "greedy_max_iter": self.greedy_max_iter,
-            "regularisation_parameter": self.regularisation_parameter,
-            "selection_threshold": self.selection_threshold,
-            "verbose": self.verbose,
+            'kernel_type': self.kernel_type,
+            'kernel_length_scale': self.kernel_length_scale,
+            'greedy_type': self.greedy_type,
+            'greedy_tol': self.greedy_tol,
+            'greedy_max_iter': self.greedy_max_iter,
+            'regularisation_parameter': self.regularisation_parameter,
+            'selection_threshold': self.selection_threshold,
+            'verbose': self.verbose,
         }
+
+    def clone(self):
+        return VKOGAEstimator(**self.get_params())
 
 
 class DataDrivenModel(GenericModel):
@@ -101,7 +101,7 @@ class DataDrivenModel(GenericModel):
         parameter_scaling,
         compute_shapes,
         estimators,
-        name: Optional[str] = "DataDrivenModel",
+        name: str | None = 'DataDrivenModel',
     ):
         self.__auto_init(locals())
         computers = {}
@@ -146,13 +146,11 @@ class DataDrivenReductor(BasicObject):
         compute_shapes: dict[
             str, tuple[VectorSpace | Number, Number]
         ],  # compute_id: data_dim, data_length
-        estimators: Union[skbase.BaseEstimator, dict[str, skbase.BaseEstimator]],
-        parameter_scaling: Optional[Callable[[Mu], Mu]] = None,
-        training_data: Optional[
-            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]]
-        ] = None,
-        shuffle_mode: str = "sort+shuffle",  # highly recommended, possible values are None, 'sort', 'shuffle', 'sort+shuffle'
-        rom_name: str = "DataDrivenModel",
+        estimators: dict[str, skbase.BaseEstimator],
+        parameter_scaling: Callable[[Mu], Mu] | None = None,
+        training_data: tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]] | None = None,
+        shuffle_mode: str = 'sort+shuffle',  # highly recommended, possible values are None, 'sort', 'shuffle', 'sort+shuffle'
+        rom_name: str = 'DataDrivenModel',
     ):
         assert isinstance(parameters, Parameters)
         assert isinstance(compute_shapes, dict)
@@ -165,16 +163,14 @@ class DataDrivenReductor(BasicObject):
             isinstance(s, (VectorSpace, Number)) for s, _ in compute_shapes.values()
         )
         assert all(isinstance(c, Number) for _, c in compute_shapes.values())
-        # We use skbase.clone to ensure no one tempers with the estimators while we hold them.
-        if isinstance(estimators, skbase.BaseEstimator):
-            estimators = {
-                compute_id: skbase.clone(estimators)
-                for compute_id in self.reducable_computes
-            }
         assert isinstance(estimators, dict)
         assert all(isinstance(k, str) for k in estimators)
         assert all(k in self.reducable_computes for k in estimators)
         assert all(isinstance(v, skbase.BaseEstimator) for v in estimators.values())
+        estimators = {
+            compute_id: estimator.clone()  # ensure no one tempers with the estimators while we hold them
+            for compute_id, estimator in estimators.items()
+        }
         parameter_scaling = parameter_scaling or (lambda mu: mu)
         assert callable(parameter_scaling)
         # training_data will be checked in _parse_data
@@ -202,15 +198,15 @@ class DataDrivenReductor(BasicObject):
         self._shuffle_data()
 
     def _shuffle_data(self):
-        assert self.shuffle_mode in (None, "sort", "shuffle", "sort+shuffle")
+        assert self.shuffle_mode in (None, 'sort', 'shuffle', 'sort+shuffle')
         if self.shuffle_mode is None:
             return
         if len(self._data[0]) == 0:
             return
         data_tuples = list(
-            zip(self._data[0], *(self._data[1][k] for k in self._data[1]))
+            zip(self._data[0], *(self._data[1][k] for k in self._data[1]), strict=False)
         )
-        if self.shuffle_mode in ("sort", "sort+shuffle"):
+        if self.shuffle_mode in ('sort', 'sort+shuffle'):
             if self.parameters.dim == 1:
 
                 def reduce(pair):
@@ -221,9 +217,9 @@ class DataDrivenReductor(BasicObject):
                     return np.linalg.norm(pair[0].to_numpy())
 
             data_tuples.sort(key=reduce)
-        if self.shuffle_mode in ("shuffle", "sort+shuffle"):
+        if self.shuffle_mode in ('shuffle', 'sort+shuffle'):
             get_rng().shuffle(data_tuples)
-        reordered_inputs_and_outputs = list(zip(*data_tuples))
+        reordered_inputs_and_outputs = list(zip(*data_tuples, strict=False))
         reordered_inputs = reordered_inputs_and_outputs[0]
         reordered_outputs = {
             k: list(reordered_inputs_and_outputs[i + 1])
@@ -234,7 +230,7 @@ class DataDrivenReductor(BasicObject):
     def reconstruct(self, u, basis=None):
         return u
 
-    def reduce(self, data_size: Optional[Number] = None) -> DataDrivenModel:
+    def reduce(self, data_size: Number | None = None) -> DataDrivenModel:
         """Fits the estimator to the amount of data specified by data_size."""
         if data_size is None:
             data_size = len(self._data[0])
@@ -243,7 +239,7 @@ class DataDrivenReductor(BasicObject):
         assert data_size <= len(self._data[0])
         if data_size not in self._roms:
             self._fitted_estimators[data_size] = {
-                compute_id: skbase.clone(estimator)
+                compute_id: estimator.clone()
                 for compute_id, estimator in self.estimators.items()
             }
             if data_size > 0:
@@ -291,9 +287,7 @@ class DataDrivenReductor(BasicObject):
 
     def _parse_data(
         self,
-        mus_and_data: Optional[
-            tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]]
-        ] = None,
+        mus_and_data: tuple[Iterable[Mu], dict[str, Iterable[VectorSpace | np.ndarray]]] | None = None,
     ):
         parsed_new_data = [[], {compute_id: [] for compute_id in self.compute_shapes}]
         if mus_and_data is None:
