@@ -1,8 +1,8 @@
 import numpy as np
 
 from pymor.core.defaults import defaults
-from pymor.models.interface import Model
 from pymor.models.generic import GenericModel
+from pymor.models.interface import Model
 from pymor.reductors.basic import ProjectionBasedReductor
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -16,7 +16,7 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
     We achieve restriction to sub-basis by using the projected operators as a dimension tag.
     """
 
-    @defaults("check_orthonormality", "check_tol")
+    @defaults('check_orthonormality', 'check_tol')
     def __init__(
         self,
         fom: Model,
@@ -28,7 +28,7 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
         assert basis in fom.solution_space
         super().__init__(
             fom,
-            {"RB": basis},
+            {'RB': basis},
             check_orthonormality=check_orthonormality,
             check_tol=check_tol,
         )
@@ -38,7 +38,7 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
         return len(self.basis)
 
     def project_operators_to_subbasis(self, dims):
-        dim = dims["RB"]
+        dim = dims['RB']
         assert dim <= len(self.basis)
         return dim
 
@@ -56,17 +56,21 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
             return np.linalg.solve(G, R).T
 
         rom_space = NumpyVectorSpace(dim)
+
+        computers={
+            'solution': (
+                rom_space,
+                lambda mu: rom_space.from_numpy(
+                    # TODO: replace transposing the result of project_onto_basis (required for the instationary case) with something also working in the stationary case
+                    project_onto_basis(self.fom.solve(mu)).T
+                ),
+            ),
+        }
+
         rom = GenericModel(
             parameters=self.fom.parameters,
-            computers={
-                "solution": (
-                    rom_space,
-                    lambda mu: rom_space.from_numpy(
-                        project_onto_basis(self.fom.solve(mu))
-                    ),
-                ),
-            },
-            name=f"BestApproximationReduced{self.fom.name}",
+            computers=computers,
+            name=f'OrthogonalProjectionReduced{self.fom.name}',
         )
         rom.disable_logging()
         return rom
