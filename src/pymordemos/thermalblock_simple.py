@@ -251,16 +251,16 @@ def _discretize_fenicsx():
     def ass_matrix(x, y, nx, ny):
         d = diffusion(x/nx, (x + 1)/nx, y/ny, (y + 1)/ny, (x + 1 == nx), (y + 1 == ny))
         blf = form(inner(d * grad(u), grad(v)) * dx)
-        mat = assemble_matrix(blf, diagonal=0., bcs=[bc])
+        mat = assemble_matrix(blf, diag=0., bcs=[bc])
         mat.assemble()
         return mat
 
     mats = [ass_matrix(x, y, XBLOCKS, YBLOCKS)
             for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
-    mat0 = assemble_matrix(form(inner(Constant(mesh, 0.) * grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    mat0 = assemble_matrix(form(inner(Constant(mesh, 0.) * grad(u), grad(v)) * dx), diag=1., bcs=[bc])
     mat0.assemble()
-    h1_mat = assemble_matrix(form(inner(grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    h1_mat = assemble_matrix(form(inner(grad(u), grad(v)) * dx), diag=1., bcs=[bc])
     h1_mat.assemble()
 
     lf = form(v * dx)
