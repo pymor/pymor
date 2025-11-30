@@ -1025,6 +1025,7 @@ def test_pickle(vector_array):
     assert_picklable_without_dumps_function(vector_array)
 
 
+@pytest.mark.builtin
 def test_numpyvectorspace_dim_must_be_int():
     with pytest.raises(AssertionError):
         _ = NumpyVectorSpace(5.)

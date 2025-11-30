@@ -10,6 +10,8 @@ from pymor.algorithms.krylov import arnoldi
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
 
 @pytest.mark.parametrize('block_size', [1,3])
 @pytest.mark.parametrize('with_E', [False, True])

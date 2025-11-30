@@ -1,8 +1,12 @@
 import numpy as np
+import pytest
 
 from pymor.algorithms.timestepping import DiscreteTimeStepper, ImplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.models.examples import heat_equation_example, heat_equation_non_parametric_example
 from pymor.operators.constructions import vector_array_to_selection_operator
+
+pytestmark = pytest.mark.builtin
+
 
 tol = 1e-10
 

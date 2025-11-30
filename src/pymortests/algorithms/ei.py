@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.algorithms.ei import ei_greedy
 from pymor.algorithms.pod import pod
@@ -61,6 +62,7 @@ def test_ei_rom(stationary_models):
         assert_all_almost_equal(u, ru_rec, rtol=1e-10)
 
 
+@pytest.mark.builtin
 def test_ei_greedy_complex_data():
     space = NumpyVectorSpace(10)
     U = space.random(3) * 1.j + space.random(3)
