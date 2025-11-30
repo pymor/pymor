@@ -6,6 +6,7 @@ ENV DOCKER_PYMOR=1 \
     OMP_NUM_THREADS=1
 
 RUN mkdir /src && \
+    apt-get update && apt-get install -y xvfb && \
     conda install -y fenics-dolfinx=0.10 mpich==4.3.2 pyvista==0.46.4
 
 CMD /bin/bash --login
