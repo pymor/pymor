@@ -535,7 +535,7 @@ class FenicsxOperator(Operator):
 
 
 class RestrictedFenicsxOperator(Operator):
-    """Restricted :class:`FenicsOperator`."""
+    """Restricted :class:`FenicsxOperator`."""
 
     linear = False
 
