@@ -627,6 +627,81 @@ else:
     fenics_with_arrays_generators = []
 
 
+if config.HAVE_FENICSX:
+    def fenicsx_matrix_operator_factory():
+        from dolfinx.fem import Constant, form, functionspace
+        from dolfinx.fem.petsc import assemble_matrix
+        from dolfinx.mesh import create_unit_square
+        from mpi4py import MPI
+        from ufl import TestFunction, TrialFunction, dx, grad, inner
+
+        from pymor.bindings.fenicsx import FenicsxMatrixOperator
+
+        mesh = create_unit_square(MPI.COMM_WORLD, 10, 10)
+        V = functionspace(mesh, ('Lagrange', 2))
+
+        u = TrialFunction(V)
+        v = TestFunction(V)
+        c = Constant(mesh, np.array([1., 1.]))
+
+        mat = assemble_matrix(form(u * v * dx + inner(c, grad(u)) * v * dx))
+        mat.assemble()
+        op = FenicsxMatrixOperator(mat, V, V)
+
+        mat = assemble_matrix(form(u*v*dx))
+        mat.assemble()
+        prod = FenicsxMatrixOperator(mat, V, V)
+
+        return op, None, op.source.random(), op.range.random(), prod, prod
+
+    def fenicsx_nonlinear_operator_factory():
+        from dolfinx.fem import Constant, Function, dirichletbc, form, functionspace, locate_dofs_geometrical
+        from dolfinx.fem.petsc import assemble_matrix
+        from dolfinx.mesh import create_unit_square
+        from mpi4py import MPI
+        from ufl import SpatialCoordinate, TestFunction, TrialFunction, dx, grad, inner, sin
+
+        from pymor.bindings.fenicsx import FenicsxMatrixOperator, FenicsxOperator
+
+        mesh = create_unit_square(MPI.COMM_WORLD, 10, 10)
+        V = functionspace(mesh, ('Lagrange', 2))
+
+        g = Constant(mesh, 1.0)
+        c = Constant(mesh, 1.0)
+
+        def on_boundary(x):
+            return np.isclose(x[0], 1)
+
+        boundary_dofs = locate_dofs_geometrical(V, on_boundary)
+        bc = dirichletbc(g, boundary_dofs, V)
+
+        u = TrialFunction(V)
+        v = TestFunction(V)
+        w = Function(V)
+        x = SpatialCoordinate(mesh)
+        f = x[0]*sin(x[1])
+        F = inner((1 + c*w**2)*grad(w), grad(v))*dx - f*v*dx
+
+        op = FenicsxOperator(F, w, params={'c': c}, bcs=(bc,), apply_lifting_with_jacobian=True)
+
+        mat = assemble_matrix(form(u*v*dx))
+        mat.assemble()
+        prod = FenicsxMatrixOperator(mat, V, V)
+        return op, op.parameters.parse(42), op.source.random(), op.range.random(), prod, prod
+
+    fenicsx_with_arrays_and_products_generators = [
+        lambda rng: fenicsx_matrix_operator_factory(),
+        lambda rng: fenicsx_nonlinear_operator_factory(),
+    ]
+    fenicsx_with_arrays_generators = [
+        lambda rng: fenicsx_matrix_operator_factory()[:4],
+        lambda rng: fenicsx_nonlinear_operator_factory()[:4],
+    ]
+else:
+    fenicsx_with_arrays_and_products_generators = []
+    fenicsx_with_arrays_generators = []
+
+
 builtin_operator_with_arrays_and_products_generators = (
     [] if BUILTIN_DISABLED else
     thermalblock_operator_with_arrays_and_products_generators
@@ -647,6 +722,7 @@ builtin_operator_with_arrays_and_products_generators = (
 @pytest.fixture(params=(
     builtin_operator_with_arrays_and_products_generators
     + fenics_with_arrays_and_products_generators
+    + fenicsx_with_arrays_and_products_generators
 ))
 def operator_with_arrays_and_products(rng, request):
     return request.param(rng)
@@ -674,6 +750,7 @@ builtin_operator_with_arrays_generators = (
 @pytest.fixture(params=(
     builtin_operator_with_arrays_generators
     + fenics_with_arrays_generators
+    + fenicsx_with_arrays_generators
 ))
 def operator_with_arrays(rng, request):
     return request.param(rng)
