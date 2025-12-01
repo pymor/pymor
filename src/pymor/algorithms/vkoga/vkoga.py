@@ -41,6 +41,37 @@ class VKOGASurrogate(WeakGreedySurrogate):
         diag = self.kernel.diag(self.X_train)
         self._power2 = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
 
+    def _ensure_kernel_4d_for_predict(self, K):
+        """Bring kernel evaluation K into a 4D array suitable for predict."""
+        K = np.asarray(K)
+        if K.ndim == 4:
+            return K
+        if K.ndim == 3:
+            if self._centers is not None and self._centers.shape[0] == 1:
+                return K[:, None, :, :]
+            else:
+                return K[None, :, :, :]
+        elif K.ndim == 2:
+            return K[:, :, None, None]
+        else:
+            raise ValueError(f'Unsupported kernel output shape {K.shape}')
+
+    def _find_training_indices(self, mus):
+        """Find mus within training data points (or their nearest neighbors)."""
+        # exact matches
+        eq = np.isclose(self.X_train[None, :, :], mus[:, None, :]).all(axis=2)
+        exact = eq.argmax(axis=1)  # 0 if no match, index otherwise
+        has_exact = eq.any(axis=1)
+
+        # nearest neighbors only for non-matches
+        if not has_exact.all():
+            diff = self.X_train[None, :, :] - mus[:, None, :]
+            dists = np.linalg.norm(diff, axis=2)
+            nn = dists.argmin(axis=1)
+            exact = np.where(has_exact, exact, nn)
+
+        return exact
+
     def predict(self, X):
         X = np.asarray(X)
         if self._centers is None:
@@ -49,32 +80,15 @@ class VKOGASurrogate(WeakGreedySurrogate):
         K = self.kernel(X, self._centers)
         coeff = self._coefficients
 
-        if K.ndim == 3:
-            if self._centers.shape[0] == 1:
-                K = K[:, None, :, :]
-            else:
-                K = K[None, :, :, :]
-        elif K.ndim == 2:
-            K = K[:, :, None, None]
+        # normalize K to (n_query, n_centers, m, m)
+        K = self._ensure_kernel_4d_for_predict(K)
 
         y = np.einsum('ncab,cb->na', K, coeff)
         return y
 
     def evaluate(self, mus, return_all_values=False):
         mus = np.asarray(mus)
-        # map mus to exact training indices if possible, else nearest
-        idxs = []
-        for mu in mus:
-            matches = np.where(np.all(np.isclose(self.X_train, mu), axis=1))[0]
-            if matches.size > 0:
-                idxs.append(int(matches[0]))
-            else:
-                # fallback to nearest but warn once
-                idx_nn = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
-                idxs.append(idx_nn)
-                self.logger.warn('Parameter not in the training set, falling back to nearest.')
-
-        idxs = np.array(idxs, dtype=int)
+        idxs = self._find_training_indices(mus)
         Xc = mus
 
         if self.criterion in ('fp', 'f/p', 'f'):
@@ -294,17 +308,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
         n = len(self._centers)
-        N = len(self.X_train)
         m = self.m
 
         # compute k(mu, y_i) for all training points y_i
-        K_stack_new = np.zeros((N, n * m + m, m))
-        K_stack_new[:, :-m] = self._K_stack
         K_X_mu = self.kernel(self.X_train, mu)
         if K_X_mu.ndim == 2:
             K_X_mu = K_X_mu[:, :, None]
-        K_stack_new[:, -m:] = K_X_mu
-        self._K_stack = K_stack_new
+        # concatenate along the second axis (flattened block axis)
+        self._K_stack = np.concatenate([self._K_stack, K_X_mu], axis=1)
 
         # compute Cholesky update
         k_nn = self.kernel(mu, mu)
@@ -341,23 +352,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
     def _update_newton_basis(self, mu):
         """Append Xi as the last block to the Newton basis V."""
-        N = len(self.X_train)
-        m = self.m
-        V_old = self._V
-        p_old = V_old.shape[1]
-
-        # update Newton basis
-        Xi = np.einsum('ij,Njk->Nik', self._C[-m:], self._K_stack)
-        V_new = np.zeros((N, p_old + m, m))
-        V_new[:, :p_old] = V_old
-        V_new[:, p_old:p_old + m] = Xi
-        self._V = V_new
+        Xi = np.einsum('ij,Njk->Nik', self._C[-self.m:], self._K_stack)
+        self._V = np.concatenate([self._V, Xi], axis=1)
 
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
         Xi = self._V[:, -self.m:]
-        norms = np.sum(Xi * Xi, axis=(1, 2))
+        norms = np.einsum('nij,nij->n', Xi, Xi)
         self._power2 = np.maximum(self._power2 - norms, 0.0)
 
 
