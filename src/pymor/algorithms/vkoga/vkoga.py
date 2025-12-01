@@ -300,7 +300,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # compute k(mu, y_i) for all training points y_i
         K_stack_new = np.zeros((N, n * m + m, m))
         K_stack_new[:, :-m] = self._K_stack
-        K_X_mu= self.kernel(self.X_train, mu)
+        K_X_mu = self.kernel(self.X_train, mu)
         if K_X_mu.ndim == 2:
             K_X_mu = K_X_mu[:, :, None]
         K_stack_new[:, -m:] = K_X_mu
@@ -327,7 +327,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._coefficients = (self._C.T @ self._z).reshape(n + 1, m)
         self._centers = np.vstack([self._centers, mu])
         self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
-
 
     def _update_cholesky_factor(self, W, l_nn):
         """Extend the Cholesky factor with the new block."""
