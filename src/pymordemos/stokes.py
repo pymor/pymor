@@ -12,14 +12,13 @@ from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.models.examples import stokes_2Dexample
 from pymor.reductors.stokes import StationaryRBStokesReductor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
 def main(
     mu_low: float = Argument(0.01),
     mu_high: float = Argument(100),
-    modes: int = Argument(30),
+    modes: int = Argument(50),
     n_tests: int = Argument(5)
 ):
     """This example sets up the MOR workflow for the 2D stationary Stokes equation.
@@ -94,26 +93,13 @@ def evaluate_fom_once(fom, mu):
     return {'fom_u': fom_u, 'fom_p': fom_p, 't_fom': t_fom}
 
 def evaluate_rom_once(rom, reductor_stokes, mu):
-    # Reduced spaces
-    n_u = len(reductor_stokes.bases['RB_u'])
-    n_p = len(reductor_stokes.bases['RB_p'])
-    u_red_space = NumpyVectorSpace(n_u)
-    p_red_space = NumpyVectorSpace(n_p)
-
     # ROM solve & timing
     tic_rom = time.perf_counter()
     test_sol_rom = rom.solve(mu)
     t_rom = time.perf_counter() - tic_rom
 
-    # Split ROM coefficients into u/p, reconstruct in FOM space
-    rom_np = test_sol_rom.to_numpy()
-    rom_u = u_red_space.make_array(rom_np[:n_u])
-    rom_p = p_red_space.make_array(rom_np[n_u:])
-
-    rom_u_re = reductor_stokes.reconstruct(rom_u, basis='RB_u')
-    rom_p_re = reductor_stokes.reconstruct(rom_p, basis='RB_p')
-
-    return {'rom_u': rom_u_re, 'rom_p': rom_p_re, 't_rom': t_rom}
+    test_sol_rom_re = reductor_stokes.reconstruct(test_sol_rom)
+    return {'rom': test_sol_rom_re,'t_rom': t_rom}
 
 def compute_speedup_and_errros(fom_results, rom_results):
     results = []
@@ -121,8 +107,12 @@ def compute_speedup_and_errros(fom_results, rom_results):
     for i in range(len(fom_results)):
         # Relative errors
         results.append({})
-        results[i]['err_u'] = (rom_results[i]['rom_u'] - fom_results[i]['fom_u']).norm()/fom_results[i]['fom_u'].norm()
-        results[i]['err_p'] = (rom_results[i]['rom_p'] - fom_results[i]['fom_p']).norm()/fom_results[i]['fom_p'].norm()
+        dim_u = fom_results[i]['fom_u'].to_numpy().shape[0]
+        dim_p = fom_results[i]['fom_p'].to_numpy().shape[0]
+        results[i]['err_u'] = np.linalg.norm(rom_results[i]['rom'].dofs(list(range(dim_u))) -
+                                             fom_results[i]['fom_u'].to_numpy()) / fom_results[i]['fom_u'].norm()
+        results[i]['err_p'] = np.linalg.norm(rom_results[i]['rom'].dofs(list(range(dim_u, dim_u + dim_p))) -
+                                             fom_results[i]['fom_p'].to_numpy()) / fom_results[i]['fom_p'].norm()
 
         # Speedup (FOM time divided by ROM time)
         results[i]['speedup'] = (fom_results[i]['t_fom'] / rom_results[i]['t_rom'])

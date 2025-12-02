@@ -176,6 +176,10 @@ VKOGA_2D_INPUT_ARGS = (
     ('vkoga_2d_input', ['--greedy-criterion=p']),
 )
 
+STOKES_REDUCTOR_ARGS = (
+    ('stokes', []),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
@@ -196,6 +200,7 @@ DEMO_ARGS = (
     + SYMPLECTIC_WAVE_ARGS
     + VKOGA_ARGS
     + VKOGA_2D_INPUT_ARGS
+    + STOKES_REDUCTOR_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]

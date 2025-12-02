@@ -2,11 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
+from pymor.vectorarrays.constructions import cat_arrays
 
 
 class StationaryRBStokesReductor(ProjectionBasedReductor):
@@ -48,7 +50,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         assert RB_p in fom.solution_space.subspaces[1]
 
         self.projection_method = projection_method
-        self.V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
+        self.u_product = u_product
+        self.supremizers = fom.solution_space.subspaces[0].empty()
 
         if u_product or p_product:
             blocks = [
@@ -62,23 +65,40 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         super().__init__(fom, {'RB_u': RB_u, 'RB_p': RB_p}, {'RB_u': u_product, 'RB_p': p_product},
                         check_orthonormality=check_orthonormality, check_tol=check_tol)
 
-    def project_operators(self):
+    def _project_operators(self, dims):
         fom = self.fom
-        RB_p = self.bases['RB_p']
-        V_block = self.V_block
+        dim_u = dims['RB_u']
+        dim_p = dims['RB_p']
+        RB_u = self.bases['RB_u'][:dim_u]
+        RB_p = self.bases['RB_p'][:dim_p]
+
+        V_block = fom.solution_space.make_block_diagonal_array((RB_u, RB_p))
         mixed_product = self.mixed_product
 
         if self.projection_method == 'supremizer_galerkin':
-            # Enrich velocity basis RB_u with one supremizer per pressure basis vector:
-            # len(RB_u) <- len(RB_u) + len(RB_p)
-            with self.logger.block(
-                f'Enriching RB_u with supremizers: len(RB_u) += len(RB_p) = {len(RB_p)}'
-            ):
-                supremizers = self.compute_supremizers()
-                self.extend_basis(supremizers, 'RB_u')
+            if len(self.supremizers) < len(RB_p):
+                # Enrich velocity basis RB_u with one supremizer per pressure basis vector:
+                # len(RB_u) <- len(RB_u) + len(RB_p) - len(self.supremizers)
+                with self.logger.block(
+                    'Enriching RB_u with supremizers'
+                ):
+                    supremizers = self.compute_supremizers(RB_p, offset=len(self.supremizers))
+                    RB_u_enriched = cat_arrays([RB_u, self.supremizers, supremizers])
+                    RB_u_enriched = gram_schmidt(RB_u_enriched, offset=len(RB_u)+len(self.supremizers),
+                                                 product=self.u_product, copy=False, check=False)
+                    self.supremizers = supremizers
+
+            elif len(self.supremizers) > len(RB_p):
+                with self.logger.block(
+                    'Removing supremizer corresponding to pressure basis vector(s)'
+                ):
+                    self.supremizers = self.supremizers[:len(RB_p)]
+                    RB_u_enriched = cat_arrays([RB_u, self.supremizers])
+            else:
+                RB_u_enriched = cat_arrays([RB_u, self.supremizers])
 
             # build V_block again as it changed due to supremizer enrichment
-            V_block = fom.solution_space.make_block_diagonal_array((self.bases['RB_u'], RB_p))
+            V_block = fom.solution_space.make_block_diagonal_array((RB_u_enriched, RB_p))
             block_stationary_reductor = StationaryRBReductor(fom, RB=V_block, check_orthonormality=False)
 
         elif self.projection_method == 'ls-normal':
@@ -88,21 +108,19 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         elif self.projection_method == 'ls-ls':
             block_stationary_reductor = StationaryLSRBReductor(fom, RB=V_block, product=mixed_product,
                                                                check_orthonormality=False)
-
         else:
             raise NotImplementedError
 
         projected_operators = block_stationary_reductor.project_operators()
-        self.block_stationary_reductor = block_stationary_reductor
+        self._block_basis = V_block
         return projected_operators
 
-    def compute_supremizers(self):
+    def compute_supremizers(self, RB_p, offset=0):
         fom = self.fom
-        RB_p = self.bases['RB_p']
         u_product = fom.u_product
         block_pu = fom.operator.blocks[1,0]
 
-        supremizer_rhs = block_pu.apply_adjoint(RB_p)
+        supremizer_rhs = block_pu.apply_adjoint(RB_p[offset:])
         if u_product:
             supremizer_vector = u_product.apply_inverse(supremizer_rhs)
         else:
@@ -113,14 +131,17 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
         return supremizer_vector
 
-    def project_operators_to_subbasis(self, dims, last_rom=None):
-        rom = last_rom if last_rom is not None else self._last_rom
-        dim_u = dims['RB_u']
-        dim_p = dims['RB_p']
-        dim_trial = dim_u + dim_p
+    def project_operators(self):
+        RB_p = self.bases['RB_p']
+        RB_u = self.bases['RB_u']
+        dims = {'RB_u': len(RB_u), 'RB_p': len(RB_p)}
+        return self._project_operators(dims)
 
-        projected_operators = self.block_stationary_reductor.project_operators_to_subbasis({'RB': dim_trial}, rom)
-        return projected_operators
+    def project_operators_to_subbasis(self, dims):
+        return self._project_operators(dims)
 
     def build_rom(self, projected_operators, error_estimator):
         return StationaryModel(error_estimator=error_estimator, **projected_operators)
+
+    def reconstruct(self, u):
+        return self._block_basis[:u.dim].lincomb(u.to_numpy())
