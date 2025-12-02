@@ -54,7 +54,7 @@ class GaussianKernel:
 class DiagonalVectorValuedKernel:
     r"""A simple vector-valued kernel built from a scalar base kernel.
 
-    Produces a block-diagonal kernel matrix of shape :math:`(n\cdot m, n'\cdot m)`,
+    Produces a block-diagonal kernel matrix of shape :math:`(n, n', m, m)`,
     where :math:`m` is the number of outputs and :math:`n` and :math:`n'` are
     the numbers of inputs.
 
@@ -74,7 +74,7 @@ class DiagonalVectorValuedKernel:
         r"""Compute blockified vector-valued kernel between `X` and `Y`.
 
         If `base_kernel(X, Y)` has shape :math:`(n, n')`, the returned matrix
-        has shape :math:`(n\cdot m, n'\cdot m)`, where `m = n_outputs`.
+        has shape :math:`(n, n', m, m)`, where `m = n_outputs`.
         """
         X = np.atleast_2d(X)
         Y = X if Y is None else np.atleast_2d(Y)
@@ -101,4 +101,5 @@ class DiagonalVectorValuedKernel:
         """Return the diagonal of the kernel matrix."""
         X = np.atleast_2d(X)
         k_diag = self.base_kernel.diag(X)
-        return np.kron(np.ones(self.n_outputs), k_diag)
+        d = np.ones(self.n_outputs)
+        return (k_diag[:, None] * d[None, :]).ravel()
