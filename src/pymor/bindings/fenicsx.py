@@ -181,22 +181,25 @@ class FenicsxMatrixBasedOperator(Operator):
 
     linear = True
 
-    def __init__(self, form, params=None, bcs=None, lifting_form=None, functional=False, solver=None,
-                 name=None):
-        assert 1 <= form.rank <= 2
+    def __init__(self, ufl_form, params=None, bcs=(), diag=1., ufl_lifting_form=None, alpha=1., functional=False,
+                 solver=None, name=None):
+        rank = len(ufl_form.arguments())
+        assert 1 <= rank <= 2
         params = params or {}
-        bcs = bcs or tuple()
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
-        assert not functional or form.rank == 1
+        assert not functional or rank == 1
+        if rank == 2 and [arg.number() for arg in ufl_form.arguments()] != [0, 1]:
+            raise NotImplementedError
         self.__auto_init(locals())
-        if form.rank == 2 or not functional:
-            range_space = form.function_spaces[0]
-            self.range = FenicsxVectorSpace(range_space)
+        self.compiled_form = form(ufl_form)
+        self.compiled_lifting_form = form(ufl_lifting_form)
+        self.rank = rank
+        if rank == 2 or not functional:
+            self.range = FenicsxVectorSpace(ufl_form.arguments()[0].ufl_function_space())
         else:
             self.range = NumpyVectorSpace(1)
-        if form.rank == 2 or functional:
-            source_space = form.function_spaces[0 if functional else 1]  # TODO: check order
-            self.source = FenicsxVectorSpace(source_space)
+        if rank == 2 or functional:
+            self.source = FenicsxVectorSpace(ufl_form.arguments()[-1].ufl_function_space())
         else:
             self.source = NumpyVectorSpace(1)
         self.parameters_own = {k: v.ufl_shape[0] if len(v.ufl_shape) == 1 else 1 for k, v in params.items()}
@@ -207,23 +210,24 @@ class FenicsxMatrixBasedOperator(Operator):
         for k, v in self.params.items():
             v.value = mu[k]
         # assemble matrix
-        if self.form.rank == 2:
-            mat = assemble_matrix(self.form, self.bcs)
+        if self.rank == 2:
+            mat = assemble_matrix(self.compiled_form, bcs=self.bcs, diag=self.diag)
             mat.assemble()
             return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver,
                                          name=self.name + '_assembled')
-        elif self.functional:
-            vec = assemble_vector(self.form)
-            vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
-            V = self.source.make_array([vec])
-            return VectorFunctional(V)
         else:
-            vec = assemble_vector(self.form)
-            apply_lifting(vec, [self.lifting_form], [self.bcs])
+            vec = assemble_vector(self.compiled_form)
+            if self.bcs and self.lifting_form:
+                apply_lifting(vec, [self.compiled_lifting_form], [self.bcs], alpha=self.alpha)
             vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
-            set_bc(vec, self.bcs)
-            V = self.range.make_array([vec])
-            return VectorOperator(V)
+            if self.bcs:
+                set_bc(vec, self.bcs, alpha=self.alpha)
+            if self.functional:
+                V = self.source.make_array([vec])
+                return VectorFunctional(V)
+            else:
+                V = self.range.make_array([vec])
+                return VectorOperator(V)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -236,9 +240,6 @@ class FenicsxMatrixBasedOperator(Operator):
 
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
-
-    def _apply_inverse(self, V, mu, initial_guess):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, return_info=True)
 
 
 class FenicsxLinearSolver(ComplexifiedListVectorArrayBasedSolver):
@@ -345,16 +346,14 @@ class FenicsxOperator(Operator):
     def __init__(self, ufl_form, source_function, params=None, bcs=(), alpha=None, linear=False,
                  apply_lifting_with_jacobian=False, solver=None, name=None):
         assert len(ufl_form.arguments()) == 1
-        compiled_form = form(ufl_form)
         params = params or {}
-        bcs = bcs or tuple()
         if alpha is None:
             alpha = -1 if apply_lifting_with_jacobian else 1
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
         self.__auto_init(locals())
         self.range = FenicsxVectorSpace(ufl_form.arguments()[0].ufl_function_space())
         self.source = FenicsxVectorSpace(source_function.ufl_function_space())
-        self.compiled_form = compiled_form
+        self.compiled_form = form(ufl_form)
         self.compiled_derivative = form(derivative(self.ufl_form, self.source_function))
         self.parameters_own = {k: v.ufl_shape[0] if len(v.ufl_shape) == 1 else 1 for k, v in params.items()}
 
