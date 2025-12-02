@@ -302,7 +302,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._V = np.einsum('ij, Njk->Nik', self._C, self._K_stack)
 
         # update power2: p_{n+1}^2(x) = p_n^2(x) - V_i^T @ V_i
-        norms = np.sum(self._V * self._V, axis=(1, 2))
+        norms = np.einsum('bij,bij->b', self._V, self._V)
         self._power2 = np.maximum(self._power2 - norms, 0.0)
 
     def _extend_incremental(self, mu, idx_in_X):
@@ -310,7 +310,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         n = len(self._centers)
         m = self.m
 
-        # compute k(mu, y_i) for all training points y_i
+        # compute k(yi, mu) for all training points y_i
         K_X_mu = self.kernel(self.X_train, mu)
         if K_X_mu.ndim == 2:
             K_X_mu = K_X_mu[:, :, None]
@@ -329,9 +329,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
         z_new = (self.res[idx_in_X] * np.sqrt(m) / np.sqrt(self._power2[idx_in_X])).reshape(m)
         self._z = np.hstack([self._z, z_new])
 
-        # update power function, Newton basis and the transformation matrix C
+        # update Cholesky inverse, Newton basis and the power function values
         self._update_cholesky_inverse(W, l_nn)
-        self._update_newton_basis(mu)
+        self._update_newton_basis()
         self._update_power_function_evals()
 
         # update centers and final coefficients
@@ -350,7 +350,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._C = np.block([[self._C, np.zeros((self._C.shape[0], self.m))],
                             [- c_nn.T @ W.T @ self._C, c_nn]])
 
-    def _update_newton_basis(self, mu):
+    def _update_newton_basis(self):
         """Append Xi as the last block to the Newton basis V."""
         Xi = np.einsum('ij,Njk->Nik', self._C[-self.m:], self._K_stack)
         self._V = np.concatenate([self._V, Xi], axis=1)
