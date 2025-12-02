@@ -654,6 +654,46 @@ if config.HAVE_FENICSX:
 
         return op, None, op.source.random(), op.range.random(), prod, prod
 
+    def fenicsx_matrix_based_operator_factory():
+        from dolfinx.fem import Constant, functionspace
+        from dolfinx.mesh import create_unit_square
+        from mpi4py import MPI
+        from ufl import TestFunction, TrialFunction, dx, grad, inner
+
+        from pymor.bindings.fenicsx import FenicsxMatrixBasedOperator
+
+        mesh = create_unit_square(MPI.COMM_WORLD, 10, 10)
+        V = functionspace(mesh, ('Lagrange', 2))
+
+        u = TrialFunction(V)
+        v = TestFunction(V)
+        c = Constant(mesh, 1.)
+
+        op = FenicsxMatrixBasedOperator(u * v * dx + c * inner(grad(u), grad(v)) * dx,
+                                        params={'c': c})
+        prod = op.assemble(op.parameters.parse(0.))
+
+        return op, op.parameters.parse(42.), op.source.random(), op.range.random(), prod, prod
+
+    def fenicsx_matrix_based_vector_operator_factory():
+        from dolfinx.fem import Constant, functionspace
+        from dolfinx.mesh import create_unit_square
+        from mpi4py import MPI
+        from ufl import TestFunction, dx, grad, inner
+
+        from pymor.bindings.fenicsx import FenicsxMatrixBasedOperator
+
+        mesh = create_unit_square(MPI.COMM_WORLD, 10, 10)
+        V = functionspace(mesh, ('Lagrange', 2))
+
+        v = TestFunction(V)
+        c = Constant(mesh, [1.,1.])
+
+        op = FenicsxMatrixBasedOperator(v * dx + inner(c, grad(v)) * dx, params={'c': c})
+
+        return op, op.parameters.parse([3., 4.]), op.source.random(), op.range.random()
+
+
     def fenicsx_nonlinear_operator_factory():
         from dolfinx.fem import Constant, Function, dirichletbc, form, functionspace, locate_dofs_geometrical
         from dolfinx.fem.petsc import assemble_matrix
@@ -691,10 +731,13 @@ if config.HAVE_FENICSX:
 
     fenicsx_with_arrays_and_products_generators = [
         lambda rng: fenicsx_matrix_operator_factory(),
+        lambda rng: fenicsx_matrix_based_operator_factory(),
         lambda rng: fenicsx_nonlinear_operator_factory(),
     ]
     fenicsx_with_arrays_generators = [
         lambda rng: fenicsx_matrix_operator_factory()[:4],
+        lambda rng: fenicsx_matrix_based_operator_factory()[:4],
+        lambda rng: fenicsx_matrix_based_vector_operator_factory(),
         lambda rng: fenicsx_nonlinear_operator_factory()[:4],
     ]
 else:
