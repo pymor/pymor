@@ -6,6 +6,12 @@ from pymor.core.config import config
 
 config.require('FENICSX')
 
+from pymor.tools.mpi import parallel
+
+if parallel:
+    import warnings
+    warnings.warn('MPI parallel run detected. FEniCSx bindings have only been tested for serial execution.')
+
 import sys
 
 import numpy as np
