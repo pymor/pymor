@@ -6,6 +6,7 @@ from pymor.core.config import config
 
 config.require('FENICSX')
 
+import sys
 
 import numpy as np
 from dolfinx.fem import Constant, Function, IntegralType, create_interpolation_data, dirichletbc, form, functionspace
@@ -618,7 +619,8 @@ class FenicsxVisualizer(ImmutableObject):
             import pyvista
             rows = 1 if len(U) <= 2 else 2
             cols = int(np.ceil(len(U) / rows))
-            plotter = pyvista.Plotter(shape=(rows, cols))
+            called_from_test = getattr(sys, '_called_from_test', False)
+            plotter = pyvista.Plotter(shape=(rows, cols), off_screen=called_from_test)
             mesh_data = vtk_mesh(self.space.V)
             for i, (u, l) in enumerate(zip(U, legend, strict=True)):
                 row = i // cols

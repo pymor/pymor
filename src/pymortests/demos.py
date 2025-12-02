@@ -88,7 +88,7 @@ THERMALBLOCK_ADAPTIVE_ARGS = (
 THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
-    ('thermalblock_simple', ['fenicsx', 'greedy', 2, 5, 5, '--no-visualize']),
+    ('thermalblock_simple', ['fenicsx', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
@@ -130,8 +130,8 @@ HAPOD_ARGS = (
 FENICS_NONLINEAR_ARGS = (
     ('fenics_nonlinear', [2, 10, 2]),
     ('fenics_nonlinear', [3, 5, 1]),
-    ('fenicsx_nonlinear', [2, 10, 2, '--no-visualize']),
-    ('fenicsx_nonlinear', [3, 5, 1, '--no-visualize']),
+    ('fenicsx_nonlinear', [2, 10, 2]),
+    ('fenicsx_nonlinear', [3, 5, 1]),
 )
 
 FUNCTION_EI_ARGS = (
