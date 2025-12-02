@@ -632,37 +632,3 @@ class FenicsxVisualizer(ImmutableObject):
                 plotter.view_xy()
                 plotter.add_title(title)
             plotter.show()
-
-
-class FenicsxInterpolationOperator(Operator):
-
-    linear = True
-    source = NumpyVectorSpace(1)
-
-    def __init__(self, V, function, parameters):
-        self.__auto_init(locals())
-        self.range = FenicsxVectorSpace(V)
-        self.parameters_own = parameters
-
-    def assemble(self, mu=None):
-        assert self.parameters.assert_compatible(mu)
-        f = Function(self.V)
-        self.function.set_mu(mu)
-        f.interpolate(self.function)
-        # TODO: copy needed as petsc_vec does ensure that memory stays allocated
-        return VectorOperator(self.range.make_array([f.x.petsc_vec.copy()]))
-
-    def apply(self, U, mu=None):
-        return self.assemble(mu).apply(U)
-
-    def apply_adjoint(self, V, mu=None):
-        return self.assemble(mu).apply_adjoint(V)
-
-    def as_range_array(self, mu=None):
-        return self.assemble(mu).as_range_array()
-
-    def as_source_array(self, mu=None):
-        return self.assemble(mu).as_source_array()
-
-    def _apply_inverse(self, V, mu, initial_guess):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, return_info=True)
