@@ -5,7 +5,7 @@
 import weakref
 
 import numpy as np
-from scipy.linalg import lstsq, solve, solve_triangular
+from scipy.linalg import lstsq, qr, solve, solve_triangular
 
 from pymor.operators.constructions import (
     ComponentProjectionOperator,
@@ -173,6 +173,8 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
+        if self.least_squares:
+            self.least_squares_qr = qr(self.interpolation_matrix, mode='economic')
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -180,7 +182,8 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
             if self.least_squares:
-                interpolation_coefficients = lstsq(self.interpolation_matrix, AU.to_numpy())[0]
+                Q, R = self.least_squares_qr
+                interpolation_coefficients = solve_triangular(R, Q.T @ AU.to_numpy(), lower=False)
             elif self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
