@@ -30,14 +30,17 @@ class GenericModel(Model):
 
         super().__init__(visualizer=visualizer, name=name or 'BlackBoxModel')
 
+        self.computable_quantities = set(computers.keys())
+
         if 'solution' in computers:
             self.solution_space = computers['solution'][0]
         if 'output' in computers:
+            assert not output_functional
             assert not isinstance(computers['output'][0], VectorSpace)
             self.dim_output = computers['output'][0]
-            assert not output_functional, 'TODO: comes later'
-
-        self.computable_quantities = set(computers.keys())
+        elif output_functional is not None:
+            self.dim_output = output_functional.range.dim
+            self.computable_quantities.add('output')
 
         self.__auto_init(locals())
 
