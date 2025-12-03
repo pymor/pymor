@@ -39,7 +39,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
         """Initialize power2 and V when no centers were selected yet."""
         # power2 = trace(k(x,x)) for each training point
         diag = self.kernel.diag(self.X_train)
-        self._power2 = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
+        trace_vals = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
+        self._power2 = trace_vals / self.m
 
     def _ensure_kernel_4d_for_predict(self, K):
         """Bring kernel evaluation K into a 4D array suitable for predict."""
@@ -108,8 +109,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         if return_all_values:
             return scores
-        idx = int(np.argmax(scores))
-        return float(scores[idx]), mus[idx]
+        idx = np.argmax(scores)
+        return scores[idx], mus[idx]
 
     def extend(self, mu):
         r"""Extends the kernel interpolant by adding a new center and updating all quantities.
@@ -286,7 +287,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         l_nn = np.linalg.cholesky(k_nn)
         self._L = l_nn
 
-        self._z = self.res[idx_in_X] * np.sqrt(self.m) / np.sqrt(self._power2[idx_in_X])
+        self._z = self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])
         self._init_power_function_evals_after_first_center(mu, l_nn)
 
         self._coefficients = (self._C.T @ self._z).reshape(1, self.m)
@@ -303,7 +304,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         # update power2: p_{n+1}^2(x) = p_n^2(x) - V_i^T @ V_i
         norms = np.einsum('bij,bij->b', self._V, self._V)
-        self._power2 = np.maximum(self._power2 - norms, 0.0)
+        self._power2 = np.maximum(self._power2 - norms / self.m, 0.0)
 
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
@@ -326,7 +327,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._update_cholesky_factor(W, l_nn)
 
         # update coefficient
-        z_new = (self.res[idx_in_X] * np.sqrt(m) / np.sqrt(self._power2[idx_in_X])).reshape(m)
+        z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(m)
         self._z = np.hstack([self._z, z_new])
 
         # update Cholesky inverse, Newton basis and the power function values
@@ -360,7 +361,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
         Xi = self._V[:, -self.m:]
         norms = np.einsum('nij,nij->n', Xi, Xi)
-        self._power2 = np.maximum(self._power2 - norms, 0.0)
+        self._power2 = np.maximum(self._power2 - norms / self.m, 0.0)
 
 
 class VKOGAEstimator(BasicObject):
