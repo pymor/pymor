@@ -125,14 +125,14 @@ class DataDrivenModel(GenericModel):
                         mu = self.parameter_scaling(mu)
                         X = mu.to_numpy().reshape(1, -1)
                         Y = estimator.predict(X)
-                        return data_dim.from_numpy(Y.reshape(data_length, data_dim.dim))
+                        return data_dim.from_numpy(Y.reshape(data_dim.dim, data_length))
                 else:
 
                     def predict(mu):
                         mu = self.parameter_scaling(mu)
                         X = mu.to_numpy().reshape(1, -1)
                         Y = estimator.predict(X)
-                        return Y.reshape((data_length, data_dim))
+                        return Y.reshape((data_dim, data_length))
 
                 computers[compute_id] = (data_dim, predict)
         super().__init__(parameters=parameters, computers=computers, name=name)
