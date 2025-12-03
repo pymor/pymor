@@ -4,9 +4,10 @@ from numbers import Number
 import numpy as np
 import sklearn.base as skbase
 import sklearn.utils as skutils
-from vkoga.kernels import Gaussian, Matern
-from vkoga.vkoga import VKOGA
+# from vkoga.kernels import Gaussian, Matern
+# from vkoga.vkoga import VKOGA
 
+from pymor.algorithms.vkoga import VKOGAEstimator, GaussianKernel
 from pymor.core.base import BasicObject
 from pymor.models.generic import GenericModel
 from pymor.parameters.base import Mu, Parameters
@@ -14,7 +15,7 @@ from pymor.tools.random import get_rng
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
-class VKOGAEstimator(VKOGA, BasicObject):
+class VKOGAEstimatorWrapper(BasicObject):
     def __init__(
         self,
         kernel_type='gaussian',
@@ -22,63 +23,31 @@ class VKOGAEstimator(VKOGA, BasicObject):
         greedy_type='p_greedy',
         greedy_tol=1e-10,
         greedy_max_iter=100,
-        regularisation_parameter=0.0,
-        selection_threshold=0.0,
-        verbose=False,
+        regularisation_parameter=1e-12,
     ):
         if kernel_type == 'gaussian':
-            kernel = Gaussian(ep=kernel_length_scale)
-        elif kernel_type[:6] == 'matern':
-            order = int(kernel_type[7:]) if len(kernel_type) > 6 else 1
-            kernel = Matern(ep=kernel_length_scale, k=order)
+            kernel = GaussianKernel(length_scale=kernel_length_scale)
         else:
             raise ValueError(f'Unknown kernel: {kernel_type}')
-        super().__init__(
-            kernel=kernel,
-            kernel_par=1,  # unsused?
-            verbose=verbose,
-            n_report=10,
-            greedy_type=greedy_type,
-            reg_par=regularisation_parameter,
-            restr_par=selection_threshold,
-            tol_f=greedy_tol,
-            tol_p=greedy_tol,
-        )
+        assert greedy_type in ('f_greedy', 'fp_greedy', 'p_greedy'), 'Unknown greedy type'
+        self._estimator = VKOGAEstimator(
+            kernel=kernel, criterion=greedy_type.split('_')[0], max_centers=greedy_max_iter, tol=greedy_tol, reg=regularisation_parameter)
         self.__auto_init(locals())
 
     def fit(self, X, y):
         # we only need the amout of data, not the data itself, but it seems easiest to let sklearn to the parsing
         X, y = skutils.validation.check_X_y(X, y, multi_output=True)
         N, _ = y.shape
-        max_iter = min(self.greedy_max_iter, N)
-        super().fit(X, y, maxIter=max_iter)
+        self._estimator.max_centers = min(self._estimator.max_centers, N)
+        self._estimator.fit(X, y)
+
+    def predict(self, X):
+        return self._estimator.predict(X)
 
     def __sklearn_is_fitted__(self):
-        return hasattr(self, 'ctrs_') and self.ctrs_ is not None
+        return hasattr(self, '_weak_greedy_result')
 
-    def set_params(self, **params):
-        """Set parameters - required for sklearn compatibility"""
-        for key, value in params.items():
-            setattr(self, key, value)
-
-        # Reinitialize kernel when parameters change
-        if 'kernel_type' in params or 'kernel_length_scale' in params:
-            if self.kernel_type == 'gaussian':
-                self.kernel = Gaussian(ep=self.kernel_length_scale)
-            elif self.kernel_type[:6] == 'matern':
-                order = int(self.kernel_type[7:]) if len(self.kernel_type) > 6 else 1
-                self.kernel = Matern(ep=self.kernel_length_scale, k=order)
-
-        # Update VKOGA parameters
-        self.tol_f = self.greedy_tol
-        self.tol_p = self.greedy_tol
-        self.reg_par = self.regularisation_parameter
-        self.restr_par = self.selection_threshold
-
-        return self
-
-    def get_params(self, deep=True):
-        """Get parameters - required for sklearn compatibility"""
+    def get_params(self):
         return {
             'kernel_type': self.kernel_type,
             'kernel_length_scale': self.kernel_length_scale,
@@ -86,12 +55,10 @@ class VKOGAEstimator(VKOGA, BasicObject):
             'greedy_tol': self.greedy_tol,
             'greedy_max_iter': self.greedy_max_iter,
             'regularisation_parameter': self.regularisation_parameter,
-            'selection_threshold': self.selection_threshold,
-            'verbose': self.verbose,
         }
 
     def clone(self):
-        return VKOGAEstimator(**self.get_params())
+        return VKOGAEstimatorWrapper(**self.get_params())
 
 
 class DataDrivenModel(GenericModel):
@@ -166,7 +133,7 @@ class DataDrivenReductor(BasicObject):
         assert isinstance(estimators, dict)
         assert all(isinstance(k, str) for k in estimators)
         assert all(k in self.reducable_computes for k in estimators)
-        assert all(isinstance(v, skbase.BaseEstimator) for v in estimators.values())
+        # assert all(isinstance(v, skbase.BaseEstimator) for v in estimators.values())
         estimators = {
             compute_id: estimator.clone()  # ensure no one tempers with the estimators while we hold them
             for compute_id, estimator in estimators.items()
