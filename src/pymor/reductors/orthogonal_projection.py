@@ -1,5 +1,6 @@
 import numpy as np
 
+from pymor.algorithms.projection import project
 from pymor.core.defaults import defaults
 from pymor.models.generic import GenericModel
 from pymor.models.interface import Model
@@ -67,9 +68,12 @@ class OrthogonalProjectionReductor(ProjectionBasedReductor):
             ),
         }
 
+        # TODO: handle the case of computable output without output_functional
+
         rom = GenericModel(
             parameters=self.fom.parameters,
             computers=computers,
+            output_functional=project(self.fom.output_functional, None, B_sub) if hasattr(self.fom, 'output_functional') else None,
             name=f'OrthogonalProjectionReduced{self.fom.name}',
         )
         rom.disable_logging()
