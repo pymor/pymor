@@ -192,17 +192,26 @@ def _skip_if_no_solver(param):
     builtin = True
     from pymor.core.config import config
     for check, package in [
-            (lambda s: 'fenics' in s),
+            (lambda s: 'fenics' in s, ('FENICS', 'FENICSX')),
             (lambda s: 'ngsolve' in s, 'NGSOLVE'),
             (lambda s: 'neural_' in s, 'TORCH'),
-            (lambda s: 'neural_networks_instationary' in s, 'FENICS')
+            (lambda s: 'neural_networks_instationary' in s, 'FENICS'),
+            (lambda s: 'neural_networks_fenics' in s, 'FENICS'),
+            (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
+            (lambda s: 'thermalblock' in s and 'simple' not in s and 'fenics' in s, 'FENICS'),
     ]:
         needs_solver = check(full_str)
-        has_solver = getattr(config, f'HAVE_{package}')
+        if isinstance(package, tuple):
+            has_solver = any(getattr(config, f'HAVE_{p}') for p in package)
+        else:
+            has_solver = getattr(config, f'HAVE_{package}')
         if needs_solver and package != 'TORCH':
             builtin = False
         if needs_solver and not has_solver:
-            pytest.skip('skipped test due to missing ' + package)
+            if isinstance(package, tuple):
+                pytest.skip('skipped test due to missing ' + ' or '.join(package))
+            else:
+                pytest.skip('skipped test due to missing ' + package)
     if builtin and BUILTIN_DISABLED:
         pytest.skip('builtin discretizations disabled')
 
