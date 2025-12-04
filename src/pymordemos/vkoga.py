@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.vkoga import DiagonalVectorValuedKernel, GaussianKernel, VKOGAEstimator
+from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.tools.random import new_rng
 from pymor.tools.typer import Choices
 
@@ -23,10 +23,7 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
          length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
                                                 'Only used when `kernel = diagonal`.')):
     m = 2
-    kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), m, diag_weights=[2, 1])
-    # Alternative: kernel = GaussianKernel(length_scale)
-    # and let the estimator handle wrapping to a DiagonalVectorValuedKernel
-    # Then diag_weights = np.ones(m)
+    kernel = GaussianKernel(length_scale)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':

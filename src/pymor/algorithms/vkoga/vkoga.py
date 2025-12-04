@@ -3,10 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from scipy.linalg import solve_triangular
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
-from pymor.algorithms.vkoga.kernels import DiagonalVectorValuedKernel
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
@@ -30,16 +28,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._centers_idx = None
         self._coefficients = None
         self._z = None
-        self._L = None
         self._K_stack = None
         self._V = None
         self._C = None
-
-        self.kernel_diag_weights = 1
-        self.kernel_diag_weights_trace = 1
-        if isinstance(self.kernel, DiagonalVectorValuedKernel):
-            self.kernel_diag_weights = np.sqrt(self.kernel.diag_weights)
-            self.kernel_diag_weights_trace = np.sum(self.kernel.diag_weights)
 
         self._init_power_function_evals()
 
@@ -47,23 +38,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         """Initialize power2 and V when no centers were selected yet."""
         # power2 = trace(k(x,x)) for each training point
         diag = self.kernel.diag(self.X_train)
-        trace_vals = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
-        self._power2 = trace_vals / self.kernel_diag_weights_trace
-
-    def _ensure_kernel_4d_for_predict(self, K):
-        """Bring kernel evaluation K into a 4D array suitable for predict."""
-        K = np.asarray(K)
-        if K.ndim == 4:
-            return K
-        if K.ndim == 3:
-            if self._centers is not None and self._centers.shape[0] == 1:
-                return K[:, None, :, :]
-            else:
-                return K[None, :, :, :]
-        elif K.ndim == 2:
-            return K[:, :, None, None]
-        else:
-            raise ValueError(f'Unsupported kernel output shape {K.shape}')
+        self._power2 = diag
 
     def _find_training_indices(self, mus):
         """Find mus within training data points (or their nearest neighbors)."""
@@ -88,12 +63,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         K = self.kernel(X, self._centers)
         coeff = self._coefficients
-
-        # normalize K to (n_query, n_centers, m, m)
-        K = self._ensure_kernel_4d_for_predict(K)
-
-        y = np.einsum('ncab,cb->na', K, coeff)
-        return y
+        return K @ coeff
 
     def evaluate(self, mus, return_all_values=False):
         mus = np.asarray(mus)
@@ -279,94 +249,73 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self._V is None and self._z is None:
             self.res = self.F_train
         else:
-            self.res = self.res - np.einsum('nij, i->nj', self._V[:, -self.m:], self._z[-self.m:])
+            self.res = self.res - self._V[:, -1:] @ self._z[-1:, :]
 
-        if self._L is None or self._centers is None:
+        if self._centers is None:
             self._extend_first_center(mu, idx_in_X)
         else:
             self._extend_incremental(mu, idx_in_X)
 
     def _extend_first_center(self, mu, idx_in_X):
         """Add the first center to the interpolant."""
-        k_nn = self.kernel(mu, mu) + self.reg * np.eye(self.m)
-        l_nn = np.linalg.cholesky(k_nn)
-        self._L = l_nn
+        self._z = self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])
+        self._z = self._z.reshape(1, self.m)
+        self._init_power_function_evals_after_first_center(mu, idx_in_X)
 
-        self._z = self.res[idx_in_X] / (np.sqrt(self._power2[idx_in_X]) * self.kernel_diag_weights)
-        self._init_power_function_evals_after_first_center(mu, l_nn)
-
-        self._coefficients = (self._C.T @ self._z).reshape(1, self.m)
+        self._coefficients = self._C.T @ self._z
         self._centers = np.atleast_2d(mu)
         self._centers_idx = np.array([idx_in_X], dtype=int)
 
-    def _init_power_function_evals_after_first_center(self, mu, l_nn):
+    def _init_power_function_evals_after_first_center(self, mu, idx_in_X):
         K_X_mu = self.kernel(self.X_train, mu)
-        if K_X_mu.ndim == 2:
-            K_X_mu = K_X_mu[:, :, None]
         self._K_stack = K_X_mu
-        self._C = solve_triangular(l_nn, np.eye(l_nn.shape[0]), lower=True)
-        self._V = np.einsum('ij, Njk->Nik', self._C, self._K_stack)
+        self._V = self._K_stack / self._K_stack[idx_in_X, -1]
+        self._C = np.atleast_2d(1 / self._V[idx_in_X, -1])
 
         # update power2: p_{n+1}^2(x) = p_n^2(x) - V_i^T @ V_i
-        norms = np.einsum('bij,bij->b', self._V, self._V)
-        self._power2 = np.maximum(self._power2 - norms / self.kernel_diag_weights_trace, 0.0)
+        norms = np.sum(self._V**2, axis=1)
+        self._power2 = np.maximum(self._power2 - norms, 0.0)
 
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
-        n = len(self._centers)
         m = self.m
 
         # compute k(yi, mu) for all training points y_i
         K_X_mu = self.kernel(self.X_train, mu)
-        if K_X_mu.ndim == 2:
-            K_X_mu = K_X_mu[:, :, None]
-        # concatenate along the second axis (flattened block axis)
         self._K_stack = np.concatenate([self._K_stack, K_X_mu], axis=1)
 
-        # compute Cholesky update
-        k_nn = self.kernel(mu, mu)
-        B_col = self._K_stack[self._centers_idx, -m:].reshape(-1, m)
-        W = solve_triangular(self._L, B_col, lower=True)
-        S = k_nn - W.T @ W + self.reg * np.eye(m)
-        l_nn = np.linalg.cholesky(S)
-        self._update_cholesky_factor(W, l_nn)
-
         # update coefficient
-        z_new = (self.res[idx_in_X] / (np.sqrt(self._power2[idx_in_X]) * self.kernel_diag_weights)).reshape(m)
-        self._z = np.hstack([self._z, z_new])
+        z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(1, m)
+        self._z = np.vstack([self._z, z_new])
 
         # update Cholesky inverse, Newton basis and the power function values
-        self._update_cholesky_inverse(W, l_nn)
-        self._update_newton_basis()
+        self._update_newton_basis(idx_in_X)
+        self._update_cholesky_inverse(idx_in_X)
         self._update_power_function_evals()
 
         # update centers and final coefficients
-        self._coefficients = (self._C.T @ self._z).reshape(n + 1, m)
+        self._coefficients = self._C.T @ self._z
         self._centers = np.vstack([self._centers, mu])
         self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
 
-    def _update_cholesky_factor(self, W, l_nn):
-        """Extend the Cholesky factor with the new block."""
-        self._L = np.block([[self._L, np.zeros((self._L.shape[0], self.m))],
-                            [W.T, l_nn]])
-
-    def _update_cholesky_inverse(self, W, l_nn):
-        """Extend the inverse of the Choleksky matrix with the new block."""
-        c_nn = solve_triangular(l_nn, np.eye(l_nn.shape[0]), lower=True, check_finite=False)
-        self._C = np.block([[self._C, np.zeros((self._C.shape[0], self.m))],
-                            [- c_nn.T @ W.T @ self._C, c_nn]])
-
-    def _update_newton_basis(self):
+    def _update_newton_basis(self, idx_in_X):
         """Append Xi as the last block to the Newton basis V."""
-        Xi = np.einsum('ij,Njk->Nik', self._C[-self.m:], self._K_stack)
+        Xi = self._K_stack[:, -1:] - (self._V[idx_in_X, :] @ self._V.T).reshape(-1,1)
+        Xi = Xi / np.sqrt(self._power2[idx_in_X])
         self._V = np.concatenate([self._V, Xi], axis=1)
+
+    def _update_cholesky_inverse(self, idx_in_X):
+        """Extend the inverse of the Choleksky matrix with the new block."""
+        c_nn = 1 / self._V[idx_in_X, -1]
+        self._C = np.block([[self._C, np.zeros((self._C.shape[0], 1))],
+                            [- c_nn * self._V[idx_in_X, :-1] @ self._C, c_nn]])
 
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
-        Xi = self._V[:, -self.m:]
-        norms = np.einsum('nij,nij->n', Xi, Xi)
-        self._power2 = np.maximum(self._power2 - norms / self.kernel_diag_weights_trace, 0.0)
+        Xi = self._V[:, -1:]
+        norms = np.sum(Xi**2, axis=1)
+        self._power2 = np.maximum(self._power2 - norms, 0.0)
 
 
 class VKOGAEstimator(BasicObject):
@@ -410,17 +359,6 @@ class VKOGAEstimator(BasicObject):
         """
         X = np.asarray(X)
         Y = np.asarray(Y)
-
-        kernel = self.kernel
-        m = Y.shape[1]
-        if isinstance(kernel, DiagonalVectorValuedKernel):
-            assert kernel.n_outputs == m
-        elif m > 1:
-            with self.logger.block(
-                f'Detected vector-valued outputs (m={m}) but a scalar kernel was provided.'
-                ' Wrapping the base kernel in DiagonalVectorValuedKernel.'
-            ):
-                self.kernel = DiagonalVectorValuedKernel(kernel, n_outputs=m)
 
         # instantiate surrogate
         surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
