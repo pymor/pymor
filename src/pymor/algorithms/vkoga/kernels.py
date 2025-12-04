@@ -66,9 +66,15 @@ class DiagonalVectorValuedKernel:
         Number of output components (:math:`m`).
     """
 
-    def __init__(self, base_kernel, n_outputs):
+    def __init__(self, base_kernel, n_outputs, diag_weights=None):
         self.base_kernel = base_kernel
         self.n_outputs = n_outputs
+
+        if diag_weights is None:
+            self.diag_weights = np.ones(n_outputs)
+        else:
+            self.diag_weights = np.asarray(diag_weights, dtype=float)
+            assert self.diag_weights.shape == (n_outputs,)
 
     def __call__(self, X, Y=None):
         r"""Compute blockified vector-valued kernel between `X` and `Y`.
@@ -83,7 +89,8 @@ class DiagonalVectorValuedKernel:
         if self.n_outputs == 1:
             return K_scalar
 
-        K_block = K_scalar[..., None, None] * np.eye(self.n_outputs)[None, None, :, :]
+        D = np.diag(self.diag_weights)
+        K_block = K_scalar[..., None, None] * D[None, None, :, :]
 
         n, m = X.shape[0], Y.shape[0]
         axes_to_squeeze = []
@@ -101,5 +108,5 @@ class DiagonalVectorValuedKernel:
         """Return the diagonal of the kernel matrix."""
         X = np.atleast_2d(X)
         k_diag = self.base_kernel.diag(X)
-        d = np.ones(self.n_outputs)
+        d = self.diag_weights
         return (k_diag[:, None] * d[None, :]).ravel()

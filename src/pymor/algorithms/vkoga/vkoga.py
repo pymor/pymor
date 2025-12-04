@@ -6,6 +6,7 @@ import numpy as np
 from scipy.linalg import solve_triangular
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
+from pymor.algorithms.vkoga.kernels import DiagonalVectorValuedKernel
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
@@ -33,6 +34,13 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._K_stack = None
         self._V = None
         self._C = None
+
+        self.kernel_diag_weights = 1
+        self.kernel_diag_weights_trace = 1
+        if isinstance(self.kernel, DiagonalVectorValuedKernel):
+            self.kernel_diag_weights = np.sqrt(self.kernel.diag_weights)
+            self.kernel_diag_weights_trace = np.sum(self.kernel.diag_weights)
+
         self._init_power_function_evals()
 
     def _init_power_function_evals(self):
@@ -40,7 +48,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # power2 = trace(k(x,x)) for each training point
         diag = self.kernel.diag(self.X_train)
         trace_vals = np.add.reduceat(diag, range(0, len(diag), len(diag) // len(self.X_train)))
-        self._power2 = trace_vals / self.m
+        self._power2 = trace_vals / self.kernel_diag_weights_trace
 
     def _ensure_kernel_4d_for_predict(self, K):
         """Bring kernel evaluation K into a 4D array suitable for predict."""
@@ -91,21 +99,22 @@ class VKOGASurrogate(WeakGreedySurrogate):
         mus = np.asarray(mus)
         idxs = self._find_training_indices(mus)
         Xc = mus
+        p2 = self._power2[idxs]
 
         if self.criterion in ('fp', 'f/p', 'f'):
             Ypred = self.predict(Xc)
             Fres = self.F_train[idxs] - Ypred
             res_norms = np.linalg.norm(Fres, axis=1)
             if self.criterion == 'fp':
-                scores = res_norms * np.sqrt(self._power2)
+                scores = res_norms * np.sqrt(p2)
             elif self.criterion == 'f':
                 scores = res_norms
             elif self.criterion == 'f/p':
                 scores = np.zeros_like(res_norms)
-                nonzero_power = np.nonzero(self._power2)
-                scores[nonzero_power] = res_norms[nonzero_power] / np.sqrt(self._power2[nonzero_power])
+                nonzero_power = np.nonzero(p2)
+                scores[nonzero_power] = res_norms[nonzero_power] / np.sqrt(p2[nonzero_power])
         elif self.criterion == 'p':
-            scores = np.sqrt(self._power2)
+            scores = np.sqrt(p2)
 
         if return_all_values:
             return scores
@@ -287,7 +296,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         l_nn = np.linalg.cholesky(k_nn)
         self._L = l_nn
 
-        self._z = self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])
+        self._z = self.res[idx_in_X] / (np.sqrt(self._power2[idx_in_X]) * self.kernel_diag_weights)
         self._init_power_function_evals_after_first_center(mu, l_nn)
 
         self._coefficients = (self._C.T @ self._z).reshape(1, self.m)
@@ -304,7 +313,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         # update power2: p_{n+1}^2(x) = p_n^2(x) - V_i^T @ V_i
         norms = np.einsum('bij,bij->b', self._V, self._V)
-        self._power2 = np.maximum(self._power2 - norms / self.m, 0.0)
+        self._power2 = np.maximum(self._power2 - norms / self.kernel_diag_weights_trace, 0.0)
 
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
@@ -327,7 +336,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._update_cholesky_factor(W, l_nn)
 
         # update coefficient
-        z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(m)
+        z_new = (self.res[idx_in_X] / (np.sqrt(self._power2[idx_in_X]) * self.kernel_diag_weights)).reshape(m)
         self._z = np.hstack([self._z, z_new])
 
         # update Cholesky inverse, Newton basis and the power function values
@@ -361,7 +370,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
         Xi = self._V[:, -self.m:]
         norms = np.einsum('nij,nij->n', Xi, Xi)
-        self._power2 = np.maximum(self._power2 - norms / self.m, 0.0)
+        self._power2 = np.maximum(self._power2 - norms / self.kernel_diag_weights_trace, 0.0)
 
 
 class VKOGAEstimator(BasicObject):
