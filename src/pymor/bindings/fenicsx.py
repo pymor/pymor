@@ -164,15 +164,20 @@ class FenicsxMatrixBasedOperator(Operator):
 
     Parameters
     ----------
-    form
-        The `Form` object which is assembled to a matrix or vector.
+    ufl_form
+        The ufl `Form` object which is assembled to a matrix or vector.
     params
         Dict mapping parameters to dolfinx `Constants`.
     bcs
-        dolfin `DirichletBC` objects to be applied.
+        dolfinx `DirichletBC` objects to be applied.
+    diag
+        Value to put on the diagonal when applying Dirichlet conditions.
+    ufl_lifting_form
+        If not `None` and `ufl_form` represents a linear form, `apply_lifting` is called
+        with this form for the assembled vector.
     functional
-        If `True` return a |VectorFunctional| instead of a |VectorOperator| in case
-        `form` is a linear form.
+        If `True` and `ufl_form` represents a linear form, return a |VectorFunctional| instead
+        of a |VectorOperator|.
     solver
         The |Solver| for the operator.
     name
@@ -342,6 +347,7 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
 
 class FenicsxOperator(Operator):
+    """Wraps an UFL form as an |Operator|."""
 
     def __init__(self, ufl_form, source_function, params=None, bcs=(), alpha=None, linear=False,
                  apply_lifting_with_jacobian=False, solver=None, name=None):
@@ -577,7 +583,7 @@ class FenicsxVisualizer(ImmutableObject):
     Parameters
     ----------
     space
-        The `FenicsVectorSpace` for which we want to visualize DOF vectors.
+        The `FenicsxVectorSpace` for which we want to visualize DOF vectors.
     """
 
     def __init__(self, space):
