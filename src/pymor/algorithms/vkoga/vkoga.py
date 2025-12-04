@@ -101,7 +101,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         Xc = mus
         p2 = self._power2[idxs]
 
-        if self.criterion in ('fp', 'f/p', 'f'):
+        if self.criterion in ('fp', 'f'):
             Ypred = self.predict(Xc)
             Fres = self.F_train[idxs] - Ypred
             res_norms = np.linalg.norm(Fres, axis=1)
@@ -109,10 +109,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 scores = res_norms * np.sqrt(p2)
             elif self.criterion == 'f':
                 scores = res_norms
-            elif self.criterion == 'f/p':
-                scores = np.zeros_like(res_norms)
-                nonzero_power = np.nonzero(p2)
-                scores[nonzero_power] = res_norms[nonzero_power] / np.sqrt(p2[nonzero_power])
         elif self.criterion == 'p':
             scores = np.sqrt(p2)
 
@@ -414,6 +410,17 @@ class VKOGAEstimator(BasicObject):
         """
         X = np.asarray(X)
         Y = np.asarray(Y)
+
+        kernel = self.kernel
+        m = Y.shape[1]
+        if isinstance(kernel, DiagonalVectorValuedKernel):
+            assert kernel.n_outputs == m
+        elif m > 1:
+            with self.logger.block(
+                f'Detected vector-valued outputs (m={m}) but a scalar kernel was provided.'
+                ' Wrapping the base kernel in DiagonalVectorValuedKernel.'
+            ):
+                self.kernel = DiagonalVectorValuedKernel(kernel, n_outputs=m)
 
         # instantiate surrogate
         surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)

@@ -16,7 +16,7 @@ from pymor.tools.typer import Choices
 def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                                       help='Method for sampling the training points'),
          num_training_points: int = Option(40, help='Number of training points in the weak greedy algorithm.'),
-         greedy_criterion: Choices('fp f p f/p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
+         greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
          max_centers: int = Option(20, help='Maximum number of selected centers in the greedy algorithm.'),
          tol: float = Option(1e-6, help='Tolerance for the weak greedy algorithm.'),
          reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
@@ -24,6 +24,9 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                 'Only used when `kernel = diagonal`.')):
     m = 2
     kernel = DiagonalVectorValuedKernel(GaussianKernel(length_scale), m, diag_weights=[2, 1])
+    # Alternative: kernel = GaussianKernel(length_scale)
+    # and let the estimator handle wrapping to a DiagonalVectorValuedKernel
+    # Then diag_weights = np.ones(m)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':
