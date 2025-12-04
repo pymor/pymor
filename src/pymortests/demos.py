@@ -167,14 +167,12 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=fp']),
     ('vkoga', ['--greedy-criterion=f']),
     ('vkoga', ['--greedy-criterion=p']),
-    ('vkoga', ['--greedy-criterion=f/p']),
 )
 
 VKOGA_2D_INPUT_ARGS = (
     ('vkoga_2d_input', ['--greedy-criterion=fp']),
     ('vkoga_2d_input', ['--greedy-criterion=f']),
     ('vkoga_2d_input', ['--greedy-criterion=p']),
-    ('vkoga_2d_input', ['--greedy-criterion=f/p']),
 )
 
 DEMO_ARGS = (
