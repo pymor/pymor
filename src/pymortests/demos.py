@@ -130,8 +130,8 @@ HAPOD_ARGS = (
 FENICS_NONLINEAR_ARGS = (
     ('fenics_nonlinear', [2, 10, 2]),
     ('fenics_nonlinear', [3, 5, 1]),
-    ('fenicsx_nonlinear', [2, 10, 2]),
-    ('fenicsx_nonlinear', [3, 5, 1]),
+    ('fenics_nonlinear', [2, 10, 2]),
+    ('fenics_nonlinear', [3, 5, 1]),
 )
 
 FUNCTION_EI_ARGS = (
@@ -195,8 +195,7 @@ def _skip_if_no_solver(param):
     builtin = True
     from pymor.core.config import config
     for check, package in [
-            (lambda s: 'fenics' in s and 'fenicsx' not in s, 'FENICS'),
-            (lambda s: 'fenicsx' in s, 'FENICSX'),
+            (lambda s: 'fenics' in s),
             (lambda s: 'ngsolve' in s, 'NGSOLVE'),
             (lambda s: 'neural_' in s, 'TORCH'),
             (lambda s: 'neural_networks_instationary' in s, 'FENICS')

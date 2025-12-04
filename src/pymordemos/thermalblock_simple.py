@@ -30,7 +30,7 @@ TEXT = 'pyMOR'
 ####################################################################################################
 
 def main(
-    model: Choices('pymor fenics fenicsx ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
+    model: Choices('pymor fenics ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
     alg: Choices('naive greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
     snapshots: int = Argument(
         ...,
@@ -48,9 +48,10 @@ def main(
     if model == 'pymor':
         fom, parameter_space = discretize_pymor()
     elif model == 'fenics':
-        fom, parameter_space = discretize_fenics()
-    elif model == 'fenicsx':
-        fom, parameter_space = discretize_fenicsx()
+        if config.HAVE_FENICSX:
+            fom, parameter_space = discretize_fenicsx()
+        else:
+            fom, parameter_space = discretize_fenics()
     elif model == 'ngsolve':
         config.require('NGSOLVE')
         fom, parameter_space = discretize_ngsolve()
