@@ -358,7 +358,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
         A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
-        Has no effect if `alg == 'deim'`.
+        Has no effect if `alg == 'deim' or `alg == 'qdeim'`.
     product
         Inner product for POD computation in :func:`deim`.
         Has no effect if `alg == 'ei_greedy'`.
@@ -392,7 +392,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.
     """
-    assert alg in ('ei_greedy', 'deim')
+    assert alg in ('ei_greedy', 'deim', 'qdeim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
         operators = [getattr(fom, operator_name) for operator_name in operator_names]
@@ -414,17 +414,18 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
                 dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
                                               max_interpolation_dofs=max_interpolation_dofs,
                                               copy=False, pool=pool)
-        elif alg == 'deim':
-            if alg == 'deim' and pool is not dummy_pool:
+        elif alg in ['deim', 'qdeim']:
+            if pool is not dummy_pool:
                 logger.warning('DEIM algorithm not parallel. Collecting operator evaluations.')
                 evaluations = pool.apply(_identity, x=evaluations)
                 evs = evaluations[0]
                 for e in evaluations[1:]:
                     evs.append(e, remove_from_other=True)
                 evaluations = evs
-            with logger.block('Executing DEIM algorithm:'):
-                dofs, basis, data = deim(evaluations, modes=max_interpolation_dofs,
-                                         atol=atol, rtol=rtol, pod_options=pod_options, product=product)
+            with logger.block(f'Executing {alg} algorithm:'):
+                deim_alg = deim if alg == 'deim' else qdeim
+                dofs, basis, data = deim_alg(evaluations, modes=max_interpolation_dofs,
+                                             atol=atol, rtol=rtol, pod_options=pod_options, product=product)
         else:
             assert False
 
