@@ -25,7 +25,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self.N, self.m = self.F_train.shape
         self.d = self.X_train.shape[1]
 
-        #self._centers = None
         self._centers = None
         self._centers_idx = None
         self._coefficients = None
@@ -60,7 +59,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
     def predict(self, X):
         X = np.asarray(X)
-        if self._centers is None or self._centers.size==0:
+        if self._centers is None or self._centers.size == 0:
             return np.zeros((X.shape[0], self.m))
 
         K = self.kernel(X, self._centers)
@@ -251,7 +250,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self._V is None and self._z is None:
             self.res = self.F_train
         else:
-            self.res = self.res - self._V[:, -1:] @ self._z[-1:, :]
+            self.res = self.res - self._V[:, -1:] @ self._z[-1:]
 
         self._extend_incremental(mu, idx_in_X)
 
@@ -283,12 +282,12 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self._V is None:
             self._V = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
         else:
-            Xi = self._K_X_mu - (self._V[idx_in_X, :] @ self._V.T).reshape(-1,1)
+            Xi = self._K_X_mu - (self._V[idx_in_X] @ self._V.T).reshape(-1, 1)
             Xi = Xi / np.sqrt(self._power2[idx_in_X])
             self._V = np.concatenate([self._V, Xi], axis=1)
 
     def _update_cholesky_inverse(self, idx_in_X):
-        """Extend the inverse of the Choleksky matrix with the new block."""
+        """Extend the inverse of the Cholesky matrix by the new block."""
         c_nn = 1 / self._V[idx_in_X, -1]
         if self._C is None:
             self._C = np.atleast_2d(c_nn)
@@ -299,8 +298,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
-        Xi = self._V[:, -1:]
-        norms = np.sum(Xi**2, axis=1)
+        norms = self._V[:, -1] ** 2
         self._power2 = np.maximum(self._power2 - norms, 0.0)
 
 
