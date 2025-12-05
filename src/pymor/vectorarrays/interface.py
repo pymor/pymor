@@ -2,8 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import weakref
-from collections import namedtuple
 from numbers import Integral, Number
 
 import numpy as np
@@ -257,7 +255,6 @@ class VectorArray(BasicObject):
             raise ValueError('Cannot delete items from VectorArray view')
         assert self.check_ind(ind)
         self._copy_impl_if_multiple_refs()
-        self.impl.generation += 1
         self.impl.delete(ind)
         self._len = len(self.impl)
 
@@ -292,7 +289,6 @@ class VectorArray(BasicObject):
         self._copy_impl_if_multiple_refs()
         if remove_from_other:
             other._copy_impl_if_multiple_refs()
-        self.impl.generation += 1
         self.impl.append(other.impl, remove_from_other, other.ind)
         self._len += other._len
         if remove_from_other:
@@ -354,7 +350,6 @@ class VectorArray(BasicObject):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         self._copy_impl_if_multiple_refs()
-        self.impl.generation += 1
         self.impl.scal(alpha, self.ind)
 
     def axpy(self, alpha, x):
@@ -384,7 +379,6 @@ class VectorArray(BasicObject):
         assert x in self.space
         assert len(self) == len(x) or len(x) == 1
         self._copy_impl_if_multiple_refs()
-        self.impl.generation += 1
         self.impl.axpy(alpha, x.impl, self.ind, x.ind)
 
     def inner(self, other, product=None):
@@ -691,10 +685,6 @@ class VectorArray(BasicObject):
             return self.copy()
         else:
             return type(self)(self.space, impl)
-
-    @property
-    def current_state(self):
-        return VectorArrayState(weakref.ref(self.impl), self.impl.generation, self.ind)
 
     def __add__(self, other):
         if isinstance(other, Number):
@@ -1029,8 +1019,6 @@ class VectorArrayImpl(BasicObject):
     non-negative numbers.
     """
 
-    generation = 0
-
     @abstractmethod
     def __len__(self):
         pass
@@ -1120,6 +1108,3 @@ class VectorArrayImpl(BasicObject):
             return len(ind)
         except TypeError:
             return 1
-
-
-VectorArrayState = namedtuple('VectorArrayState', ['impl', 'generation', 'ind'])
