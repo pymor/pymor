@@ -3,12 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.operators.constructions import AdjointOperator, InverseOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
+@pytest.mark.builtin
 def test_adjoint_operator():
     op = NumpyMatrixOperator(np.array([[1., 1.], [1., 0]]))
     sp = NumpyMatrixOperator(np.diag([1., 2.]))

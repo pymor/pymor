@@ -58,6 +58,13 @@ def _get_fenics_version():
     return df.__version__
 
 
+def _get_fenicsx_version():
+    import dolfinx as dfx
+    if not (parse('0.10') <= parse(dfx.__version__) < parse('0.11')):
+        warnings.warn(f'FEniCSx bindings have only been tested for version 0.10 '
+                      f'(installed: {dfx.__version__}).')
+    return dfx.__version__
+
 def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
 
@@ -149,6 +156,7 @@ def is_jupyter():
 _PACKAGES = {
     'DEALII': _get_version('pymor_dealii'),
     'FENICS': _get_fenics_version,
+    'FENICSX': _get_fenicsx_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYPARALLEL': _get_version('ipyparallel'),
     'IPYTHON': _get_version('IPython'),
