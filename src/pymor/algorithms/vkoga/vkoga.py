@@ -38,8 +38,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _init_power_function_evals(self):
         """Initialize power2 and V when no centers were selected yet."""
         # power2 = trace(k(x,x)) for each training point
-        diag = self.kernel.diag(self.X_train)
-        self._power2 = diag
+        self._power2 = self.kernel.diag(self.X_train) + self.reg
 
     def _find_training_indices(self, mus):
         """Find mus within training data points (or their nearest neighbors)."""
@@ -59,7 +58,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
     def predict(self, X):
         X = np.asarray(X)
-        if self._centers is None or self._centers.size == 0:
+        if self._centers is None:
             return np.zeros((X.shape[0], self.m))
 
         K = self.kernel(X, self._centers)
@@ -299,7 +298,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         """Incrementally update self._power2 after adding new center."""
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
         norms = self._V[:, -1] ** 2
-        self._power2 = np.maximum(self._power2 - norms, 0.0)
+        self._power2 = np.maximum(self._power2 - norms, 0)
 
 
 class VKOGAEstimator(BasicObject):
