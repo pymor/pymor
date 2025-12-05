@@ -264,32 +264,71 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     return interpolation_dofs, collateral_basis, data
 
 
-def qdeim(basis):
-    """Select DEIM interpolation points using the Q-DEIM algorithm.
+def qdeim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_options={}):
+    """Generate data for empirical interpolation using the Q-DEIM algorithm.
 
-    For a given interpolation basis, this algorithm computes DEIM
-    interpolation degrees of freedom using the Q-DEIM algorithm from
+    Given a |VectorArray| `U`, this method generates a collateral basis and
+    interpolation DOFs for empirical interpolation of the vectors contained in `U`.
+    The returned objects can be used to instantiate an |EmpiricalInterpolatedOperator|
+    (with `triangular=False`).
+
+    The collateral basis is determined by the first :func:`~pymor.algorithms.pod.pod` modes
+    of `U`.
+
+    The intperpolation DOFs are computed using the Q-DEIM algorithm from
     :cite:`DG16`. It leads to more stable interpolation matrices compared
-    to :meth:`ei_greedy`. However, the algorithm only works with
-    |NumPy| data, so the basis |VectorArray| needs to support the
-    :meth:`~pymor.vectorarrays.interface.to_numpy` method.
+    to :meth:`ei_greedy`. However, the algorithm only works with |NumPy| data, so the
+    basis |VectorArray| needs to support the
+    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy` method.
 
     Parameters
     ----------
-    basis
-        |VectorArray| containing the interpolation basis. Has to
-        support `to_numpy`.
+    U
+        A |VectorArray| of vectors to interpolate.
+    modes
+        Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
+    pod
+        If `True`, perform a POD of `U` to obtain the collateral basis. If `False`, `U`
+        is used as collateral basis.
+    atol
+        Absolute POD tolerance.
+    rtol
+        Relative POD tolerance.
+    product
+        Inner product |Operator| used for the POD.
+    pod_options
+        Dictionary of additional options to pass to the :func:`~pymor.algorithms.pod.pod` algorithm.
 
     Returns
     -------
-    dofs
-        One-dimensional |NumPy Array| containing the indices of the
-        computed interpolation degrees of freedom.
+    interpolation_dofs
+        |NumPy array| of the DOFs at which the vectors are interpolated.
+    collateral_basis
+        |VectorArray| containing the generated collateral basis.
+    data
+        Dict containing the following fields:
+
+        :svals:
+            POD singular values.
     """
-    num_dofs = len(basis)
-    basis = basis.to_numpy(ensure_copy=True)
-    dofs = spla.qr(basis.T, pivoting=True, mode='economic', overwrite_a=True)[2][:num_dofs]
-    return dofs
+    assert isinstance(U, VectorArray)
+
+    logger = getLogger('pymor.algorithms.ei.qdeim')
+    logger.info('Generating Interpolation Data ...')
+
+    data = {}
+
+    if pod:
+        collateral_basis, svals = pod_alg(U, modes=modes, atol=atol, rtol=rtol, product=product, **pod_options)
+        data['svals'] = svals
+    else:
+        collateral_basis = U
+
+    numpy_cb = collateral_basis.to_numpy(ensure_copy=True)
+    interpolation_dofs = \
+        spla.qr(numpy_cb.T, pivoting=True, mode='economic', overwrite_a=True)[2][:len(collateral_basis)]
+
+    return interpolation_dofs, collateral_basis, data
 
 
 def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None,
