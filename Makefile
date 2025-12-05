@@ -4,10 +4,12 @@ THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 CI_CURRENT_IMAGE_TAG := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)/requirements-ci-current.txt | sha256sum | cut -d " " -f 1)
 CI_OLDEST_IMAGE_TAG  := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-oldest  $(THIS_DIR)/requirements-ci-oldest.txt  | sha256sum | cut -d " " -f 1)
 CI_FENICS_IMAGE_TAG  := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-fenics  $(THIS_DIR)/requirements-ci-fenics.txt  | sha256sum | cut -d " " -f 1)
+CI_FENICSX_IMAGE_TAG := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-fenicsx $(THIS_DIR)/requirements-ci-fenicsx.txt | sha256sum | cut -d " " -f 1)
 
 CI_CURRENT_IMAGE_TARGET_TAG := $(or $(TARGET_TAG),$(CI_CURRENT_IMAGE_TAG))
 CI_OLDEST_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),$(CI_OLDEST_IMAGE_TAG))
 CI_FENICS_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),$(CI_FENICS_IMAGE_TAG))
+CI_FENICSX_IMAGE_TARGET_TAG := $(or $(TARGET_TAG),$(CI_FENICSX_IMAGE_TAG))
 
 CI_PREFLIGHT_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),latest)
 
@@ -89,6 +91,21 @@ ci_fenics_requirements:
 		-o requirements-ci-fenics.txt \
 		./pyproject.toml ./requirements-ci-fenics-pins.in
 
+ci_fenicsx_requirements:
+	uv pip compile  \
+		--extra docs_additional \
+		--extra tests \
+		--extra ann \
+		--extra ipyparallel \
+		--extra mpi \
+		--python-version 3.12 \
+		--python-platform x86_64-manylinux_2_31 \
+		--extra-index-url https://download.pytorch.org/whl/cpu \
+		--index-strategy unsafe-best-match \
+		--emit-index-url \
+		-o requirements-ci-fenicsx.txt \
+		./pyproject.toml
+
 CONDA_EXTRAS = \
 	--extras tests \
 	--extras ci-conda \
@@ -118,7 +135,10 @@ ci_oldest_image:
 ci_fenics_image:
 	$(DOCKER) build -t pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_images: ci_current_image ci_oldest_image ci_fenics_image ## build the Docker CI images
+ci_fenicsx_image:
+	$(DOCKER) build -t pymor/ci-fenicsx:$(CI_FENICSX_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-fenicsx $(THIS_DIR)
+
+ci_images: ci_current_image ci_oldest_image ci_fenics_image ci_fenicsx_image ## build the Docker CI images
 
 
 ci_current_image_pull:  ## pull 'current' CI image from zivgitlab.wwu.io
@@ -130,7 +150,10 @@ ci_oldest_image_pull:  ## pull 'oldest' CI image from zivgitlab.wwu.io
 ci_fenics_image_pull:  ## pull 'fenics' CI image from zivgitlab.wwu.io
 	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
 
-ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull  ## pull all CI images from zivgitlab.wwu.io
+ci_fenicsx_image_pull:  ## pull 'fenicsx' CI image from zivgitlab.wwu.io
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenicsx:$(CI_FENICSX_IMAGE_TAG)
+
+ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull ci_fenicsx_image_pull  ## pull all CI images from zivgitlab.wwu.io
 
 
 ci_current_image_push:
@@ -148,12 +171,17 @@ ci_fenics_image_push:
 	$(DOCKER) push pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) \
 		zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TARGET_TAG)
 
+ci_fenicsx_image_push:
+	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
+	$(DOCKER) push pymor/ci-fenicsx:$(CI_FENICSX_IMAGE_TAG) \
+		zivgitlab.wwu.io/pymor/pymor/ci-fenicsx:$(CI_FENICSX_IMAGE_TARGET_TAG)
+
 ci_preflight_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push ## push the CI images to zivgitlab.wwu.io
+ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push ci_fenicsx_image_push ## push the CI images to zivgitlab.wwu.io
 
 
 ci_current_image_run:  ## run the 'current' CI image (needs to be pulled first)
@@ -164,6 +192,9 @@ ci_oldest_image_run:  ## run the 'oldest' CI image (needs to be pulled first)
 
 ci_fenics_image_run:  ## run the 'fenics' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
+
+ci_fenicsx_image_run:  ## run the 'fenicsx' CI image (needs to be pulled first)
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenicsx:$(CI_FENICSX_IMAGE_TAG)
 
 
 ci_current_image_run_notebook:  ## run jupyter in 'current' CI image (needs to be pulled first)

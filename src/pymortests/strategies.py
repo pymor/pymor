@@ -122,6 +122,26 @@ if config.HAVE_FENICS:
         return ret
     _other_vector_space_types.append('fenics')
 
+if config.HAVE_FENICSX:
+    import dolfinx as dfx
+    from mpi4py import MPI
+
+    from pymor.bindings.fenicsx import FenicsxVectorSpace
+
+    _FENICSX_spaces = {}
+
+    def _fenicsx_vector_spaces(draw, np_data_list, compatible, count, dims):
+        ret = []
+        for d, ar in zip(dims, np_data_list, strict=True):
+            assume(d > 1)
+            if d not in _FENICSX_spaces:
+                _FENICSX_spaces[d] = FenicsxVectorSpace(
+                    dfx.fem.functionspace(dfx.mesh.create_unit_interval(MPI.COMM_WORLD, d - 1), ('Lagrange', 1))
+                )
+            ret.append((_FENICSX_spaces[d], ar))
+        return ret
+    _other_vector_space_types.append('fenicsx')
+
 if config.HAVE_NGSOLVE:
     _NGSOLVE_spaces = {}
 

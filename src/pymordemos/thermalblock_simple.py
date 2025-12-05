@@ -10,7 +10,7 @@ Usage:
 Arguments:
 """
 
-from typer import Argument, run
+from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -30,7 +30,7 @@ TEXT = 'pyMOR'
 ####################################################################################################
 
 def main(
-    model: Choices('pymor fenics fenicsx ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
+    model: Choices('pymor fenics ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
     alg: Choices('naive greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
     snapshots: int = Argument(
         ...,
@@ -41,15 +41,17 @@ def main(
     ),
     rbsize: int = Argument(..., help='Size of the reduced basis.'),
     test: int = Argument(..., help='Number of parameters for stochastic error estimation.'),
+    visualize: bool = Option(True, help='Visualize solution and reduczed solution'),
 ):
     # discretize
     ############
     if model == 'pymor':
         fom, parameter_space = discretize_pymor()
     elif model == 'fenics':
-        fom, parameter_space = discretize_fenics()
-    elif model == 'fenicsx':
-        fom, parameter_space = discretize_fenicsx()
+        if config.HAVE_FENICSX:
+            fom, parameter_space = discretize_fenicsx()
+        else:
+            fom, parameter_space = discretize_fenics()
     elif model == 'ngsolve':
         config.require('NGSOLVE')
         fom, parameter_space = discretize_ngsolve()
@@ -98,11 +100,12 @@ def main(
 
     # visualize reduction error for worst-approximated mu
     #####################################################
-    mumax = results['max_error_mus'][0, -1]
-    U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rom.solve(mumax))
-    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                  separate_colorbars=True, block=True)
+    if visualize:
+        mumax = results['max_error_mus'][0, -1]
+        U = fom.solve(mumax)
+        U_RB = reductor.reconstruct(rom.solve(mumax))
+        fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                      separate_colorbars=True, block=True)
 
 
 ####################################################################################################
@@ -251,16 +254,16 @@ def _discretize_fenicsx():
     def ass_matrix(x, y, nx, ny):
         d = diffusion(x/nx, (x + 1)/nx, y/ny, (y + 1)/ny, (x + 1 == nx), (y + 1 == ny))
         blf = form(inner(d * grad(u), grad(v)) * dx)
-        mat = assemble_matrix(blf, diagonal=0., bcs=[bc])
+        mat = assemble_matrix(blf, diag=0., bcs=[bc])
         mat.assemble()
         return mat
 
     mats = [ass_matrix(x, y, XBLOCKS, YBLOCKS)
             for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
-    mat0 = assemble_matrix(form(inner(Constant(mesh, 0.) * grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    mat0 = assemble_matrix(form(inner(Constant(mesh, 0.) * grad(u), grad(v)) * dx), diag=1., bcs=[bc])
     mat0.assemble()
-    h1_mat = assemble_matrix(form(inner(grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    h1_mat = assemble_matrix(form(inner(grad(u), grad(v)) * dx), diag=1., bcs=[bc])
     h1_mat.assemble()
 
     lf = form(v * dx)

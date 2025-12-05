@@ -570,6 +570,7 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
+@pytest.mark.builtin
 def test_vector_array_to_selection_operator():
     from pymor.operators.constructions import vector_array_to_selection_operator
     from pymor.vectorarrays.numpy import NumpyVectorSpace

@@ -11,6 +11,8 @@ from pymor.algorithms.bfgs import _get_active_and_inactive_sets, error_aware_bfg
 from pymor.core.exceptions import BFGSError
 from pymordemos.linear_optimization import create_fom
 
+pytestmark = pytest.mark.builtin
+
 
 @given(pyst.active_mu_data())
 def test_active_inactive_sets(data):

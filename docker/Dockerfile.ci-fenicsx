@@ -1,0 +1,17 @@
+FROM docker.io/condaforge/miniforge3:25.9.1-0
+
+ENV DOCKER_PYMOR=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    GOTO_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
+RUN mkdir /src && \
+    apt-get update && apt-get install -y xvfb build-essential && \
+    conda install -y fenics-dolfinx=0.10 mpich==4.3.2 pyvista==0.46.4
+
+CMD /bin/bash --login
+
+WORKDIR /src
+
+COPY requirements-ci-fenicsx.txt .
+RUN pip install --no-cache-dir -r requirements-ci-fenicsx.txt

@@ -73,6 +73,7 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(onb, U))
 
 
+@pytest.mark.builtin
 @pytest.mark.parametrize('copy', [False, True])
 def test_chol_qr_empty(copy):
     n = 5

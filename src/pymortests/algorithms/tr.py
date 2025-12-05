@@ -11,6 +11,8 @@ from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
+pytestmark = pytest.mark.builtin
+
 
 @pytest.mark.parametrize('primal_dual', [False, True])
 def test_tr(primal_dual):
