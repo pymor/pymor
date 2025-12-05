@@ -5,7 +5,7 @@
 import weakref
 
 import numpy as np
-from scipy.linalg import solve, solve_triangular
+from scipy.linalg import lu_factor, lu_solve, solve_triangular
 
 from pymor.operators.constructions import (
     ComponentProjectionOperator,
@@ -88,6 +88,8 @@ class EmpiricalInterpolatedOperator(Operator):
                 self._operator = operator
             interpolation_matrix = collateral_basis.dofs(interpolation_dofs)
             self.interpolation_matrix = interpolation_matrix
+            if not triangular:
+                self.lu_factors = lu_factor(self.interpolation_matrix)
         self.collateral_basis = collateral_basis.copy()
 
     @property
@@ -112,7 +114,7 @@ class EmpiricalInterpolatedOperator(Operator):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy())
+                interpolation_coefficients = lu_solve(self.lu_factors, AU.to_numpy())
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(self.collateral_basis), len(AU))) + np.nan
         return self.collateral_basis.lincomb(interpolation_coefficients)
@@ -141,7 +143,7 @@ class EmpiricalInterpolatedOperator(Operator):
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.to_numpy(),
                                                                   lower=True, unit_diagonal=True)
                 else:
-                    interpolation_coefficients = solve(self.interpolation_matrix, JU.to_numpy())
+                    interpolation_coefficients = lu_solve(self.lu_factors, JU.to_numpy())
             except ValueError:  # this exception occurs when AU contains NaNs ...
                 interpolation_coefficients = np.empty((len(self.collateral_basis), len(JU))) + np.nan
             J = self.collateral_basis.lincomb(interpolation_coefficients)
@@ -170,6 +172,8 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
+        if not triangular:
+            self.lu_factors = lu_factor(self.interpolation_matrix)
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -180,7 +184,7 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy())
+                interpolation_coefficients = lu_solve(self.lu_factors, AU.to_numpy())
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(self.projected_collateral_basis), len(AU))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
@@ -200,7 +204,7 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, J.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, J.to_numpy())
+                interpolation_coefficients = lu_solve(self.lu_factors, J.to_numpy())
         except ValueError:  # this exception occurs when J contains NaNs ...
             interpolation_coefficients = (np.empty((len(self.projected_collateral_basis),
                                                     len(self.source_basis_dofs)))
