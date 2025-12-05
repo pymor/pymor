@@ -107,7 +107,7 @@ class NeuralNetworkReductor(BasicObject):
 
     def __init__(self, fom=None, reduced_basis=None, training_parameters=None, validation_parameters=None,
                  training_snapshots=None, validation_snapshots=None, validation_ratio=0.1, T=None, nt=1,
-                 basis_size=None, rtol=0., atol=0.,l2_err=0., pod_params={}, ann_mse='like_basis',
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}, ann_mse='like_basis',
                  scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_parameters
 
@@ -669,6 +669,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
         return rom
 
+
 class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
     """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
@@ -751,6 +752,7 @@ class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
             return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
         else:
             return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
+
 
 class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
                                                NeuralNetworkLSTMReductor):
