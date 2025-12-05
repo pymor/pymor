@@ -5,7 +5,7 @@
 import weakref
 
 import numpy as np
-from scipy.linalg import lstsq, qr, solve, solve_triangular
+from scipy.linalg import lstsq, lu_factor, lu_solve, qr, solve, solve_triangular
 
 from pymor.operators.constructions import (
     ComponentProjectionOperator,
@@ -175,6 +175,8 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         self.linear = restricted_operator.linear
         if self.least_squares:
             self.least_squares_qr = qr(self.interpolation_matrix, mode='economic')
+        elif not triangular:
+            self.lu_factors = lu_factor(self.interpolation_matrix)
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -188,7 +190,7 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy(),
                                                               lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy())
+                interpolation_coefficients = lu_solve(self.lu_factors, AU.to_numpy(), check_finite=False)
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(self.projected_collateral_basis), len(AU))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
