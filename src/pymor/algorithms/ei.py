@@ -264,6 +264,34 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     return interpolation_dofs, collateral_basis, data
 
 
+def qdeim(basis):
+    """Select DEIM interpolation points using the Q-DEIM algorithm.
+
+    For a given interpolation basis, this algorithm computes DEIM
+    interpolation degrees of freedom using the Q-DEIM algorithm from
+    :cite:`DG16`. It leads to more stable interpolation matrices compared
+    to :meth:`ei_greedy`. However, the algorithm only works with
+    |NumPy| data, so the basis |VectorArray| needs to support the
+    :meth:`~pymor.vectorarrays.interface.to_numpy` method.
+
+    Parameters
+    ----------
+    basis
+        |VectorArray| containing the interpolation basis. Has to
+        support `to_numpy`.
+
+    Returns
+    -------
+    dofs
+        One-dimensional |NumPy Array| containing the indices of the
+        computed interpolation degrees of freedom.
+    """
+    num_dofs = len(basis)
+    basis = basis.to_numpy(ensure_copy=True)
+    dofs = spla.qr(basis.T, pivoting=True, mode='economic', overwrite_a=True)[2][:num_dofs]
+    return dofs
+
+
 def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None,
                           product=None, atol=None, rtol=None, max_interpolation_dofs=None,
                           pod_options={}, alg='ei_greedy', pool=dummy_pool):
