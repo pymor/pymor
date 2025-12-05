@@ -23,12 +23,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self.F_train.ndim == 1:
             self.F_train = self.F_train.reshape((-1, 1))
         self.N, self.m = self.F_train.shape
+        self.d = self.X_train.shape[1]
 
+        #self._centers = None
         self._centers = None
         self._centers_idx = None
         self._coefficients = None
         self._z = None
-        self._K_stack = None
+        self._K_X_mu = None
         self._V = None
         self._C = None
 
@@ -58,7 +60,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
     def predict(self, X):
         X = np.asarray(X)
-        if self._centers is None:
+        if self._centers is None or self._centers.size==0:
             return np.zeros((X.shape[0], self.m))
 
         K = self.kernel(X, self._centers)
@@ -251,42 +253,16 @@ class VKOGASurrogate(WeakGreedySurrogate):
         else:
             self.res = self.res - self._V[:, -1:] @ self._z[-1:, :]
 
-        if self._centers is None:
-            self._extend_first_center(mu, idx_in_X)
-        else:
-            self._extend_incremental(mu, idx_in_X)
-
-    def _extend_first_center(self, mu, idx_in_X):
-        """Add the first center to the interpolant."""
-        self._z = self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])
-        self._z = self._z.reshape(1, self.m)
-        self._init_power_function_evals_after_first_center(mu, idx_in_X)
-
-        self._coefficients = self._C.T @ self._z
-        self._centers = np.atleast_2d(mu)
-        self._centers_idx = np.array([idx_in_X], dtype=int)
-
-    def _init_power_function_evals_after_first_center(self, mu, idx_in_X):
-        K_X_mu = self.kernel(self.X_train, mu)
-        self._K_stack = K_X_mu
-        self._V = self._K_stack / self._K_stack[idx_in_X, -1]
-        self._C = np.atleast_2d(1 / self._V[idx_in_X, -1])
-
-        # update power2: p_{n+1}^2(x) = p_n^2(x) - V_i^T @ V_i
-        norms = np.sum(self._V**2, axis=1)
-        self._power2 = np.maximum(self._power2 - norms, 0.0)
+        self._extend_incremental(mu, idx_in_X)
 
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
-        m = self.m
-
         # compute k(yi, mu) for all training points y_i
-        K_X_mu = self.kernel(self.X_train, mu)
-        self._K_stack = np.concatenate([self._K_stack, K_X_mu], axis=1)
+        self._K_X_mu = self.kernel(self.X_train, mu)
 
         # update coefficient
-        z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(1, m)
-        self._z = np.vstack([self._z, z_new])
+        z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(1, self.m)
+        self._z = np.vstack([self._z, z_new]) if self._z is not None else z_new
 
         # update Cholesky inverse, Newton basis and the power function values
         self._update_newton_basis(idx_in_X)
@@ -295,20 +271,30 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         # update centers and final coefficients
         self._coefficients = self._C.T @ self._z
-        self._centers = np.vstack([self._centers, mu])
-        self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
+        if self._centers is None and self._centers_idx is None:
+            self._centers = np.atleast_2d(mu)
+            self._centers_idx = np.array([idx_in_X], dtype=int)
+        else:
+            self._centers = np.vstack([self._centers, mu])
+            self._centers_idx = np.concatenate([self._centers_idx, np.array([idx_in_X], dtype=int)])
 
     def _update_newton_basis(self, idx_in_X):
         """Append Xi as the last block to the Newton basis V."""
-        Xi = self._K_stack[:, -1:] - (self._V[idx_in_X, :] @ self._V.T).reshape(-1,1)
-        Xi = Xi / np.sqrt(self._power2[idx_in_X])
-        self._V = np.concatenate([self._V, Xi], axis=1)
+        if self._V is None:
+            self._V = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
+        else:
+            Xi = self._K_X_mu - (self._V[idx_in_X, :] @ self._V.T).reshape(-1,1)
+            Xi = Xi / np.sqrt(self._power2[idx_in_X])
+            self._V = np.concatenate([self._V, Xi], axis=1)
 
     def _update_cholesky_inverse(self, idx_in_X):
         """Extend the inverse of the Choleksky matrix with the new block."""
         c_nn = 1 / self._V[idx_in_X, -1]
-        self._C = np.block([[self._C, np.zeros((self._C.shape[0], 1))],
-                            [- c_nn * self._V[idx_in_X, :-1] @ self._C, c_nn]])
+        if self._C is None:
+            self._C = np.atleast_2d(c_nn)
+        else:
+            self._C = np.block([[self._C, np.zeros((self._C.shape[0], 1))],
+                                [- c_nn * self._V[idx_in_X, :-1] @ self._C, c_nn]])
 
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
