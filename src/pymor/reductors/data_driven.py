@@ -15,7 +15,7 @@ class DataDrivenReductor(BasicObject):
 
     def __init__(self, estimator, fom=None, reduced_basis=None, training_parameters=None, validation_parameters=None,
                  training_snapshots=None, validation_snapshots=None, validation_ratio=0.1, T=None, nt=1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}):
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}, input_scaler=None, output_scaler=None):
         assert 0 < validation_ratio < 1 or validation_parameters
 
         self.training_data = None
@@ -47,7 +47,7 @@ class DataDrivenReductor(BasicObject):
 
         self.__auto_init(locals())
 
-    def reduce(self, training_parameters={}):
+    def reduce(self, estimator_settings={}):
         # compute training snapshots
         if self.training_snapshots is None:
             self.compute_training_snapshots()
@@ -99,10 +99,21 @@ class DataDrivenReductor(BasicObject):
 
         # run the actual training of the estimator
         with self.logger.block('Training of machine learning method ...'):
+            # fit input and output scaler if required
+            if self.input_scaler:
+                X = [x[0] for x in self.training_data]
+                self.input_scaler.fit(X)
+                X = [self.input_scaler.transform(x[0]) for x in self.training_data]
+            else:
+                X = [x[0] for x in self.training_data]
+            if self.output_scaler:
+                Y = [x[1] for x in self.training_data]
+                self.output_scaler.fit(Y)
+                Y = [self.output_scaler(x[1]) for x in self.training_data]
+            else:
+                Y = [x[1] for x in self.training_data]
             # fit estimator to training data
-            X = [x[0] for x in self.training_data]
-            Y = [x[1] for x in self.training_data]
-            self.estimator.fit(X, Y, **training_parameters)
+            self.estimator.fit(X, Y, **estimator_settings)
 
         return self._build_rom()
 
@@ -185,12 +196,13 @@ class DataDrivenReductor(BasicObject):
         with self.logger.block('Building ROM ...'):
             if self.is_stationary:
                 rom = DataDrivenModel(self.estimator, len(self.reduced_basis), parameters=parameters,
-                                      output_functional=projected_output_functional,
-                                      name=f'{name}_reduced')
+                                      output_functional=projected_output_functional, input_scaler=self.input_scaler,
+                                      output_scaler=self.output_scaler, name=f'{name}_reduced')
             else:
                 rom = DataDrivenInstationaryModel(self.T, self.nt, self.estimator, len(self.reduced_basis),
                                                   parameters=parameters,
                                                   output_functional=projected_output_functional,
+                                                  input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                                   name=f'{name}_reduced')
         return rom
 
