@@ -360,7 +360,11 @@ def stokes_2Dexample(rhs):
     from skfem.mesh import MeshTri
     from skfem.models.general import divergence
     from skfem.models.poisson import mass, vector_laplace
-    from skfem.utils import bmat, condense
+    from skfem.utils import condense
+    try:
+        from skfem.utils import bmat
+    except (ImportError, AttributeError):
+        from scipy.sparse import bmat
 
     from pymor.analyticalproblems.functions import Function
     from pymor.discretizers.skfem.cg import VectorL2Functional

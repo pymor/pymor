@@ -18,6 +18,7 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
+from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import AdjointOperator, ConcatenationOperator, IdentityOperator, InverseOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -311,12 +312,16 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         The full order |Model| to reduce.
     RB
         The basis of the reduced space onto which to project. If `None`, an empty basis is used.
+        Can be a list or tuple of |VectorArrays| for blocked systems.
     product
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
-        inner product is used.
+        inner product is used. Can be a list or tuple of |Operators| for blocked systems.
     use_normal_equations
         If `True`, solve the normal equations (A^* W A x = A^* b) instead of using a least-squares
         solver. If `False`, equip the operator with a least-squares solver.
+    blocked_system
+        If `True`, `fom` is assumed to be a blocked system and `RB` and `product` have to be lists
+        or tuples of |VectorArrays| and |Operators|, respectively.
     check_orthonormality
         See :class:`ProjectionBasedReductor`.
     check_tol
@@ -324,20 +329,66 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
     """
 
     def __init__(self, fom, RB=None, product=None, use_normal_equations=False,
-                 check_orthonormality=None, check_tol=None):
+                 blocked_system=False, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
-        RB = fom.solution_space.empty() if RB is None else RB
-        assert RB in fom.solution_space
-        super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
-        self.use_normal_equations = use_normal_equations
-        self.product = product
+
+        if RB is None:
+            assert blocked_system is not None
+            if blocked_system:
+                assert hasattr(fom.solution_space, 'subspaces')
+                RB = []
+                for i in range(len(fom.solution_space.subspaces)):
+                    RB.append(fom.solution_space.subspaces[i].empty())
+            else:
+                RB = fom.solution_space.empty()
+
+        if hasattr(fom.solution_space, 'subspaces'):
+            assert isinstance(RB, (list, tuple))
+            assert isinstance(product, (list, tuple))
+            self.blocked_system = True
+
+            if len(product) != len(RB):
+                raise ValueError(f'Length mismatch: {len(RB)} RBs but {len(product)} products')
+
+            if len(RB) != len(fom.solution_space.subspaces):
+                raise ValueError(f'Expected {len(fom.solution_space.subspaces)} RBs for blocked system, got {len(RB)}')
+
+            product_blocks = []
+            RB_dict = {}
+            product_dict = {}
+            for i, rb in enumerate(RB):
+                assert rb in fom.solution_space.subspaces[i]
+                RB_dict[f'RB_{i}'] = rb
+                product_dict[f'RB_{i}'] = product[i]
+                product_blocks.append(product[i] if product[i]
+                                      else IdentityOperator(fom.solution_space.subspaces[i].dim))
+
+            self.product = BlockDiagonalOperator(blocks=product_blocks)
+
+        else:
+            assert RB in fom.solution_space
+            self.blocked_system = False
+            product_dict = {'RB': product}
+            RB_dict = {'RB': RB}
+            self.product = product
+
+        super().__init__(fom, RB_dict, product_dict, check_orthonormality=check_orthonormality, check_tol=check_tol)
+
         self.test_space = fom.operator.range.empty()
         self.test_space_dims = []
+        self.use_normal_equations = use_normal_equations
 
-    def project_operators(self):
+    def _project_operators(self, dims, subbasis=False):
         fom = self.fom
-        RB = self.bases['RB']
+
+        if self.blocked_system:
+            RB_blocks = []
+            for i in range(len(fom.solution_space.subspaces)):
+                RB_blocks.append(self.bases[f'RB_{i}'][:dims[f'RB_{i}']])
+            self._block_basis = fom.solution_space.make_block_diagonal_array(RB_blocks)
+            RB = self._block_basis
+        else:
+            RB = self.bases['RB']
 
         if self.use_normal_equations:
             # Solve LS problem argmin||Ax - b||_{W} via the normal equation: (A^* W A) x = A^* W b
@@ -355,14 +406,19 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
 
         else:
             expanded_op = expand(fom.operator)
+
+            if subbasis:
+                extends = (self.fom.solution_space.empty(), [])
+            else:
+                extends = (self.test_space, self.test_space_dims)
             # See comment in self.use_normal_equations == True: The inverse of self.product is used
-            # in estimate_image_hierarchical if riesz_representative == True.
-            extends = (self.test_space, self.test_space_dims)
+            # in estimate_image_hierarchical if riesz_representatives == True.
             self.test_space, self.test_space_dims = estimate_image_hierarchical(operators=[expanded_op],
                                                                                 domain=RB,
                                                                                 extends=extends,
                                                                                 orthonormalize=True,
-                                                                                product=self.product)
+                                                                                product=self.product,
+                                                                                riesz_representatives=True)
 
             projected_operators = {
                 'operator':          project(fom.operator, range_basis=self.test_space,
@@ -373,7 +429,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
             }
         return projected_operators
 
-    def project_operators_to_subbasis(self, dims):
+    def _project_operators_to_subbasis(self, dims):
         rom = self._last_rom
         dim = dims['RB']
 
@@ -395,6 +451,27 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim)
             }
         return projected_operators
+
+    def project_operators(self):
+        dims = {k: len(v) for k, v in self.bases.items()}
+        return self._project_operators(dims=dims)
+
+    def project_operators_to_subbasis(self, dims):
+        assert len(dims) == len(self.bases)
+        assert set(dims.keys()) == set(self.bases.keys())
+
+        if self.blocked_system:
+            # if the system is blocked, we always need to recompute the whole projection
+            # as slicing out the correct blocks is currently not supported
+            return self._project_operators(dims=dims, subbasis=True)
+        else:
+            return self._project_operators_to_subbasis(dims=dims)
+
+    def reconstruct(self, u, basis='RB'):
+        if self.blocked_system:
+            return self._block_basis.lincomb(u.to_numpy())
+        else:
+            return super().reconstruct(u, basis)
 
     def build_rom(self, projected_operators, error_estimator):
         return StationaryModel(error_estimator=error_estimator, **projected_operators)

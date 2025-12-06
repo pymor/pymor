@@ -11,28 +11,24 @@ from typer import Argument, run
 from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.models.examples import stokes_2Dexample
-from pymor.reductors.stokes import StationaryRBStokesReductor
+from pymor.reductors.stokes import StationaryLSRBStokesReductor, StationarySupremizerGalerkinStokesReductor
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
 def main(
     mu_low: float = Argument(0.01),
-    mu_high: float = Argument(100),
+    mu_high: float = Argument(1000),
     modes: int = Argument(50),
-    n_tests: int = Argument(5)
+    n_tests: int = Argument(10)
 ):
     """This example sets up the MOR workflow for the 2D stationary Stokes equation.
 
-    The :class:`~pymor.reductors.stokes.StationaryRBStokesReductor` supports three
-    different projection methods:
-
-        - ``'supremizer_galerkin'``
-        - ``'ls-normal'``
-        - ``'ls-ls'``
-
-    The script computes the relative error of the reduced order model (ROM)
-    compared to the full order model (FOM), as well as the achieved speedup,
-    for all three projection methods.
+    The script first computes POD bases for the velocity and pressure spaces
+    from randomly sampled solutions of the full order model (FOM). Then, it
+    constructs reduced order models (ROMs) using three different projection
+    methods: supremizer enrichment Galerkin projection, least-squares projection with
+    normal equations, and least-squares projection without normal equations.  Finally,
+    it evaluates the ROMs against the FOM on a set of random parameters.
     """
     # sets up the discrete Stokes model
     body_force = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
@@ -58,24 +54,36 @@ def main(
 
     rng = np.random.default_rng(442)
     mus = rng.uniform(mu_low, mu_high, n_tests).tolist()
+    results_fom = [evaluate_fom_once(fom_stokes, mu) for mu in mus]
 
     for method in PROJECTION_METHODS:
 
         # construct reduced order model
-        reductor_stokes = StationaryRBStokesReductor(fom_stokes,
-                                                     RB_u=basis_u,
-                                                     RB_p=basis_p,
-                                                     projection_method=method,
-                                                     u_product = fom_stokes.u_product,
-                                                     p_product=fom_stokes.p_product)
-        rom = reductor_stokes.reduce()
-
-        results_rom = [evaluate_rom_once(rom, reductor_stokes, mu) for mu in mus]
-
-        #evaluate fom as reference solution only once
         if method == 'supremizer_galerkin':
-            results_fom = [evaluate_fom_once(fom_stokes, mu) for mu in mus]
+            reductor_stokes = StationarySupremizerGalerkinStokesReductor(fom_stokes,
+                                                                         RB_u=basis_u,
+                                                                         RB_p=basis_p,
+                                                                         u_product = fom_stokes.u_product,
+                                                                         p_product=fom_stokes.p_product)
+        elif method == 'ls-normal':
+            reductor_stokes = StationaryLSRBStokesReductor(fom_stokes,
+                                                           RB_u=basis_u,
+                                                           RB_p=basis_p,
+                                                           u_product = fom_stokes.u_product,
+                                                           p_product=fom_stokes.p_product,
+                                                           use_normal_equations=True)
+        elif method == 'ls-ls':
+            reductor_stokes = StationaryLSRBStokesReductor(fom_stokes,
+                                                           RB_u=basis_u,
+                                                           RB_p=basis_p,
+                                                           u_product = fom_stokes.u_product,
+                                                           p_product=fom_stokes.p_product,
+                                                           use_normal_equations=False)
+        else:
+            raise ValueError(f'Unknown projection method {method}')
 
+        rom = reductor_stokes.reduce()
+        results_rom = [evaluate_rom_once(rom, reductor_stokes, mu) for mu in mus]
         results = compute_speedup_and_errros(results_fom, results_rom)
 
         speedups[method] = np.mean([r['speedup'] for r in results])
@@ -124,7 +132,7 @@ def print_results(speedups, errors_u, errors_p):
     print(f"{'Method':<20} | {'Speedup':>10} | {'Error u':>12} | {'Error p':>12}")
     print('-' * 56)
     for method in speedups:
-        print(f'{method:<20} | {speedups[method]:10.2f} | {errors_u[method]:12.2e} | {errors_p[method]:12.2e}')
+        print(f'{method:<20} | {speedups[method]:10.2f} | {errors_u[method]:12.4e} | {errors_p[method]:12.4e}')
     print()
 
 if __name__ == '__main__':
