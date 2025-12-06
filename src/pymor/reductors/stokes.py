@@ -12,6 +12,9 @@ from pymor.vectorarrays.constructions import cat_arrays
 class StationarySupremizerGalerkinStokesReductor(ProjectionBasedReductor):
     """Projection-based reductor for the stationary stokes equation.
 
+    Uses supremizer enrichment to stabilize the velocity space, then computes
+    a Galerkin projection of the full order model onto the reduced space.
+
     Parameters
     ----------
     fom

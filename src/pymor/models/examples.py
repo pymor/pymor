@@ -355,16 +355,16 @@ def stokes_2Dexample(rhs):
         Discretized Stokes equation as a |SaddlePointModel|.
     """
     import numpy as np
+
+    from pymor.core.config import config
+    config.require('SCIKIT_FEM')
+
     from skfem.assembly import Basis, asm
     from skfem.element import ElementTriP1, ElementTriP2, ElementVector
     from skfem.mesh import MeshTri
     from skfem.models.general import divergence
     from skfem.models.poisson import mass, vector_laplace
-    from skfem.utils import condense
-    try:
-        from skfem.utils import bmat
-    except (ImportError, AttributeError):
-        from scipy.sparse import bmat
+    from skfem.utils import bmat, condense
 
     from pymor.analyticalproblems.functions import Function
     from pymor.discretizers.skfem.cg import VectorL2Functional
