@@ -16,7 +16,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
     """
 
     def __init__(self, kernel, X_train, F_train, criterion='fp', reg=1e-12):
-        assert criterion in ('fp', 'f', 'p', 'f/p')
+        assert criterion in ('fp', 'f', 'p')
         self.__auto_init(locals())
         self.X_train = np.asarray(X_train)
         self.F_train = np.asarray(F_train)
