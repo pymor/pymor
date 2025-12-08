@@ -6,6 +6,7 @@ import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
+from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
 from pymor.tools.random import get_rng
@@ -13,7 +14,8 @@ from pymor.tools.random import get_rng
 
 class DataDrivenReductor(BasicObject):
 
-    def __init__(self, estimator, fom=None, reduced_basis=None, training_parameters=None, validation_parameters=None,
+    def __init__(self, estimator=VKOGAEstimator(GaussianKernel()), fom=None, reduced_basis=None,
+                 training_parameters=None, validation_parameters=None,
                  training_snapshots=None, validation_snapshots=None, validation_ratio=0.1, T=None, nt=1,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}, input_scaler=None, output_scaler=None):
         assert 0 < validation_ratio < 1 or validation_parameters
@@ -47,7 +49,7 @@ class DataDrivenReductor(BasicObject):
 
         self.__auto_init(locals())
 
-    def reduce(self, estimator_settings={}):
+    def reduce(self, **kwargs):
         # compute training snapshots
         if self.training_snapshots is None:
             self.compute_training_snapshots()
@@ -113,7 +115,7 @@ class DataDrivenReductor(BasicObject):
             else:
                 Y = [x[1] for x in self.training_data]
             # fit estimator to training data
-            self.estimator.fit(X, Y, **estimator_settings)
+            self.estimator.fit(X, Y, **kwargs)
 
         return self._build_rom()
 

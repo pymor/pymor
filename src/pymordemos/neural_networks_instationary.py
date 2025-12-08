@@ -9,12 +9,7 @@ from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.reductors.neural_network import (
-    NeuralNetworkLSTMReductor,
-    NeuralNetworkLSTMStatefreeOutputReductor,
-    NeuralNetworkReductor,
-    NeuralNetworkStatefreeOutputReductor,
-)
+from pymor.reductors.data_driven import DataDrivenReductor
 from pymor.tools import mpi
 
 
@@ -79,17 +74,19 @@ def main(
 
         return absolute_errors, relative_errors, speedups
 
-    reductor = NeuralNetworkReductor(fom=fom, training_parameters=training_parameters,
-                                     validation_parameters=validation_parameters, basis_size=10,
-                                     scale_outputs=True, ann_mse=None)
+    from pymor.algorithms.neural_network import NeuralNetworkEstimator
+    fcnn_estimator = NeuralNetworkEstimator(tol=None, neural_network_type='FullyConnectedNN')
+    reductor = DataDrivenReductor(estimator=fcnn_estimator, fom=fom, training_parameters=training_parameters,
+                                  validation_parameters=validation_parameters, basis_size=10)
     rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=0)
 
     abs_errors, rel_errors, speedups = compute_errors_state(rom, reductor)
 
-    reductor_lstm = NeuralNetworkLSTMReductor(fom=fom, training_parameters=training_parameters,
-                                              validation_parameters=validation_parameters, basis_size=10,
-                                              scale_inputs=False, scale_outputs=True, ann_mse=None)
-    rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=3, learning_rate=0.1)
+    lstm_estimator = NeuralNetworkEstimator(tol=None, neural_network_type='LongShortTermMemoryNN')
+    reductor_lstm = DataDrivenReductor(estimator=lstm_estimator, fom=fom, training_parameters=training_parameters,
+                                       validation_parameters=validation_parameters, basis_size=10)
+    rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=3, learning_rate=1e-3, hidden_dimension=50,
+                                    log_loss_frequency=5)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
 
@@ -118,24 +115,6 @@ def main(
 
         return outputs_absolute_errors, outputs_relative_errors, outputs_speedups
 
-    output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, nt=time_steps+1,
-                                                           training_parameters=training_parameters,
-                                                           validation_parameters=validation_parameters,
-                                                           validation_loss=None, scale_outputs=True)
-    output_rom = output_reductor.reduce(restarts=100)
-
-    outputs_abs_errors, outputs_rel_errors, outputs_speedups = compute_errors_output(output_rom)
-
-    output_reductor_lstm = NeuralNetworkLSTMStatefreeOutputReductor(fom=fom, nt=time_steps + 1,
-                                                                    training_parameters=training_parameters,
-                                                                    validation_parameters=validation_parameters,
-                                                                    validation_loss=None, scale_inputs=False,
-                                                                    scale_outputs=True)
-    output_rom_lstm = output_reductor_lstm.reduce(restarts=0, number_layers=3, hidden_dimension=50,
-                                                  learning_rate=0.1)
-
-    outputs_abs_errors_lstm, outputs_rel_errors_lstm, outputs_speedups_lstm = compute_errors_output(output_rom_lstm)
-
     print()
     print('Approach by Hesthaven and Ubbiali using feedforward ANNs:')
     print('=========================================================')
@@ -143,12 +122,6 @@ def main(
     print(f'Average absolute error: {np.average(abs_errors)}')
     print(f'Average relative error: {np.average(rel_errors)}')
     print(f'Median of speedup: {np.median(speedups)}')
-
-    print()
-    print('Results for output approximation:')
-    print(f'Average absolute error: {np.average(outputs_abs_errors)}')
-    print(f'Average relative error: {np.average(outputs_rel_errors)}')
-    print(f'Median of speedup: {np.median(outputs_speedups)}')
 
     print()
     print()
@@ -159,12 +132,6 @@ def main(
     print(f'Average absolute error: {np.average(abs_errors_lstm)}')
     print(f'Average relative error: {np.average(rel_errors_lstm)}')
     print(f'Median of speedup: {np.median(speedups_lstm)}')
-
-    print()
-    print('Results for output approximation:')
-    print(f'Average absolute error: {np.average(outputs_abs_errors_lstm)}')
-    print(f'Average relative error: {np.average(outputs_rel_errors_lstm)}')
-    print(f'Median of speedup: {np.median(outputs_speedups_lstm)}')
 
 
 def create_fom(problem_number, grid_intervals, time_steps):

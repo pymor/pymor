@@ -28,7 +28,7 @@ def main(
     input_scaling: bool = Option(False, help=''),
     output_scaling: bool = Option(False, help=''),
 ):
-    """Model order reduction with neural networks (approach by Hesthaven and Ubbiali)."""
+    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
     if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:

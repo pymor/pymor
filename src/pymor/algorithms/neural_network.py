@@ -469,7 +469,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                         loss = loss_function(outputs, targets)
                         if loss.requires_grad:
                             loss.backward()
-                        return loss
+                        return loss.item()
 
                     # perform optimization step
                     if phase == 'train':
@@ -479,7 +479,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                     loss = closure()
 
                 # update overall absolute loss
-                running_loss += loss.item() * len(batch[0])
+                running_loss += loss * len(batch[0])
 
             # compute average loss
             if len(dataloaders[phase].dataset) > 0:
