@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from packaging.version import parse
 from skfem import Basis, BilinearForm, BoundaryFacetBasis, LinearForm, asm, enforce, projection
-from skfem.helpers import dot, grad
+from skfem.helpers import ddot, div, dot, grad
 from skfem.visuals.matplotlib import plot, show
 
 from pymor.algorithms.preassemble import preassemble as preassemble_
@@ -30,8 +30,15 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None, name=None):
-        self.source = self.range = NumpyVectorSpace(basis.N)
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, eliminate=False, solver=None, name=None):
+        self._free = None
+
+        if eliminate and dirichlet_dofs is not None:
+            self._free = np.setdiff1d(np.arange(basis.N), dirichlet_dofs)
+            self.source = self.range = NumpyVectorSpace(self._free.size)
+        else:
+            self.source = self.range = NumpyVectorSpace(basis.N)
+
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -41,21 +48,81 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
         form = BilinearForm(self.build_form(mu))
         A = asm(form, self.basis)
         if self.dirichlet_dofs is not None:
-            with warnings.catch_warnings():
-                from scipy.sparse import SparseEfficiencyWarning
-                warnings.filterwarnings('ignore', category=SparseEfficiencyWarning)
+            if self.eliminate:
+                A = A[np.ix_(self._free, self._free)]
+            else:
+                with warnings.catch_warnings():
+                    from scipy.sparse import SparseEfficiencyWarning
+                    warnings.filterwarnings('ignore', category=SparseEfficiencyWarning)
 
-                if parse('1.15.0') > parse(config.SCIPY_VERSION) >= parse('1.13.0'):
-                    # see https://github.com/scipy/scipy/issues/21791
-                    A = A.tocoo()
-                    A.setdiag(A.diagonal())
-                    A = A.tocsr()
-                else:
-                    # avoid index errors in enforce
-                    A.setdiag(A.diagonal())
+                    if parse('1.15.0') > parse(config.SCIPY_VERSION) >= parse('1.13.0'):
+                        # see https://github.com/scipy/scipy/issues/21791
+                        A = A.tocoo()
+                        A.setdiag(A.diagonal())
+                        A = A.tocsr()
+                    else:
+                        # avoid index errors in enforce
+                        A.setdiag(A.diagonal())
 
-                enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
+                    enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
         return A
+
+    @property
+    def free(self):
+        """Indices of free (unconstrained) DoFs."""
+        if self._free is not None:
+            return self._free
+        return np.arange(self.basis.N)
+
+
+class SKFemMixedBilinearFormOperator(NumpyMatrixBasedOperator):
+
+    sparse = True
+
+    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None,
+                 dirichlet_test_dofs=None, eliminate_trial=False, eliminate_test=False, solver=None, name=None):
+        self._free_trial = None
+        self._free_test = None
+
+        if eliminate_trial and dirichlet_trial_dofs is not None:
+            self._free_trial = np.setdiff1d(np.arange(trial_basis.N), dirichlet_trial_dofs)
+            self.source = NumpyVectorSpace(self._free_trial.size)
+        else:
+            self.source = NumpyVectorSpace(trial_basis.N)
+
+        if eliminate_test and dirichlet_test_dofs is not None:
+            self._free_test = np.setdiff1d(np.arange(test_basis.N), dirichlet_test_dofs)
+            self.range = NumpyVectorSpace(self._free_test.size)
+        else:
+            self.range = NumpyVectorSpace(test_basis.N)
+
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        pass
+
+    def _assemble(self, mu=None):
+        form = BilinearForm(self.build_form(mu))
+        M = asm(form, self.trial_basis, self.test_basis)
+
+        if self.eliminate_trial or self.eliminate_test:
+            M = M[np.ix_(self._free_test, self._free_trial)]
+
+        return M
+
+    @property
+    def free_trial(self):
+        """Indices of free trial DoFs."""
+        if self._free_trial is not None:
+            return self._free_trial
+        return np.arange(self.trial_basis.N)
+
+    @property
+    def free_test(self):
+        """Indices of free test DoFs."""
+        if self._free_test is not None:
+            return self._free_test
+        return np.arange(self.test_basis.N)
 
 
 class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
@@ -63,24 +130,41 @@ class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, basis, dirichlet_dofs=None, name=None):
-        self.range = NumpyVectorSpace(basis.N)
+    def __init__(self, basis, dirichlet_dofs=None, eliminate=False, name=None):
+        self._free = None
+
+        if eliminate and dirichlet_dofs is not None:
+            free = np.setdiff1d(np.arange(basis.N), dirichlet_dofs)
+            self._free = free
+            self.range = NumpyVectorSpace(free.size)
+        else:
+            self.range = NumpyVectorSpace(basis.N)
         self.__auto_init(locals())
 
     def _assemble(self, mu):
         form = LinearForm(self.build_form(mu))
         F = asm(form, self.basis)
         if self.dirichlet_dofs is not None:
-            F[self.dirichlet_dofs] = 0
+            if self.eliminate:
+                F = F[self._free]
+            else:
+                F[self.dirichlet_dofs] = 0
         return F.reshape((-1, 1))
+
+    @property
+    def free(self):
+        """Indices of free (unconstrained) DoFs."""
+        if self._free is not None:
+            return self._free
+        return np.arange(self.basis.N)
 
 
 class DiffusionOperator(SKFemBilinearFormOperator):
 
     def __init__(self, basis, diffusion_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
-                 name=None):
+                 eliminate=False, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
-                         solver=solver, name=name)
+                         eliminate=eliminate, solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -93,9 +177,9 @@ class DiffusionOperator(SKFemBilinearFormOperator):
 class L2ProductOperator(SKFemBilinearFormOperator):
 
     def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, coefficient_function=None,
-                 solver=None, name=None):
+                 eliminate=False, solver=None, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
-                         solver=solver, name=name)
+                         eliminate=eliminate, solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -110,10 +194,10 @@ class L2ProductOperator(SKFemBilinearFormOperator):
 
 class AdvectionOperator(SKFemBilinearFormOperator):
 
-    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
-                 name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=solver,
-                         name=name)
+    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False,
+                 eliminate=False, solver=None, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         eliminate=eliminate, solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -123,16 +207,58 @@ class AdvectionOperator(SKFemBilinearFormOperator):
         return bf
 
 
+class DivergenceOperator(SKFemMixedBilinearFormOperator):
+
+    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None, dirichlet_test_dofs=None,
+                 eliminate_trial=False, eliminate_test=False, name=None):
+        super().__init__(trial_basis, test_basis, dirichlet_trial_dofs=dirichlet_trial_dofs,
+                         dirichlet_test_dofs=dirichlet_test_dofs,eliminate_trial=eliminate_trial,
+                         eliminate_test=eliminate_test, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return v * div(u)
+        return bf
+
+
+class VectorLaplaceOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, eliminate=False, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         eliminate=eliminate, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return ddot(grad(u), grad(v))
+        return bf
+
+
 class L2Functional(SKFemLinearFormOperator):
 
-    def __init__(self, basis, function, dirichlet_dofs=None, dirichlet_data=None, name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, name=name)
+    def __init__(self, basis, function, dirichlet_dofs=None, eliminate=False, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, eliminate=eliminate, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
         def lf(u, w):
             f = _eval_pymor_function(self.function, w.x, mu)
             return u * f
+        return lf
+
+
+class VectorL2Functional(SKFemLinearFormOperator):
+
+    def __init__(self, basis, function, dirichlet_dofs=None, eliminate=False, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, eliminate=eliminate, name=name)
+        assert function.shape_range[0] > 1
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def lf(u, w):
+            f = _eval_pymor_function(self.function, w.x, mu)
+            return np.sum(f*u, axis=0)
         return lf
 
 
