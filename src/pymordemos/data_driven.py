@@ -16,9 +16,9 @@ from pymor.tools.typer import Choices
 
 
 def main(
-    estimator: Choices('nn vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks using "
-                                                             "PyTorch, pyMOR's VKOGA algorithm or Gaussian process "
-                                                             "regression using scikit-learn."),
+    estimator: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
+                                                                   "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
+                                                                   "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
@@ -29,7 +29,7 @@ def main(
     output_scaling: bool = Option(False, help=''),
 ):
     """Model order reduction with neural networks (approach by Hesthaven and Ubbiali)."""
-    if estimator == 'nn' and not config.HAVE_TORCH:
+    if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
@@ -42,9 +42,12 @@ def main(
     validation_parameters = parameter_space.sample_randomly(validation_samples)
     test_parameters = parameter_space.sample_randomly(10)
 
-    if estimator == 'nn':
+    if estimator == 'fcnn':
         from pymor.algorithms.neural_network import NeuralNetworkEstimator
-        estimator = NeuralNetworkEstimator(ann_mse=1e-5)
+        estimator = NeuralNetworkEstimator(tol=1e-5, neural_network_type='FullyConnectedNN')
+    elif estimator == 'lstm':
+        from pymor.algorithms.neural_network import NeuralNetworkEstimator
+        estimator = NeuralNetworkEstimator(tol=1e-5, neural_network_type='LongShortTermMemoryNN')
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)

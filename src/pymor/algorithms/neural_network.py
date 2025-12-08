@@ -19,15 +19,12 @@ import torch.utils as utils
 from pymor.core.base import BasicObject
 from pymor.core.exceptions import NeuralNetworkTrainingError
 from pymor.core.logger import getLogger
-from pymor.models.neural_network import (
-    FullyConnectedNN,
-)
 from pymor.tools.random import get_rng, get_seed_seq
 
 
 class NeuralNetworkEstimator(BasicObject):
 
-    def __init__(self, validation_ratio=0.1, ann_mse=None,
+    def __init__(self, validation_ratio=0.1, tol=None, neural_network_type='FullyConnectedNN',
                  training_parameters={'hidden_layers': '[(N+P)*3, (N+P)*3]', 'activation_function': torch.tanh,
                                       'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
                                       'loss_function': None, 'restarts': 10, 'lr_scheduler': optim.lr_scheduler.StepLR,
@@ -92,23 +89,33 @@ class NeuralNetworkEstimator(BasicObject):
     def _initialize_neural_network(self, params):
         neural_network_parameters = {'layer_sizes': params['layer_sizes'],
                                      'activation_function': params['activation_function']}
-        neural_network = FullyConnectedNN(**neural_network_parameters).double()
+        if self.neural_network_type == 'FullyConnectedNN':
+            neural_network = FullyConnectedNN(**neural_network_parameters).double()
+        elif self.neural_network_type == 'LongShortTermMemoryNN':
+            assert len(params['layer_sizes']) >= 3
+            number_layers = len(params['layer_sizes']) - 2
+            neural_network = LongShortTermMemoryNN(input_dimension=params['layer_sizes'][0],
+                                                   hidden_dimension=params['layer_sizes'][1],
+                                                   output_dimension=params['layer_sizes'][-1],
+                                                   number_layers=number_layers).double()
+        else:
+            raise NotImplementedError(f'Unknown neural network type {self.neural_network_type}!')
         return neural_network
 
     def _compute_target_loss(self):
         target_loss = None
-        if isinstance(self.ann_mse, Number):
-            target_loss = self.ann_mse
+        if isinstance(self.tol, Number):
+            target_loss = self.tol
         return target_loss
 
     def _check_tolerances(self):
         with self.logger.block('Checking tolerances for error of neural network ...'):
 
-            if isinstance(self.ann_mse, Number):
-                if self.losses['full'] > self.ann_mse:
+            if isinstance(self.tol, Number):
+                if self.losses['full'] > self.tol:
                     raise NeuralNetworkTrainingError('Could not train a neural network that '
                                                       'guarantees prescribed tolerance!')
-            elif self.ann_mse is None:
+            elif self.tol is None:
                 self.logger.info('Using neural network with smallest validation error ...')
                 self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
             else:
@@ -118,8 +125,111 @@ class NeuralNetworkEstimator(BasicObject):
         return self.neural_network(torch.DoubleTensor(X)).detach().numpy()
 
 
-class LSTMEstimator(NeuralNetworkEstimator):
-    pass
+class FullyConnectedNN(nn.Module, BasicObject):
+    """Class for neural networks with fully connected layers.
+
+    This class implements neural networks consisting of linear and fully connected layers.
+    Furthermore, the same activation function is used between each layer, except for the
+    last one where no activation function is applied.
+
+    Parameters
+    ----------
+    layer_sizes
+        List of sizes (i.e. number of neurons) for the layers of the neural network.
+    activation_function
+        Function to use as activation function between the single layers.
+    """
+
+    def __init__(self, layer_sizes, activation_function=torch.tanh):
+        super().__init__()
+
+        if layer_sizes is None or not len(layer_sizes) > 1 or not all(size >= 1 for size in layer_sizes):
+            raise ValueError
+
+        self.input_dimension = layer_sizes[0]
+        self.output_dimension = layer_sizes[-1]
+
+        self.layers = nn.ModuleList()
+        self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1]))
+                            for i in range(len(layer_sizes) - 1)])
+
+        self.activation_function = activation_function
+
+        if not self.logging_disabled:
+            self.logger.info(f'Architecture of the neural network:\n{self}')
+
+    def forward(self, x):
+        """Performs the forward pass through the neural network.
+
+        Applies the weights in the linear layers and passes the outcomes to the
+        activation function.
+
+        Parameters
+        ----------
+        x
+            Input for the neural network.
+
+        Returns
+        -------
+        The output of the neural network for the input x.
+        """
+        for i in range(len(self.layers) - 1):
+            x = self.activation_function(self.layers[i](x))
+        return self.layers[len(self.layers)-1](x)
+
+
+class LongShortTermMemoryNN(nn.Module, BasicObject):
+    """Class for Long Short-Term Memory neural networks (LSTMs).
+
+    This class implements neural networks for time series of input data of arbitrary length.
+    The same LSTMCell is applied in each timestep and the hidden state of the former LSTMCell
+    is used as input hidden state for the next cell.
+
+    Parameters
+    ----------
+    input_dimension
+        Dimension of the input (at a fixed time instance) of the LSTM.
+    hidden_dimension
+        Dimension of the hidden state of the LSTM.
+    output_dimension
+        Dimension of the output of the LSTM (must be smaller than `hidden_dimension`).
+    number_layers
+        Number of layers in the LSTM (if greater than 1, a stacked LSTM is used).
+    """
+
+    def __init__(self, input_dimension, hidden_dimension=10, output_dimension=1, number_layers=1):
+        assert input_dimension > 0
+        assert hidden_dimension > 0
+        assert output_dimension > 0
+        assert hidden_dimension > output_dimension
+        assert number_layers > 0
+
+        super().__init__()
+        self.__auto_init(locals())
+
+        self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
+                            proj_size=output_dimension, batch_first=True).double()
+
+        self.logger.info(f'Architecture of the neural network:\n{self}')
+
+    def forward(self, x):
+        """Performs the forward pass through the neural network.
+
+        Initializes the hidden and cell states and applies the weights of the LSTM layers
+        followed by the output layer that maps from the hidden state to the output state.
+
+        Parameters
+        ----------
+        x
+            Input for the neural network.
+
+        Returns
+        -------
+        The output of the neural network for the input x.
+        """
+        # perform forward pass through LSTM and return the result
+        output, _ = self.lstm(x)
+        return output
 
 
 class EarlyStoppingScheduler(BasicObject):
