@@ -83,6 +83,14 @@ class QtMissingError(DependencyMissingError):
         super().__init__('QT', msg)
 
 
+class SklearnMissingError(DependencyMissingError):
+    """Raise me where having importable scikit-learn version is non-optional."""
+
+    def __init__(self, msg=None):
+        msg = msg or 'cannot use scikit-learn: import of sklearn failed'
+        super().__init__('SKLEARN', msg)
+
+
 class TorchMissingError(DependencyMissingError):
     """Raise me where having importable torch version is non-optional."""
 

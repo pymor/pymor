@@ -29,9 +29,9 @@ class DataDrivenModel(Model):
         if 'solution' in quantities:
             # obtain (reduced) coordinates by passing the parameter values
             # to the estimator
-            transformed_mu = mu.to_numpy()
+            transformed_mu = np.atleast_2d(mu.to_numpy())
             if self.input_scaler:
-                transformed_mu = self.input_scaler.transform(mu)
+                transformed_mu = self.input_scaler.transform(transformed_mu)
             U = self.estimator.predict(transformed_mu)
             # convert plain numpy array to element of the actual solution space
             if self.output_scaler:
@@ -45,7 +45,7 @@ class DataDrivenModel(Model):
 
 class DataDrivenInstationaryModel(Model):
 
-    def __init__(self, T, nt, estimator, dim_output, parameters={},
+    def __init__(self, T, nt, estimator, dim_output, time_vectorized=False, parameters={},
                  output_functional=None, products=None, error_estimator=None,
                  input_scaler=None, output_scaler=None,
                  visualizer=None, name=None):
@@ -62,11 +62,16 @@ class DataDrivenInstationaryModel(Model):
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             # collect all inputs in a single tensor
-            if self.input_scaler:
-                inputs = np.array([self.input_scaler.transform(mu.at_time(t).to_numpy())
-                                   for t in np.linspace(0., self.T, self.nt)])
+            if self.time_vectorized:
+                inputs = mu.to_numpy()
+                if self.input_scaler:
+                    inputs = self.input_scaler.transform(mu)
             else:
-                inputs = np.array([mu.at_time(t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+                if self.input_scaler:
+                    inputs = np.array([self.input_scaler.transform(mu.at_time(t).to_numpy())
+                                       for t in np.linspace(0., self.T, self.nt)])
+                else:
+                    inputs = np.array([mu.at_time(t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
             # pass batch of inputs to estimator
             U = self.estimator.predict(inputs)
             if self.output_scaler:

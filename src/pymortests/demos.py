@@ -61,6 +61,13 @@ SUCCESSIVE_CONSTRAINTS_ARGS = (
     ('coercivity_estimation_scm', []),
 )
 
+DATA_DRIVEN_ARGS = (
+    ('data_driven', ['nn', 15, 20, 3]),
+    ('data_driven', ['vkoga', 15, 20, 3]),
+    ('data_driven', ['gpr', 15, 20, 3]),
+    ('data_driven', ['vkoga', 15, 20, 3, '--input-scaling', '--output-scaling']),
+)
+
 NEURAL_NETWORK_ARGS = (
     ('neural_networks', [15, 20, 3]),
     ('neural_networks_fenics', [15, 3]),

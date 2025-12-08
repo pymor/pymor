@@ -9,18 +9,31 @@ from typer import Argument, Option, run
 
 from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.basic import *
+from pymor.core.config import config
+from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.tools.typer import Choices
 
 
 def main(
+    estimator: Choices('nn vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks using "
+                                                             "PyTorch, pyMOR's VKOGA algorithm or Gaussian process "
+                                                             "regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
+    input_scaling: bool = Option(False, help=''),
+    output_scaling: bool = Option(False, help=''),
 ):
     """Model order reduction with neural networks (approach by Hesthaven and Ubbiali)."""
+    if estimator == 'nn' and not config.HAVE_TORCH:
+        raise TorchMissingError
+    elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
+        raise SklearnMissingError
+
     fom = create_fom(fv, grid_intervals)
 
     parameter_space = fom.parameters.space((0.1, 1))
@@ -29,8 +42,26 @@ def main(
     validation_parameters = parameter_space.sample_randomly(validation_samples)
     test_parameters = parameter_space.sample_randomly(10)
 
-    kernel = GaussianKernel(length_scale=1.0)
-    estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+    if estimator == 'nn':
+        from pymor.algorithms.neural_network import NeuralNetworkEstimator
+        estimator = NeuralNetworkEstimator(ann_mse=1e-5)
+    elif estimator == 'vkoga':
+        kernel = GaussianKernel(length_scale=1.0)
+        estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+    elif estimator == 'gpr':
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        estimator = GaussianProcessRegressor()
+
+    if input_scaling or output_scaling:
+        from sklearn.preprocessing import MinMaxScaler
+    if input_scaling:
+        input_scaler = MinMaxScaler()
+    else:
+        input_scaler = None
+    if output_scaling:
+        output_scaler = MinMaxScaler()
+    else:
+        output_scaler = None
 
     training_outputs = []
     training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
@@ -48,12 +79,11 @@ def main(
         validation_outputs.append(res['output'].flatten())
     validation_outputs = np.array(validation_outputs).T
 
-    reductor_data_driven = DataDrivenReductor(estimator=estimator,
-                                              training_parameters=training_parameters,
-                                                 training_snapshots=training_snapshots,
-                                                 validation_parameters=validation_parameters,
-                                                 validation_snapshots=validation_snapshots,
-                                                 l2_err=1e-5)
+    reductor_data_driven = DataDrivenReductor(estimator=estimator, training_parameters=training_parameters,
+                                              training_snapshots=training_snapshots,
+                                              validation_parameters=validation_parameters,
+                                              validation_snapshots=validation_snapshots,
+                                              l2_err=1e-5, input_scaler=input_scaler, output_scaler=output_scaler)
     rom_data_driven = reductor_data_driven.reduce()
 
     speedups_data_driven = []

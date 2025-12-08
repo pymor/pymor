@@ -103,13 +103,13 @@ class DataDrivenReductor(BasicObject):
             if self.input_scaler:
                 X = [x[0] for x in self.training_data]
                 self.input_scaler.fit(X)
-                X = [self.input_scaler.transform(x[0]) for x in self.training_data]
+                X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
             else:
                 X = [x[0] for x in self.training_data]
             if self.output_scaler:
                 Y = [x[1] for x in self.training_data]
                 self.output_scaler.fit(Y)
-                Y = [self.output_scaler(x[1]) for x in self.training_data]
+                Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
             else:
                 Y = [x[1] for x in self.training_data]
             # fit estimator to training data
