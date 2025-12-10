@@ -169,16 +169,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         .. math::
             \begin{align*}
-                \Xi(x) = \frac{k(x, \mu) - V_{n}(x) V_n(\mu)^\top}{P_n(\mu)}.
-            \end{align*}
-
-        and using :math:`\Xi` to update the Newton basis
-
-        .. math::
-            \begin{align*}
-                V_{n+1} = \begin{bmatrix}
-                    V_n & \Xi
-                \end{bmatrix}.
+                V_{n+1} = \frac{k(x, \mu) - \sum_{j=1}^n V_j(x) V_j(\mu)}{P_n(\mu)}.
             \end{align*}
 
         Regarding the power function (measuring for  :math:`x\in\mathbb{R}^d` how well the current
@@ -194,14 +185,14 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         .. math::
             \begin{align*}
-                P_n^2(x) = P_{n-1}^2(x) - \lVert V_n(x)\rVert_F^2.
+                P_n^2(x) = P_{n-1}^2(x) - V_n(x)^2
             \end{align*}
 
         We are going to track this quantity evaluated at all training points during the
         iterations of the greedy algorithm.
 
         It remains the computation of the inverse of the Cholesky factor :math:`C_n`:
-        The initial inverse Cholesky factor is initialiazed as
+        The initial inverse Cholesky factor is given as
 
         .. math::
             \begin{align*}
@@ -213,8 +204,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
         .. math::
             C_{n+1} = \begin{bmatrix}
                 C_n & 0 \\
-                -\frac{1}{V_{n+1}(\mu)} V_{n+1}(X_n) C_n & \frac{1}{V_{n+1}(\mu)}
-            \end{bmatrix}.
+                -\frac{1}{V_{n+1}(\mu)} V_{:n+1}(\mu) C_n & \frac{1}{V_{n+1}(\mu)},
+            \end{bmatrix}
+
+        where by abuse of notation we denote with :math:`V_{:n+1}(\mu)` the vector
+        :math:`[V_{1}(\mu), \dots, V_{n}(\mu)]`.
 
         Parameters
         ----------
