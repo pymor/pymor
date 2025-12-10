@@ -90,22 +90,23 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def extend(self, mu):
         r"""Extends the kernel interpolant by adding a new center and updating all quantities.
 
-        Incrementally add a new center :math`\mu` with corresponding function value
+        Incrementally add a new center :math:`\mu` with corresponding function value
         from the training data. This function updates
 
         * the selected centers (`self._centers`)
         * the indices of the selected centers in the training set (`self._centers_idx`)
         * the coefficients of the interpolant (`self._coefficients`)
-        * the power function evaluations on the training set (`self._power2`)
+        * the (squared) power function evaluations on the training set (`self._power2`)
         * the Newton basis evaluations on the training set (`self._V`)
         * the residual :math:`f - s_f` (`self.res`)
-        * the inverse of the Cholesky factor of the kernel matrix (`self._C`).
+        * the inverse of the Cholesky factor of the kernel matrix (`self._C`)
+        * the coefficients in the Newton basis (`self._z`).
 
         In the following derivation we leave out the regularization term for simplicity.
         Let :math:`K_n` denotes the full kernel matrix for :math:`X_n`. Since :math:`K_n`
         is a kernel matrix, it is in particular positive-definite, so it has a Cholesky
-        decomposition, i.e. :math:`K_n=L_nL_n^\top`. The inverse :math:`C_n := L_{n}^{-1}`
-        of the Choleksy decomposition will be used to efficiently compute and update the
+        decomposition, i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Choleksy decomposition
+        :math:`C_n := L_{n}^{-1}` will be used to efficiently compute and update the
         coefficients  of the kernel interpolant. The formula for the computation and update of
         :math:`C_n` is found below.
 
@@ -120,7 +121,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         selected centers. The kernel interpolant is then given as
 
         .. math::
-            \sum\limits_{i=1}^{n} (c_n)_i k(\,\cdot\,,x_i),
+            s_f^n(x) := \sum\limits_{i=1}^{n} (c_n)_i k(x, x_i),
 
         where :math:`x_1,\dots,x_n\in\mathbb{R}^d` are the :math:`n` selected centers.
         When adding :math:`\mu` as new center, the new coefficient
@@ -133,19 +134,21 @@ class VKOGASurrogate(WeakGreedySurrogate):
             \end{bmatrix}
 
         for unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
-        residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n
+        residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n`
         (the definitions of these quantities are given below):
 
         .. math::
             \begin{align*}
-               z_{n+1} = {\frac{r_n(\mu)}{P_n(\mu)}
+               z_{n+1} = \frac{r_n(\mu)}{P_n(\mu)}
             \end{align*}
 
-        where the residual :math:`r_n` is given by
+        The residual :math:`r_n` is defined as the difference between the target function
+        :math:`f` and the current kernel interpolant :math:`s_f^n` and can be updated via
+        the following recursion:
 
         .. math::
             \begin{align*}
-                r_n(x) := r_{n-1}(x) - z_n V_n(x).
+                r_n(x) := r_{n-1}(x) - z_n V_n(x),
             \end{align*}
 
         with initial residual :math:`r_0 := f`. Here :math:`V_n` denotes the Newton basis for
@@ -166,10 +169,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         .. math::
             \begin{align*}
-                \Xi(x) = \frac{k(x, x_{n+1}) - V_{n}(x) V_n(\mu)}{P_n(\mu)}.
+                \Xi(x) = \frac{k(x, \mu) - V_{n}(x) V_n(\mu)^\top}{P_n(\mu)}.
             \end{align*}
 
-         using :math:`\Xi` to update the Newton basis
+        and using :math:`\Xi` to update the Newton basis
 
         .. math::
             \begin{align*}
@@ -191,7 +194,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         .. math::
             \begin{align*}
-                P_n^2(x) = P_{n-1}^2(x) - \lVert V_n(x)\rVert_F^2,
+                P_n^2(x) = P_{n-1}^2(x) - \lVert V_n(x)\rVert_F^2.
             \end{align*}
 
         We are going to track this quantity evaluated at all training points during the
@@ -208,12 +211,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         and updated via
 
         .. math::
-            \begin{align*}
-                C_{n+1} = \begin{bmatrix}
-                    C_n & 0 \\
-                    -{\frac{1}{V_{n+1}(\mu)} V_{n+1}(X_n) C_n} & {\frac{1}{V_{n+1}(\mu)}}
-                \end{bmatrix}.
-            \end{align*}
+            C_{n+1} = \begin{bmatrix}
+                C_n & 0 \\
+                -\frac{1}{V_{n+1}(\mu)} V_{n+1}(X_n) C_n & \frac{1}{V_{n+1}(\mu)}
+            \end{bmatrix}.
 
         Parameters
         ----------

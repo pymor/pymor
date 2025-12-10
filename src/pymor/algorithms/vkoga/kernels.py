@@ -9,7 +9,9 @@ class GaussianKernel:
     r"""Standalone Gaussian (RBF) kernel with scikit-learn-like interface.
 
     .. math::
-        k(x, y) = \exp(-||x - y||_2^2 / (2 \cdot \text{length_scale}^2))
+        k(x, y) = \exp(-||x - y||_2^2 / (2 l^2))
+
+    where :math:`l` is the length scale parameter.
 
     Parameters
     ----------
