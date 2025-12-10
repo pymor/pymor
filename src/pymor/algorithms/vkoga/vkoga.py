@@ -90,63 +90,40 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def extend(self, mu):
         r"""Extends the kernel interpolant by adding a new center and updating all quantities.
 
-        Incrementally add a new center `mu` with corresponding function value
+        Incrementally add a new center :math`\mu` with corresponding function value
         from the training data. This function updates
 
         * the selected centers (`self._centers`)
         * the indices of the selected centers in the training set (`self._centers_idx`)
-        * the block-Cholesky factor of the kernel matrix for the selected centers (`self._L`)
         * the coefficients of the interpolant (`self._coefficients`)
         * the power function evaluations on the training set (`self._power2`)
         * the Newton basis evaluations on the training set (`self._V`)
         * the residual :math:`f - s_f` (`self.res`)
-        * the inverse of the Cholesky matrix (`self._C`)
-
-        using a numerically stable Newton basis expansion.
+        * the inverse of the Cholesky factor of the kernel matrix (`self._C`).
 
         In the following derivation we leave out the regularization term for simplicity.
-        If :math:`K_n` denotes the full block kernel for :math:`X_n`, we can write :math:`K_{n+1}`
-        as
-
-        .. math::
-            K_{n+1} = \begin{bmatrix}
-                K_n & B \\
-                B^\top & k_{n+1,n+1}
-            \end{bmatrix},
-
-        where :math:`B=k(X_n,x_{n+1})` and :math:`k_{n+1,n+1}=k(x_{n+1},x_{n+1})`. Since :math:`K_n`
+        Let :math:`K_n` denotes the full kernel matrix for :math:`X_n`. Since :math:`K_n`
         is a kernel matrix, it is in particular positive-definite, so it has a Cholesky
-        decomposition, i.e. :math:`K_n=L_nL_n^\top`. For :math:`K_{n+1}`, we can compute the
-        Cholesky decomposition by a suitable update of :math:`L_n`:
+        decomposition, i.e. :math:`K_n=L_nL_n^\top`. The inverse :math:`C_n := L_{n}^{-1}`
+        of the Choleksy decomposition will be used to efficiently compute and update the
+        coefficients  of the kernel interpolant. The formula for the computation and update of
+        :math:`C_n` is found below.
 
-        .. math::
-            L_{n+1} = \begin{bmatrix}
-                L_n & 0 \\
-                W^\top & l_{n+1, n+1}
-            \end{bmatrix},
-
-        where :math:`W=L_n^{-1}B` and :math:`l_{n+1, n+1}` is the Cholesky decomposition
-        of :math:`k_{n+1,n+1}-W^\top W`.
-
-        It is further possible to update the coefficient vector in a suitable way by reusing
-        the old coefficients and without solving the whole system again. To do so, the inverse of
-        the Cholesky factor :math:`L_{n}^{-1} =: C_{n}` is required.  We remark that :math:`C_n`
-        can also be updated incrementally in a similar fashion as the Cholesky factor.
-
-        Let :math:`c_n\in\mathbb{R}^n` denote the coefficients associated to the interpolant
-        for the first :math:`n` selected centers, i.e.
+        Updating the coefficients of the kernel interpolant: Let :math:`c_n\in\mathbb{R}^n` denote
+        the coefficients associated to the kernel interpolant the first :math:`n` selected centers
+        (:math:`X_n`), i.e.
 
         .. math::
             K_n c_n = f_n,
 
         where :math:`f_n\in\mathbb{R}^n` corresponds to the vector of target values at the
-        selected centers. The interpolant is then given as
+        selected centers. The kernel interpolant is then given as
 
         .. math::
             \sum\limits_{i=1}^{n} (c_n)_i k(\,\cdot\,,x_i),
 
         where :math:`x_1,\dots,x_n\in\mathbb{R}^d` are the :math:`n` selected centers.
-        When adding :math:`x_{n+1}\in\mathbb{R}^d` as new center, the new coefficient
+        When adding :math:`\mu` as new center, the new coefficient
         vector :math:`c_{n+1}\in \mathbb{R}^{n+1}` is given as
 
         .. math::
@@ -156,11 +133,12 @@ class VKOGASurrogate(WeakGreedySurrogate):
             \end{bmatrix}
 
         for unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
-        residual :math:`r_n` and a scalar version of the power function :math:`p_n`:
+        residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n
+        (the definitions of these quantities are given below):
 
         .. math::
             \begin{align*}
-               z_{n+1} = {\frac{r_n(x_{n+1})}{p_n(x_{n+1})}
+               z_{n+1} = {\frac{r_n(\mu)}{P_n(\mu)}
             \end{align*}
 
         where the residual :math:`r_n` is given by
@@ -170,62 +148,70 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 r_n(x) := r_{n-1}(x) - z_n V_n(x).
             \end{align*}
 
-        with initial residual :math:`r_0 := f`. Here :math:`V_n` denotes the Newton basis,
-        which we define below.  Regarding the power function (measuring for :math:`x\in\mathbb{R}^d`
-        how well the current subspace can represent :math:`k(\,\cdot\,,x)`, i.e. the projection
-        error in the reproducing kernel Hilbert space):
-        The power function :math:`P_n` (for the centers :math:`X_n`) in matrix form is
-        defined as
+        with initial residual :math:`r_0 := f`. Here :math:`V_n` denotes the Newton basis for
 
         .. math::
             \begin{align*}
-                P_n^2(x) = k(x,x) - k(x,X_n)k(X_n,X_n)^{-1}k(X_n,x).
+                V(X_n) := \mathrm{span}\{k(\,\cdot\,,x_1), \dots, k(\,\cdot\,,x_n)\}.
             \end{align*}
 
-        Since we use the power function to compute the coefficients of the kernel interpolant and
-        want to use it as selection criterion for centers within the greedy iteration,
-        we consider a scalar version by taking the trace:
+        The first Newton basis is given as
 
         .. math::
             \begin{align*}
-                p_n^2(x) = \operatorname{trace}(P_n^2(x)).
+                V_{1}(x)= \frac{k(x, x_1)}{\sqrt{k(x_1, x_1)}}.
+            \end{align*}
+
+        The subsequent Newton basis functions are computed via
+
+        .. math::
+            \begin{align*}
+                \Xi(x) = \frac{k(x, x_{n+1}) - V_{n}(x) V_n(\mu)}{P_n(\mu)}.
+            \end{align*}
+
+         using :math:`\Xi` to update the Newton basis
+
+        .. math::
+            \begin{align*}
+                V_{n+1} = \begin{bmatrix}
+                    V_n & \Xi
+                \end{bmatrix}.
+            \end{align*}
+
+        Regarding the power function (measuring for  :math:`x\in\mathbb{R}^d` how well the current
+        subspace can represent  :math:`k(\,\cdot\,,x)`, i.e. the projection error in the
+        reproducing kernel  Hilbert space): The initial squared power function is given as
+
+        .. math::
+            \begin{align*}
+                P_0^2(x) = k(x, x)
+            \end{align*}
+
+        and the incremental update of the squared power function :math:`P_n^2` is given as
+
+        .. math::
+            \begin{align*}
+                P_n^2(x) = P_{n-1}^2(x) - \lVert V_n(x)\rVert_F^2,
             \end{align*}
 
         We are going to track this quantity evaluated at all training points during the
-        iterations of the greedy algorithm. In order to do so, we also maintain an array
-        storing the Newton basis evaluations of the current basis at the training points:
+        iterations of the greedy algorithm.
+
+        It remains the computation of the inverse of the Cholesky factor :math:`C_n`:
+        The initial inverse Cholesky factor is initialiazed as
 
         .. math::
             \begin{align*}
-                V_{n,i} = C_n k(X_n,y_i)
+                C_1 = \frac{1}{V_1(\mu)}
             \end{align*}
 
-        for all training points :math:`y_i`.
-
-        Given the first center :math:`x_1`, we initialize the (squared) power function
-        values as
+        and updated via
 
         .. math::
             \begin{align*}
-                p_n^2(y_i) = \operatorname{trace}(k(y_i,y_i)-V_{1,i}^\top V_{1,i}).
-            \end{align*}
-
-        The incremental updates of :math:`V_{n,i}` to :math:`V_{n+1,i}` and the power
-        function values is then performed in the following way: Compute the latest
-        Newton basis via :math:`\Xi_i = C_{n+1}[-m:, :] \cdot k(X_{n+1}, y_i)`
-
-        .. math::
-            \begin{align*}
-                p_{n+1}^2(y_i) = p_n^2(y_i) - \lVert \Xi_i\rVert_F^2
-            \end{align*}
-
-        and update the Newton basis:
-
-        .. math::
-            \begin{align*}
-                V_{n+1,i} = \begin{bmatrix}
-                    V_{n,i} \\
-                    \Xi_i
+                C_{n+1} = \begin{bmatrix}
+                    C_n & 0 \\
+                    -{\frac{1}{V_{n+1}(\mu)} V_{n+1}(X_n) C_n} & {\frac{1}{V_{n+1}(\mu)}}
                 \end{bmatrix}.
             \end{align*}
 
