@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2025.2
+
+* Sven Ullmann, @ullmannsven
+  * efficiency improvements for the Vectorial Kernel Orthogonal Greedy Algorithm (VKOGA)
+
 ### pyMOR 2025.1
 
 * Timo Plath, @TiPlath
