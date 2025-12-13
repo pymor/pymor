@@ -12,32 +12,48 @@ from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.tools import mpi
 from pymor.tools.typer import Choices
 
 
 def main(
+    problem_number: int = Argument(..., min=0, max=1, help='Selects the problem to solve [0 or 1].'),
     estimator: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
                                                                    "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
                                                                    "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
+    time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
     validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
+    time_vectorized: bool = Option(False, help='Predict the whole time trajectory at once or iteratively.'),
     input_scaling: bool = Option(False, help='Scale the input of the estimator (i.e. the parameter).'),
     output_scaling: bool = Option(False, help='Scale the output of the estimator (i.e. reduced coefficients or output '
                                               'quantity.'),
 ):
-    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
+    """Model order reduction with machine learning methods for instationary problems.
+
+    Problem number 0 considers the incompressible Navier-Stokes equations in
+    a two-dimensional cavity with the Reynolds number as parameter.
+    The discretization is based on FEniCS.
+
+    Problem number 1 considers a parametrized Burgers equation on a
+    one-dimensional domain. The discretization is based on pyMOR's built-in
+    functionality.
+    """
     if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
-    fom = create_fom(fv, grid_intervals)
+    fom, plot_function = create_fom(problem_number, grid_intervals, time_steps)
 
-    parameter_space = fom.parameters.space((0.1, 1))
+    if problem_number == 0:
+        parameter_space = fom.parameters.space(1., 50.)
+    else:
+        parameter_space = fom.parameters.space(1., 2.)
 
     training_parameters = parameter_space.sample_uniformly(training_samples)
     test_parameters = parameter_space.sample_randomly(10)
@@ -79,20 +95,21 @@ def main(
     for mu in training_parameters:
         res = fom.compute(solution=True, output=True, mu=mu)
         training_snapshots.append(res['solution'])
-        training_outputs.append(res['output'][:, 0])
+        training_outputs.extend(o for o in res['output'].T)
     training_outputs = np.array(training_outputs)
 
     reductor_data_driven = DataDrivenReductor(estimator=estimator_solution, target_quantity='solution',
                                               training_parameters=training_parameters,
                                               training_snapshots=training_snapshots,
-                                              l2_err=1e-5, input_scaler=input_scaler, output_scaler=output_scaler)
+                                              l2_err=1e-5, T=fom.T, time_vectorized=time_vectorized,
+                                              input_scaler=input_scaler, output_scaler=output_scaler)
     rom_data_driven = reductor_data_driven.reduce()
 
     output_reductor_data_driven = DataDrivenReductor(estimator=estimator_output, target_quantity='output',
                                                      training_parameters=training_parameters,
-                                                     training_snapshots=training_outputs,
-                                                     l2_err=1e-5, input_scaler=input_scaler,
-                                                     output_scaler=output_scaler)
+                                                     training_snapshots=training_outputs, l2_err=1e-5,
+                                                     T=fom.T, time_vectorized=time_vectorized,
+                                                     input_scaler=input_scaler, output_scaler=output_scaler)
     output_rom_data_driven = output_reductor_data_driven.reduce()
 
 
@@ -152,30 +169,151 @@ def main(
     print(f'Average relative error: {np.average(outputs_relative_errors)}')
     print(f'Median of speedup: {np.median(outputs_speedups)}')
 
-def create_fom(fv, grid_intervals):
-    f = LincombFunction(
-        [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.1])
-    g = LincombFunction(
-        [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.5])
 
-    problem = StationaryProblem(
-        domain=RectDomain(),
-        rhs=f,
-        diffusion=LincombFunction(
-            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-            [ProjectionParameterFunctional('mu'), 1]),
-        dirichlet_data=g,
-        outputs=[('l2', f), ('l2_boundary', g)],
-        name='2DProblem'
-    )
-
+def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
-    fom, _ = discretizer(problem, diameter=1. / int(grid_intervals))
+    if problem_number == 0:
+        config.require('FENICS')
+        fom, plot_function = discretize_navier_stokes(grid_intervals, time_steps)
+    elif problem_number == 1:
+        problem = burgers_problem()
+        f = LincombFunction(
+            [ExpressionFunction('1.', 1), ConstantFunction(1., 1)],
+            [ProjectionParameterFunctional('exponent'), 0.1])
+        problem = problem.with_stationary_part(outputs=[('l2', f), ('l2', ConstantFunction(1., 1))],)
 
-    return fom
+        fom, _ = discretize_instationary_fv(problem, diameter=1. / grid_intervals, nt=time_steps)
+        plot_function = fom.visualize
+    else:
+        raise ValueError(f'Unknown problem number {problem_number}')
+
+    return fom, plot_function
+
+
+def discretize_navier_stokes(n, nt):
+    if mpi.parallel:
+        from pymor.models.mpi import mpi_wrap_model
+        fom = mpi_wrap_model(lambda: _discretize_navier_stokes(n, nt),
+                             use_with=True, pickle_local_spaces=False)
+        plot_function = None
+    else:
+        fom, plot_function = _discretize_navier_stokes(n, nt)
+    return fom, plot_function
+
+
+def _discretize_navier_stokes(n, nt):
+    import dolfin as df
+    import matplotlib.pyplot as plt
+
+    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace, FenicsVisualizer
+
+    # create square mesh
+    mesh = df.UnitSquareMesh(n, n)
+
+    # create Finite Elements for the pressure and the velocity
+    P = df.FiniteElement('P', mesh.ufl_cell(), 1)
+    V = df.VectorElement('P', mesh.ufl_cell(), 2, dim=2)
+    # create mixed element and function space
+    TH = df.MixedElement([P, V])
+    W = df.FunctionSpace(mesh, TH)
+
+    # extract components of mixed space
+    W_p = W.sub(0)
+    W_u = W.sub(1)
+
+    # define trial and test functions for mass matrix
+    u = df.TrialFunction(W_u)
+    psi_u = df.TestFunction(W_u)
+
+    # assemble mass matrix for velocity
+    mass_mat = df.assemble(df.inner(u, psi_u) * df.dx)
+
+    # define trial and test functions
+    psi_p, psi_u = df.TestFunctions(W)
+    w = df.Function(W)
+    p, u = df.split(w)
+
+    # set Reynolds number, which will serve as parameter
+    Re = df.Constant(1.)
+
+    # define walls
+    top_wall = 'near(x[1], 1.)'
+    walls = 'near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)'
+
+    # define no slip boundary conditions on all but the top wall
+    bcu_noslip_const = df.Constant((0., 0.))
+    bcu_noslip  = df.DirichletBC(W_u, bcu_noslip_const, walls)
+    # define Dirichlet boundary condition for the velocity on the top wall
+    bcu_lid_const = df.Constant((1., 0.))
+    bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
+
+    # fix pressure at a single point of the domain to obtain unique solutions
+    pressure_point = 'near(x[0],  0.) & (x[1] <= ' + str(2./n) + ')'
+    bcp_const = df.Constant(0.)
+    bcp = df.DirichletBC(W_p, bcp_const, pressure_point)
+
+    # collect boundary conditions
+    bc = [bcu_noslip, bcu_lid, bcp]
+
+    mass = -psi_p * df.div(u)
+    momentum = (df.dot(psi_u, df.dot(df.grad(u), u))
+                - df.div(psi_u) * p
+                + 2.*(1./Re) * df.inner(df.sym(df.grad(psi_u)), df.sym(df.grad(u))))
+    F = (mass + momentum) * df.dx
+
+    df.solve(F == 0, w, bc)
+
+    # define pyMOR operators
+    space = FenicsVectorSpace(W)
+    mass_op = FenicsMatrixOperator(mass_mat, W, W, name='mass')
+    op = FenicsOperator(F, space, space, w, bc,
+                        parameter_setter=lambda mu: Re.assign(mu['Re'].item()),
+                        parameters={'Re': 1})
+
+    # timestep size for the implicit Euler timestepper
+    dt = 0.01
+    ie_stepper = ImplicitEulerTimeStepper(nt=nt)
+
+    # define initial condition and right hand side as zero
+    fom_init = VectorOperator(op.range.zeros())
+    rhs = VectorOperator(op.range.zeros())
+    # define output functional
+    output_func = VectorFunctional(op.range.ones())
+
+    # construct instationary model
+    fom = InstationaryModel(dt * nt,
+                            fom_init,
+                            op,
+                            rhs,
+                            mass=mass_op,
+                            time_stepper=ie_stepper,
+                            output_functional=output_func,
+                            visualizer=FenicsVisualizer(space))
+
+    def plot_fenics(w, title=''):
+        v = df.Function(W)
+        v.leaf_node().vector()[:] = (w.to_numpy()[:, -1]).squeeze()
+        p, u  = v.split()
+
+        fig_u = df.plot(u)
+        plt.title('Velocity vector field ' + title)
+        plt.xlabel('$x$')
+        plt.ylabel('$y$')
+        plt.colorbar(fig_u)
+        plt.show()
+
+        fig_p = df.plot(p)
+        plt.title('Pressure field ' + title)
+        plt.xlabel('$x$')
+        plt.ylabel('$y$')
+        plt.colorbar(fig_p)
+        plt.show()
+
+    if mpi.parallel:
+        return fom
+    else:
+        return fom, plot_fenics
 
 
 if __name__ == '__main__':

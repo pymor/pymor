@@ -34,12 +34,12 @@ class DataDrivenModel(Model):
         U = self.estimator.predict(transformed_mu)
         if self.output_scaler is not None:
             U = self.output_scaler.inverse_transform(U)
-        return U
+        return U.T
 
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             assert self.target_quantity == 'solution'
-            U = self.solution_space.make_array(self._perform_prediction(mu).T)
+            U = self.solution_space.make_array(self._perform_prediction(mu))
             data['solution'] = U
             quantities.remove('solution')
 
@@ -83,12 +83,14 @@ class DataDrivenInstationaryModel(Model):
         U = self.estimator.predict(inputs)
         if self.output_scaler is not None:
             U = self.output_scaler.inverse_transform(U)
-        return U
+        if self.time_vectorized:
+            U = U.reshape((self.nt, -1))
+        return U.T
 
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             assert self.target_quantity == 'solution'
-            data['solution'] = self.solution_space.make_array(self._perform_prediction(mu).T)
+            data['solution'] = self.solution_space.make_array(self._perform_prediction(mu))
             quantities.remove('solution')
 
         if 'output' in quantities and self.target_quantity == 'output':

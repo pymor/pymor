@@ -14,7 +14,8 @@ from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenMode
 class DataDrivenReductor(BasicObject):
 
     def __init__(self, estimator=VKOGAEstimator(GaussianKernel()), target_quantity='solution', fom=None,
-                 reduced_basis=None, training_parameters=None, training_snapshots=None, T=None, nt=1,
+                 reduced_basis=None, training_parameters=None, training_snapshots=None,
+                 T=None, time_vectorized=False,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}, input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
 
@@ -59,7 +60,8 @@ class DataDrivenReductor(BasicObject):
             with self.logger.block('Computing training data ...'):
                 self.training_data = self.compute_data(self.training_parameters, snapshots=self.training_snapshots)
         assert self.training_data is not None
-        assert len(self.training_data) == len(self.training_parameters) * self.nt
+        if self.is_stationary or not self.time_vectorized:
+            assert len(self.training_data) == len(self.training_parameters) * self.nt
 
         # run the actual training of the estimator
         with self.logger.block('Training of machine learning method ...'):
@@ -106,8 +108,14 @@ class DataDrivenReductor(BasicObject):
             elif self.target_quantity == 'output':
                 func = lambda i, mu: self.fom.output(mu)
 
+        def func_wrapped(i, mu):
+            if not self.is_stationary or not self.time_vectorized:
+                return func(i, mu)
+            else:
+                return func(i, mu).flatten()
+
         for i, mu in enumerate(parameters):
-            samples = self._compute_sample(mu, func(i, mu))
+            samples = self._compute_sample(mu, func_wrapped(i, mu))
             data.extend(samples)
 
         return data
@@ -126,8 +134,12 @@ class DataDrivenReductor(BasicObject):
     def _compute_sample(self, mu, u):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
         # conditional expression to check for instationary solution to return self.nt solutions
-        parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
-        samples = [(mu.to_numpy(), u_t) for mu, u_t in zip(parameters, u, strict=True)]
+        if not self.is_stationary and not self.time_vectorized:
+            parameters = [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
+            samples = [(mu.to_numpy(), u_t.flatten()) for mu, u_t in zip(parameters, u, strict=True)]
+        else:
+            samples = [(mu.to_numpy(), u.flatten())]
+
         return samples
 
     def _build_rom(self):
@@ -140,7 +152,7 @@ class DataDrivenReductor(BasicObject):
             name = self.fom.name
         else:
             parameters = self.training_parameters[0].parameters()
-            name = 'data_driven'
+            name = 'DataDrivenModel'
 
         with self.logger.block('Building ROM ...'):
             dim_solution_space = None
@@ -156,7 +168,7 @@ class DataDrivenReductor(BasicObject):
                                                   dim_solution_space=dim_solution_space, parameters=parameters,
                                                   output_functional=projected_output_functional,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
-                                                  name=f'{name}_reduced')
+                                                  time_vectorized=self.time_vectorized, name=f'{name}_reduced')
         return rom
 
     def reconstruct(self, u):
