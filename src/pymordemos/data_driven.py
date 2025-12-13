@@ -21,12 +21,13 @@ def main(
                                                                    "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
-    validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
-    input_scaling: bool = Option(False, help=''),
-    output_scaling: bool = Option(False, help=''),
+    validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
+    input_scaling: bool = Option(False, help='Scale the input of the estimator (i.e. the parameter).'),
+    output_scaling: bool = Option(False, help='Scale the output of the estimator (i.e. reduced coefficients or output '
+                                              'quantity.'),
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
     if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
@@ -39,21 +40,28 @@ def main(
     parameter_space = fom.parameters.space((0.1, 1))
 
     training_parameters = parameter_space.sample_uniformly(training_samples)
-    validation_parameters = parameter_space.sample_randomly(validation_samples)
     test_parameters = parameter_space.sample_randomly(10)
 
     if estimator == 'fcnn':
         from pymor.algorithms.neural_network import NeuralNetworkEstimator
-        estimator = NeuralNetworkEstimator(tol=1e-5, neural_network_type='FullyConnectedNN')
+        estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
+                                                    neural_network_type='FullyConnectedNN')
+        estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
+                                                  neural_network_type='FullyConnectedNN')
     elif estimator == 'lstm':
         from pymor.algorithms.neural_network import NeuralNetworkEstimator
-        estimator = NeuralNetworkEstimator(tol=1e-5, neural_network_type='LongShortTermMemoryNN')
+        estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
+                                                    neural_network_type='LongShortTermMemoryNN')
+        estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
+                                                  neural_network_type='LongShortTermMemoryNN')
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
-        estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+        estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+        estimator_output = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
     elif estimator == 'gpr':
         from sklearn.gaussian_process import GaussianProcessRegressor
-        estimator = GaussianProcessRegressor()
+        estimator_solution = GaussianProcessRegressor()
+        estimator_output = GaussianProcessRegressor()
 
     if input_scaling or output_scaling:
         from sklearn.preprocessing import MinMaxScaler
@@ -72,29 +80,31 @@ def main(
         res = fom.compute(solution=True, output=True, mu=mu)
         training_snapshots.append(res['solution'])
         training_outputs.append(res['output'].flatten())
-    training_outputs = np.array(training_outputs).T
+    training_outputs = np.array(training_outputs)
 
-    validation_outputs = []
-    validation_snapshots = fom.solution_space.empty(reserve=len(validation_parameters))
-    for mu in validation_parameters:
-        res = fom.compute(solution=True, output=True, mu=mu)
-        validation_snapshots.append(res['solution'])
-        validation_outputs.append(res['output'].flatten())
-    validation_outputs = np.array(validation_outputs).T
-
-    reductor_data_driven = DataDrivenReductor(estimator=estimator, training_parameters=training_parameters,
+    reductor_data_driven = DataDrivenReductor(estimator=estimator_solution, target_quantity='solution',
+                                              training_parameters=training_parameters,
                                               training_snapshots=training_snapshots,
-                                              validation_parameters=validation_parameters,
-                                              validation_snapshots=validation_snapshots,
                                               l2_err=1e-5, input_scaler=input_scaler, output_scaler=output_scaler)
     rom_data_driven = reductor_data_driven.reduce()
 
-    speedups_data_driven = []
+    output_reductor_data_driven = DataDrivenReductor(estimator=estimator_output, target_quantity='output',
+                                                     training_parameters=training_parameters,
+                                                     training_snapshots=training_outputs,
+                                                     l2_err=1e-5, input_scaler=input_scaler,
+                                                     output_scaler=output_scaler)
+    output_rom_data_driven = output_reductor_data_driven.reduce()
 
-    print(f'Performing test on parameters of size {len(test_parameters)} ...')
+
+    print(f'Performing test on parameter set of size {len(test_parameters)} ...')
 
     U = fom.solution_space.empty(reserve=len(test_parameters))
     U_red_data_driven = fom.solution_space.empty(reserve=len(test_parameters))
+    speedups_data_driven = []
+
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
 
     for mu in test_parameters:
         tic = time.perf_counter()
@@ -107,6 +117,22 @@ def main(
 
         speedups_data_driven.append(time_fom / time_red_data_driven)
 
+        tic = time.perf_counter()
+        outputs.append(fom.output(mu=mu))
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red.append(output_rom_data_driven.output(mu=mu))
+        time_red = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
     absolute_errors_data_driven = (U - U_red_data_driven).norm()
     relative_errors_data_driven = (U - U_red_data_driven).norm() / U.norm()
 
@@ -115,10 +141,16 @@ def main(
                       legend=('Full solution', 'Reduced solution (data-driven)'))
 
     print()
-    print('Results for state approximation purely data-driven:')
+    print('Results for state approximation:')
     print(f'Average absolute error: {np.average(absolute_errors_data_driven)}')
     print(f'Average relative error: {np.average(relative_errors_data_driven)}')
     print(f'Median of speedup: {np.median(speedups_data_driven)}')
+
+    print()
+    print('Results for output approximation:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors)}')
+    print(f'Median of speedup: {np.median(outputs_speedups)}')
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(
