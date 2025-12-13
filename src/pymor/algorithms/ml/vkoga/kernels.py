@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from pymor.core.defaults import defaults
+
 
 class GaussianKernel:
     r"""Standalone Gaussian (RBF) kernel with scikit-learn-like interface.
@@ -19,6 +21,7 @@ class GaussianKernel:
         The length scale parameter of the kernel.
     """
 
+    @defaults('length_scale')
     def __init__(self, length_scale=1.0):
         assert length_scale > 0.
         self.length_scale = length_scale

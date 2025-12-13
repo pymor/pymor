@@ -4,9 +4,9 @@
 
 import numpy as np
 
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
-from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
 

@@ -7,7 +7,7 @@ import time
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
@@ -43,13 +43,13 @@ def main(
     test_parameters = parameter_space.sample_randomly(10)
 
     if estimator == 'fcnn':
-        from pymor.algorithms.neural_network import NeuralNetworkEstimator
+        from pymor.algorithms.ml.nn import NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
                                                     neural_network_type='FullyConnectedNN')
         estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
                                                   neural_network_type='FullyConnectedNN')
     elif estimator == 'lstm':
-        from pymor.algorithms.neural_network import NeuralNetworkEstimator
+        from pymor.algorithms.ml.nn import NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
                                                     neural_network_type='LongShortTermMemoryNN')
         estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
