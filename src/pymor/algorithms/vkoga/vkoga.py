@@ -98,21 +98,23 @@ class VKOGASurrogate(WeakGreedySurrogate):
         * the coefficients of the interpolant (`self._coefficients`)
         * the (squared) power function evaluations on the training set (`self._power2`)
         * the Newton basis evaluations on the training set (`self._V`)
-        * the residual :math:`f - s_f` (`self.res`)
+        * the residual :math:`f - s_f` at the training points (`self.res`)
         * the inverse of the Cholesky factor of the kernel matrix (`self._C`)
         * the coefficients in the Newton basis (`self._z`).
 
-        In the following derivation we leave out the regularization term for simplicity.
-        Let :math:`K_n` denotes the full kernel matrix for :math:`X_n`. Since :math:`K_n`
-        is a kernel matrix, it is in particular positive-definite, so it has a Cholesky
-        decomposition, i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Choleksy decomposition
+        In the following derivation we leave out the regularization term for simplicity
+        and restrict ourselves to scalar kernels.
+        Let :math:`K_n` denote the full kernel matrix for the current set of selected
+        centers :math:`X_n`. Since :math:`K_n` is a kernel matrix, it is in particular
+        positive-definite, so it has a Cholesky decomposition,
+        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Choleksy decomposition
         :math:`C_n := L_{n}^{-1}` will be used to efficiently compute and update the
         coefficients  of the kernel interpolant. The formula for the computation and update of
-        :math:`C_n` is found below.
+        :math:`C_n` can be found below.
 
         Updating the coefficients of the kernel interpolant: Let :math:`c_n\in\mathbb{R}^n` denote
-        the coefficients associated to the kernel interpolant the first :math:`n` selected centers
-        (:math:`X_n`), i.e.
+        the coefficients associated to the kernel interpolant for the first :math:`n` selected
+        centers (:math:`X_n`), i.e.
 
         .. math::
             K_n c_n = f_n,
@@ -123,9 +125,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         .. math::
             s_f^n(x) := \sum\limits_{i=1}^{n} (c_n)_i k(x, x_i),
 
-        where :math:`x_1,\dots,x_n\in\mathbb{R}^d` are the :math:`n` selected centers.
-        When adding :math:`\mu` as new center, the new coefficient
-        vector :math:`c_{n+1}\in \mathbb{R}^{n+1}` is given as
+        where :math:`X_n=\{x_1,\dots,x_n\}\subset\mathbb{R}^d` is the set containing the :math:`n`
+        selected centers. When adding :math:`\mu` as new center, i.e.
+        :math:`X_{n+1}=X_n\cup \{\mu\}`, the new coefficient
+        vector :math:`c_{n+1}\in\mathbb{R}^{n+1}` is given as
 
         .. math::
             c_{n+1} = C_{n+1}^\top \begin{bmatrix}
@@ -133,25 +136,25 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 z_{n+1}
             \end{bmatrix}
 
-        for unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
+        for an unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
         residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n`
-        (the definitions of these quantities are given below):
+        evaluated at :math:`\mu` (the definitions of these quantities are given below):
 
         .. math::
             \begin{align*}
-               z_{n+1} = \frac{r_n(\mu)}{P_n(\mu)}
+               z_{n+1} = \frac{r_n(\mu)}{P_n(\mu)}.
             \end{align*}
 
-        The residual :math:`r_n` is defined as the difference between the target function
+        The residual :math:`r_n=f-s_f^n` is defined as the difference between the target function
         :math:`f` and the current kernel interpolant :math:`s_f^n` and can be updated via
         the following recursion:
 
         .. math::
             \begin{align*}
-                r_n(x) := r_{n-1}(x) - z_n V_n(x),
+                r_n(x) = r_{n-1}(x) - z_n V_n(x)
             \end{align*}
 
-        with initial residual :math:`r_0 := f`. Here :math:`V_n` denotes the Newton basis for
+        with initial residual :math:`r_0 = f`. Here, :math:`V_n` denotes the Newton basis for
 
         .. math::
             \begin{align*}
@@ -165,11 +168,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 V_{1}(x)= \frac{k(x, x_1)}{\sqrt{k(x_1, x_1)}}.
             \end{align*}
 
-        The subsequent Newton basis functions are computed via
+        The subsequent Newton basis functions are computed via the Gram-Schmidt algorithm as
 
         .. math::
             \begin{align*}
-                V_{n+1} = \frac{k(x, \mu) - \sum_{j=1}^n V_j(x) V_j(\mu)}{P_n(\mu)}.
+                V_{n+1}(x) = \frac{k(x, \mu) - \sum_{j=1}^n V_j(x) V_j(\mu)}{P_n(\mu)}.
             \end{align*}
 
         Regarding the power function (measuring for  :math:`x\in\mathbb{R}^d` how well the current
@@ -181,11 +184,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 P_0^2(x) = k(x, x)
             \end{align*}
 
-        and the incremental update of the squared power function :math:`P_n^2` is given as
+        and the incremental update of the squared power function :math:`P_n^2` can be computed by
 
         .. math::
             \begin{align*}
-                P_n^2(x) = P_{n-1}^2(x) - V_n(x)^2
+                P_n^2(x) = P_{n-1}^2(x) - V_n(x)^2.
             \end{align*}
 
         We are going to track this quantity evaluated at all training points during the
@@ -199,16 +202,16 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 C_1 = \frac{1}{V_1(\mu)}
             \end{align*}
 
-        and updated via
+        and is updated via
 
         .. math::
             C_{n+1} = \begin{bmatrix}
                 C_n & 0 \\
-                -\frac{1}{V_{n+1}(\mu)} V_{:n+1}(\mu) C_n & \frac{1}{V_{n+1}(\mu)},
-            \end{bmatrix}
+                -\frac{1}{V_{n+1}(\mu)}\bar{v}_{n}(\mu) C_n & \frac{1}{V_{n+1}(\mu)}
+            \end{bmatrix},
 
-        where by abuse of notation we denote with :math:`V_{:n+1}(\mu)` the vector
-        :math:`[V_{1}(\mu), \dots, V_{n}(\mu)]`.
+        where we denote as :math:`\bar{v}_{n}(\mu)\in\mathbb{R}^n`
+        the vector :math:`[V_{1}(\mu),\ldots,V_{n}(\mu)]`.
 
         Parameters
         ----------
