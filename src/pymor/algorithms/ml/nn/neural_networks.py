@@ -27,23 +27,26 @@ class FullyConnectedNN(nn.Module, BasicObject):
         Function to use as activation function between the single layers.
     """
 
-    def __init__(self, layer_sizes, activation_function=torch.tanh):
+    def __init__(self, hidden_layers, input_dimension=None, output_dimension=None, activation_function=torch.tanh):
         super().__init__()
 
-        if layer_sizes is None or not len(layer_sizes) > 1 or not all(size >= 1 for size in layer_sizes):
-            raise ValueError
+        self.hidden_layers = hidden_layers
 
-        self.input_dimension = layer_sizes[0]
-        self.output_dimension = layer_sizes[-1]
-
-        self.layers = nn.ModuleList()
-        self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1]))
-                            for i in range(len(layer_sizes) - 1)])
+        if input_dimension is not None and output_dimension is not None:
+            self.set_input_output_dimensions(input_dimension=input_dimension, output_dimension=output_dimension)
 
         self.activation_function = activation_function
 
         if not self.logging_disabled:
             self.logger.info(f'Architecture of the neural network:\n{self}')
+
+    def set_input_output_dimensions(self, input_dimension, output_dimension):
+        layer_sizes = [input_dimension]
+        layer_sizes.extend(self.hidden_layers)
+        layer_sizes.append(output_dimension)
+        self.layers = nn.ModuleList()
+        self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1])).double()
+                            for i in range(len(layer_sizes) - 1)])
 
     def forward(self, x):
         """Performs the forward pass through the neural network.
@@ -84,8 +87,8 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         Number of layers in the LSTM (if greater than 1, a stacked LSTM is used).
     """
 
-    def __init__(self, input_dimension, hidden_dimension=10, output_dimension=1, number_layers=1):
-        assert input_dimension > 0
+    def __init__(self, input_dimension=None, hidden_dimension=10, output_dimension=1, number_layers=1):
+        assert input_dimension is None or input_dimension > 0
         assert hidden_dimension > 0
         assert output_dimension > 0
         assert hidden_dimension > output_dimension
@@ -94,10 +97,15 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         super().__init__()
         self.__auto_init(locals())
 
-        self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
-                            proj_size=output_dimension, batch_first=True).double()
+        if input_dimension is not None:
+            self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
+                                proj_size=output_dimension, batch_first=True).double()
 
         self.logger.info(f'Architecture of the neural network:\n{self}')
+
+    def set_input_output_dimensions(self, input_dimension, output_dimension):
+        self.lstm = nn.LSTM(input_dimension, self.hidden_dimension, num_layers=self.number_layers,
+                            proj_size=output_dimension, batch_first=True).double()
 
     def forward(self, x):
         """Performs the forward pass through the neural network.

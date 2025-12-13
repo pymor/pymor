@@ -3,3 +3,4 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.ml.nn.estimator import NeuralNetworkEstimator
+from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN, LongShortTermMemoryNN

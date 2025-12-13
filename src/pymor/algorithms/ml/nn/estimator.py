@@ -11,7 +11,7 @@ from numbers import Number
 import torch
 import torch.optim as optim
 
-from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN, LongShortTermMemoryNN
+from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN
 from pymor.algorithms.ml.nn.train import multiple_restarts_training
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
@@ -21,10 +21,9 @@ from pymor.tools.random import get_rng, get_seed_seq
 
 class NeuralNetworkEstimator(BasicObject):
 
-    @defaults('validation_ratio', 'tol', 'neural_network_type')
-    def __init__(self, validation_ratio=0.1, tol=None, neural_network_type='FullyConnectedNN',
-                 training_parameters={'hidden_layers': '[(N+P)*3, (N+P)*3]', 'activation_function': torch.tanh,
-                                      'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
+    @defaults('neural_network', 'validation_ratio', 'tol')
+    def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None,
+                 training_parameters={'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
                                       'loss_function': None, 'restarts': 10, 'lr_scheduler': optim.lr_scheduler.StepLR,
                                       'lr_scheduler_params': {'step_size': 10, 'gamma': 0.7},
                                       'es_scheduler_params': {'patience': 10, 'delta': 0.}, 'weight_decay': 0.,
@@ -50,12 +49,10 @@ class NeuralNetworkEstimator(BasicObject):
         self.dim_inputs = X[0].shape[0]
         self.dim_outputs = Y[0].shape[0]
 
-        # compute layer sizes
-        self.training_parameters['layer_sizes'] = self._compute_layer_sizes(self.training_parameters['hidden_layers'])
-
         self.logger.info('Initializing neural network ...')
         # initialize the neural network
-        neural_network = self._initialize_neural_network(self.training_parameters)
+        self.neural_network.set_input_output_dimensions(input_dimension=self.dim_inputs,
+                                                        output_dimension=self.dim_outputs)
 
         self.training_data = [(x, y) for x, y in zip(X, Y, strict=False)]
         number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
@@ -70,35 +67,10 @@ class NeuralNetworkEstimator(BasicObject):
 
             # run training algorithm with multiple restarts
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
-                neural_network, target_loss, self.training_parameters['restarts'],
+                self.neural_network, target_loss, self.training_parameters['restarts'],
                 self.training_parameters['log_loss_frequency'], self.training_parameters)
 
         self._check_tolerances()
-
-    def _compute_layer_sizes(self, hidden_layers):
-        # determine the numbers of neurons in the hidden layers
-        if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': self.dim_outputs, 'P': self.dim_inputs})
-        # input and output size of the neural network are prescribed by the
-        # dimension of the parameter space and the reduced basis size
-        assert isinstance(hidden_layers, list)
-        return [self.dim_inputs, ] + hidden_layers + [self.dim_outputs, ]
-
-    def _initialize_neural_network(self, params):
-        neural_network_parameters = {'layer_sizes': params['layer_sizes'],
-                                     'activation_function': params['activation_function']}
-        if self.neural_network_type == 'FullyConnectedNN':
-            neural_network = FullyConnectedNN(**neural_network_parameters).double()
-        elif self.neural_network_type == 'LongShortTermMemoryNN':
-            assert len(params['layer_sizes']) >= 3
-            number_layers = len(params['layer_sizes']) - 2
-            neural_network = LongShortTermMemoryNN(input_dimension=params['layer_sizes'][0],
-                                                   hidden_dimension=params['layer_sizes'][1],
-                                                   output_dimension=params['layer_sizes'][-1],
-                                                   number_layers=number_layers).double()
-        else:
-            raise NotImplementedError(f'Unknown neural network type {self.neural_network_type}!')
-        return neural_network
 
     def _compute_target_loss(self):
         target_loss = None

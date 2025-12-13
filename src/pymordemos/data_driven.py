@@ -43,17 +43,17 @@ def main(
     test_parameters = parameter_space.sample_randomly(10)
 
     if estimator == 'fcnn':
-        from pymor.algorithms.ml.nn import NeuralNetworkEstimator
-        estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
-                                                    neural_network_type='FullyConnectedNN')
-        estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=1e-5,
-                                                  neural_network_type='FullyConnectedNN')
+        from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
+        estimator_solution = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
+                                                    validation_ratio=validation_ratio, tol=1e-5)
+        estimator_output = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
+                                                  validation_ratio=validation_ratio, tol=1e-5)
     elif estimator == 'lstm':
-        from pymor.algorithms.ml.nn import NeuralNetworkEstimator
-        estimator_solution = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
-                                                    neural_network_type='LongShortTermMemoryNN')
-        estimator_output = NeuralNetworkEstimator(validation_ratio=validation_ratio, tol=None,
-                                                  neural_network_type='LongShortTermMemoryNN')
+        from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkEstimator
+        estimator_solution = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
+                                                    validation_ratio=validation_ratio, tol=None)
+        estimator_output = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
+                                                  validation_ratio=validation_ratio, tol=None)
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
