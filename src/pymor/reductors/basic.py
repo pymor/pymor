@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.image import estimate_image_hierarchical
+from pymor.algorithms.image import estimate_image_hierarchical, estimate_image_hierarchical_blocked
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
@@ -306,6 +306,8 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
     equations (`use_normal_equations = True`) or by Petrov-Galerkin projection of the
     least-squares residual.
 
+    This reductor supports blocked systems.
+
     Parameters
     ----------
     fom
@@ -317,7 +319,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
         inner product is used. Can be a list or tuple of |Operators| for blocked systems.
     use_normal_equations
-        If `True`, solve the normal equations (A^* W A x = A^* b) instead of using a least-squares
+        If `True`, projects the normal equation instead of using a least-squares
         solver. If `False`, equip the operator with a least-squares solver.
     blocked_system
         If `True`, `fom` is assumed to be a blocked system and `RB` and `product` have to be lists
@@ -362,8 +364,12 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 product_dict[f'RB_{i}'] = product[i]
                 product_blocks.append(product[i] if product[i]
                                       else IdentityOperator(fom.solution_space.subspaces[i].dim))
-
             self.product = BlockDiagonalOperator(blocks=product_blocks)
+
+            # required for hierarchical image estimation
+            self.test_space_block_offset = [0 for _ in range(len(RB))]
+            self.test_space_raw_contributions = []
+            self.test_space_domain_vector_mapping = []
 
         else:
             assert RB in fom.solution_space
@@ -407,18 +413,41 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
         else:
             expanded_op = expand(fom.operator)
 
-            if subbasis:
-                extends = (self.fom.solution_space.empty(), [])
+            # subbasis projection for blocked systems
+            if subbasis and len(self.test_space_domain_vector_mapping) > 0:
+                subbasis_test_space = fom.operator.range.empty()
+
+                for idx, (block_idx, vec_idx) in enumerate(self.test_space_domain_vector_mapping):
+                    if block_idx == -1:
+                        subbasis_test_space.append(self.test_space_raw_contributions[idx])
+                    elif vec_idx < dims[f'RB_{block_idx}']:
+                        subbasis_test_space.append(self.test_space_raw_contributions[idx])
+
+                self.test_space = gram_schmidt(subbasis_test_space, product=self.product, copy=False)
+
+            elif self.blocked_system:
+                extends = (self.test_space, self.test_space_dims, self.block_offset,
+                           self.raw_contributions, self.domain_vector_mapping)
+
+                # See comment in self.use_normal_equations == True: The inverse of self.product is
+                # used in estimate_image_hierarchical_blocked if riesz_representatives == True.
+                self.test_space, self.test_space_dims, self.test_space_block_offset, \
+                self.test_space_raw_contributions, self.test_space_domain_vector_mapping = \
+                    estimate_image_hierarchical_blocked(operators=[expanded_op],
+                                                        domain_blocks=RB_blocks,
+                                                        extends=extends,
+                                                        orthonormalize=True,
+                                                        product=self.product,
+                                                        riesz_representatives=True)
+
             else:
                 extends = (self.test_space, self.test_space_dims)
-            # See comment in self.use_normal_equations == True: The inverse of self.product is used
-            # in estimate_image_hierarchical if riesz_representatives == True.
-            self.test_space, self.test_space_dims = estimate_image_hierarchical(operators=[expanded_op],
-                                                                                domain=RB,
-                                                                                extends=extends,
-                                                                                orthonormalize=True,
-                                                                                product=self.product,
-                                                                                riesz_representatives=True)
+                self.test_space, self.test_space_dims = estimate_image_hierarchical(operators=[expanded_op],
+                                                                                    domain=RB,
+                                                                                    extends=extends,
+                                                                                    orthonormalize=True,
+                                                                                    product=self.product,
+                                                                                    riesz_representatives=True)
 
             projected_operators = {
                 'operator':          project(fom.operator, range_basis=self.test_space,

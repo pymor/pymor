@@ -218,6 +218,165 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     return image, image_dims
 
 
+def estimate_image_hierarchical_blocked(operators=(), vectors=(), domain_blocks=None,
+                                         extends=None, orthonormalize=True,
+                                         product=None, riesz_representatives=False):
+    """Estimate the image of given |Operators| for blocked systems.
+
+    This is a block-aware version of :func:`estimate_image_hierarchical` designed for
+    systems where the domain is a BlockVectorArray and the operator has coupling
+    between blocks (i.e., is not block-diagonal).
+
+    The key difference from :func:`estimate_image_hierarchical`:
+    * `domain_blocks` is a list of VectorArrays, one per block
+    * The function processes domain vectors block-by-block, building a unified
+      test space that accounts for the full operator coupling
+    * `extends` tracks progress per-block, allowing incremental extension when
+      new basis vectors are added to individual blocks
+
+    Parameters
+    ----------
+    operators
+        See :func:`estimate_image`. These operators should be block operators
+        compatible with the blocked `domain_blocks` input.
+    vectors
+        See :func:`estimate_image`.
+    domain_blocks
+        List of |VectorArrays|, one for each block of the domain space.
+    extends
+        Tuple `(image, image_dims, , raw_contributions, domain_vector_mapping)`
+        from a previous call, or `None`.
+        - `image`: the BlockVectorArray of test space vectors computed so far
+        - `image_dims`: list where `image_dims[k]` is the image dimension after
+          processing the k-th domain vector (in flattened block order)
+        - `block_offsets`: list where `block_offsets[i]` is how many domain vectors
+          from block `i` have been processed
+        - `raw_contributions`: list of all raw image contributions before orthonormalization
+        - `domain_vector_mapping`: list of tuples `(block_idx, vector_idx)` indicating
+          which domain vector each raw contribution corresponds to.
+    orthonormalize
+        See :func:`estimate_image`.
+    product
+        See :func:`estimate_image`.
+    riesz_representatives
+        See :func:`estimate_image`.
+
+    Returns
+    -------
+    image
+        See above.
+    image_dims
+        See above
+    block_offsets
+        List tracking how many vectors from each block have been processed.
+    raw_contributions
+        List of all raw image contributions before orthonormalization.
+    domain_vector_mapping
+        List of tuples `(block_idx, vector_idx)` indicating which domain vector
+        each raw contribution corresponds to.
+    """
+    assert operators
+    assert isinstance(domain_blocks, list)
+    assert all(isinstance(db, VectorArray) for db in domain_blocks)
+
+    domain_space = operators[0].source
+    image_space = operators[0].range
+
+    n_blocks = len(domain_blocks)
+
+    assert all(
+        isinstance(v, VectorArray) and (
+            v in image_space
+        )
+        or isinstance(v, Operator) and (
+            v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
+        )
+        for v in vectors
+    )
+
+    assert product is None or product.source == product.range == image_space
+    assert extends is None or len(extends) == 5
+
+    if hasattr(domain_space, 'subspaces'):
+        assert len(domain_space.subspaces) == n_blocks
+        for i, db in enumerate(domain_blocks):
+            assert db in domain_space.subspaces[i]
+
+    logger = getLogger('pymor.algorithms.image.estimate_image_hierarchical_blocked')
+
+    if extends is not None:
+        image, image_dims, block_offsets, raw_contributions, domain_vector_mapping = extends
+        assert len(block_offsets) == n_blocks
+    else:
+        image = image_space.empty()
+        image_dims = []
+        block_offsets = [0] * n_blocks
+        raw_contributions = []
+        domain_vector_mapping = []
+
+    if extends is None and vectors:
+        logger.info('Processing domain-independent vectors...')
+        new_image = estimate_image(operators, vectors, None, extends=False,
+                                   orthonormalize=False, product=product,
+                                   riesz_representatives=riesz_representatives)
+
+        raw_contributions.append(new_image.copy())
+        domain_vector_mapping.append((-1, -1))
+
+        gram_schmidt_offset = len(image)
+        image.append(new_image, remove_from_other=True)
+        if orthonormalize:
+            gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+        image_dims.append(len(image))
+
+    total_new = 0
+    for block_idx in range(n_blocks):
+        n_old = block_offsets[block_idx]
+        n_new = len(domain_blocks[block_idx])
+
+        if n_new <= n_old:
+            continue
+
+        logger.info(f'Processing block {block_idx}: domain vectors {n_old} to {n_new-1}')
+        for k in range(n_old, n_new):
+            logger.info(f'Estimating image for block {block_idx}, domain vector {k}...')
+            single_domain_vector = _make_single_block_vector(domain_space, domain_blocks, block_idx, k)
+            new_image = estimate_image(operators, [], single_domain_vector, extends=True,
+                                       orthonormalize=False, product=product,
+                                       riesz_representatives=riesz_representatives)
+
+            raw_contributions.append(new_image.copy())
+            domain_vector_mapping.append((block_idx, k))
+
+            gram_schmidt_offset = len(image)
+            image.append(new_image, remove_from_other=True)
+            if orthonormalize:
+                with logger.block('Orthonormalizing...'):
+                    gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+
+            image_dims.append(len(image))
+            total_new += 1
+
+        block_offsets[block_idx] = n_new
+
+    logger.info(f'Processed {total_new} new domain vectors, image dimension: {len(image)}')
+
+    return image, image_dims, block_offsets, raw_contributions, domain_vector_mapping
+
+
+def _make_single_block_vector(domain_space, domain_blocks, block_idx, vector_idx):
+    """Create a BlockVectorArray with a single vector, nonzero only in one block."""
+    n_blocks = len(domain_blocks)
+    block_arrays = []
+    for j in range(n_blocks):
+        if j == block_idx:
+            block_arrays.append(domain_blocks[j][vector_idx:vector_idx+1])
+        else:
+            block_arrays.append(domain_space.subspaces[j].zeros(1))
+
+    return domain_space.make_array(block_arrays)
+
+
 class CollectOperatorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
