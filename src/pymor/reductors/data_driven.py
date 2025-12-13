@@ -12,11 +12,91 @@ from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenMode
 
 
 class DataDrivenReductor(BasicObject):
+    """Reductor relying on a machine learning surrogate.
+
+    The reductor works for stationary as well as for instationary
+    problems and returns a suitable model for the respective case.
+
+    Depending on the argument `target_quantity`, this reductor
+    either approximates the solution or the output as a parametric
+    quantity by training a machine learning surrogate.
+
+    In case of an approximation of the solution, the reductor either
+    takes a precomputed reduced basis or constructs a reduced basis
+    using proper orthogonal decomposition. It then trains a machine
+    learning estimator that approximates the mapping from
+    parameter space to coefficients of the full-order solution
+    in the reduced basis. Moreover, the reductor also works without
+    providing a full-order model, in which case it requires a set of
+    training parameters and corresponding solution snapshots. This way,
+    the reductor can be used in a completely data-driven manner.
+    The approach is described in :cite:`HU18`.
+
+    For `target_quantity='output'`, the machine learning estimator
+    directly approximates the output depending on the parameter.
+    The outputs for the training parameters are either computed using
+    the full-order model or can be provided as the `training_snapshots`
+    argument.
+
+    Parameters
+    ----------
+    estimator
+        Estimator with `fit` and `predict` methods similar to scikit-learn
+        estimators that is trained in the `reduce`-method.
+    target_quantity
+        Either `'solution'` or `'output'`, determines which quantity to learn.
+    fom
+        The full-order |Model| to reduce. If `None`, the `training_parameters` with
+        |parameter values| and the `training_snapshots` with corresponding solution
+        |VectorArrays| or outputs have to be set.
+    reduced_basis
+        |VectorArray| of basis vectors of the reduced space onto which to project.
+        If `None`, the reduced basis is computed using the
+        :meth:`~pymor.algorithms.pod.pod` method.
+    training_parameters
+        |Parameter values| to use for POD (in case no `reduced_basis` is provided)
+        and training of the neural network.
+    training_snapshots
+        |VectorArray| to use for POD and training of the neural network.
+        Contains the solutions to the parameters of the
+        `training_parameters` and can be `None` when `fom` is not `None`.
+        In the case of a time-dependent problem, the snapshots are assumed to be
+        equidistant in time.
+    T
+        In the instationary case, determines the final time until which to solve.
+    time_vectorized
+        In the instationary case, determines whether to predict the whole time
+        trajectory at once (time-vectorized version; output of the estimator is
+        typically very high-dimensional in this case) or if the result for a
+        single point in time is approximated (time serves as an additional input
+        to the estimator).
+    basis_size
+        Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
+        be provided.
+    rtol
+        Relative tolerance the basis should guarantee on the training parameters.
+    atol
+        Absolute tolerance the basis should guarantee on the training parameters.
+    l2_err
+        L2-approximation error the basis should not exceed on the training
+        parameters.
+    pod_params
+        Dict of additional parameters for the POD-method.
+    input_scaler
+        If not `None`, a scaler object with `fit`, `transform` and
+        `inverse_transform` methods similar to the scikit-learn interface can be
+        used to scale the parameters before passing them to the estimator.
+    output_scaler
+        If not `None`, a scaler object with `fit`, `transform` and
+        `inverse_transform` methods similar to the scikit-learn interface can be
+        used to scale the outputs (reduced coeffcients or output quantities)
+        before passing them to the estimator.
+    """
 
     def __init__(self, estimator=VKOGAEstimator(GaussianKernel()), target_quantity='solution', fom=None,
-                 reduced_basis=None, training_parameters=None, training_snapshots=None,
-                 T=None, time_vectorized=False,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={}, input_scaler=None, output_scaler=None):
+                 reduced_basis=None, training_parameters=None, training_snapshots=None, T=None,
+                 time_vectorized=False, basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
+                 input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
 
         self.training_data = None
@@ -38,7 +118,7 @@ class DataDrivenReductor(BasicObject):
         else:
             self.parameters_dim = fom.parameters.dim
             if hasattr(fom, 'time_stepper'):  # instationary
-                self.nt = fom.time_stepper.nt + 1  # +1 because of initial condition
+                self.nt = fom.time_stepper.nt + 1  # + 1 because of initial condition
                 self.T = fom.T
                 self.is_stationary = False
             else:  # stationary
@@ -48,8 +128,21 @@ class DataDrivenReductor(BasicObject):
         self.__auto_init(locals())
 
     def reduce(self, **kwargs):
+        """Reduce by training a machine learning surrogate.
+
+        Parameters
+        ----------
+        kwargs
+            Additional arguments that will be passed to the `fit` method
+            of the estimator.
+
+        Returns
+        -------
+        The data-driven reduced model.
+        """
         if self.target_quantity == 'solution' and self.training_snapshots is None:
             self.training_snapshots = self.compute_snapshots(self.training_parameters)
+
         # build a reduced basis using POD if necessary
         if self.target_quantity == 'solution' and self.reduced_basis is None:
             self.compute_reduced_basis()
@@ -68,22 +161,23 @@ class DataDrivenReductor(BasicObject):
             # fit input and output scaler if required
             if self.input_scaler is not None:
                 X = [x[0] for x in self.training_data]
-                self.input_scaler.fit(X)
+                self.input_scaler = self.input_scaler.fit(X)
                 X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
             else:
                 X = [x[0] for x in self.training_data]
             if self.output_scaler is not None:
                 Y = [x[1] for x in self.training_data]
-                self.output_scaler.fit(Y)
+                self.output_scaler = self.output_scaler.fit(Y)
                 Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
             else:
                 Y = [x[1] for x in self.training_data]
             # fit estimator to training data
-            self.estimator.fit(X, Y, **kwargs)
+            self.estimator = self.estimator.fit(X, Y, **kwargs)
 
         return self._build_rom()
 
     def compute_snapshots(self, parameters):
+        """Compute snapshots for the given parameters."""
         assert self.target_quantity == 'solution'
         assert self.fom is not None
         U = self.fom.solution_space.empty(reserve=len(parameters))

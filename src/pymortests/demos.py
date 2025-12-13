@@ -62,17 +62,21 @@ SUCCESSIVE_CONSTRAINTS_ARGS = (
 )
 
 DATA_DRIVEN_ARGS = (
-    ('data_driven', ['nn', 15, 20, 3]),
-    ('data_driven', ['vkoga', 15, 20, 3]),
-    ('data_driven', ['gpr', 15, 20, 3]),
-    ('data_driven', ['vkoga', 15, 20, 3, '--input-scaling', '--output-scaling']),
+    ('data_driven', ['fcnn', 15, 20]),
+    ('data_driven', ['vkoga', 15, 20]),
+    ('data_driven', ['gpr', 15, 20]),
+    ('data_driven', ['vkoga', 15, 20, '--input-scaling', '--output-scaling']),
+    ('data_driven_instationary', [0, 'vkoga', 10, 3, 15]),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20]),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--time-vectorized']),
+    ('data_driven_instationary', [1, 'fcnn', 15, 3, 20]),
+    ('data_driven_instationary', [1, 'lstm', 15, 3, 20]),
+    ('data_driven_instationary', [1, 'gpr', 15, 3, 20]),
 )
 
 NEURAL_NETWORK_ARGS = (
     ('neural_networks', [15, 20, 3]),
     ('neural_networks_fenics', [15, 3]),
-    ('neural_networks_instationary', [0, 10, 3, 15, 3]),
-    ('neural_networks_instationary', [1, 15, 3, 20, 3]),
 )
 
 THERMALBLOCK_ARGS = (
