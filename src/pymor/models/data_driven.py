@@ -88,8 +88,7 @@ class DataDrivenModel(Model):
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             assert self.target_quantity == 'solution'
-            U = self.solution_space.make_array(self._perform_prediction(mu))
-            data['solution'] = U
+            data['solution'] = self.solution_space.make_array(self._perform_prediction(mu))
             quantities.remove('solution')
 
         if 'output' in quantities and self.target_quantity == 'output':
@@ -99,7 +98,7 @@ class DataDrivenModel(Model):
         super()._compute(quantities, data, mu=mu)
 
 
-class DataDrivenInstationaryModel(Model):
+class DataDrivenInstationaryModel(DataDrivenModel):
     """Class for models of stationary problems that use estimators for prediction.
 
     This class implements a |Model| that uses an estimator for solution
@@ -164,17 +163,12 @@ class DataDrivenInstationaryModel(Model):
                  dim_solution_space=None, input_scaler=None, output_scaler=None,
                  time_vectorized=False, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
-
-        super().__init__(products=products, error_estimator=error_estimator,
+        super().__init__(estimator, target_quantity=target_quantity, parameters=parameters,
+                         dim_solution_space=dim_solution_space, input_scaler=input_scaler, output_scaler=output_scaler,
+                         output_functional=output_functional, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
-        if self.target_quantity == 'solution':
-            assert self.dim_solution_space
-            self.solution_space = NumpyVectorSpace(self.dim_solution_space)
-            output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), self.solution_space)
-            assert output_functional.source == self.solution_space
-            self.dim_output = output_functional.range.dim
 
     def _perform_prediction(self, mu):
         """Performs the prediction with correct scaling."""
@@ -196,15 +190,3 @@ class DataDrivenInstationaryModel(Model):
         if self.time_vectorized:
             U = U.reshape((self.nt, -1))
         return U.T
-
-    def _compute(self, quantities, data, mu):
-        if 'solution' in quantities:
-            assert self.target_quantity == 'solution'
-            data['solution'] = self.solution_space.make_array(self._perform_prediction(mu))
-            quantities.remove('solution')
-
-        if 'output' in quantities and self.target_quantity == 'output':
-            data['output'] = self._perform_prediction(mu)
-            quantities.remove('output')
-
-        super()._compute(quantities, data, mu=mu)
