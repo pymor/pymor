@@ -228,11 +228,12 @@ def estimate_image_hierarchical_blocked(operators=(), vectors=(), domain_blocks=
     between blocks (i.e., is not block-diagonal).
 
     The key difference from :func:`estimate_image_hierarchical`:
-    * `domain_blocks` is a list of VectorArrays, one per block
+
+    * `domain_blocks` is a list of VectorArrays, one per block.
     * The function processes domain vectors block-by-block,
-    building a unified test space that accounts for the full operator coupling
+    building a unified test space that accounts for the full operator coupling.
     * `extends` tracks progress per-block, allowing incremental extension when
-    new basis vectors are added to individual blocks
+    new basis vectors are added to individual blocks.
 
     Parameters
     ----------

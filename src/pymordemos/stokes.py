@@ -10,6 +10,7 @@ from typer import Argument, run
 
 from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.functions import ExpressionFunction
+from pymor.core.config import config
 from pymor.models.examples import stokes_2Dexample
 from pymor.reductors.stokes import StationaryLSRBStokesReductor, StationarySupremizerGalerkinStokesReductor
 
@@ -31,6 +32,7 @@ def main(
     it evaluates the ROMs against the FOM on a set of random parameters.
     """
     # sets up the discrete Stokes model
+    config.require('SCIKIT_FEM')
     body_force = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
     fom_stokes = stokes_2Dexample(rhs=body_force)
 
