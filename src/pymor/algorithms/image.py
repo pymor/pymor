@@ -221,7 +221,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 def estimate_image_hierarchical_blocked(operators=(), vectors=(), domain_blocks=None,
                                          extends=None, orthonormalize=True,
                                          product=None, riesz_representatives=False):
-    """Estimate the image of given |Operators| for blocked systems.
+    """Estimate the image of given |Operators| for all mu for blocked systems.
 
     This is a block-aware version of :func:`estimate_image_hierarchical` designed for
     systems where the domain is a BlockVectorArray and the operator has coupling
@@ -229,10 +229,10 @@ def estimate_image_hierarchical_blocked(operators=(), vectors=(), domain_blocks=
 
     The key difference from :func:`estimate_image_hierarchical`:
     * `domain_blocks` is a list of VectorArrays, one per block
-    * The function processes domain vectors block-by-block, building a unified
-      test space that accounts for the full operator coupling
+    * The function processes domain vectors block-by-block,
+    building a unified test space that accounts for the full operator coupling
     * `extends` tracks progress per-block, allowing incremental extension when
-      new basis vectors are added to individual blocks
+    new basis vectors are added to individual blocks
 
     Parameters
     ----------
@@ -244,16 +244,8 @@ def estimate_image_hierarchical_blocked(operators=(), vectors=(), domain_blocks=
     domain_blocks
         List of |VectorArrays|, one for each block of the domain space.
     extends
-        Tuple `(image, image_dims, , raw_contributions, domain_vector_mapping)`
-        from a previous call, or `None`.
-        - `image`: the BlockVectorArray of test space vectors computed so far
-        - `image_dims`: list where `image_dims[k]` is the image dimension after
-          processing the k-th domain vector (in flattened block order)
-        - `block_offsets`: list where `block_offsets[i]` is how many domain vectors
-          from block `i` have been processed
-        - `raw_contributions`: list of all raw image contributions before orthonormalization
-        - `domain_vector_mapping`: list of tuples `(block_idx, vector_idx)` indicating
-          which domain vector each raw contribution corresponds to.
+        Tuple `(image, image_dims, block_offsets, raw_contributions, domain_vector_mapping)`
+        from a previous call, or `None`. See :func:`estimate_image_hierarchical` for details.
     orthonormalize
         See :func:`estimate_image`.
     product

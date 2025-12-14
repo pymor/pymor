@@ -426,8 +426,8 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 self.test_space = gram_schmidt(subbasis_test_space, product=self.product, copy=False)
 
             elif self.blocked_system:
-                extends = (self.test_space, self.test_space_dims, self.block_offset,
-                           self.raw_contributions, self.domain_vector_mapping)
+                extends = (self.test_space, self.test_space_dims, self.test_space_block_offset,
+                           self.test_space_raw_contributions, self.test_space_domain_vector_mapping)
 
                 # See comment in self.use_normal_equations == True: The inverse of self.product is
                 # used in estimate_image_hierarchical_blocked if riesz_representatives == True.
