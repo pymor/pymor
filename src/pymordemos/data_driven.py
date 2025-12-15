@@ -8,6 +8,7 @@ import numpy as np
 from typer import Argument, Option, run
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.pod import pod
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
@@ -82,17 +83,18 @@ def main(
         training_outputs.append(res['output'][:, 0])
     training_outputs = np.array(training_outputs)
 
-    reductor_data_driven = DataDrivenReductor(estimator=estimator_solution, target_quantity='solution',
-                                              training_parameters=training_parameters,
-                                              training_snapshots=training_snapshots,
-                                              l2_err=1e-5, input_scaler=input_scaler, output_scaler=output_scaler)
+    RB, _ = pod(training_snapshots, l2_err=1e-5)
+    projected_training_snapshots = training_snapshots.inner(RB)
+
+    reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                              estimator=estimator_solution, target_quantity='solution',
+                                              reduced_basis=RB,
+                                              input_scaler=input_scaler, output_scaler=output_scaler)
     rom_data_driven = reductor_data_driven.reduce()
 
-    output_reductor_data_driven = DataDrivenReductor(estimator=estimator_output, target_quantity='output',
-                                                     training_parameters=training_parameters,
-                                                     training_snapshots=training_outputs,
-                                                     l2_err=1e-5, input_scaler=input_scaler,
-                                                     output_scaler=output_scaler)
+    output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,
+                                                     estimator=estimator_output, target_quantity='output',
+                                                     input_scaler=input_scaler, output_scaler=output_scaler)
     output_rom_data_driven = output_reductor_data_driven.reduce()
 
 

@@ -5,8 +5,6 @@
 import numpy as np
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
-from pymor.algorithms.pod import pod
-from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
 
@@ -40,28 +38,23 @@ class DataDrivenReductor(BasicObject):
 
     Parameters
     ----------
+    training_parameters
+        |Parameter values| to use for training of the estimator.
+    training_snapshots
+        |VectorArray| to use for the training of the estimator.
+        Contains the solutions or outputs associated to the parameters in
+        `training_parameters`.
+        In the case of a time-dependent problem, the snapshots are assumed to be
+        equidistant in time.
     estimator
         Estimator with `fit` and `predict` methods similar to scikit-learn
         estimators that is trained in the `reduce`-method.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
-    fom
-        The full-order |Model| to reduce. If `None`, the `training_parameters` with
-        |parameter values| and the `training_snapshots` with corresponding solution
-        |VectorArrays| or outputs have to be set.
     reduced_basis
-        |VectorArray| of basis vectors of the reduced space onto which to project.
-        If `None`, the reduced basis is computed using the
-        :meth:`~pymor.algorithms.pod.pod` method.
-    training_parameters
-        |Parameter values| to use for POD (in case no `reduced_basis` is provided)
-        and training of the neural network.
-    training_snapshots
-        |VectorArray| to use for POD and training of the neural network.
-        Contains the solutions to the parameters of the
-        `training_parameters` and can be `None` when `fom` is not `None`.
-        In the case of a time-dependent problem, the snapshots are assumed to be
-        equidistant in time.
+        |VectorArray| of basis vectors of the reduced space that is used for
+        reconstruction when the solution is the target quantity. If `None`,
+        the result of the estimator is returned by `reconstruct`.
     T
         In the instationary case, determines the final time until which to solve.
     time_vectorized
@@ -70,18 +63,6 @@ class DataDrivenReductor(BasicObject):
         typically very high-dimensional in this case) or if the result for a
         single point in time is approximated (time serves as an additional input
         to the estimator).
-    basis_size
-        Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
-        be provided.
-    rtol
-        Relative tolerance the basis should guarantee on the training parameters.
-    atol
-        Absolute tolerance the basis should guarantee on the training parameters.
-    l2_err
-        L2-approximation error the basis should not exceed on the training
-        parameters.
-    pod_params
-        Dict of additional parameters for the POD-method.
     input_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
@@ -93,37 +74,27 @@ class DataDrivenReductor(BasicObject):
         before passing them to the estimator.
     """
 
-    def __init__(self, estimator=VKOGAEstimator(GaussianKernel()), target_quantity='solution', fom=None,
-                 reduced_basis=None, training_parameters=None, training_snapshots=None, T=None,
-                 time_vectorized=False, basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
+    def __init__(self, training_parameters, training_snapshots,
+                 estimator=VKOGAEstimator(GaussianKernel()), target_quantity='solution',
+                 reduced_basis=None, T=None, time_vectorized=False,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
 
         self.training_data = None
 
-        if fom is None:
-            assert training_parameters is not None
-            assert len(training_parameters) > 0
-            assert training_snapshots is not None
-            self.parameters_dim = training_parameters[0].parameters().dim
-            self.nt = int(len(training_snapshots) / len(training_parameters))
-            assert len(training_snapshots) == len(training_parameters) * self.nt
-            if self.nt > 1:  # instationary
-                assert T is not None
-                self.T = T
-                self.is_stationary = False
-            else:  # stationary
-                assert T is None
-                self.is_stationary = True
-        else:
-            self.parameters_dim = fom.parameters.dim
-            if hasattr(fom, 'time_stepper'):  # instationary
-                self.nt = fom.time_stepper.nt + 1  # + 1 because of initial condition
-                self.T = fom.T
-                self.is_stationary = False
-            else:  # stationary
-                self.nt = 1
-                self.is_stationary = True
+        assert training_parameters is not None
+        assert len(training_parameters) > 0
+        assert training_snapshots is not None
+        self.parameters_dim = training_parameters[0].parameters().dim
+        self.nt = int(len(training_snapshots) / len(training_parameters))
+        assert len(training_snapshots) == len(training_parameters) * self.nt
+        if self.nt > 1:  # instationary
+            assert T is not None
+            self.T = T
+            self.is_stationary = False
+        else:  # stationary
+            assert T is None
+            self.is_stationary = True
 
         self.__auto_init(locals())
 
@@ -176,31 +147,10 @@ class DataDrivenReductor(BasicObject):
 
         return self._build_rom()
 
-    def compute_snapshots(self, parameters):
-        """Compute snapshots for the given parameters."""
-        assert self.target_quantity == 'solution'
-        assert self.fom is not None
-        U = self.fom.solution_space.empty(reserve=len(parameters))
-        for mu in parameters:
-            U.append(self.fom.solve(mu))
-        return U
-
-    def compute_data(self, parameters, snapshots=None):
+    def compute_data(self, parameters, snapshots):
         """Collect data for the estimator using the reduced basis."""
         data = []
-        if snapshots is not None:
-            if self.target_quantity == 'solution':
-                product = self.pod_params.get('product')
-                func = lambda i, mu: self.reduced_basis.inner(snapshots[i*self.nt:(i+1)*self.nt], product=product).T
-            elif self.target_quantity == 'output':
-                func = lambda i, mu: snapshots[i*self.nt:(i+1)*self.nt]
-        else:
-            assert self.fom is not None
-            if self.target_quantity == 'solution':
-                product = self.pod_params.get('product')
-                func = lambda i, mu: self.reduced_basis.inner(self.fom.solve(mu), product=product).T
-            elif self.target_quantity == 'output':
-                func = lambda i, mu: self.fom.output(mu)
+        func = lambda i, mu: snapshots[i*self.nt:(i+1)*self.nt]
 
         def func_wrapped(i, mu):
             if not self.is_stationary or not self.time_vectorized:
@@ -213,17 +163,6 @@ class DataDrivenReductor(BasicObject):
             data.extend(samples)
 
         return data
-
-    def compute_reduced_basis(self):
-        """Compute a reduced basis using proper orthogonal decomposition."""
-        # compute reduced basis via POD
-        with self.logger.block('Building reduced basis ...'):
-            self.reduced_basis, svals = pod(self.training_snapshots, modes=self.basis_size, rtol=self.rtol / 2.,
-                                            atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                            **(self.pod_params or {}))
-
-            # compute mean square loss
-            self.mse_basis = (sum(self.training_snapshots.norm2()) - sum(svals ** 2)) / len(self.training_snapshots)
 
     def _compute_sample(self, mu, u):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
@@ -238,15 +177,8 @@ class DataDrivenReductor(BasicObject):
 
     def _build_rom(self):
         """Construct the reduced order model."""
-        projected_output_functional = None
-        if self.fom is not None:
-            if self.target_quantity == 'solution':
-                projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
-            parameters = self.fom.parameters
-            name = self.fom.name
-        else:
-            parameters = self.training_parameters[0].parameters()
-            name = 'DataDrivenModel'
+        parameters = self.training_parameters[0].parameters()
+        name = 'DataDrivenModel'
 
         with self.logger.block('Building ROM ...'):
             dim_solution_space = None
@@ -255,12 +187,11 @@ class DataDrivenReductor(BasicObject):
             if self.is_stationary:
                 rom = DataDrivenModel(self.estimator, target_quantity=self.target_quantity,
                                       dim_solution_space=dim_solution_space, parameters=parameters,
-                                      output_functional=projected_output_functional, input_scaler=self.input_scaler,
-                                      output_scaler=self.output_scaler, name=f'{name}_reduced')
+                                      input_scaler=self.input_scaler, output_scaler=self.output_scaler,
+                                      name=f'{name}_reduced')
             else:
                 rom = DataDrivenInstationaryModel(self.T, self.nt, self.estimator, target_quantity=self.target_quantity,
                                                   dim_solution_space=dim_solution_space, parameters=parameters,
-                                                  output_functional=projected_output_functional,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                                   time_vectorized=self.time_vectorized, name=f'{name}_reduced')
         return rom
@@ -268,5 +199,6 @@ class DataDrivenReductor(BasicObject):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         assert self.target_quantity == 'solution'
-        assert hasattr(self, 'reduced_basis')
-        return self.reduced_basis.lincomb(u.to_numpy())
+        if self.reduced_basis is not None:
+            return self.reduced_basis.lincomb(u.to_numpy())
+        return u
