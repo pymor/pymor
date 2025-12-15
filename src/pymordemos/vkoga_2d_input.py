@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
 from pymor.tools.typer import Choices
 
 
