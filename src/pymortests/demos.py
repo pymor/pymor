@@ -221,9 +221,9 @@ def _skip_if_no_solver(param):
     for check, package in [
             (lambda s: 'fenics' in s, ('FENICS', 'FENICSX')),
             (lambda s: 'ngsolve' in s, 'NGSOLVE'),
-            (lambda s: 'neural_' in s, 'TORCH'),
-            (lambda s: 'neural_networks_instationary' in s, 'FENICS'),
-            (lambda s: 'neural_networks_fenics' in s, 'FENICS'),
+            (lambda s: 'data_driven_' in s, 'TORCH'),
+            (lambda s: 'data_driven_instationary' in s, 'FENICS'),
+            (lambda s: 'data_driven_fenics' in s, 'FENICS'),
             (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
             (lambda s: 'thermalblock' in s and 'simple' not in s and 'fenics' in s, 'FENICS'),
     ]:
