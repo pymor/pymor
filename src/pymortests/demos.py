@@ -69,6 +69,8 @@ DATA_DRIVEN_ARGS = (
     ('data_driven_instationary', [0, 'vkoga', 10, 3, 15]),
     ('data_driven_instationary', [1, 'vkoga', 15, 3, 20]),
     ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--time-vectorized']),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--input-scaling', '--output-scaling']),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--time-vectorized', '--input-scaling', '--output-scaling']),
     ('data_driven_instationary', [1, 'fcnn', 15, 3, 20]),
     ('data_driven_instationary', [1, 'lstm', 15, 3, 20]),
     ('data_driven_instationary', [1, 'gpr', 15, 3, 20]),
