@@ -174,12 +174,12 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         """Performs the prediction with correct scaling."""
         # collect all inputs in a single tensor
         if self.time_vectorized:
-            inputs = mu.to_numpy()
+            inputs = np.atleast_2d(mu.to_numpy())
             if self.input_scaler is not None:
-                inputs = self.input_scaler.transform(mu)
+                inputs = self.input_scaler.transform(inputs)
         else:
             if self.input_scaler is not None:
-                inputs = np.array([self.input_scaler.transform(mu.at_time(t).to_numpy())
+                inputs = np.array([self.input_scaler.transform(np.atleast_2d(mu.at_time(t).to_numpy())).flatten()
                                    for t in np.linspace(0., self.T, self.nt)])
             else:
                 inputs = np.array([mu.at_time(t).to_numpy() for t in np.linspace(0., self.T, self.nt)])

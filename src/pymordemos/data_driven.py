@@ -8,7 +8,6 @@ import numpy as np
 from typer import Argument, Option, run
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
-from pymor.algorithms.pod import pod
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
@@ -17,9 +16,9 @@ from pymor.tools.typer import Choices
 
 
 def main(
-    estimator: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
-                                                                   "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
-                                                                   "process regression using scikit-learn."),
+    estimator: Choices('fcnn vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
+                                                              "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
+                                                              "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
 
@@ -31,7 +30,7 @@ def main(
                                               'quantity.'),
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
-    if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
+    if estimator == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
@@ -49,12 +48,6 @@ def main(
                                                     validation_ratio=validation_ratio, tol=1e-5)
         estimator_output = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
                                                   validation_ratio=validation_ratio, tol=1e-5)
-    elif estimator == 'lstm':
-        from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkEstimator
-        estimator_solution = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                    validation_ratio=validation_ratio, tol=None)
-        estimator_output = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                  validation_ratio=validation_ratio, tol=None)
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
@@ -67,13 +60,17 @@ def main(
     if input_scaling or output_scaling:
         from sklearn.preprocessing import MinMaxScaler
     if input_scaling:
-        input_scaler = MinMaxScaler()
+        input_scaler_solution = MinMaxScaler()
+        input_scaler_output = MinMaxScaler()
     else:
-        input_scaler = None
+        input_scaler_solution = None
+        input_scaler_output = None
     if output_scaling:
-        output_scaler = MinMaxScaler()
+        output_scaler_solution = MinMaxScaler()
+        output_scaler_output = MinMaxScaler()
     else:
-        output_scaler = None
+        output_scaler_solution = None
+        output_scaler_output = None
 
     training_outputs = []
     training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
@@ -89,12 +86,13 @@ def main(
     reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
                                               estimator=estimator_solution, target_quantity='solution',
                                               reduced_basis=RB,
-                                              input_scaler=input_scaler, output_scaler=output_scaler)
+                                              input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
     rom_data_driven = reductor_data_driven.reduce()
 
     output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,
                                                      estimator=estimator_output, target_quantity='output',
-                                                     input_scaler=input_scaler, output_scaler=output_scaler)
+                                                     input_scaler=input_scaler_output,
+                                                     output_scaler=output_scaler_output)
     output_rom_data_driven = output_reductor_data_driven.reduce()
 
 

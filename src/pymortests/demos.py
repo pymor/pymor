@@ -72,11 +72,11 @@ DATA_DRIVEN_ARGS = (
     ('data_driven_instationary', [1, 'fcnn', 15, 3, 20]),
     ('data_driven_instationary', [1, 'lstm', 15, 3, 20]),
     ('data_driven_instationary', [1, 'gpr', 15, 3, 20]),
-)
-
-NEURAL_NETWORK_ARGS = (
-    ('neural_networks', [15, 20, 3]),
-    ('neural_networks_fenics', [15, 3]),
+    ('data_driven_fenics', ['vkoga', 15]),
+    ('data_driven_fenics', ['vkoga', 15, '--time-vectorized']),
+    ('data_driven_fenics', ['fcnn', 15]),
+    ('data_driven_fenics', ['lstm', 15]),
+    ('data_driven_fenics', ['gpr', 15]),
 )
 
 THERMALBLOCK_ARGS = (
@@ -189,7 +189,7 @@ VKOGA_2D_INPUT_ARGS = (
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
-    + NEURAL_NETWORK_ARGS
+    + DATA_DRIVEN_ARGS
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS

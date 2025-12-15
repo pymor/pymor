@@ -8,7 +8,6 @@ import numpy as np
 from typer import Argument, Option, run
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
-from pymor.algorithms.pod import pod
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
@@ -20,8 +19,9 @@ from pymor.tools.typer import Choices
 def main(
     problem_number: int = Argument(..., min=0, max=1, help='Selects the problem to solve [0 or 1].'),
     estimator: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
-                                                                   "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
-                                                                   "process regression using scikit-learn."),
+                                                                   "using PyTorch (fully-connected or long short-term "
+                                                                   "memory networks), pyMOR's VKOGA algorithm or "
+                                                                   "Gaussian process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
@@ -83,13 +83,17 @@ def main(
     if input_scaling or output_scaling:
         from sklearn.preprocessing import MinMaxScaler
     if input_scaling:
-        input_scaler = MinMaxScaler()
+        input_scaler_solution = MinMaxScaler()
+        input_scaler_output = MinMaxScaler()
     else:
-        input_scaler = None
+        input_scaler_solution = None
+        input_scaler_output = None
     if output_scaling:
-        output_scaler = MinMaxScaler()
+        output_scaler_solution = MinMaxScaler()
+        output_scaler_output = MinMaxScaler()
     else:
-        output_scaler = None
+        output_scaler_solution = None
+        output_scaler_output = None
 
     training_outputs = []
     training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
@@ -105,13 +109,14 @@ def main(
     reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
                                               estimator=estimator_solution, target_quantity='solution',
                                               reduced_basis=RB, T=fom.T, time_vectorized=time_vectorized,
-                                              input_scaler=input_scaler, output_scaler=output_scaler)
+                                              input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
     rom_data_driven = reductor_data_driven.reduce()
 
     output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,
                                                      estimator=estimator_output, target_quantity='output',
                                                      T=fom.T, time_vectorized=time_vectorized,
-                                                     input_scaler=input_scaler, output_scaler=output_scaler)
+                                                     input_scaler=input_scaler_output,
+                                                     output_scaler=output_scaler_output)
     output_rom_data_driven = output_reductor_data_driven.reduce()
 
 
