@@ -126,6 +126,10 @@ ngsolve = [
 scikit-fem = [
   "scikit-fem>=6.0.0",
 ]
+# Machine learning
+scikit-learn = [
+  "scikit-learn",
+]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
