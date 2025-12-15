@@ -37,9 +37,6 @@ class FullyConnectedNN(nn.Module, BasicObject):
 
         self.activation_function = activation_function
 
-        if not self.logging_disabled:
-            self.logger.info(f'Architecture of the neural network:\n{self}')
-
     def set_input_output_dimensions(self, input_dimension, output_dimension):
         layer_sizes = [input_dimension]
         layer_sizes.extend(self.hidden_layers)
@@ -100,8 +97,6 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         if input_dimension is not None:
             self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
                                 proj_size=output_dimension, batch_first=True).double()
-
-        self.logger.info(f'Architecture of the neural network:\n{self}')
 
     def set_input_output_dimensions(self, input_dimension, output_dimension):
         self.lstm = nn.LSTM(input_dimension, self.hidden_dimension, num_layers=self.number_layers,

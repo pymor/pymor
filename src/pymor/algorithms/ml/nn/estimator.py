@@ -116,6 +116,8 @@ class NeuralNetworkEstimator(BasicObject):
             else:
                 raise ValueError('Unknown value for mean squared error of neural network')
 
+        return self
+
     def predict(self, X):
         """Predict the target for the input `X`.
 
