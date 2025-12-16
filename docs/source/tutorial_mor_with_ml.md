@@ -21,15 +21,18 @@ kernelspec:
 
 ```
 
-# Tutorial: Model order reduction with artificial neural networks
+# Tutorial: Model order reduction with machine learning methods
 
-Recent success of artificial neural networks led to the development of several
-methods for model order reduction using neural networks. pyMOR provides the
+Recent success of machine learning methods such as artificial neural networks or
+kernel approaches led to the development of several
+methods for model order reduction using machine learning surrogates. pyMOR provides the
 functionality for a simple approach developed by Hesthaven and Ubbiali in {cite}`HU18`.
 For training and evaluation of the neural networks, [PyTorch](<https://pytorch.org>) is used.
+Kernel methods are implemented in pyMOR based on the vectorial kernel orthogonal
+greedy algorithm (VKOGA), see {class}`~pymor.algorithms.ml.vkoga.estimator.VKOGAEstimator`.
 
-In this tutorial we will learn about feedforward neural networks, the basic
-idea of the approach by Hesthaven et al., and how to use it in pyMOR.
+In this tutorial we will learn about feedforward neural networks and kernel greedy methods,
+the basic idea of the approach by Hesthaven and Ubbiali, and how to use it in pyMOR.
 
 ## Feedforward neural networks
 
@@ -77,14 +80,30 @@ one typically uses a Quasi-Newton method for small neural networks or a
 (stochastic) gradient descent method for deep neural networks (those with many
 hidden layers).
 
-A possibility to use feedforward neural networks in combination with reduced
-basis methods will be introduced in the following section.
+In pyMOR, there exists a training routine for neural networks. This
+procedure is part of the `fit`-method of the
+{class}`~pymor.algorithms.ml.nn.estimator.NeuralNetworkEstimator`
+and it is not necessary to write a custom training algorithm for each specific
+problem. The training data is automatically split in a random fashion into
+training and validation set. However, it is sometimes necessary to try
+different architectures for the neural network to find the one that best fits
+the problem at hand. In the estimator, one can easily adjust the number of
+layers and the number of neurons in each hidden layer, for instance.
+Furthermore, it is also possible to change the deployed activation function.
 
-## A non-intrusive reduced order method using artificial neural networks
+A possibility to use feedforward neural networks in combination with reduced
+basis methods will be discussed below. First, we introduce a different machine
+learning technique based on kernel interpolation. Both methods can be used within
+pyMOR for model order reduction. It is further possible to employ any estimator
+for regression problems from scikit-learn.
+
+## Greedy kernel methods
+
+## A non-intrusive reduced order method using machine learning
 
 We now assume that we are given a parametric pyMOR {{ Model }} for which we want
-to compute a reduced order surrogate {{ Model }} using a neural network. In this
-example, we consider the following two-dimensional diffusion problem with
+to compute a reduced order surrogate {{ Model }} using a machine learning method.
+In this example, we consider the following two-dimensional diffusion problem with
 parametrized diffusion, right hand side and Dirichlet boundary condition:
 
 ```{math}
@@ -152,80 +171,112 @@ since one can simply train a neural network, check its performance and resort
 to a different method if the neural network does not provide proper
 approximation results.
 
-In pyMOR, there exists a training routine for feedforward neural networks. This
-procedure is part of a reductor and it is not necessary to write a custom
-training algorithm for each specific problem. However, it is sometimes
-necessary to try different architectures for the neural network to find the one
-that best fits the problem at hand. In the reductor, one can easily adjust the
-number of layers and the number of neurons in each hidden layer, for instance.
-Furthermore, it is also possible to change the deployed activation function.
+Further, the method is actually independent of the particular machine learning
+approach. It is therefore possible to use, for instance, kernel methods instead
+of neural networks as originally proposed in {cite}`HU18`. In pyMOR, the implementation
+can deal with any estimator fulfilling the scikit-learn interface. The neural networks
+and the kernel methods are implemented in pyMOR in such a way that they also follow
+the scikit-learn interface and the reductor only requires such an estimator.
+In this tutorial, we will compare neural networks and kernel methods and show
+how they can be trained and used in the context of model order reduction.
 
-To train the neural network, we create a set of training and a validation parameters
-consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
+To train the machine learning surrogates, we create a set of training parameters
+consisting of 100 randomly chosen {{ parameter_values }}:
 
 ```{code-cell} ipython3
 training_parameters = parameter_space.sample_uniformly(100)
-validation_parameters = parameter_space.sample_randomly(20)
 ```
 
 In this tutorial, we construct the reduced basis such that no more modes than
 required to bound the l2-approximation error by a given value are used.
-The l2-approximation error is  the error of the orthogonal projection (in the
+The l2-approximation error is the error of the orthogonal projection (in the
 l2-sense) of the training snapshots onto the reduced basis. That is, we
-prescribe `l2_err` in the reductor. It is also possible to determine a relative
+prescribe `l2_err` in the POD method. It is also possible to determine a relative
 or absolute tolerance (in the singular values) that should not be exceeded on
 the training parameters. Further, one can preset the size of the reduced basis.
+The construction of the reduced basis is independent of the machine learning
+surrogate and is therefore not part of the reductor. The reduced basis has to be
+computed beforehand and provided (together with the reduced coeffcients, for
+instance the coefficients with respect to the reduced basis of the orthogonal
+projection onto the reduced space) to the reductor. Within the reductor, mainly
+the training of the estimator using the correct data formats is performed and
+suitable reduced models are constructed.
 
-The training is aborted when a neural network that guarantees our prescribed
-tolerance is found. If we set `ann_mse` to `None`, this function will
-automatically train several neural networks with different initial weights and
-select the one leading to the best results on the validation parameters. We can also
-set `ann_mse` to `'like_basis'`. Then, the algorithm tries to train a neural
-network that leads to a mean squared error on the training parameters that is as small
-as the error of the reduced basis. If the maximal number of restarts is reached
-without finding a network that fulfills the tolerances, an exception is raised.
-In such a case, one could try to change the architecture of the neural network
-or switch to `ann_mse=None` which is guaranteed to produce a reduced order
-model (perhaps with insufficient approximation properties).
-
-We can now construct a reductor with prescribed error for the basis and mean
-squared error of the neural network:
+We start by collecting the training snapshots associated to the training parameters:
 
 ```{code-cell} ipython3
-from pymor.reductors.neural_network import NeuralNetworkReductor
-
-reductor = NeuralNetworkReductor(fom,
-                                 training_parameters=training_parameters,
-                                 validation_parameters=validation_parameters,
-                                 l2_err=1e-5,
-                                 ann_mse=1e-5)
+training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
+for mu in training_parameters:
+    training_snapshots.append(fom.solve(mu))
 ```
 
-To reduce the model, i.e. compute a reduced basis via POD and train the neural
-network, we use the respective function of the
-{class}`~pymor.reductors.neural_network.NeuralNetworkReductor`:
+Afterwards, we compute a reduced basis using POD
 
 ```{code-cell} ipython3
-rom = reductor.reduce(restarts=100)
+RB, _ = pod(training_snapshots, l2_err=1e-5)
 ```
 
-We are now ready to test our reduced model by solving for a random parameter value
-the full problem and the reduced model and visualize the result:
+and project the training snapshots onto the reduced basis to obtain the
+training data for the machine learning surrogates:
+
+```{code-cell} ipython3
+projected_training_snapshots = training_snapshots.inner(RB)
+```
+
+We now initialize estimators for feedforward neural networks
+
+```{code-cell} ipython3
+from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
+neural_network = FullyConnectedNN(hidden_layers=[30, 30, 30])
+nn_estimator = NeuralNetworkEstimator(neural_network, tol=1e-4)
+```
+
+and kernel methods
+
+```{code-cell} ipython3
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+kernel = GaussianKernel(length_scale=1.0)
+vkoga_estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+```
+
+Finally, we construct data-driven reductors using the different estimators
+and call the respective `reduce`-method to start the training process:
+
+```{code-cell} ipython3
+from pymor.reductors.data_driven import DataDrivenReductor
+nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                 estimator=nn_estimator, reduced_basis=RB)
+nn_rom = nn_reductor.reduce()
+
+vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                    estimator=vkoga_estimator, reduced_basis=RB)
+vkoga_rom = vkoga_reductor.reduce()
+```
+
+We are now ready to test our reduced models by solving for a random parameter value
+the full problem and the reduced models and visualize the result:
 
 ```{code-cell} ipython3
 mu = parameter_space.sample_randomly()
 
 U = fom.solve(mu)
-U_red = rom.solve(mu)
-U_red_recon = reductor.reconstruct(U_red)
+# Neural network based model
+U_red_nn = nn_rom.solve(mu)
+U_red_nn_recon = nn_reductor.reconstruct(U_red_nn)
+# Kernel based model
+U_red_vkoga = vkoga_rom.solve(mu)
+U_red_vkoga_recon = vkoga_reductor.reconstruct(U_red_vkoga)
 
-fom.visualize((U, U_red_recon),
-              legend=(f'Full solution for parameter {mu}', f'Reduced solution for parameter {mu}'))
+fom.visualize((U, U_red_nn_recon, U_red_vkoga_recon),
+              legend=(f'Full solution for parameter {mu}', f'Reduced solution using NN for parameter {mu}',
+                      f'Reduced solution using VKOGA for parameter {mu}'))
 ```
 
-Finally, we measure the error of our neural network and the performance
-compared to the solution of the full order problem on the training parameters. To this
-end, we sample randomly some {{ parameter_values }} from our {{ ParameterSpace }}:
+Finally, we measure the error of our neural network and kernel surrogates
+and the performance in terms of computational speedup compared to the
+solution of the full order problem for some test parameters.
+To this end, we sample randomly
+some {{ parameter_values }} from our {{ ParameterSpace }}:
 
 ```{code-cell} ipython3
 test_parameters = parameter_space.sample_randomly(10)
@@ -236,9 +287,11 @@ empty list for the speedups:
 
 ```{code-cell} ipython3
 U = fom.solution_space.empty(reserve=len(test_parameters))
-U_red = fom.solution_space.empty(reserve=len(test_parameters))
+U_red_nn = fom.solution_space.empty(reserve=len(test_parameters))
+U_red_vkoga = fom.solution_space.empty(reserve=len(test_parameters))
 
-speedups = []
+speedups_nn = []
+speedups_vkoga = []
 ```
 
 Now, we iterate over the test parameters, compute full and reduced solutions to the
@@ -252,45 +305,64 @@ for mu in test_parameters:
     U.append(fom.solve(mu))
     time_fom = time.perf_counter() - tic
 
+    # Neural network based model
     tic = time.perf_counter()
-    U_red.append(reductor.reconstruct(rom.solve(mu)))
-    time_red = time.perf_counter() - tic
+    U_red_nn.append(nn_reductor.reconstruct(nn_rom.solve(mu)))
+    time_red_nn = time.perf_counter() - tic
+    speedups_nn.append(time_fom / time_red_nn)
 
-    speedups.append(time_fom / time_red)
+    # Kernel based model
+    tic = time.perf_counter()
+    U_red_vkoga.append(vkoga_reductor.reconstruct(vkoga_rom.solve(mu)))
+    time_red_vkoga = time.perf_counter() - tic
+    speedups_vkoga.append(time_fom / time_red_vkoga)
 ```
 
 We can now derive the absolute and relative errors on the training parameters as
 
 ```{code-cell} ipython3
-absolute_errors = (U - U_red).norm()
-relative_errors = (U - U_red).norm() / U.norm()
+absolute_errors_nn = (U - U_red_nn).norm()
+relative_errors_nn = absolute_errors_nn / U.norm()
+
+absolute_errors_vkoga = (U - U_red_vkoga).norm()
+relative_errors_vkoga = absolute_errors_vkoga / U.norm()
 ```
 
-The average absolute error amounts to
+The average absolute errors amount to
 
 ```{code-cell} ipython3
 import numpy as np
 
-np.average(absolute_errors)
+print(f"Neural network: {np.average(absolute_errors_nn)}")
+print(f"Kernel method: {np.average(absolute_errors_vkoga)}")
 ```
 
-On the other hand, the average relative error is
+On the other hand, the average relative errors are
 
 ```{code-cell} ipython3
-np.average(relative_errors)
+print(f"Neural network: {np.average(relative_errors_nn)}")
+print(f"Kernel method: {np.average(relative_errors_vkoga)}")
 ```
 
-Using neural networks results in the following median speedup compared to
+Using machine learning results in the following median speedups compared to
 solving the full order problem:
 
 ```{code-cell} ipython3
-np.median(speedups)
+print(f"Neural network: {np.median(speedups_nn)}")
+print(f"Kernel: {np.median(speedups_vkoga)}")
 ```
 
-Since {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` only calls
-the {meth}`~pymor.models.interface.Model.solve` method of the {{ Model }}, it can easily
-be applied to {{ Models }} originating from external solvers, without requiring any access to
-{{ Operators }} internal to the solver.
+Since {class}`~pymor.reductors.data_driven.DataDrivenReductor` only uses the provided
+training data, the approach presented here can easily be applied to {{ Models }}
+originating from external solvers, without requiring any access to {{ Operators }}
+internal to the solver. Examples using FEniCS for stationary and instationary problems
+together with the {class}`~pymor.reductors.data_driven.DataDrivenReductor` are provided
+in {mod}`~pymordemos.data_driven_fenics` and {mod}`~pymordemos.data_driven_instationary`.
+Furthermore, the stratedy is also applicable when no full-order model is available at all.
+Given a set of training snapshots (for instance read from a file), a reduced basis can be
+computed using a data-driven compression method such as POD, the snapshots can be
+projected onto the reduced basis and the machine learning training is handled by the
+data-driven reductor as shown before.
 
 ## Direct approximation of output quantities
 
@@ -304,9 +376,9 @@ mapping from parameter to output. That is, one can use a neural network to appro
 the output dimension.
 
 In the following, we will extend our problem from the last section by an output functional
-and use the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` to
-derive a reduced model that can solely be used to solve for the output quantity without
-computing a reduced state at all.
+and use the {class}`~pymor.reductors.data_driven.DataDrivenReductor` with the argument
+`target_quantity='output'` to derive a reduced model that can solely be used to solve
+for the output quantity without computing a reduced state at all.
 
 For the definition of the output, we define the output of out problem as the l2-product of the
 solution with the right hand side respectively Dirichlet boundary data of our original problem:
@@ -322,30 +394,41 @@ we also have to update the full order model to be aware of the output quantities
 fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 ```
 
-We can now import the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
-and initialize the reductor using the same data as before:
+We can now use again the {class}`~pymor.reductors.data_driven.DataDrivenReductor`
+(for simplicity we only consider kernel methods here) and initialize the reductor
+using output data:
 
 ```{code-cell} ipython3
-from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
+training_outputs = []
+for mu in training_parameters:
+    training_outputs.append(fom.output(mu)[:, 0])
+training_outputs = np.array(training_outputs)
 
-output_reductor = NeuralNetworkStatefreeOutputReductor(fom,
-                                                       training_parameters=training_parameters,
-                                                       validation_parameters=validation_parameters,
-                                                       validation_loss=1e-5)
+vkoga_output_estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+output_reductor = DataDrivenReductor(training_parameters, training_outputs,
+                                     estimator=vkoga_output_estimator, target_quantity='output')
 ```
 
-Similar to the `NeuralNetworkReductor`, we can call `reduce` to obtain a reduced order model.
-In this case, `reduce` trains a neural network to approximate the mapping from parameter to
-output directly. Therefore, we can only use the resulting reductor to solve for the outputs
-and not for state approximations. The `NeuralNetworkReductor` though can be used to do both by
-calling `solve` respectively `output` (if we had initialized the `NeuralNetworkReductor` with
-the problem including the output quantities).
+Observe that we now specified `target_quantity='output'` instead of the default value
+`target_quantity='solution'` when creating the reductor. On the other hand, we do not need
+a reduced basis now since we are solely interested in an approximation of the output.
+
+Similar to the {class}`~pymor.reductors.data_driven.DataDrivenReductor`
+with `target_quantity='solution'`, we can call `reduce` to obtain a reduced order model.
+In this case, `reduce` trains the machine learning surrogate to approximate the mapping from
+parameter to output directly. Therefore, we can only use the resulting reductor to solve for
+the outputs and not for state approximations.
+The {class}`~pymor.reductors.data_driven.DataDrivenReductor` with
+`target_quantity='solution'` though can be used to do both by calling `solve`
+respectively `output` (if we had initialized
+the {class}`~pymor.reductors.data_driven.DataDrivenReductor` with
+`target_quantity='solution'` and the problem including the output quantities).
 
 We now perform the reduction and run some tests with the resulting
-{class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
+{class}`~pymor.models.data_driven.DataDrivenModel`:
 
 ```{code-cell} ipython3
-output_rom = output_reductor.reduce(restarts=100)
+output_rom = output_reductor.reduce()
 
 outputs = []
 outputs_red = []
@@ -366,10 +449,10 @@ outputs = np.squeeze(np.array(outputs))
 outputs_red = np.squeeze(np.array(outputs_red))
 
 outputs_absolute_errors = np.abs(outputs - outputs_red)
-outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+outputs_relative_errors = outputs_absolute_errors / np.abs(outputs)
 ```
 
-The average absolute error (component-wise) on the training parameters is given by
+The average absolute error (component-wise) on the test parameters is given by
 
 ```{code-cell} ipython3
 np.average(outputs_absolute_errors)
@@ -389,14 +472,15 @@ np.median(outputs_speedups)
 
 ## Neural networks for instationary problems
 
-To solve instationary problems using neural networks, we have extended the
-{class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to also treat instationary cases, where time
-is treated as an additional parameter (see {cite}`WHR19`). It passes the input, together
-with the current time instance, through the neural network in each time step to obtain reduced
-coefficients. In the same fashion, the
-{class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` and the
-corresponding {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel` are extended to
-take instationary problems into account.
+To solve instationary problems using machine learning, we have extended the
+{class}`~pymor.reductors.data_driven.DataDrivenReductor` to also treat instationary cases,
+where time is treated either as an additional parameter (see {cite}`WHR19`) or the whole time
+trajectory can be predicted at once. In the first case, the input, together
+with the current time instance, is passed to the machine learning surrogate in each time step
+to obtain reduced coefficients. In the second case, the parameter is used as input and the of
+the machine learning surrogate is the complete time trajectory of reduced coefficients.
+In the same fashion, setting `target_quantity='output'` yields a reduced model for prediction
+of output trajectories without requiring information about the solution states.
 
 A slightly different approach that is also implemented in pyMOR and uses a different type of
 neural network is described in the following section.
@@ -410,9 +494,7 @@ time step to the next. Therefore, these networks implement an internal memory th
 information over time. Furthermore, for each element of the input sequence, the same neural
 network is applied.
 
-In the {class}`~pymor.models.neural_network.NeuralNetworkModel` obtained by the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`,
-we make use of a specific type of recurrent neural network, namely a so-called
+In pyMOR, a specific type of recurrent neural network is implemented, namely a so-called
 *long short-term memory neural network (LSTM)*, first introduced in {cite}`HS97`, that tries to
 avoid problems like vanishing or exploding gradients that often occur during training of recurrent
 neural networks.
@@ -523,19 +605,18 @@ time instance as an additional input of the neural network, we use an LSTM that 
 instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses
 the hidden states of the former time step. The output {math}`o(t_k)` of the LSTM (and therefore
 also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations of the reduced
-basis coefficients (similar to the
-{class}`~pymor.models.neural_network.NeuralNetworkModel`) or approximations of the
-output quantities (similar to the
-{class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`). For state approximations
-using a reduced basis, one can apply the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`.
-For a direct approximation of outputs using LSTMs, we provide the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMStatefreeOutputReductor`.
+basis coefficients (if `target_quantity='solution'`) or approximations of the
+output quantities (`target_quantity='output'`). In order to use LSTMs in pyMOR, one simply
+initializes a {class}`~pymor.algorithms.ml.nn.neural_networks.LongShortTermMemoryNN` and
+creates a {class}`~pymor.algorithms.ml.nn.estimator.NeuralNetworkEstimator` with the LSTM.
+Everything else is automatically handled by pyMOR when using
+the {class}`~pymor.reductors.data_driven.DataDrivenReductor`.
 
 ### Instationary neural network reductors in practice
 
-In the following we apply two neural network reductors to a parametrized parabolic equation.
-First, we import the parametrized heat equation example from {mod}`~pymor.models.examples`:
+In the following we apply different machine learning surrogates to a parametrized parabolic
+equation. First, we import the parametrized heat equation example from
+{mod}`~pymor.models.examples`:
 
 ```{code-cell} ipython3
 from pymor.models.examples import heat_equation_example
@@ -549,16 +630,15 @@ We further define the parameter space:
 parameter_space = fom.parameters.space(1, 25)
 ```
 
-Additionally, we sample training, validation and test parameters from the respective parameter space:
+Additionally, we sample training and test parameters from the respective parameter space:
 
 ```{code-cell} ipython3
 training_parameters = parameter_space.sample_uniformly(15)
-validation_parameters = parameter_space.sample_randomly(3)
 test_parameters = parameter_space.sample_randomly(10)
 ```
 
-To check how the two reductors perform, we write a simple function that measures the
-errors and the speedups on a set of test parameters:
+To check how the different reduced models perform, we write a simple function that measures
+the errors and the speedups on a set of test parameters:
 
 ```{code-cell} ipython3
 def compute_errors(rom, reductor):
@@ -585,29 +665,69 @@ def compute_errors(rom, reductor):
     return relative_errors, speedups
 ```
 
-We now run the
-{class}`~pymor.reductors.neural_network.NeuralNetworkReductor`
-and the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`
-with different parameters and evaluate their performance:
+We now run the {class}`~pymor.reductors.data_driven.DataDrivenReductor` using
+different machine learning surrogates (VKOGA, VKOGA with time-vectorization,
+fully-connected neural network, LSTM) and evaluate the performance of the
+resulting reduced models:
 
 ```{code-cell} ipython3
-from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkLSTMReductor
+training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
+for mu in training_parameters:
+    training_snapshots.append(fom.solve(mu))
 
 basis_size = 20
+RB, _ = pod(training_snapshots, modes=basis_size)
+projected_training_snapshots = training_snapshots.inner(RB)
+```
 
-reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters,
-                                 validation_parameters=validation_parameters, basis_size=basis_size,
-                                 pod_params={'product': product}, ann_mse=None, scale_inputs=True,
-                                 scale_outputs=True)
-rom = reductor.reduce(restarts=0)
-rel_errors, speedups = compute_errors(rom, reductor)
-reductor_lstm = NeuralNetworkLSTMReductor(fom, training_parameters=training_parameters,
-                                          validation_parameters=validation_parameters, basis_size=basis_size,
-                                          pod_params={'product': product}, ann_mse=None, scale_inputs=True,
-                                          scale_outputs=True)
-rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
-rel_errors_lstm, speedups_lstm = compute_errors(rom_lstm, reductor_lstm)
+It is often useful for the machine learning training to scale inputs and outputs,
+for instance using scikit-learn's `MinMaxScaler`. This will be incorporated below
+as well:
+
+```{code-cell} ipython3
+from sklearn.preprocessing import MinMaxScaler
+
+vkoga_estimator = VKOGAEstimator()
+vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                    estimator=vkoga_estimator, target_quantity='solution',
+                                    reduced_basis=RB, T=fom.T, time_vectorized=False,
+                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+vkoga_rom = vkoga_reductor.reduce()
+rel_errors_vkoga, speedups_vkoga = compute_errors(vkoga_rom, vkoga_reductor)
+```
+
+```{code-cell} ipython3
+vkoga_estimator_tv = VKOGAEstimator()
+vkoga_reductor_tv = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                    estimator=vkoga_estimator_tv, target_quantity='solution',
+                                    reduced_basis=RB, T=fom.T, time_vectorized=True,
+                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+vkoga_rom_tv = vkoga_reductor_tv.reduce()
+rel_errors_vkoga_tv, speedups_vkoga_tv = compute_errors(vkoga_rom_tv, vkoga_reductor_tv)
+```
+
+```{code-cell} ipython3
+nn_estimator = NeuralNetworkEstimator(tol=None, restarts=0)
+nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                 estimator=nn_estimator, target_quantity='solution',
+                                 reduced_basis=RB, T=fom.T, time_vectorized=False,
+                                 input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+nn_rom = nn_reductor.reduce()
+rel_errors_nn, speedups_nn = compute_errors(nn_rom, nn_reductor)
+```
+
+```{code-cell} ipython3
+"""
+from pymor.algorithms.ml.nn.neural_networks import LongShortTermMemoryNN
+lstm_estimator = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=25, number_layers=1),
+                                        tol=None, restarts=0, learning_rate=0.01)
+lstm_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
+                                   estimator=lstm_estimator, target_quantity='solution',
+                                   reduced_basis=RB, T=fom.T, time_vectorized=False,
+                                   input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+lstm_rom = lstm_reductor.reduce()
+rel_errors_lstm, speedups_lstm = compute_errors(lstm_rom, lstm_reductor)
+"""
 ```
 
 We finally print the results:
@@ -618,132 +738,30 @@ print('====================================')
 print()
 print('Approach by Hesthaven and Ubbiali using feedforward ANNs:')
 print('---------------------------------------------------------')
-print(f'Average relative error: {np.average(rel_errors)}')
-print(f'Median of speedup: {np.median(speedups)}')
+print(f'Average relative error: {np.average(rel_errors_nn)}')
+print(f'Median of speedup: {np.median(speedups_nn)}')
 print()
+"""
 print('Approach using long short-term memory ANNs:')
 print('-------------------------------------------')
 print(f'Average relative error: {np.average(rel_errors_lstm)}')
 print(f'Median of speedup: {np.median(speedups_lstm)}')
+"""
+print()
+print('Approach by Hesthaven and Ubbiali using VKOGA:')
+print('----------------------------------------------')
+print(f'Average relative error: {np.average(rel_errors_vkoga)}')
+print(f'Median of speedup: {np.median(speedups_vkoga)}')
+print()
+print('Approach by Hesthaven and Ubbiali using VKOGA (time-vectorized):')
+print('----------------------------------------------------------------')
+print(f'Average relative error: {np.average(rel_errors_vkoga_tv)}')
+print(f'Median of speedup: {np.median(speedups_vkoga_tv)}')
 ```
 
 In this example, we observe that the LSTMs perform much better than the feedforward ANNs in terms
 of accuracy while the speedups of both methods lie in the same order of magnitude.
 
-## Data-driven neural network without full-order model
-
-In the previous sections, we have seen how to use neural networks for model order reduction
-using a full-order model. However, if there is no full-order model available, one can utilise
-the neural network reductor to approximate the mapping from the {{ Parameters }} to the
-coefficients of the respective solution in a reduced basis from data which was generated by
-an arbitrary external solver. This works for all of the above discussed neural network reductors.
-
-In the following we will show an example with data generated from our initial two-dimensional
-diffusion problem with parametrized diffusion, right hand side and Dirichlet boundary condition.
-Therefore, we will use the
-{class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` to approximate the
-mapping from the {{ Parameters }} to the output quantities directly using the
-{class}`~pymor.reductors.neural_network.NeuralNetworkReductor` without the full-order model.
-
-We reuse the `problem` with output dimension {math}`q=2` and create a full order model that
-is aware of the output quantities:
-
-```{code-cell} ipython3
-fom, _ = discretize_stationary_cg(problem, diameter=1/50)
-```
-
-We create the {{ ParameterSpace }} similarly as before:
-
-```{code-cell} ipython3
-parameter_space = fom.parameters.space((0.1, 1))
-```
-
-To train the neural network, we create a set of training, validation and test parameters
-consisting of 100, 20 and 10 randomly chosen {{ parameter_values }}, respectively:
-
-```{code-cell} ipython3
-training_parameters = parameter_space.sample_uniformly(100)
-validation_parameters = parameter_space.sample_randomly(20)
-test_parameters = parameter_space.sample_randomly(10)
-```
-
-Contrary to the previous examples, we now generate data from the full order model. Therefore,
-we create `output` quantities for the `training_paramters` and `validation_parameters`:
-
-```{code-cell} ipython3
-training_outputs = []
-for mu in training_parameters:
-    training_outputs.append(fom.compute(output=True, mu=mu)['output'].flatten())
-training_outputs = np.array(training_outputs).T
-
-validation_outputs = []
-for mu in validation_parameters:
-    validation_outputs.append(fom.compute(output=True, mu=mu)['output'].flatten())
-validation_outputs = np.array(validation_outputs).T
-```
-
-Now we import the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
-and initialize the reductor passing only the {{ Parameters }} and the outputs without the
-full order model (`fom`):
-
-```{code-cell} ipython3
-from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
-
-output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
-                                                                   training_outputs=training_outputs,
-                                                                   validation_parameters=validation_parameters,
-                                                                   validation_outputs=validation_outputs,
-                                                                   validation_loss=1e-5)
-```
-
-Similar to the previous examples, the reduction can be performed using the `reduce` method,
-and we measure the speed up and the errors on the test parameters of the resulting
-{class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
-
-```{code-cell} ipython3
-output_rom_data_driven = output_reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
-
-outputs = []
-outputs_red_data_driven = []
-outputs_speedups_data_driven = []
-print(f'Performing test on parameters of size {len(test_parameters)} ...')
-
-for mu in test_parameters:
-    tic = time.perf_counter()
-    outputs.append(fom.compute(output=True, mu=mu)['output'])
-    time_fom = time.perf_counter() - tic
-
-    tic = time.perf_counter()
-    outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
-    time_red_data_driven = time.perf_counter() - tic
-
-    outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
-
-outputs = np.squeeze(np.array(outputs))
-outputs_red_data_driven = np.squeeze(np.array(outputs_red))
-
-outputs_absolute_errors_data_driven = np.abs(outputs - outputs_red_data_driven)
-outputs_relative_errors_data_driven = np.abs(outputs - outputs_red_data_driven) / np.abs(outputs)
-```
-
-The average absolute error (component-wise) on the training parameters is given by
-
-```{code-cell} ipython3
-np.average(outputs_absolute_errors_data_driven)
-```
-
-The average relative error is
-
-```{code-cell} ipython3
-np.average(outputs_relative_errors_data_driven)
-```
-
-and the median of the speedups amounts to
-
-```{code-cell} ipython3
-np.median(outputs_speedups_data_driven)
-```
-
 Download the code:
-{download}`tutorial_mor_with_anns.md`
-{nb-download}`tutorial_mor_with_anns.ipynb`
+{download}`tutorial_mor_with_ml.md`
+{nb-download}`tutorial_mor_with_ml.ipynb`
