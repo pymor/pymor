@@ -46,7 +46,7 @@ docs = [
 # to avoid pip-compile include pymor itself as a dependency, why is happening
 # when recursive extras are used within recursive extras
 docs-additional = [
-  "astroid<4",  # astroid 4 is incompatible with the pinned sphinx/autoapi version
+  "astroid<4", # astroid 4 is incompatible with the pinned sphinx/autoapi version
   "bash_kernel",
   "docutils",
   "myst-nb>=0.16",
