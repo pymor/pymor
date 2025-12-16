@@ -35,20 +35,24 @@ class NeuralNetworkEstimator(BasicObject):
         neural network with the smallest validation loss is used (usually,
         multiple restarts of the training using different initial guesses
         for the weights and biases are performed).
-    training_parameters
+    kwargs
         Additional training parameters passed to the training algorithm.
         For training,
         :func:`~pymor.algorithms.ml.nn.train.multiple_restarts_training`
-        is used.
+        is used. The default training parameters will be overriden by the
+        additional training parameters provided here.
     """
 
     @defaults('neural_network', 'validation_ratio', 'tol')
-    def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None,
-                 training_parameters={'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
-                                      'loss_function': None, 'restarts': 10, 'lr_scheduler': optim.lr_scheduler.StepLR,
-                                      'lr_scheduler_params': {'step_size': 10, 'gamma': 0.7},
-                                      'es_scheduler_params': {'patience': 10, 'delta': 0.}, 'weight_decay': 0.,
-                                      'log_loss_frequency': 0}):
+    def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None, **kwargs):
+        self.training_parameters = {'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
+                                    'loss_function': None, 'restarts': 10, 'lr_scheduler': optim.lr_scheduler.StepLR,
+                                    'lr_scheduler_params': {'step_size': 10, 'gamma': 0.7},
+                                    'es_scheduler_params': {'patience': 10, 'delta': 0.}, 'weight_decay': 0.,
+                                    'log_loss_frequency': 0}
+        for key, item in kwargs.items():
+            self.training_parameters[key] = item
+
         assert 0 < validation_ratio < 1
 
         self.__auto_init(locals())

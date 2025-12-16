@@ -68,9 +68,9 @@ def main(
     elif estimator == 'lstm':
         from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                    validation_ratio=validation_ratio, tol=None)
+                                                    validation_ratio=validation_ratio, tol=None, restarts=0)
         estimator_output = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                  validation_ratio=validation_ratio, tol=None)
+                                                  validation_ratio=validation_ratio, tol=None, restarts=0)
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
