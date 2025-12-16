@@ -42,7 +42,7 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - macos-13
+          - macos-15
           - windows-2022
         python:
           - '3.10'
@@ -51,10 +51,10 @@ jobs:
           - os: ubuntu-22.04
             prefix: /usr/share/miniconda3/envs/pyMOR-ci
             environment_file: conda-linux-64.lock
-          - os: macos-13
+          - os: macos-15
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
-          - os: macos-13
+          - os: macos-15
             python: 3.10
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
