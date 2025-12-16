@@ -51,7 +51,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         return K @ coeff
 
     def evaluate(self, mus, return_all_values=False):
-        mus = np.asarray(mus)
+        mus = np.asarray(self.X_train[mus])
         idxs = self._find_training_indices(mus)
         Xc = mus
         p2 = self._power2[idxs]
@@ -281,11 +281,12 @@ class VKOGAEstimator(BasicObject):
     Parameters
     ----------
     kernel
-        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output
-        and will be used for vector-valued outputs by multiplying with a suitable identity
-        matrix. The interface of the kernel needs to follow the scikit-learn interface and in
-        particular a `__call__`-method for (vectorized) evaluation of the kernel and a
-        `diag`-method for computing the diagonal of the kernel matrix are required.
+        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output.
+        For vector-valued outputs, the interpolant uses vector-valued coefficients,
+        i.e., the prediction is computed as a linear combination of kernel evaluations
+        with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
+        interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
+        and a `diag`-method for computing the diagonal of the kernel matrix are required.
         For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
@@ -323,7 +324,7 @@ class VKOGAEstimator(BasicObject):
         surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
 
         # use X as training set in the weak greedy algorithm
-        result = weak_greedy(surrogate, X, atol=self.tol, max_extensions=self.max_centers)
+        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=self.max_centers)
 
         self._surrogate = surrogate
         # store the results of the weak greedy algorithm for inspection/plotting
