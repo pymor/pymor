@@ -20,7 +20,9 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     associated with a training set of parameters by iteratively evaluating a
     :class:`surrogate <WeakGreedySurrogate>` for the approximation error on
     the training set and adding the worst approximated vector (according to
-    the surrogate) to the basis.
+    the surrogate) to the basis. Here, the training set does not necessarily
+    have to consist of parameters, but any set of indices suitable to
+    enumerate the set of vectors to approximate is possible.
 
     The constructed basis is extracted from the surrogate after termination
     of the algorithm.
@@ -31,7 +33,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
         An instance of :class:`WeakGreedySurrogate` representing the surrogate
         for the approximation error.
     training_set
-        The set of parameter samples on which to perform the greedy search.
+        The set of (parameter) samples on which to perform the greedy search.
     atol
         If not `None`, stop the algorithm if the maximum (estimated) error
         on the training set drops below this value.
