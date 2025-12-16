@@ -9,12 +9,16 @@ import numpy as np
 from typer import Option, run
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.core.config import config
+from pymor.core.exceptions import SklearnMissingError
 from pymor.tools.random import new_rng
 from pymor.tools.typer import Choices
 
 
 def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                                       help='Method for sampling the training points'),
+         kernel: Choices('Gaussian Matern RationalQuadratic') = Option('Gaussian',
+                                                                       help='Kernel to use in VKOGA.'),
          num_training_points: int = Option(40, help='Number of training points in the weak greedy algorithm.'),
          greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
          max_centers: int = Option(20, help='Maximum number of selected centers in the greedy algorithm.'),
@@ -24,7 +28,17 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                 'Only used when `kernel = diagonal`.')):
     """Approximates a function with 2d output from training data using VKOGA."""
     m = 2
-    kernel = GaussianKernel(length_scale)
+    if kernel in ('Matern', 'RationalQuadratic') and not config.HAVE_SKLEARN:
+        raise SklearnMissingError
+
+    if kernel == 'Gaussian':
+        kernel = GaussianKernel(length_scale)
+    elif kernel == 'Matern':
+        from sklearn.gaussian_process.kernels import Matern
+        kernel = Matern(length_scale)
+    elif kernel == 'RationalQuadratic':
+        from sklearn.gaussian_process.kernels import RationalQuadratic
+        kernel = RationalQuadratic(length_scale)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':

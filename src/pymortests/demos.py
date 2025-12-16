@@ -178,6 +178,8 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=fp']),
     ('vkoga', ['--greedy-criterion=f']),
     ('vkoga', ['--greedy-criterion=p']),
+    ('vkoga', ['--kernel=Matern']),
+    ('vkoga', ['--kernel=RationalQuadratic']),
 )
 
 VKOGA_2D_INPUT_ARGS = (
