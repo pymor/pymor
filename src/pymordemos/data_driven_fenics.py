@@ -21,20 +21,18 @@ FENICS_ORDER = 1
 
 
 def main(
-    estimator: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
-                                                                   "using PyTorch (fully-connected or long short-term "
-                                                                   "memory networks), pyMOR's VKOGA algorithm or "
-                                                                   "Gaussian process regression using scikit-learn."),
+    estimator: Choices('fcnn vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
+                                                              "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
+                                                              "process regression using scikit-learn."),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
 
     validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
-    time_vectorized: bool = Option(False, help='Predict the whole time trajectory at once or iteratively.'),
     input_scaling: bool = Option(False, help='Scale the input of the estimator (i.e. the parameter).'),
     output_scaling: bool = Option(False, help='Scale the output of the estimator (i.e. reduced coefficients or output '
                                               'quantity.'),
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
-    if (estimator == 'fcnn' or estimator == 'lstm') and not config.HAVE_TORCH:
+    if estimator == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
@@ -48,10 +46,6 @@ def main(
         from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
                                                     validation_ratio=validation_ratio, tol=1e-5)
-    elif estimator == 'lstm':
-        from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkEstimator
-        estimator_solution = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                    validation_ratio=validation_ratio, tol=None)
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
@@ -79,8 +73,7 @@ def main(
 
     reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
                                   estimator=estimator_solution, target_quantity='solution',
-                                  reduced_basis=RB, T=fom.T, time_vectorized=time_vectorized,
-                                  input_scaler=input_scaler, output_scaler=output_scaler)
+                                  reduced_basis=RB, input_scaler=input_scaler, output_scaler=output_scaler)
     rom = reductor.reduce()
 
     speedups = []

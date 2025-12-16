@@ -74,11 +74,9 @@ DATA_DRIVEN_ARGS = (
     ('data_driven_instationary', [1, 'fcnn', 15, 3, 20]),
     ('data_driven_instationary', [1, 'lstm', 15, 3, 20]),
     ('data_driven_instationary', [1, 'gpr', 15, 3, 20]),
-    ('data_driven_fenics', ['vkoga', 15]),
-    ('data_driven_fenics', ['vkoga', 15, '--time-vectorized']),
-    ('data_driven_fenics', ['fcnn', 15]),
-    ('data_driven_fenics', ['lstm', 15]),
-    ('data_driven_fenics', ['gpr', 15]),
+    ('data_driven_fenics', ['vkoga', 15, '--input-scaling', '--output-scaling']),
+    ('data_driven_fenics', ['fcnn', 15, '--input-scaling', '--output-scaling']),
+    ('data_driven_fenics', ['gpr', 15, '--input-scaling', '--output-scaling']),
 )
 
 THERMALBLOCK_ARGS = (
