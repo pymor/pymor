@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""VKOGA demo with 2d input."""
+"""Demo of the VKOGA algorithm for function approximation with a two-dimensional input."""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,6 +19,7 @@ def main(num_training_points: int = Option(100, help='Number of training points 
          reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
          length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
                                                 'Only used when `kernel = diagonal`.')):
+    """Approximates a function with 2d input and 2d output from training data using VKOGA."""
     # define kernel
     kernel = GaussianKernel(length_scale)
 

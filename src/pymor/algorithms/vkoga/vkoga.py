@@ -21,7 +21,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         F_train = np.asarray(F_train)
         if F_train.ndim == 1:
             F_train = F_train.reshape((-1, 1))
-        self.__auto_init(locals())            
+        self.__auto_init(locals())
         self.N, self.m = self.F_train.shape
         self.d = self.X_train.shape[1]
 
@@ -36,20 +36,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._power2 = self.kernel.diag(self.X_train) + self.reg
 
     def _find_training_indices(self, mus):
-        """Find mus within training data points (or their nearest neighbors)."""
-        # exact matches
-        eq = np.isclose(self.X_train[None, :, :], mus[:, None, :]).all(axis=2)
-        exact = eq.argmax(axis=1)  # 0 if no match, index otherwise
-        has_exact = eq.any(axis=1)
-
-        # nearest neighbors only for non-matches
-        if not has_exact.all():
-            diff = self.X_train[None, :, :] - mus[:, None, :]
-            dists = np.linalg.norm(diff, axis=2)
-            nn = dists.argmin(axis=1)
-            exact = np.where(has_exact, exact, nn)
-
-        return exact
+        """Find nearest neighbors of mus within training data points."""
+        diff = self.X_train[None, :, :] - mus[:, None, :]
+        dists = np.linalg.norm(diff, axis=2)
+        return dists.argmin(axis=1)
 
     def predict(self, X):
         X = np.asarray(X)
@@ -291,7 +281,12 @@ class VKOGAEstimator(BasicObject):
     Parameters
     ----------
     kernel
-        Kernel to use in the estimator.
+        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output
+        and will be used for vector-valued outputs by multiplying with a suitable identity
+        matrix. The interface of the kernel needs to follow the scikit-learn interface and in
+        particular a `__call__`-method for (vectorized) evaluation of the kernel and a
+        `diag`-method for computing the diagonal of the kernel matrix are required.
+        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
     max_centers
