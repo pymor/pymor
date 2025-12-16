@@ -228,8 +228,9 @@ matplotlib==3.6.2
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
     #   ipympl
-matplotlib-inline==0.2.1
+matplotlib-inline==0.1.7
     # via
+    #   -r ./requirements-ci-oldest-pins.in
     #   ipykernel
     #   ipython
 mdit-py-plugins==0.5.0
