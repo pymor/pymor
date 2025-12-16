@@ -55,6 +55,7 @@ docs-additional = [
   "sphinx-material",
   "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
+  "astroid<4"  # astroid 4 is incompatible with the pinned sphinx/autoapi version
 ]
 # additional dependencies for running tests via 'make tests'
 tests = [

@@ -15,8 +15,10 @@ argon2-cffi-bindings==25.1.0
     # via argon2-cffi
 arrow==1.4.0
     # via isoduration
-astroid==4.0.2
-    # via sphinx-autoapi
+astroid==3.3.11
+    # via
+    #   pymor (./pyproject.toml)
+    #   sphinx-autoapi
 asttokens==3.0.1
     # via stack-data
 async-lru==2.0.5

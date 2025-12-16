@@ -5,8 +5,10 @@
 
 alabaster==0.7.16
     # via sphinx
-astroid==4.0.2
-    # via sphinx-autoapi
+astroid==3.3.11
+    # via
+    #   pymor (./pyproject.toml)
+    #   sphinx-autoapi
 asttokens==3.0.1
     # via stack-data
 attrs==25.4.0
