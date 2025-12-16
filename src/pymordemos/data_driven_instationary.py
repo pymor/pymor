@@ -62,9 +62,9 @@ def main(
     if estimator == 'fcnn':
         from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
-                                                    validation_ratio=validation_ratio, tol=1e-5)
+                                                    validation_ratio=validation_ratio, tol=1e-4)
         estimator_output = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
-                                                  validation_ratio=validation_ratio, tol=1e-5)
+                                                  validation_ratio=validation_ratio, tol=1e-4)
     elif estimator == 'lstm':
         from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkEstimator
         estimator_solution = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
