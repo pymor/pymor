@@ -17,11 +17,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
     def __init__(self, kernel, X_train, F_train, criterion='fp', reg=1e-12):
         assert criterion in ('fp', 'f', 'p')
-        self.__auto_init(locals())
-        self.X_train = np.asarray(X_train)
-        self.F_train = np.asarray(F_train)
-        if self.F_train.ndim == 1:
-            self.F_train = self.F_train.reshape((-1, 1))
+        X_train = np.asarray(X_train)
+        F_train = np.asarray(F_train)
+        if F_train.ndim == 1:
+            F_train = F_train.reshape((-1, 1))
+        self.__auto_init(locals())            
         self.N, self.m = self.F_train.shape
         self.d = self.X_train.shape[1]
 
@@ -32,11 +32,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._K_X_mu = None
         self._V = None
         self._C = None
-
-        self._init_power_function_evals()
-
-    def _init_power_function_evals(self):
-        """Initialize power2 and V when no centers were selected yet."""
         # power2 = trace(k(x,x)) for each training point
         self._power2 = self.kernel.diag(self.X_train) + self.reg
 
