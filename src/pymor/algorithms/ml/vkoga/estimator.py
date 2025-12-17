@@ -27,7 +27,7 @@ class VKOGAEstimator(BasicObject):
         with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
         interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
         and a `diag`-method for computing the diagonal of the kernel matrix are required.
-        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
+        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.ml.vkoga.kernels`.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
     max_centers
