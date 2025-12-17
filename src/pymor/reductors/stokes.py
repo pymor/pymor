@@ -5,6 +5,8 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
+from pymor.operators.block import BlockDiagonalOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -127,6 +129,17 @@ class StationaryLSRBStokesReductor(StationaryLSRBReductor):
                  use_normal_equations=False, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, SaddlePointModel)
 
-        super().__init__(fom, RB=[RB_u, RB_p], product=[u_product, p_product],
-                         use_normal_equations=use_normal_equations, blocked_system=True,
+        RB = fom.solution_space.make_block_diagonal_array([RB_u, RB_p])
+        product = None
+        if u_product or p_product:
+            blocks = [
+                    u_product if u_product else IdentityOperator(fom.solution_space.subspaces[0]),
+                    p_product if p_product else IdentityOperator(fom.solution_space.subspaces[1])
+                ]
+            product = BlockDiagonalOperator(blocks)
+
+        super().__init__(fom, RB=RB, product=product, use_normal_equations=use_normal_equations,
                          check_orthonormality=check_orthonormality, check_tol=check_tol)
+
+    def reduce(self):
+        return self._reduce()
