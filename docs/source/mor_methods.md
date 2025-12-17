@@ -176,11 +176,11 @@ from pymor.algorithms.pod import pod
 RB, _ = pod(training_snapshots, l2_err=1e-5)
 projected_training_snapshots = training_snapshots.inner(RB)
 
-# instantiate reductor with training parameters, snapshots, reduced basis and estimator
+# instantiate reductor with training parameters, snapshots, reduced basis and regressor
 from pymor.reductors.data_driven import DataDrivenReductor
-from pymor.algorithms.ml.nn import NeuralNetworkEstimator
+from pymor.algorithms.ml.nn import NeuralNetworkRegressor
 reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                              estimator=NeuralNetworkEstimator(), reduced_basis=RB)
+                              regressor=NeuralNetworkRegressor(), reduced_basis=RB)
 rom = reductor.reduce(restarts=5)
 ```
 

@@ -22,7 +22,7 @@ class DataDrivenReductor(BasicObject):
     In case of an approximation of the solution, the reductor either
     takes a precomputed reduced basis or constructs a reduced basis
     using proper orthogonal decomposition. It then trains a machine
-    learning estimator that approximates the mapping from
+    learning regressor that approximates the mapping from
     parameter space to coefficients of the full-order solution
     in the reduced basis. Moreover, the reductor also works without
     providing a full-order model, in which case it requires a set of
@@ -30,7 +30,7 @@ class DataDrivenReductor(BasicObject):
     the reductor can be used in a completely data-driven manner.
     The approach is described in :cite:`HU18`.
 
-    For `target_quantity='output'`, the machine learning estimator
+    For `target_quantity='output'`, the machine learning regressor
     directly approximates the output depending on the parameter.
     The outputs for the training parameters are either computed using
     the full-order model or can be provided as the `training_snapshots`
@@ -39,43 +39,43 @@ class DataDrivenReductor(BasicObject):
     Parameters
     ----------
     training_parameters
-        |Parameter values| to use for training of the estimator.
+        |Parameter values| to use for training of the regressor.
     training_snapshots
-        |VectorArray| to use for the training of the estimator.
+        |VectorArray| to use for the training of the regressor.
         Contains the solutions or outputs associated to the parameters in
         `training_parameters`.
         In the case of a time-dependent problem, the snapshots are assumed to be
         equidistant in time.
-    estimator
-        Estimator with `fit` and `predict` methods similar to scikit-learn
-        estimators that is trained in the `reduce`-method.
+    regressor
+        Regressor with `fit` and `predict` methods similar to scikit-learn
+        regressors that is trained in the `reduce`-method.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     reduced_basis
         |VectorArray| of basis vectors of the reduced space that is used for
         reconstruction when the solution is the target quantity. If `None`,
-        the result of the estimator is returned by `reconstruct`.
+        the result of the regressor is returned by `reconstruct`.
     T
         In the instationary case, determines the final time until which to solve.
     time_vectorized
         In the instationary case, determines whether to predict the whole time
-        trajectory at once (time-vectorized version; output of the estimator is
+        trajectory at once (time-vectorized version; output of the regressor is
         typically very high-dimensional in this case) or if the result for a
         single point in time is approximated (time serves as an additional input
-        to the estimator).
+        to the regressor).
     input_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the parameters before passing them to the estimator.
+        used to scale the parameters before passing them to the regressor.
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
-        before passing them to the estimator.
+        before passing them to the regressor.
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 estimator=VKOGARegressor(GaussianKernel()), target_quantity='solution',
+                 regressor=VKOGARegressor(GaussianKernel()), target_quantity='solution',
                  reduced_basis=None, T=None, time_vectorized=False,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
@@ -105,7 +105,7 @@ class DataDrivenReductor(BasicObject):
         ----------
         kwargs
             Additional arguments that will be passed to the `fit` method
-            of the estimator.
+            of the regressor.
 
         Returns
         -------
@@ -127,7 +127,7 @@ class DataDrivenReductor(BasicObject):
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(self.training_parameters) * self.nt
 
-        # run the actual training of the estimator
+        # run the actual training of the regressor
         with self.logger.block('Training of machine learning method ...'):
             # fit input and output scaler if required
             if self.input_scaler is not None:
@@ -142,13 +142,13 @@ class DataDrivenReductor(BasicObject):
                 Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
             else:
                 Y = [x[1] for x in self.training_data]
-            # fit estimator to training data
-            self.estimator = self.estimator.fit(X, Y, **kwargs)
+            # fit regressor to training data
+            self.regressor = self.regressor.fit(X, Y, **kwargs)
 
         return self._build_rom()
 
     def compute_data(self, parameters, snapshots):
-        """Collect data for the estimator using the reduced basis."""
+        """Collect data for the regressor using the reduced basis."""
         data = []
         func = lambda i, mu: snapshots[i*self.nt:(i+1)*self.nt]
 
@@ -185,12 +185,12 @@ class DataDrivenReductor(BasicObject):
             if self.target_quantity == 'solution':
                 dim_solution_space = len(self.reduced_basis)
             if self.is_stationary:
-                rom = DataDrivenModel(self.estimator, target_quantity=self.target_quantity,
+                rom = DataDrivenModel(self.regressor, target_quantity=self.target_quantity,
                                       dim_solution_space=dim_solution_space, parameters=parameters,
                                       input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                       name=f'{name}_reduced')
             else:
-                rom = DataDrivenInstationaryModel(self.T, self.nt, self.estimator, target_quantity=self.target_quantity,
+                rom = DataDrivenInstationaryModel(self.T, self.nt, self.regressor, target_quantity=self.target_quantity,
                                                   dim_solution_space=dim_solution_space, parameters=parameters,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                                   time_vectorized=self.time_vectorized, name=f'{name}_reduced')

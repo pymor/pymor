@@ -49,10 +49,10 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
 
     F = np.column_stack([np.sin(2*np.pi*X).ravel(), np.cos(2*np.pi*X).ravel()])
 
-    estimator = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
-    estimator.fit(X, F)
+    regressor = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
+    regressor.fit(X, F)
 
-    weak_greedy_result = estimator._weak_greedy_result
+    weak_greedy_result = regressor._weak_greedy_result
     print('Result of the weak greedy algorithm:')
     print(weak_greedy_result)
 
@@ -78,7 +78,7 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
 
-    plot_vkoga_results(estimator, X, F)
+    plot_vkoga_results(regressor, X, F)
 
 
 if __name__ == '__main__':

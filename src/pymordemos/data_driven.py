@@ -16,7 +16,7 @@ from pymor.tools.typer import Choices
 
 
 def main(
-    estimator: Choices('fcnn vkoga gpr') = Argument(..., help="Estimator to use. Options are neural networks "
+    regressor: Choices('fcnn vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
                                                               "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
                                                               "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
@@ -25,14 +25,14 @@ def main(
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
     validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
-    input_scaling: bool = Option(False, help='Scale the input of the estimator (i.e. the parameter).'),
-    output_scaling: bool = Option(False, help='Scale the output of the estimator (i.e. reduced coefficients or output '
+    input_scaling: bool = Option(False, help='Scale the input of the regressor (i.e. the parameter).'),
+    output_scaling: bool = Option(False, help='Scale the output of the regressor (i.e. reduced coefficients or output '
                                               'quantity.'),
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
-    if estimator == 'fcnn' and not config.HAVE_TORCH:
+    if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
-    elif (estimator == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
+    elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
     fom = create_fom(fv, grid_intervals)
@@ -42,20 +42,20 @@ def main(
     training_parameters = parameter_space.sample_uniformly(training_samples)
     test_parameters = parameter_space.sample_randomly(10)
 
-    if estimator == 'fcnn':
-        from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
-        estimator_solution = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
+    if regressor == 'fcnn':
+        from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkRegressor
+        regressor_solution = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
                                                     validation_ratio=validation_ratio, tol=1e-5)
-        estimator_output = NeuralNetworkEstimator(FullyConnectedNN(hidden_layers=[30, 30, 30]),
+        regressor_output = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
                                                   validation_ratio=validation_ratio, tol=1e-5)
-    elif estimator == 'vkoga':
+    elif regressor == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
-        estimator_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
-        estimator_output = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
-    elif estimator == 'gpr':
+        regressor_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+        regressor_output = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+    elif regressor == 'gpr':
         from sklearn.gaussian_process import GaussianProcessRegressor
-        estimator_solution = GaussianProcessRegressor()
-        estimator_output = GaussianProcessRegressor()
+        regressor_solution = GaussianProcessRegressor()
+        regressor_output = GaussianProcessRegressor()
 
     if input_scaling or output_scaling:
         from sklearn.preprocessing import MinMaxScaler
@@ -84,13 +84,13 @@ def main(
     projected_training_snapshots = training_snapshots.inner(RB)
 
     reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                              estimator=estimator_solution, target_quantity='solution',
+                                              regressor=regressor_solution, target_quantity='solution',
                                               reduced_basis=RB,
                                               input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
     rom_data_driven = reductor_data_driven.reduce()
 
     output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,
-                                                     estimator=estimator_output, target_quantity='output',
+                                                     regressor=regressor_output, target_quantity='output',
                                                      input_scaler=input_scaler_output,
                                                      output_scaler=output_scaler_output)
     output_rom_data_driven = output_reductor_data_driven.reduce()

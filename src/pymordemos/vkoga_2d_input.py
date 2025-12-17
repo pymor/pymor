@@ -35,15 +35,15 @@ def main(num_training_points: int = Option(100, help='Number of training points 
     X_train = np.column_stack([X1.ravel(), X2.ravel()])
     F_train = f(X_train)
 
-    # set up estimator
-    estimator = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
-    estimator.fit(X_train, F_train)
+    # set up regressor
+    regressor = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
+    regressor.fit(X_train, F_train)
 
     # evaluation grid
     grid_test = np.linspace(0, 1, 40)
     X1t, X2t = np.meshgrid(grid_test, grid_test)
     X_test = np.column_stack([X1t.ravel(), X2t.ravel()])
-    F_pred = estimator.predict(X_test).squeeze()
+    F_pred = regressor.predict(X_test).squeeze()
     F_true = f(X_test)
     error = abs(F_true - F_pred)
 
@@ -52,7 +52,7 @@ def main(num_training_points: int = Option(100, help='Number of training points 
 
     # plot prediction
     axes[0].contourf(X1t, X2t, F_pred.reshape(X1t.shape), levels=20, cmap='coolwarm')
-    axes[0].scatter(X_train[estimator._surrogate._centers_idx, 0], X_train[estimator._surrogate._centers_idx, 1],
+    axes[0].scatter(X_train[regressor._surrogate._centers_idx, 0], X_train[regressor._surrogate._centers_idx, 1],
                     c='k', s=40, label='Centers')
     axes[0].set_title('Prediction s_n')
     axes[0].set_xlabel('x₁')
@@ -61,7 +61,7 @@ def main(num_training_points: int = Option(100, help='Number of training points 
 
     # plot reference
     axes[1].contourf(X1t, X2t, F_true.reshape(X1t.shape), levels=20, cmap='coolwarm')
-    axes[1].scatter(X_train[estimator._surrogate._centers_idx, 0], X_train[estimator._surrogate._centers_idx, 1],
+    axes[1].scatter(X_train[regressor._surrogate._centers_idx, 0], X_train[regressor._surrogate._centers_idx, 1],
                     c='k', s=40, label='Centers')
     axes[1].set_title('Reference f')
     axes[1].set_xlabel('x₁')
@@ -70,7 +70,7 @@ def main(num_training_points: int = Option(100, help='Number of training points 
 
     # plot error surface
     c = axes[2].contourf(X1t, X2t, error.reshape(X1t.shape), levels=20, cmap='viridis')
-    axes[2].scatter(X_train[estimator._surrogate._centers_idx, 0], X_train[estimator._surrogate._centers_idx, 1],
+    axes[2].scatter(X_train[regressor._surrogate._centers_idx, 0], X_train[regressor._surrogate._centers_idx, 1],
                     c='r', s=30, label='Centers')
     axes[2].scatter(X_train[:, 0], X_train[:, 1], c='k', s=10, label='Training points')
     axes[2].set_title('|f - s_n| error surface')

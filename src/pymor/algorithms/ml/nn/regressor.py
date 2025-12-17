@@ -19,13 +19,13 @@ from pymor.core.exceptions import NeuralNetworkTrainingError
 from pymor.tools.random import get_rng, get_seed_seq
 
 
-class NeuralNetworkEstimator(BasicObject):
-    """Scikit-learn-style estimator using neural networks from PyTorch.
+class NeuralNetworkRegressor(BasicObject):
+    """Scikit-learn-style regressor using neural networks from PyTorch.
 
     Parameters
     ----------
     neural_network
-        Neural network to use in the estimator. The neural network should
+        Neural network to use in the regressor. The neural network should
         implement a function `set_input_output_dimensions` that allows to
         change the input and the output dimension also after initialization.
     validation_ratio
@@ -72,7 +72,7 @@ class NeuralNetworkEstimator(BasicObject):
 
         Returns
         -------
-        The trained estimator.
+        The trained regressor.
         """
         for key, value in kwargs.items():
             self.training_parameters[key] = value

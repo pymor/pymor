@@ -11,9 +11,9 @@ from pymor.core.defaults import defaults
 
 
 class VKOGARegressor(BasicObject):
-    """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
+    """Scikit-learn-style regressor using the :class:`VKOGASurrogate`.
 
-    The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
+    The regressor uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
     to select centers according to the given criterion.
 
     The algorithm is described in :cite:`WH13` and :cite:`SH21`.
@@ -21,7 +21,7 @@ class VKOGARegressor(BasicObject):
     Parameters
     ----------
     kernel
-        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output.
+        Kernel to use in the regressor. The kernel is assumed to have a scalar-valued output.
         For vector-valued outputs, the interpolant uses vector-valued coefficients,
         i.e., the prediction is computed as a linear combination of kernel evaluations
         with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
@@ -55,7 +55,7 @@ class VKOGARegressor(BasicObject):
 
         Returns
         -------
-        The trained estimator.
+        The trained regressor.
         """
         X = np.asarray(X)
         Y = np.asarray(Y)

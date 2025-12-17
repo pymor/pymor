@@ -29,7 +29,7 @@ methods for model order reduction using machine learning surrogates. pyMOR provi
 functionality for a simple approach developed by Hesthaven and Ubbiali in {cite}`HU18`.
 For training and evaluation of the neural networks, [PyTorch](<https://pytorch.org>) is used.
 Kernel methods are implemented in pyMOR based on the vectorial kernel orthogonal
-greedy algorithm (VKOGA), see {class}`~pymor.algorithms.ml.vkoga.estimator.VKOGAEstimator`.
+greedy algorithm (VKOGA), see {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
 
 In this tutorial we will learn about feedforward neural networks and kernel greedy methods,
 the basic idea of the approach by Hesthaven and Ubbiali, and how to use it in pyMOR.
@@ -82,19 +82,19 @@ hidden layers).
 
 In pyMOR, there exists a training routine for neural networks. This
 procedure is part of the `fit`-method of the
-{class}`~pymor.algorithms.ml.nn.estimator.NeuralNetworkEstimator`
+{class}`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`
 and it is not necessary to write a custom training algorithm for each specific
 problem. The training data is automatically split in a random fashion into
 training and validation set. However, it is sometimes necessary to try
 different architectures for the neural network to find the one that best fits
-the problem at hand. In the estimator, one can easily adjust the number of
+the problem at hand. In the regressor, one can easily adjust the number of
 layers and the number of neurons in each hidden layer, for instance.
 Furthermore, it is also possible to change the deployed activation function.
 
 A possibility to use feedforward neural networks in combination with reduced
 basis methods will be discussed below. First, we introduce a different machine
 learning technique based on kernel interpolation. Both methods can be used within
-pyMOR for model order reduction. It is further possible to employ any estimator
+pyMOR for model order reduction. It is further possible to employ any regressor
 for regression problems from scikit-learn.
 
 ## Greedy kernel methods
@@ -174,9 +174,9 @@ approximation results.
 Further, the method is actually independent of the particular machine learning
 approach. It is therefore possible to use, for instance, kernel methods instead
 of neural networks as originally proposed in {cite}`HU18`. In pyMOR, the implementation
-can deal with any estimator fulfilling the scikit-learn interface. The neural networks
+can deal with any regressor fulfilling the scikit-learn interface. The neural networks
 and the kernel methods are implemented in pyMOR in such a way that they also follow
-the scikit-learn interface and the reductor only requires such an estimator.
+the scikit-learn interface and the reductor only requires such an regressor.
 In this tutorial, we will compare neural networks and kernel methods and show
 how they can be trained and used in the context of model order reduction.
 
@@ -199,7 +199,7 @@ surrogate and is therefore not part of the reductor. The reduced basis has to be
 computed beforehand and provided (together with the reduced coeffcients, for
 instance the coefficients with respect to the reduced basis of the orthogonal
 projection onto the reduced space) to the reductor. Within the reductor, mainly
-the training of the estimator using the correct data formats is performed and
+the training of the regressor using the correct data formats is performed and
 suitable reduced models are constructed.
 
 We start by collecting the training snapshots associated to the training parameters:
@@ -223,33 +223,33 @@ training data for the machine learning surrogates:
 projected_training_snapshots = training_snapshots.inner(RB)
 ```
 
-We now initialize estimators for feedforward neural networks
+We now initialize regressors for feedforward neural networks
 
 ```{code-cell} ipython3
-from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkEstimator
+from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkRegressor
 neural_network = FullyConnectedNN(hidden_layers=[30, 30, 30])
-nn_estimator = NeuralNetworkEstimator(neural_network, tol=1e-4)
+nn_regressor = NeuralNetworkRegressor(neural_network, tol=1e-4)
 ```
 
 and kernel methods
 
 ```{code-cell} ipython3
-from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 kernel = GaussianKernel(length_scale=1.0)
-vkoga_estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+vkoga_regressor = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
 ```
 
-Finally, we construct data-driven reductors using the different estimators
+Finally, we construct data-driven reductors using the different regressors
 and call the respective `reduce`-method to start the training process:
 
 ```{code-cell} ipython3
 from pymor.reductors.data_driven import DataDrivenReductor
 nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                 estimator=nn_estimator, reduced_basis=RB)
+                                 regressor=nn_regressor, reduced_basis=RB)
 nn_rom = nn_reductor.reduce()
 
 vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    estimator=vkoga_estimator, reduced_basis=RB)
+                                    regressor=vkoga_regressor, reduced_basis=RB)
 vkoga_rom = vkoga_reductor.reduce()
 ```
 
@@ -404,9 +404,9 @@ for mu in training_parameters:
     training_outputs.append(fom.output(mu)[:, 0])
 training_outputs = np.array(training_outputs)
 
-vkoga_output_estimator = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+vkoga_output_regressor = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
 output_reductor = DataDrivenReductor(training_parameters, training_outputs,
-                                     estimator=vkoga_output_estimator, target_quantity='output')
+                                     regressor=vkoga_output_regressor, target_quantity='output')
 ```
 
 Observe that we now specified `target_quantity='output'` instead of the default value
@@ -608,7 +608,7 @@ also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations
 basis coefficients (if `target_quantity='solution'`) or approximations of the
 output quantities (`target_quantity='output'`). In order to use LSTMs in pyMOR, one simply
 initializes a {class}`~pymor.algorithms.ml.nn.neural_networks.LongShortTermMemoryNN` and
-creates a {class}`~pymor.algorithms.ml.nn.estimator.NeuralNetworkEstimator` with the LSTM.
+creates a {class}`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor` with the LSTM.
 Everything else is automatically handled by pyMOR when using
 the {class}`~pymor.reductors.data_driven.DataDrivenReductor`.
 
@@ -687,9 +687,9 @@ as well:
 ```{code-cell} ipython3
 from sklearn.preprocessing import MinMaxScaler
 
-vkoga_estimator = VKOGAEstimator()
+vkoga_regressor = VKOGARegressor()
 vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    estimator=vkoga_estimator, target_quantity='solution',
+                                    regressor=vkoga_regressor, target_quantity='solution',
                                     reduced_basis=RB, T=fom.T, time_vectorized=False,
                                     input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
 vkoga_rom = vkoga_reductor.reduce()
@@ -697,9 +697,9 @@ rel_errors_vkoga, speedups_vkoga = compute_errors(vkoga_rom, vkoga_reductor)
 ```
 
 ```{code-cell} ipython3
-vkoga_estimator_tv = VKOGAEstimator()
+vkoga_regressor_tv = VKOGARegressor()
 vkoga_reductor_tv = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    estimator=vkoga_estimator_tv, target_quantity='solution',
+                                    regressor=vkoga_regressor_tv, target_quantity='solution',
                                     reduced_basis=RB, T=fom.T, time_vectorized=True,
                                     input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
 vkoga_rom_tv = vkoga_reductor_tv.reduce()
@@ -707,9 +707,9 @@ rel_errors_vkoga_tv, speedups_vkoga_tv = compute_errors(vkoga_rom_tv, vkoga_redu
 ```
 
 ```{code-cell} ipython3
-nn_estimator = NeuralNetworkEstimator(tol=None, restarts=0)
+nn_regressor = NeuralNetworkRegressor(tol=None, restarts=0)
 nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                 estimator=nn_estimator, target_quantity='solution',
+                                 regressor=nn_regressor, target_quantity='solution',
                                  reduced_basis=RB, T=fom.T, time_vectorized=False,
                                  input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
 nn_rom = nn_reductor.reduce()
@@ -719,10 +719,10 @@ rel_errors_nn, speedups_nn = compute_errors(nn_rom, nn_reductor)
 ```{code-cell} ipython3
 """
 from pymor.algorithms.ml.nn.neural_networks import LongShortTermMemoryNN
-lstm_estimator = NeuralNetworkEstimator(LongShortTermMemoryNN(hidden_dimension=25, number_layers=1),
+lstm_regressor = NeuralNetworkRegressor(LongShortTermMemoryNN(hidden_dimension=25, number_layers=1),
                                         tol=None, restarts=0, learning_rate=0.01)
 lstm_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                   estimator=lstm_estimator, target_quantity='solution',
+                                   regressor=lstm_regressor, target_quantity='solution',
                                    reduced_basis=RB, T=fom.T, time_vectorized=False,
                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
 lstm_rom = lstm_reductor.reduce()

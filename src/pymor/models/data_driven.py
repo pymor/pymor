@@ -10,16 +10,16 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class DataDrivenModel(Model):
-    """Class for models of stationary problems that use estimators for prediction.
+    """Class for models of stationary problems that use regressors for prediction.
 
-    This class implements a |Model| that uses an estimator for solution
+    This class implements a |Model| that uses an regressor for solution
     or output approximation.
 
     Parameters
     ----------
-    estimator
-        Estimator with `fit` and `predict` methods similar to scikit-learn
-        estimators that is trained in the `reduce`-method.
+    regressor
+        Regressor with `fit` and `predict` methods similar to scikit-learn
+        regressors that is trained in the `reduce`-method.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     parameters
@@ -30,12 +30,12 @@ class DataDrivenModel(Model):
     input_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the parameters before passing them to the estimator.
+        used to scale the parameters before passing them to the regressor.
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
-        before passing them to the estimator.
+        before passing them to the regressor.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
         this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -60,7 +60,7 @@ class DataDrivenModel(Model):
         Name of the model.
     """
 
-    def __init__(self, estimator, target_quantity='solution', parameters={}, dim_solution_space=None,
+    def __init__(self, regressor, target_quantity='solution', parameters={}, dim_solution_space=None,
                  input_scaler=None, output_scaler=None, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -80,7 +80,7 @@ class DataDrivenModel(Model):
         transformed_mu = np.atleast_2d(mu.to_numpy())
         if self.input_scaler is not None:
             transformed_mu = self.input_scaler.transform(transformed_mu)
-        U = self.estimator.predict(transformed_mu)
+        U = self.regressor.predict(transformed_mu)
         if self.output_scaler is not None:
             U = self.output_scaler.inverse_transform(U)
         return U.T
@@ -99,9 +99,9 @@ class DataDrivenModel(Model):
 
 
 class DataDrivenInstationaryModel(DataDrivenModel):
-    """Class for models of stationary problems that use estimators for prediction.
+    """Class for models of stationary problems that use regressors for prediction.
 
-    This class implements a |Model| that uses an estimator for solution
+    This class implements a |Model| that uses an regressor for solution
     or output approximation.
 
     Parameters
@@ -110,9 +110,9 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         In the instationary case, determines the final time until which to solve.
     nt
         Number of time steps.
-    estimator
-        Estimator with `fit` and `predict` methods similar to scikit-learn
-        estimators that is trained in the `reduce`-method.
+    regressor
+        Regressor with `fit` and `predict` methods similar to scikit-learn
+        regressors that is trained in the `reduce`-method.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     parameters
@@ -123,18 +123,18 @@ class DataDrivenInstationaryModel(DataDrivenModel):
     input_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the parameters before passing them to the estimator.
+        used to scale the parameters before passing them to the regressor.
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
-        before passing them to the estimator.
+        before passing them to the regressor.
     time_vectorized
         In the instationary case, determines whether to predict the whole time
-        trajectory at once (time-vectorized version; output of the estimator is
+        trajectory at once (time-vectorized version; output of the regressor is
         typically very high-dimensional in this case) or if the result for a
         single point in time is approximated (time serves as an additional input
-        to the estimator).
+        to the regressor).
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
         this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -159,11 +159,11 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         Name of the model.
     """
 
-    def __init__(self, T, nt, estimator, target_quantity='solution', parameters={},
+    def __init__(self, T, nt, regressor, target_quantity='solution', parameters={},
                  dim_solution_space=None, input_scaler=None, output_scaler=None,
                  time_vectorized=False, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
-        super().__init__(estimator, target_quantity=target_quantity, parameters=parameters,
+        super().__init__(regressor, target_quantity=target_quantity, parameters=parameters,
                          dim_solution_space=dim_solution_space, input_scaler=input_scaler, output_scaler=output_scaler,
                          output_functional=output_functional, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
@@ -183,8 +183,8 @@ class DataDrivenInstationaryModel(DataDrivenModel):
                                    for t in np.linspace(0., self.T, self.nt)])
             else:
                 inputs = np.array([mu.at_time(t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
-        # pass batch of inputs to estimator
-        U = self.estimator.predict(inputs)
+        # pass batch of inputs to regressor
+        U = self.regressor.predict(inputs)
         if self.output_scaler is not None:
             U = self.output_scaler.inverse_transform(U)
         if self.time_vectorized:
