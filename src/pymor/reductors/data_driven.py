@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
 
@@ -75,7 +75,7 @@ class DataDrivenReductor(BasicObject):
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 estimator=VKOGAEstimator(GaussianKernel()), target_quantity='solution',
+                 estimator=VKOGARegressor(GaussianKernel()), target_quantity='solution',
                  reduced_basis=None, T=None, time_vectorized=False,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')

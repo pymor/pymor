@@ -7,7 +7,7 @@ import time
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
@@ -48,7 +48,7 @@ def main(
                                                     validation_ratio=validation_ratio, tol=1e-5)
     elif estimator == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
-        estimator_solution = VKOGAEstimator(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+        estimator_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
     elif estimator == 'gpr':
         from sklearn.gaussian_process import GaussianProcessRegressor
         estimator_solution = GaussianProcessRegressor()

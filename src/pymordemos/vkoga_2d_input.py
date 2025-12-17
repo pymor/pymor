@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.tools.typer import Choices
 
 
@@ -36,7 +36,7 @@ def main(num_training_points: int = Option(100, help='Number of training points 
     F_train = f(X_train)
 
     # set up estimator
-    estimator = VKOGAEstimator(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
+    estimator = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
     estimator.fit(X_train, F_train)
 
     # evaluation grid

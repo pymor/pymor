@@ -10,7 +10,7 @@ from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
 
-class VKOGAEstimator(BasicObject):
+class VKOGARegressor(BasicObject):
     """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
 
     The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
@@ -90,7 +90,7 @@ class VKOGAEstimator(BasicObject):
 
 
 class VKOGASurrogate(WeakGreedySurrogate):
-    """Surrogate for the weak greedy error used when training the :class:`VKOGAEstimator`.
+    """Surrogate for the weak greedy error used when training the :class:`VKOGARegressor`.
 
     Not intended to be used directly.
     """
