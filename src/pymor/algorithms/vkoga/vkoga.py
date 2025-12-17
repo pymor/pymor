@@ -225,7 +225,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _extend_incremental(self, mu, idx_in_X):
         """Incrementally add a new center to the existing interpolant."""
         # compute k(yi, mu) for all training points y_i
-        self._K_X_mu = self.kernel(self.X_train, mu)
+        self._K_X_mu = self.kernel(self.X_train, np.atleast_2d(mu))
 
         # update coefficient
         z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(1, self.m)
