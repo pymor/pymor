@@ -9,6 +9,85 @@ from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
 
+class VKOGAEstimator(BasicObject):
+    """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
+
+    The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
+    to select centers according to the given criterion.
+
+    The algorithm is described in :cite:`WH13` and :cite:`SH21`.
+
+    Parameters
+    ----------
+    kernel
+        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output.
+        For vector-valued outputs, the interpolant uses vector-valued coefficients,
+        i.e., the prediction is computed as a linear combination of kernel evaluations
+        with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
+        interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
+        and a `diag`-method for computing the diagonal of the kernel matrix are required.
+        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
+    criterion
+        Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
+    max_centers
+        Maximum number of selected centers in the greedy algorithm.
+    tol
+        Tolerance for the weak greedy algorithm.
+    reg
+        Regularization parameter for the kernel interpolation.
+    """
+
+    @defaults('criterion', 'max_centers', 'tol', 'reg')
+    def __init__(self, kernel, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
+        self.__auto_init(locals())
+        self._surrogate = None
+
+    def fit(self, X, Y):
+        """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
+
+        Parameters
+        ----------
+        X
+            Training inputs.
+        Y
+            Training targets.
+
+        Returns
+        -------
+        The trained estimator.
+        """
+        X = np.asarray(X)
+        Y = np.asarray(Y)
+
+        # instantiate surrogate
+        surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
+
+        # use X as training set in the weak greedy algorithm
+        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=self.max_centers)
+
+        self._surrogate = surrogate
+        # store the results of the weak greedy algorithm for inspection/plotting
+        self._weak_greedy_result = result
+
+        return self
+
+    def predict(self, X):
+        """Predict the target for the input `X`.
+
+        Parameters
+        ----------
+        X
+            Input for which to compute the prediction.
+
+        Returns
+        -------
+        Prediction obtained by the :class:`VKOGASurrogate`.
+        """
+        if self._surrogate is None:
+            raise RuntimeError('Call fit() before predict().')
+        return self._surrogate.predict(X)
+
+
 class VKOGASurrogate(WeakGreedySurrogate):
     """Surrogate for the weak greedy error used when training the :class:`VKOGAEstimator`.
 
@@ -268,82 +347,3 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # update power2: p_{n+1}^2(x) = p_n^2(x) - norms
         norms = self._V[:, -1] ** 2
         self._power2 = np.maximum(self._power2 - norms, 0)
-
-
-class VKOGAEstimator(BasicObject):
-    """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
-
-    The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
-    to select centers according to the given criterion.
-
-    The algorithm is described in :cite:`WH13` and :cite:`SH21`.
-
-    Parameters
-    ----------
-    kernel
-        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output.
-        For vector-valued outputs, the interpolant uses vector-valued coefficients,
-        i.e., the prediction is computed as a linear combination of kernel evaluations
-        with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
-        interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
-        and a `diag`-method for computing the diagonal of the kernel matrix are required.
-        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
-    criterion
-        Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
-    max_centers
-        Maximum number of selected centers in the greedy algorithm.
-    tol
-        Tolerance for the weak greedy algorithm.
-    reg
-        Regularization parameter for the kernel interpolation.
-    """
-
-    @defaults('criterion', 'max_centers', 'tol', 'reg')
-    def __init__(self, kernel, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
-        self.__auto_init(locals())
-        self._surrogate = None
-
-    def fit(self, X, Y):
-        """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
-
-        Parameters
-        ----------
-        X
-            Training inputs.
-        Y
-            Training targets.
-
-        Returns
-        -------
-        The trained estimator.
-        """
-        X = np.asarray(X)
-        Y = np.asarray(Y)
-
-        # instantiate surrogate
-        surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
-
-        # use X as training set in the weak greedy algorithm
-        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=self.max_centers)
-
-        self._surrogate = surrogate
-        # store the results of the weak greedy algorithm for inspection/plotting
-        self._weak_greedy_result = result
-
-        return self
-
-    def predict(self, X):
-        """Predict the target for the input `X`.
-
-        Parameters
-        ----------
-        X
-            Input for which to compute the prediction.
-
-        Returns
-        -------
-        Prediction obtained by the :class:`VKOGASurrogate`.
-        """
-        if self._surrogate is None:
-            raise RuntimeError('Call fit() before predict().')
-        return self._surrogate.predict(X)
