@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.vkoga import GaussianKernel, VKOGAEstimator
+from pymor.algorithms.vkoga import GaussianKernel, VKOGARegressor
 from pymor.tools.random import new_rng
 from pymor.tools.typer import Choices
 
@@ -35,7 +35,7 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
 
     F = np.column_stack([np.sin(2*np.pi*X).ravel(), np.cos(2*np.pi*X).ravel()])
 
-    estimator = VKOGAEstimator(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
+    estimator = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
     estimator.fit(X, F)
 
     weak_greedy_result = estimator._weak_greedy_result
