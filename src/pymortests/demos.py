@@ -219,6 +219,7 @@ def _skip_if_no_solver(param):
             (lambda s: 'neural_networks_fenics' in s, 'FENICS'),
             (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
             (lambda s: 'thermalblock' in s and 'simple' not in s and 'fenics' in s, 'FENICS'),
+            (lambda s: 'stokes' in s, 'SCIKIT_FEM'),
     ]:
         needs_solver = check(full_str)
         if isinstance(package, tuple):
