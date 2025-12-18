@@ -5,6 +5,8 @@
 import numpy as np
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
+from pymor.algorithms.pod import pod
+from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
 
@@ -41,9 +43,9 @@ class DataDrivenReductor(BasicObject):
     training_parameters
         |Parameter values| to use for training of the regressor.
     training_snapshots
-        |VectorArray| to use for the training of the regressor.
-        Contains the solutions or outputs associated to the parameters in
-        `training_parameters`.
+        Iterable containing the training snapshots of the regressor.
+        Contains the solutions (reduced coefficients w.r.t. the reduced basis
+        or outputs associated to the parameters in `training_parameters`.
         In the case of a time-dependent problem, the snapshots are assumed to be
         equidistant in time.
     regressor
@@ -63,6 +65,10 @@ class DataDrivenReductor(BasicObject):
         typically very high-dimensional in this case) or if the result for a
         single point in time is approximated (time serves as an additional input
         to the regressor).
+    output_functional
+        |Operator| mapping a given solution to the model output. In many applications,
+        this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+        This is not required, however.
     input_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
@@ -76,12 +82,11 @@ class DataDrivenReductor(BasicObject):
 
     def __init__(self, training_parameters, training_snapshots,
                  regressor=VKOGARegressor(GaussianKernel()), target_quantity='solution',
-                 reduced_basis=None, T=None, time_vectorized=False,
+                 reduced_basis=None, T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
+        assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
-
-        self.training_data = None
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
@@ -100,10 +105,8 @@ class DataDrivenReductor(BasicObject):
 
         # compute training data
         # i.e. pairs of parameters (potentially including time) and reduced coefficients
-        if self.training_data is None:
-            with self.logger.block('Computing training data ...'):
-                self.training_data = self.compute_data(training_parameters, snapshots=training_snapshots)
-        assert self.training_data is not None
+        with self.logger.block('Computing training data ...'):
+            self.training_data = self._compute_data(training_parameters, snapshots=training_snapshots)
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
@@ -140,7 +143,7 @@ class DataDrivenReductor(BasicObject):
 
         return self._build_rom()
 
-    def compute_data(self, parameters, snapshots):
+    def _compute_data(self, parameters, snapshots):
         """Collect data for the regressor using the reduced basis."""
         data = []
         func = lambda i, mu: snapshots[i*self.nt:(i+1)*self.nt]
@@ -170,8 +173,6 @@ class DataDrivenReductor(BasicObject):
 
     def _build_rom(self):
         """Construct the reduced order model."""
-        name = 'DataDrivenModel'
-
         with self.logger.block('Building ROM ...'):
             dim_solution_space = None
             if self.target_quantity == 'solution':
@@ -179,18 +180,19 @@ class DataDrivenReductor(BasicObject):
             if self.is_stationary:
                 rom = DataDrivenModel(self.regressor, target_quantity=self.target_quantity,
                                       dim_solution_space=dim_solution_space, parameters=self.parameters,
-                                      input_scaler=self.input_scaler, output_scaler=self.output_scaler,
-                                      name=f'{name}_reduced')
+                                      output_functional=self.output_functional,
+                                      input_scaler=self.input_scaler, output_scaler=self.output_scaler)
             else:
                 rom = DataDrivenInstationaryModel(self.T, self.nt, self.regressor, target_quantity=self.target_quantity,
                                                   dim_solution_space=dim_solution_space, parameters=self.parameters,
+                                                  output_functional=self.output_functional,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
-                                                  time_vectorized=self.time_vectorized, name=f'{name}_reduced')
+                                                  time_vectorized=self.time_vectorized)
         return rom
 
     def extend_training_data(self, parameters, snapshots):
         """Add sequences of parameters and corresponding snapshots to the training data."""
-        self.training_data.extend(self.compute_data(parameters, snapshots))
+        self.training_data.extend(self._compute_data(parameters, snapshots))
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -198,3 +200,80 @@ class DataDrivenReductor(BasicObject):
         if self.reduced_basis is not None:
             return self.reduced_basis.lincomb(u.to_numpy())
         return u
+
+
+class DataDrivenPODReductor(DataDrivenReductor):
+    """Reductor building a reduced basis and relying on a machine learning surrogate.
+
+    In addition to the :class:`~pymor.reductors.data_driven.DataDrivenReductor`,
+    this reductor uses snapshot data in order to construct a reduced basis via POD
+    and projects the snapshots onto the reduced basis to generate data for the
+    machine learning training.
+    See :class:`~pymor.reductors.data_driven.DataDrivenReductor` for more details.
+
+    Parameters
+    ----------
+    training_parameters
+        |Parameter values| to use for training of the regressor.
+    training_snapshots
+        |VectorArray| to use for the training of the regressor.
+        Contains the solutions or outputs associated to the parameters in
+        `training_parameters`.
+        In the case of a time-dependent problem, the snapshots are assumed to be
+        equidistant in time.
+    regressor
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    T
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    time_vectorized
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    output_functional
+        |Operator| mapping a given solution to the model output. In many applications,
+        this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+        This is not required, however.
+        The output functional will be projected automatically onto the reduced space.
+    input_scaler
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    output_scaler
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    product
+        Inner product |Operators| defined on the discrete space the
+        problem is posed on. Used for reduced basis computation via POD and
+        or orthogonal projection onto the reduced basis.
+    pod_params
+        Dict of additional parameters for the POD-method.
+    """
+
+    def __init__(self, training_parameters, training_snapshots,
+                 regressor=VKOGARegressor(GaussianKernel()),
+                 T=None, time_vectorized=False, output_functional=None,
+                 input_scaler=None, output_scaler=None, product=None,
+                 pod_params={}):
+        self.reduced_basis = None
+        self.__auto_init(locals())
+
+    def reduce(self, **kwargs):
+        if self.reduced_basis is None:
+            self.reduced_basis, _ = self._compute_reduced_basis()
+            projected_training_snapshots = self.training_snapshots.inner(self.reduced_basis, product=self.product)
+            projected_output_functional = None
+            if self.output_functional is not None:
+                projected_output_functional = project(self.output_functional, self.reduced_basis)
+
+            super().__init__(self.training_parameters, projected_training_snapshots,
+                             regressor=self.regressor, target_quantity='solution',
+                             output_functional=projected_output_functional,
+                             reduced_basis=self.reduced_basis,
+                             T=self.T, time_vectorized=self.time_vectorized,
+                             input_scaler=self.input_scaler, output_scaler=self.output_scaler)
+
+        return super().reduce(kwargs)
+
+    def _compute_reduced_basis(self):
+        """Compute a reduced basis using POD."""
+        return pod(self.training_snapshots, **self.pod_params)
+
+    def extend_training_data(self, parameters, snapshots):
+        """Add sequences of parameters and corresponding snapshots to the training data."""
+        projected_snapshots = snapshots.inner(self.reduced_basis, product=self.product)
+        self.training_data.extend(self._compute_data(parameters, projected_snapshots))

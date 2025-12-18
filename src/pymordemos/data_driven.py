@@ -21,7 +21,8 @@ def main(
                                                               "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
                                                               "process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
-    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
+    training_samples: int = Argument(..., help='Number of samples used for computing the reduced basis and '
+                                               'training the regressor.'),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
@@ -85,15 +86,14 @@ def main(
     projected_training_snapshots = training_snapshots.inner(RB)
 
     reductor = DataDrivenReductor(training_parameters[:1], projected_training_snapshots[:1],
-                                              regressor=regressor_solution, target_quantity='solution',
-                                              reduced_basis=RB,
-                                              input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
+                                  regressor=regressor_solution, target_quantity='solution',
+                                  reduced_basis=RB, input_scaler=input_scaler_solution,
+                                  output_scaler=output_scaler_solution)
     rom = reductor.reduce()
 
     output_reductor = DataDrivenReductor(training_parameters[:1], training_outputs[:1],
-                                                     regressor=regressor_output, target_quantity='output',
-                                                     input_scaler=input_scaler_output,
-                                                     output_scaler=output_scaler_output)
+                                         regressor=regressor_output, target_quantity='output',
+                                         input_scaler=input_scaler_output, output_scaler=output_scaler_output)
     output_rom = output_reductor.reduce()
 
     print(f'Performing test on parameter set of size {len(test_parameters)} ...')

@@ -24,7 +24,8 @@ def main(
     regressor: Choices('fcnn vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
                                                               "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
                                                               "process regression using scikit-learn."),
-    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
+    training_samples: int = Argument(..., help='Number of samples used for computing the reduced basis and '
+                                               'training the regressor.'),
 
     validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
     input_scaling: bool = Option(False, help='Scale the input of the regressor (i.e. the parameter).'),

@@ -11,7 +11,7 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
-from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.reductors.data_driven import DataDrivenPODReductor, DataDrivenReductor
 from pymor.tools import mpi
 from pymor.tools.typer import Choices
 
@@ -24,7 +24,8 @@ def main(
                                                                    "Gaussian process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
-    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
+    training_samples: int = Argument(..., help='Number of samples used for computing the reduced basis and '
+                                               'training the regressor.'),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
@@ -103,13 +104,12 @@ def main(
         training_outputs.extend(o for o in res['output'].T)
     training_outputs = np.array(training_outputs)
 
-    RB, _ = pod(training_snapshots, l2_err=1e-5)
-    projected_training_snapshots = training_snapshots.inner(RB)
-
-    reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                              regressor=regressor_solution, target_quantity='solution',
-                                              reduced_basis=RB, T=fom.T, time_vectorized=time_vectorized,
-                                              input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
+    reductor_data_driven = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                                 regressor=regressor_solution, T=fom.T,
+                                                 time_vectorized=time_vectorized,
+                                                 input_scaler=input_scaler_solution,
+                                                 output_scaler=output_scaler_solution,
+                                                 pod_params={'l2_err': 1e-5})
     rom_data_driven = reductor_data_driven.reduce()
 
     output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,

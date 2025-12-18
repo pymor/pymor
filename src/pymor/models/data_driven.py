@@ -62,7 +62,7 @@ class DataDrivenModel(Model):
 
     def __init__(self, regressor, target_quantity='solution', parameters={}, dim_solution_space=None,
                  input_scaler=None, output_scaler=None, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, name='DataDrivenModel'):
 
         super().__init__(products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
@@ -162,7 +162,7 @@ class DataDrivenInstationaryModel(DataDrivenModel):
     def __init__(self, T, nt, regressor, target_quantity='solution', parameters={},
                  dim_solution_space=None, input_scaler=None, output_scaler=None,
                  time_vectorized=False, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, name='DataDrivenModel'):
         super().__init__(regressor, target_quantity=target_quantity, parameters=parameters,
                          dim_solution_space=dim_solution_space, input_scaler=input_scaler, output_scaler=output_scaler,
                          output_functional=output_functional, products=products, error_estimator=error_estimator,
