@@ -8,14 +8,18 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.image import estimate_image_hierarchical, estimate_image_hierarchical_blocked
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.simplify import expand
+from pymor.bindings.scipy import ScipyLSTSQSolver
 from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
-from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, InverseOperator
+from pymor.operators.block import BlockDiagonalOperator
+from pymor.operators.constructions import AdjointOperator, ConcatenationOperator, IdentityOperator, InverseOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -293,6 +297,213 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             time_stepper = time_stepper.with_(solver=None)
         return InstationaryModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
                                  error_estimator=error_estimator, **projected_operators)
+
+
+class StationaryLSRBReductor(ProjectionBasedReductor):
+    """Least-squares Petrov-Galerkin projection based reductor for stationary problems.
+
+    This reductor solves a least-squares problem either by Galerkin projection of the normal
+    equations (`use_normal_equations = True`) or by Petrov-Galerkin projection of the
+    least-squares residual.
+
+    This reductor supports blocked systems.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None`, an empty basis is used.
+        Can be a list or tuple of |VectorArrays| for blocked systems.
+    product
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
+        inner product is used. Can be a list or tuple of |Operators| for blocked systems.
+    use_normal_equations
+        If `True`, projects the normal equation instead of using a least-squares
+        solver. If `False`, equip the operator with a least-squares solver.
+    blocked_system
+        If `True`, `fom` is assumed to be a blocked system and `RB` and `product` have to be lists
+        or tuples of |VectorArrays| and |Operators|, respectively.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    """
+
+    def __init__(self, fom, RB=None, product=None, use_normal_equations=False,
+                 blocked_system=False, check_orthonormality=None, check_tol=None):
+        assert isinstance(fom, StationaryModel)
+
+        if RB is None:
+            assert blocked_system is not None
+            if blocked_system:
+                assert hasattr(fom.solution_space, 'subspaces')
+                RB = []
+                for i in range(len(fom.solution_space.subspaces)):
+                    RB.append(fom.solution_space.subspaces[i].empty())
+            else:
+                RB = fom.solution_space.empty()
+
+        if hasattr(fom.solution_space, 'subspaces'):
+            assert isinstance(RB, (list, tuple))
+            assert isinstance(product, (list, tuple))
+            self.blocked_system = True
+
+            if len(product) != len(RB):
+                raise ValueError(f'Length mismatch: {len(RB)} RBs but {len(product)} products')
+
+            if len(RB) != len(fom.solution_space.subspaces):
+                raise ValueError(f'Expected {len(fom.solution_space.subspaces)} RBs for blocked system, got {len(RB)}')
+
+            product_blocks = []
+            RB_dict = {}
+            product_dict = {}
+            for i, rb in enumerate(RB):
+                assert rb in fom.solution_space.subspaces[i]
+                RB_dict[f'RB_{i}'] = rb
+                product_dict[f'RB_{i}'] = product[i]
+                product_blocks.append(product[i] if product[i]
+                                      else IdentityOperator(fom.solution_space.subspaces[i].dim))
+            self.product = BlockDiagonalOperator(blocks=product_blocks)
+
+            # required for hierarchical image estimation
+            self.test_space_block_offset = [0 for _ in range(len(RB))]
+            self.test_space_raw_contributions = []
+            self.test_space_domain_vector_mapping = []
+
+        else:
+            assert RB in fom.solution_space
+            self.blocked_system = False
+            product_dict = {'RB': product}
+            RB_dict = {'RB': RB}
+            self.product = product
+
+        super().__init__(fom, RB_dict, product_dict, check_orthonormality=check_orthonormality, check_tol=check_tol)
+
+        self.test_space = fom.operator.range.empty()
+        self.test_space_dims = []
+        self.use_normal_equations = use_normal_equations
+
+    def _project_operators(self, dims, subbasis=False):
+        fom = self.fom
+
+        if self.blocked_system:
+            RB_blocks = []
+            for i in range(len(fom.solution_space.subspaces)):
+                RB_blocks.append(self.bases[f'RB_{i}'][:dims[f'RB_{i}']])
+            self._block_basis = fom.solution_space.make_block_diagonal_array(RB_blocks)
+            RB = self._block_basis
+        else:
+            RB = self.bases['RB']
+
+        if self.use_normal_equations:
+            # Solve LS problem argmin||Ax - b||_{W} via the normal equation: (A^* W A) x = A^* W b
+            # Note: we assume that A maps to the dual of the test space, therefore due to
+            # Riesz the inverse operator is required to compute the norm in the dual space.
+            W = InverseOperator(self.product) if self.product else None
+
+            projected_operators = {
+                'operator':          project(AdjointOperator(fom.operator, range_product=W) @ fom.operator,
+                                             range_basis=RB, source_basis=RB),
+                'rhs':               project(AdjointOperator(fom.operator, range_product=W) @ fom.rhs,
+                                             range_basis=RB, source_basis=None),
+                'output_functional': project(fom.output_functional, None, RB)
+            }
+
+        else:
+            expanded_op = expand(fom.operator)
+
+            # subbasis projection for blocked systems
+            if subbasis and len(self.test_space_domain_vector_mapping) > 0:
+                subbasis_test_space = fom.operator.range.empty()
+
+                for idx, (block_idx, vec_idx) in enumerate(self.test_space_domain_vector_mapping):
+                    if block_idx == -1:
+                        subbasis_test_space.append(self.test_space_raw_contributions[idx])
+                    elif vec_idx < dims[f'RB_{block_idx}']:
+                        subbasis_test_space.append(self.test_space_raw_contributions[idx])
+
+                self.test_space = gram_schmidt(subbasis_test_space, product=self.product, copy=False)
+
+            elif self.blocked_system:
+                extends = (self.test_space, self.test_space_dims, self.test_space_block_offset,
+                           self.test_space_raw_contributions, self.test_space_domain_vector_mapping)
+
+                # See comment in self.use_normal_equations == True: The inverse of self.product is
+                # used in estimate_image_hierarchical_blocked if riesz_representatives == True.
+                self.test_space, self.test_space_dims, self.test_space_block_offset, \
+                self.test_space_raw_contributions, self.test_space_domain_vector_mapping = \
+                    estimate_image_hierarchical_blocked(operators=[expanded_op],
+                                                        domain_blocks=RB_blocks,
+                                                        extends=extends,
+                                                        orthonormalize=True,
+                                                        product=self.product,
+                                                        riesz_representatives=True)
+
+            else:
+                extends = (self.test_space, self.test_space_dims)
+                self.test_space, self.test_space_dims = estimate_image_hierarchical(operators=[expanded_op],
+                                                                                    domain=RB,
+                                                                                    extends=extends,
+                                                                                    orthonormalize=True,
+                                                                                    product=self.product,
+                                                                                    riesz_representatives=True)
+
+            projected_operators = {
+                'operator':          project(fom.operator, range_basis=self.test_space,
+                                             source_basis=RB).with_(solver=ScipyLSTSQSolver()),
+                'rhs':               project(fom.rhs, range_basis=self.test_space, source_basis=None),
+                'products':          {k: project(v, self.test_space, RB) for k, v in fom.products.items()},
+                'output_functional': project(fom.output_functional, None, RB)
+            }
+        return projected_operators
+
+    def _project_operators_to_subbasis(self, dims):
+        rom = self._last_rom
+        dim = dims['RB']
+
+        if self.use_normal_equations:
+            # Square system: both dimensions are the same
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, dim, None),
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
+        else:
+            # Rectangular system: test space (range) is larger than trial space (source)
+            range_dim = self.test_space_dims[dim]
+            projected_operators = {
+                'operator':          project_to_subbasis(rom.operator, range_dim, dim),
+                'rhs':               project_to_subbasis(rom.rhs, range_dim, None),
+                'products':          {k: project_to_subbasis(v, range_dim, dim) for k, v in rom.products.items()},
+                'output_functional': project_to_subbasis(rom.output_functional, None, dim)
+            }
+        return projected_operators
+
+    def project_operators(self):
+        dims = {k: len(v) for k, v in self.bases.items()}
+        return self._project_operators(dims=dims)
+
+    def project_operators_to_subbasis(self, dims):
+        assert len(dims) == len(self.bases)
+        assert set(dims.keys()) == set(self.bases.keys())
+
+        if self.blocked_system:
+            # if the system is blocked, we always need to recompute the whole projection
+            # as slicing out the correct blocks is currently not supported
+            return self._project_operators(dims=dims, subbasis=True)
+        else:
+            return self._project_operators_to_subbasis(dims=dims)
+
+    def reconstruct(self, u, basis='RB'):
+        if self.blocked_system:
+            return self._block_basis.lincomb(u.to_numpy())
+        else:
+            return super().reconstruct(u, basis)
+
+    def build_rom(self, projected_operators, error_estimator):
+        return StationaryModel(error_estimator=error_estimator, **projected_operators)
 
 
 class LTIPGReductor(ProjectionBasedReductor):
