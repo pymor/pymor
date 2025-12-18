@@ -79,12 +79,14 @@ class DataDrivenReductor(BasicObject):
                  reduced_basis=None, T=None, time_vectorized=False,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
+        self.__auto_init(locals())
 
         self.training_data = None
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
         assert training_snapshots is not None
+        self.parameters = training_parameters[0].parameters()
         self.parameters_dim = training_parameters[0].parameters().dim
         self.nt = int(len(training_snapshots) / len(training_parameters))
         assert len(training_snapshots) == len(training_parameters) * self.nt
@@ -96,7 +98,14 @@ class DataDrivenReductor(BasicObject):
             assert T is None
             self.is_stationary = True
 
-        self.__auto_init(locals())
+        # compute training data
+        # i.e. pairs of parameters (potentially including time) and reduced coefficients
+        if self.training_data is None:
+            with self.logger.block('Computing training data ...'):
+                self.training_data = self.compute_data(training_parameters, snapshots=training_snapshots)
+        assert self.training_data is not None
+        if self.is_stationary or not self.time_vectorized:
+            assert len(self.training_data) == len(training_parameters) * self.nt
 
     def reduce(self, **kwargs):
         """Reduce by training a machine learning surrogate.
@@ -111,22 +120,6 @@ class DataDrivenReductor(BasicObject):
         -------
         The data-driven reduced model.
         """
-        if self.target_quantity == 'solution' and self.training_snapshots is None:
-            self.training_snapshots = self.compute_snapshots(self.training_parameters)
-
-        # build a reduced basis using POD if necessary
-        if self.target_quantity == 'solution' and self.reduced_basis is None:
-            self.compute_reduced_basis()
-
-        # compute training data
-        # i.e. pairs of parameters (potentially including time) and reduced coefficients
-        if self.training_data is None:
-            with self.logger.block('Computing training data ...'):
-                self.training_data = self.compute_data(self.training_parameters, snapshots=self.training_snapshots)
-        assert self.training_data is not None
-        if self.is_stationary or not self.time_vectorized:
-            assert len(self.training_data) == len(self.training_parameters) * self.nt
-
         # run the actual training of the regressor
         with self.logger.block('Training of machine learning method ...'):
             # fit input and output scaler if required
@@ -177,7 +170,6 @@ class DataDrivenReductor(BasicObject):
 
     def _build_rom(self):
         """Construct the reduced order model."""
-        parameters = self.training_parameters[0].parameters()
         name = 'DataDrivenModel'
 
         with self.logger.block('Building ROM ...'):
@@ -186,15 +178,19 @@ class DataDrivenReductor(BasicObject):
                 dim_solution_space = len(self.reduced_basis)
             if self.is_stationary:
                 rom = DataDrivenModel(self.regressor, target_quantity=self.target_quantity,
-                                      dim_solution_space=dim_solution_space, parameters=parameters,
+                                      dim_solution_space=dim_solution_space, parameters=self.parameters,
                                       input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                       name=f'{name}_reduced')
             else:
                 rom = DataDrivenInstationaryModel(self.T, self.nt, self.regressor, target_quantity=self.target_quantity,
-                                                  dim_solution_space=dim_solution_space, parameters=parameters,
+                                                  dim_solution_space=dim_solution_space, parameters=self.parameters,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                                   time_vectorized=self.time_vectorized, name=f'{name}_reduced')
         return rom
+
+    def extend_training_data(self, parameters, snapshots):
+        """Add sequences of parameters and corresponding snapshots to the training data."""
+        self.training_data.extend(self.compute_data(parameters, snapshots))
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

@@ -4,6 +4,7 @@
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 from typer import Argument, Option, run
 
@@ -39,7 +40,7 @@ def main(
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-    training_parameters = parameter_space.sample_uniformly(training_samples)
+    training_parameters = parameter_space.sample_randomly(training_samples)
     test_parameters = parameter_space.sample_randomly(10)
 
     if regressor == 'fcnn':
@@ -83,74 +84,96 @@ def main(
     RB, _ = pod(training_snapshots, l2_err=1e-5)
     projected_training_snapshots = training_snapshots.inner(RB)
 
-    reductor_data_driven = DataDrivenReductor(training_parameters, projected_training_snapshots,
+    reductor = DataDrivenReductor(training_parameters[:1], projected_training_snapshots[:1],
                                               regressor=regressor_solution, target_quantity='solution',
                                               reduced_basis=RB,
                                               input_scaler=input_scaler_solution, output_scaler=output_scaler_solution)
-    rom_data_driven = reductor_data_driven.reduce()
+    rom = reductor.reduce()
 
-    output_reductor_data_driven = DataDrivenReductor(training_parameters, training_outputs,
+    output_reductor = DataDrivenReductor(training_parameters[:1], training_outputs[:1],
                                                      regressor=regressor_output, target_quantity='output',
                                                      input_scaler=input_scaler_output,
                                                      output_scaler=output_scaler_output)
-    output_rom_data_driven = output_reductor_data_driven.reduce()
-
+    output_rom = output_reductor.reduce()
 
     print(f'Performing test on parameter set of size {len(test_parameters)} ...')
-
     U = fom.solution_space.empty(reserve=len(test_parameters))
-    U_red_data_driven = fom.solution_space.empty(reserve=len(test_parameters))
-    speedups_data_driven = []
-
+    timings_fom = []
     outputs = []
-    outputs_red = []
-    outputs_speedups = []
-
+    output_timings_fom = []
     for mu in test_parameters:
         tic = time.perf_counter()
         U.append(fom.solve(mu))
         time_fom = time.perf_counter() - tic
-
-        tic = time.perf_counter()
-        U_red_data_driven.append(reductor_data_driven.reconstruct(rom_data_driven.solve(mu)))
-        time_red_data_driven = time.perf_counter() - tic
-
-        speedups_data_driven.append(time_fom / time_red_data_driven)
+        timings_fom.append(time_fom)
 
         tic = time.perf_counter()
         outputs.append(fom.output(mu=mu))
-        time_fom = time.perf_counter() - tic
+        output_time_fom = time.perf_counter() - tic
+        output_timings_fom.append(output_time_fom)
 
-        tic = time.perf_counter()
-        outputs_red.append(output_rom_data_driven.output(mu=mu))
-        time_red = time.perf_counter() - tic
+    error_statistics = []
+    output_error_statistics = []
 
-        outputs_speedups.append(time_fom / time_red)
+    speedups = []
+    outputs_speedups = []
+    for mu, ts, to in zip(training_parameters[1:], projected_training_snapshots[1:], training_outputs[1:],
+                          strict=False):
+        print(f'Extending training data by {mu}...')
+        reductor.extend_training_data([mu], ts.reshape((1, -1)))
+        reductor.reduce()
+        output_reductor.extend_training_data([mu], to.reshape((1, -1)))
+        output_reductor.reduce()
 
-    outputs = np.squeeze(np.array(outputs))
-    outputs_red = np.squeeze(np.array(outputs_red))
+        U_red = fom.solution_space.empty(reserve=len(test_parameters))
+        timings_red = []
 
-    outputs_absolute_errors = np.abs(outputs - outputs_red)
-    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+        outputs_red = []
+        output_timings_red = []
 
-    absolute_errors_data_driven = (U - U_red_data_driven).norm()
-    relative_errors_data_driven = (U - U_red_data_driven).norm() / U.norm()
+        for mu in test_parameters:
+            tic = time.perf_counter()
+            U_red.append(reductor.reconstruct(rom.solve(mu)))
+            time_red = time.perf_counter() - tic
+            timings_red.append(time_red)
 
-    if vis:
-        fom.visualize((U, U_red_data_driven),
-                      legend=('Full solution', 'Reduced solution (data-driven)'))
+            tic = time.perf_counter()
+            outputs_red.append(output_rom.output(mu=mu))
+            output_time_red = time.perf_counter() - tic
+            output_timings_red.append(output_time_red)
 
-    print()
-    print('Results for state approximation:')
-    print(f'Average absolute error: {np.average(absolute_errors_data_driven)}')
-    print(f'Average relative error: {np.average(relative_errors_data_driven)}')
-    print(f'Median of speedup: {np.median(speedups_data_driven)}')
+        speedups.append(np.array(timings_fom) / np.array(timings_red))
+        outputs_speedups.append(np.array(output_timings_fom) / np.array(output_timings_red))
 
-    print()
-    print('Results for output approximation:')
-    print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
-    print(f'Average relative error: {np.average(outputs_relative_errors)}')
-    print(f'Median of speedup: {np.median(outputs_speedups)}')
+        outputs = np.squeeze(np.array(outputs))
+        outputs_red = np.squeeze(np.array(outputs_red))
+
+        outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+        output_error_statistics.append(outputs_relative_errors)
+        relative_errors = (U - U_red).norm() / U.norm()
+        error_statistics.append(relative_errors)
+
+    fig, axs = plt.subplots(2, 2)
+    axs[0, 0].set_xlabel('number of training data points')
+    axs[0, 0].set_ylabel('error over test set')
+    axs[0, 0].boxplot(np.array(error_statistics).T, patch_artist=True)
+    axs[0, 0].semilogy()
+    axs[0, 0].set_title('Errors in state approximation')
+    axs[0, 1].set_xlabel('number of training data points')
+    axs[0, 1].set_ylabel('speedups')
+    axs[0, 1].boxplot(np.array(speedups).T, patch_artist=True)
+    axs[0, 1].set_title('Speedups of the state approximation')
+    axs[1, 0].set_xlabel('number of training data points')
+    axs[1, 0].set_ylabel('error over test set')
+    output_error_statistics = np.linalg.norm(np.array(output_error_statistics), axis=-1)
+    axs[1, 0].boxplot(output_error_statistics.T, patch_artist=True)
+    axs[1, 0].semilogy()
+    axs[1, 0].set_title('Errors in output approximation')
+    axs[1, 1].set_xlabel('number of training data points')
+    axs[1, 1].set_ylabel('speedups')
+    axs[1, 1].boxplot(np.array(outputs_speedups).T, patch_artist=True)
+    axs[1, 1].set_title('Speedups of the output approximation')
+    plt.show()
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(
