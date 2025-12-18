@@ -283,7 +283,7 @@ class PAAAReductor(BasicObject):
             for idc in itertools.product(*(range(s) for s in shapes)):
                 l_idc = list(idc)
                 l_idc.insert(i, slice(None))
-                L = nd_loewner(self.samples[tuple(l_idc)], [self.sampling_values[i]], [self.itpl_part[i]])
+                L = full_nd_loewner(self.samples[tuple(l_idc)], [self.sampling_values[i]], [self.itpl_part[i]])
                 rk = np.linalg.matrix_rank(L, tol=self.L_rk_tol)
                 if rk > max_rk:
                     max_rk = rk
@@ -301,48 +301,22 @@ class PAAAReductor(BasicObject):
         L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
         _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
         VH = np.conj(V.T)
-        coefs = VH[:, -1:]
+        coefs = VH[:, -1]
 
         return coefs
 
 
-def nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix using only LS partitions.
+def _cauchy_itpl(s, itpl_part):
+    """Compute a modified Cauchy matrix for Loewner matrix construction."""
+    N = s.shape[0]
+    k = len(itpl_part)
+    ls_part = sorted(set(range(len(s))) - set(itpl_part))
 
-    .. note::
-       For non-parametric data this is simply the regular Loewner matrix.
+    C = np.zeros((k, N), dtype=s.dtype)
+    C[:, itpl_part] = np.eye(k)
+    C[:, ls_part] = 1.0 / (s[ls_part] - s[itpl_part][:, None])
 
-    Parameters
-    ----------
-    samples
-        Tensor of samples (see :class:`PAAAReductor`).
-    svs
-        List of sampling values (see :class:`PAAAReductor`).
-    itpl_part
-        Nested list such that `itpl_part[i]` is a list of indices for interpolated
-        sampling values in `svs[i]`.
-
-    Returns
-    -------
-    L
-        (Parametric) Loewner matrix based only on LS partition.
-    """
-    d = len(samples.shape)
-    ls_part = [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs, strict=True)]
-
-    sdpd = 1
-    for i in range(d):
-        p0 = svs[i]
-        p = p0[itpl_part[i]]
-        ph = p0[ls_part[i]]
-        pd = ph[:, np.newaxis] - p
-        sdpd = np.kron(sdpd, pd)
-    samples0 = samples[np.ix_(*itpl_part)].reshape(-1)
-    samples1 = samples[np.ix_(*ls_part)].reshape(-1, 1)
-    samplesd = samples1 - samples0
-
-    return samplesd / sdpd
-
+    return C.T
 
 def full_nd_loewner(samples, svs, itpl_part):
     """Compute higher-dimensional Loewner matrix using all combinations of partitions.
@@ -365,38 +339,23 @@ def full_nd_loewner(samples, svs, itpl_part):
     L
         (Parametric) Loewner matrix based on all combinations of partitions.
     """
-    L = nd_loewner(samples, svs, itpl_part)
-    range_S = range(len(svs))
+    itpl_samples = samples[np.ix_(*itpl_part)]
 
-    # consider all combinations of variables coming from interpolation vs LS partition
-    # `i_itpl[i]` is `True` if we are considering a partitioning where the `i`-th parameter
-    # is interpolated
-    for i_itpl in itertools.product(*([False, True] for _ in range_S)):
+    kron_C = 1
+    zr_idc = True
+    for i in range(len(svs)):
+        # form modified Cauchy matrix kronecker product
+        C = _cauchy_itpl(svs[i], itpl_part[i])
+        kron_C = np.kron(kron_C, C)
 
-        # skip cases corresponding to all interpolated or all LS fit
-        if not any(i_itpl) or all(i_itpl):
-            continue
+        # construction of zero rows indices
+        zr_idx = np.zeros(len(svs[i]), dtype=bool)
+        zr_idx[itpl_part[i]] = 1
+        zr_idc = np.kron(zr_idx,zr_idc)
 
-        svs0 = [svs[k] for k in range_S if i_itpl[k]]
-        itpl_part0 = [itpl_part[k] for k in range_S if i_itpl[k]]
+    L = samples.reshape(-1,1) * kron_C - (itpl_samples.reshape(-1,1) * kron_C.T).T
 
-        for j in itertools.product(*(itpl_part[k] for k in range_S if not i_itpl[k])):
-            l_j = list(j)
-            for ii in range(len(i_itpl)):
-                if i_itpl[ii]:
-                    l_j.insert(ii, slice(None))
-            samples0 = samples[tuple(l_j)]
-            T_mat = 1
-            for k in range_S:
-                if i_itpl[k]:
-                    T_new = np.eye(len(itpl_part[k]))
-                else:
-                    idx = np.where(np.array(itpl_part[k]) == l_j[k])[0][0]
-                    T_new = np.eye(1, len(itpl_part[k]), idx)
-                T_mat = np.kron(T_mat, T_new)
-            LL = nd_loewner(samples0, svs0, itpl_part0)
-            L = np.vstack([L, LL @ T_mat])
-    return L
+    return L[np.invert(zr_idc),:]
 
 
 def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
