@@ -106,6 +106,7 @@ THERMALBLOCK_SIMPLE_ARGS = (
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--grid=20', '--plot-ei-err', '--plot-err', '--plot-solutions']),
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--grid=20', '--ei-alg=deim', '--plot-error-landscape']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--grid=20', '--ei-alg=qdeim']),
 )
 
 PARABOLIC_MOR_ARGS = (

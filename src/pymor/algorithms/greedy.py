@@ -14,18 +14,29 @@ from pymor.parallel.interface import RemoteObject
 
 
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
-    """Weak greedy basis generation algorithm :cite:`BCDDPW11`.
+    r"""Weak greedy basis generation algorithm :cite:`BCDDPW11`.
 
     This algorithm generates an approximation basis for a given set of vectors
-    associated with a training set of parameters by iteratively evaluating a
-    :class:`surrogate <WeakGreedySurrogate>` for the approximation error on
-    the training set and adding the worst approximated vector (according to
-    the surrogate) to the basis. Here, the training set does not necessarily
-    have to consist of parameters, but any set of indices suitable to
-    enumerate the set of vectors to approximate is possible.
 
-    The constructed basis is extracted from the surrogate after termination
-    of the algorithm.
+    .. math::
+        \mathcal{M} := \{v_{\mu} \,|\, \mu \in \mathcal{S}_{\text{train}}\}.
+
+    In each iteration of the algorithm, a vector :math:`v_{\mu^*}` from
+    :math:`\mathcal{M}` is determined which maximizes the estimated
+    best-approxmiation error w.r.t. the current basis. Then, the basis is
+    extended with :math:`v_{\mu^*}`.
+
+    The algorithm expects a :class:`surrogate <WeakGreedySurrogate>`, which can
+    :meth:`estimate <WeakGreedySurrogate.evaluate>` the best-approximation error for
+    any given :math:`v_\mu`, :math:`\mu \in \mathcal{S}_{\text{train}}`, where the
+    `training_set` :math:`\mathcal{S}_{\text{train}}` is a list of arbitrary
+    Python objects (not necessarily |Mu| instances).
+    Further the :class:`surrogate <WeakGreedySurrogate>` needs to be able to
+    :meth:`~WeakGreedySurrogate.extend` the approximation basis with :math:`v_\mu`
+    for any given :math:`\mu \in \mathcal{S}_{\text{train}}`.
+
+    The constructed basis has to be extracted from the surrogate by the user after
+    termination of the algorithm.
 
     Parameters
     ----------
@@ -145,6 +156,14 @@ class WeakGreedySurrogate(BasicObject):
 
     @abstractmethod
     def extend(self, mu):
+        r"""Extend the approximation basis.
+
+        Parameters
+        ----------
+        mu
+            A parameter from the `training_set` for which to add the corresponding
+            vector :math:`v_\mu` to the approximation basis.
+        """
         pass
 
 
