@@ -64,7 +64,7 @@ class SaddlePointModel(StationaryModel):
     """
 
     def __init__(self, A, B, f, g=None, C=None, u_product=None, p_product=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, name=None, solver=None):
         assert isinstance(A, Operator)
         assert isinstance(B, Operator)
         assert isinstance(f, Operator | VectorArray)
@@ -77,7 +77,7 @@ class SaddlePointModel(StationaryModel):
         if C is not None:
             assert C.source == C.range == B.range
 
-        operator = BlockOperator([[A, AdjointOperator(B)], [B, C]])
+        operator = BlockOperator([[A, AdjointOperator(B)], [B, C]], solver=solver)
 
         if isinstance(f, Operator):
             assert f.range == A.source

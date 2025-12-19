@@ -367,6 +367,7 @@ def stokes_2Dexample(rhs):
     from skfem.utils import bmat, condense
 
     from pymor.analyticalproblems.functions import Function
+    from pymor.bindings.scipy import ScipySpSolveSolver
     from pymor.discretizers.skfem.cg import VectorL2Functional
     from pymor.models.saddle_point import SaddlePointModel
     from pymor.operators.constructions import LincombOperator
@@ -428,6 +429,6 @@ def stokes_2Dexample(rhs):
     u_product = NumpyMatrixOperator(u_product_c)
     p_product = NumpyMatrixOperator(p_product_c)
 
-    fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product)
+    fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product, solver=ScipySpSolveSolver())
 
     return fom
