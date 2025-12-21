@@ -7,7 +7,7 @@ matplotlib-inline<0.2
 pillow<10.4        # 10.4 fails on import due to np.typing not having NDArray attr
 torch==1.11.0+cpu
 k3d==2.15.2
-scikit-fem==6.0.0
+scikit-fem==8.0.0
 slycot==0.5.4
 
 # we cannot include the entire docs-additional extra since the pinned sphinx only

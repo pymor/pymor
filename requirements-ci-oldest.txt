@@ -435,7 +435,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-scikit-fem==6.0.0
+scikit-fem==8.0.0
     # via
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)

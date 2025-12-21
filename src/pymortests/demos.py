@@ -176,6 +176,10 @@ VKOGA_2D_INPUT_ARGS = (
     ('vkoga_2d_input', ['--greedy-criterion=p']),
 )
 
+STOKES_REDUCTOR_ARGS = (
+    ('stokes', []),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
@@ -196,6 +200,7 @@ DEMO_ARGS = (
     + SYMPLECTIC_WAVE_ARGS
     + VKOGA_ARGS
     + VKOGA_2D_INPUT_ARGS
+    + STOKES_REDUCTOR_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
@@ -214,6 +219,7 @@ def _skip_if_no_solver(param):
             (lambda s: 'neural_networks_fenics' in s, 'FENICS'),
             (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
             (lambda s: 'thermalblock' in s and 'simple' not in s and 'fenics' in s, 'FENICS'),
+            (lambda s: 'stokes' in s, 'SCIKIT_FEM'),
     ]:
         needs_solver = check(full_str)
         if isinstance(package, tuple):
