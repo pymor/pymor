@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
 def thermal_block_example(diameter=1/100):
     """Return 2x2 thermal block example.
 
@@ -254,7 +253,6 @@ def heat_equation_example(grid_intervals=50, nt=50):
 
     return fom
 
-
 def heat_equation_non_parametric_example(diameter=0.1, nt=100):
     """Return non-parametric heat equation example with one output.
 
@@ -290,7 +288,6 @@ def heat_equation_non_parametric_example(diameter=0.1, nt=100):
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
 
     return fom
-
 
 def heat_equation_1d_example(diameter=0.01, nt=100):
     """Return parametric 1D heat equation example with one output.
@@ -332,22 +329,27 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
 
     return fom
 
-def stokes_2Dexample(rhs):
-    r"""Return a discretization of the parametric, stationary Stokes equation on the unit circle.
+def stokes_2Dexample(mesh_resolution=4, rhs=None):
+    r"""Return a discretization of a parametric, stationary Stokes equation on the unit disk.
 
-    Discretizes the following Stokes equation .. math::
+    Discretizes the following Stokes equation
+
+    .. math::
 
         - \mu \Delta u(x, \mu) + \nabla p(x, \mu) & = f(x) \text{ in } \Omega \\
         \nabla \cdot u(x, \mu) & = 0 \text{ in } \Omega
 
     with homogenous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
-    and :math:`\Omega` is the unit circle. To eliminate the singularity of the saddle-point system,
+    and :math:`\Omega` is the unit disk. To eliminate the singularity of the saddle-point system,
     one pressure node is set to zero.
 
     Parameters
     ----------
+    mesh_resolution
+        The number of mesh refinements performed by the scikit-fem discretizer on the unit disk.
     rhs
         The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
+        If `None`, a default right-hand side is choosen.
 
     Returns
     -------
@@ -366,7 +368,7 @@ def stokes_2Dexample(rhs):
     from skfem.models.poisson import mass, vector_laplace
     from skfem.utils import bmat, condense
 
-    from pymor.analyticalproblems.functions import Function
+    from pymor.analyticalproblems.functions import ExpressionFunction, Function
     from pymor.bindings.scipy import ScipySpSolveSolver
     from pymor.discretizers.skfem.cg import VectorL2Functional
     from pymor.models.saddle_point import SaddlePointModel
@@ -376,11 +378,14 @@ def stokes_2Dexample(rhs):
     from pymor.parameters.functionals import ExpressionParameterFunctional
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+    if rhs is None:
+        rhs = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
+
     assert isinstance(rhs, Function)
     assert rhs.dim_domain == 2
     assert rhs.shape_range == (2,)
 
-    mesh = MeshTri.init_circle(4)
+    mesh = MeshTri.init_circle(mesh_resolution)
 
     # Taylor-Hood discretization
     element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
@@ -411,12 +416,11 @@ def stokes_2Dexample(rhs):
     B_c = K_c[free_u:, :free_u]
 
     all_u = np.arange(u_product.shape[0])
-    free_idx_u = np.setdiff1d(all_u, D_u)
     all_p = np.arange(p_product.shape[0])
+    free_idx_u = np.setdiff1d(all_u, D_u)
     free_idx_p = np.setdiff1d(all_p, D_p)
-
-    u_product_c = u_product[free_idx_u][:, free_idx_u]
-    p_product_c = p_product[free_idx_p][:, free_idx_p]
+    u_product_c = u_product[np.ix_(free_idx_u, free_idx_u)]
+    p_product_c = p_product[np.ix_(free_idx_p, free_idx_p)]
 
     # build operators and fom
     mu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')

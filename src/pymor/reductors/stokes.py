@@ -11,7 +11,7 @@ from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReducto
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class StationarySupremizerGalerkinStokesReductor(ProjectionBasedReductor):
+class SupremizerGalerkinStokesReductor(ProjectionBasedReductor):
     """Projection-based reductor for the stationary stokes equation.
 
     Uses supremizer enrichment to stabilize the velocity space, then computes
@@ -64,13 +64,11 @@ class StationarySupremizerGalerkinStokesReductor(ProjectionBasedReductor):
             with self.logger.block(
                 'Enriching RB_u with supremizers'
             ):
-                supremizers = self.compute_supremizers(RB_p, offset=len(self.supremizers))
-                RB_u_enriched = cat_arrays([RB_u, self.supremizers, supremizers])
-                self.supremizers = supremizers
-        else:
-            RB_u_enriched = cat_arrays([RB_u, self.supremizers])
+                new_supremizers = self.compute_supremizers(RB_p, offset=len(self.supremizers))
+                self.supremizers.append(new_supremizers, remove_from_other=True)
 
-        RB_u_enriched = gram_schmidt(RB_u_enriched, offset=len(RB_u), product=self.u_product, copy=False, check=False)
+        RB_u_enriched = cat_arrays([RB_u, self.supremizers])
+        RB_u_enriched = gram_schmidt(RB_u_enriched, offset=len(RB_u), product=self.u_product, copy=False)
         self._block_basis = fom.solution_space.make_block_diagonal_array((RB_u_enriched, RB_p))
         block_stationary_reductor = StationaryRBReductor(fom, RB=self._block_basis, check_orthonormality=False)
 
@@ -86,11 +84,10 @@ class StationarySupremizerGalerkinStokesReductor(ProjectionBasedReductor):
         else:
             supremizer_vector = supremizer_rhs
 
-        norm = supremizer_vector.norm()
-        supremizer_vector.scal(1 / norm)
-
         return supremizer_vector
 
+    # overwriting reduce from ProjectionBasedReductor as we currently do not support
+    # project_operators_to_subbasis for the SupremizerGalerkinStokesReductor.
     def reduce(self):
         return self._reduce()
 
@@ -101,23 +98,23 @@ class StationarySupremizerGalerkinStokesReductor(ProjectionBasedReductor):
         return self._block_basis.lincomb(u.to_numpy())
 
 
-class StationaryLSRBStokesReductor(StationaryLSRBReductor):
+class LSRBStokesReductor(StationaryLSRBReductor):
     """Projection-based least-squares reductor for the stationary stokes equation.
 
     Parameters
     ----------
     fom
-        See :class:`StationarySupremizerGalerkinStokesReductor`.
+        See :class:`SupremizerGalerkinStokesReductor`.
     RB_u
-        See :class:`StationarySupremizerGalerkinStokesReductor`.
+        See :class:`SupremizerGalerkinStokesReductor`.
     RB_p
-        See :class:`StationarySupremizerGalerkinStokesReductor`.
+        See :class:`SupremizerGalerkinStokesReductor`.
     u_product
-        See :class:`StationarySupremizerGalerkinStokesReductor`.
+        See :class:`SupremizerGalerkinStokesReductor`.
     p_product
-        See :class:`StationarySupremizerGalerkinStokesReductor`.
+        See :class:`SupremizerGalerkinStokesReductor`.
     use_normal_equations
-        Whether to solve the least-squares problem directly using a least-square solver
+        Whether to solve the least-squares problem directly using a least-squares solver
         or via the normal equations.
     check_orthonormality
         See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
@@ -141,5 +138,7 @@ class StationaryLSRBStokesReductor(StationaryLSRBReductor):
         super().__init__(fom, RB=RB, product=product, use_normal_equations=use_normal_equations,
                          check_orthonormality=check_orthonormality, check_tol=check_tol)
 
+    # overwriting reduce from ProjectionBasedReductor as we currently do not support
+    # project_operators_to_subbasis for the LSRBStokesReductor.
     def reduce(self):
         return self._reduce()

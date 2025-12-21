@@ -317,6 +317,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
     use_normal_equations
         If `True`, projects the normal equation instead of using a least-squares
         solver. If `False`, equip the operator with a least-squares solver.
+    check_orthonormality
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
@@ -352,6 +353,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                                              range_basis=RB, source_basis=RB),
                 'rhs':               project(AdjointOperator(fom.operator, range_product=W) @ fom.rhs,
                                              range_basis=RB, source_basis=None),
+                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
                 'output_functional': project(fom.output_functional, None, RB)
             }
 
@@ -369,7 +371,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
                 'operator':          project(fom.operator, range_basis=self.test_space,
                                              source_basis=RB).with_(solver=ScipyLSTSQSolver()),
                 'rhs':               project(fom.rhs, range_basis=self.test_space, source_basis=None),
-                'products':          {k: project(v, self.test_space, RB) for k, v in fom.products.items()},
+                'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
                 'output_functional': project(fom.output_functional, None, RB)
             }
         return projected_operators
@@ -392,7 +394,7 @@ class StationaryLSRBReductor(ProjectionBasedReductor):
             projected_operators = {
                 'operator':          project_to_subbasis(rom.operator, range_dim, dim),
                 'rhs':               project_to_subbasis(rom.rhs, range_dim, None),
-                'products':          {k: project_to_subbasis(v, range_dim, dim) for k, v in rom.products.items()},
+                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
                 'output_functional': project_to_subbasis(rom.output_functional, None, dim)
             }
         return projected_operators

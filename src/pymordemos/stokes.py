@@ -11,7 +11,7 @@ from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.core.config import config
 from pymor.models.examples import stokes_2Dexample
-from pymor.reductors.stokes import StationaryLSRBStokesReductor, StationarySupremizerGalerkinStokesReductor
+from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesReductor
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
@@ -21,7 +21,7 @@ def main(
     modes: int = Argument(50),
     n_tests: int = Argument(10)
 ):
-    """This example sets up the MOR workflow for the 2D stationary Stokes equation.
+    """This example demonstrates a MOR workflow for a 2D Stokes equation.
 
     The script first computes POD bases for the velocity and pressure spaces
     from randomly sampled solutions of the full order model (FOM). Then, it
@@ -61,20 +61,20 @@ def main(
 
         # construct reduced order model
         if method == 'supremizer_galerkin':
-            reductor_stokes = StationarySupremizerGalerkinStokesReductor(fom_stokes,
+            reductor_stokes = SupremizerGalerkinStokesReductor(fom_stokes,
                                                                          RB_u=basis_u,
                                                                          RB_p=basis_p,
                                                                          u_product = fom_stokes.u_product,
                                                                          p_product=fom_stokes.p_product)
         elif method == 'ls-normal':
-            reductor_stokes = StationaryLSRBStokesReductor(fom_stokes,
+            reductor_stokes = LSRBStokesReductor(fom_stokes,
                                                            RB_u=basis_u,
                                                            RB_p=basis_p,
                                                            u_product = fom_stokes.u_product,
                                                            p_product=fom_stokes.p_product,
                                                            use_normal_equations=True)
         elif method == 'ls-ls':
-            reductor_stokes = StationaryLSRBStokesReductor(fom_stokes,
+            reductor_stokes = LSRBStokesReductor(fom_stokes,
                                                            RB_u=basis_u,
                                                            RB_p=basis_p,
                                                            u_product = fom_stokes.u_product,
@@ -85,7 +85,7 @@ def main(
 
         rom = reductor_stokes.reduce()
         results_rom = [evaluate_rom_once(rom, reductor_stokes, mu) for mu in mus]
-        results = compute_speedup_and_errros(results_fom, results_rom)
+        results = compute_speedup_and_errors(results_fom, results_rom)
 
         speedups[method] = np.mean([r['speedup'] for r in results])
         errors_u[method] = np.mean([r['err_u'] for r in results])
@@ -110,7 +110,7 @@ def evaluate_rom_once(rom, reductor_stokes, mu):
     test_sol_rom_re = reductor_stokes.reconstruct(test_sol_rom)
     return {'rom': test_sol_rom_re,'t_rom': t_rom}
 
-def compute_speedup_and_errros(fom_results, rom_results):
+def compute_speedup_and_errors(fom_results, rom_results):
     results = []
 
     for i in range(len(fom_results)):
