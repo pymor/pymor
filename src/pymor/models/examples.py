@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+
 def thermal_block_example(diameter=1/100):
     """Return 2x2 thermal block example.
 
@@ -339,7 +340,7 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
         - \mu \Delta u(x, \mu) + \nabla p(x, \mu) & = f(x) \text{ in } \Omega \\
         \nabla \cdot u(x, \mu) & = 0 \text{ in } \Omega
 
-    with homogenous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
+    with homogeneous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
     and :math:`\Omega` is the unit disk. To eliminate the singularity of the saddle-point system,
     one pressure node is set to zero.
 
@@ -349,7 +350,7 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
         The number of mesh refinements performed by the scikit-fem discretizer on the unit disk.
     rhs
         The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
-        If `None`, a default right-hand side is choosen.
+        If `None`, a default right-hand side is chosen.
 
     Returns
     -------
