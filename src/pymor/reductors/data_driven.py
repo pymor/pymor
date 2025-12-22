@@ -21,16 +21,10 @@ class DataDrivenReductor(BasicObject):
     either approximates the solution or the output as a parametric
     quantity by training a machine learning surrogate.
 
-    In case of an approximation of the solution, the reductor either
-    takes a precomputed reduced basis or constructs a reduced basis
-    using proper orthogonal decomposition. It then trains a machine
-    learning regressor that approximates the mapping from
-    parameter space to coefficients of the full-order solution
-    in the reduced basis. Moreover, the reductor also works without
-    providing a full-order model, in which case it requires a set of
-    training parameters and corresponding solution snapshots. This way,
-    the reductor can be used in a completely data-driven manner.
-    The approach is described in :cite:`HU18`.
+    In case of an approximation of the solution, the reductor trains
+    a machine learning regressor that approximates the mapping from
+    parameter space to a |NumPy array|. Typically, the array contains
+    coefficients of the solution with respect to a reduced basis.
 
     For `target_quantity='output'`, the machine learning regressor
     directly approximates the output depending on the parameter.
@@ -198,7 +192,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
     In addition to the :class:`~pymor.reductors.data_driven.DataDrivenReductor`,
     this reductor uses snapshot data in order to construct a reduced basis via POD
     and projects the snapshots onto the reduced basis to generate data for the
-    machine learning training.
+    machine learning training. The approach is described in :cite:`HU18`.
     See :class:`~pymor.reductors.data_driven.DataDrivenReductor` for more details.
 
     Parameters
