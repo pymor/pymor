@@ -210,19 +210,6 @@ for mu in training_parameters:
     training_snapshots.append(fom.solve(mu))
 ```
 
-Afterwards, we compute a reduced basis using POD
-
-```{code-cell} ipython3
-RB, _ = pod(training_snapshots, l2_err=1e-5)
-```
-
-and project the training snapshots onto the reduced basis to obtain the
-training data for the machine learning surrogates:
-
-```{code-cell} ipython3
-projected_training_snapshots = training_snapshots.inner(RB)
-```
-
 We now initialize regressors for feedforward neural networks
 
 ```{code-cell} ipython3
@@ -243,13 +230,13 @@ Finally, we construct data-driven reductors using the different regressors
 and call the respective `reduce`-method to start the training process:
 
 ```{code-cell} ipython3
-from pymor.reductors.data_driven import DataDrivenReductor
-nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                 regressor=nn_regressor, reduced_basis=RB)
+from pymor.reductors.data_driven import DataDrivenPODReductor
+nn_reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                    regressor=nn_regressor, pod_params={'l2_err': 1e-5})
 nn_rom = nn_reductor.reduce()
 
-vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    regressor=vkoga_regressor, reduced_basis=RB)
+vkoga_reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                       regressor=vkoga_regressor, pod_params={'l2_err': 1e-5})
 vkoga_rom = vkoga_reductor.reduce()
 ```
 
@@ -404,6 +391,7 @@ for mu in training_parameters:
     training_outputs.append(fom.output(mu)[:, 0])
 training_outputs = np.array(training_outputs)
 
+from pymor.reductors.data_driven import DataDrivenReductor
 vkoga_output_regressor = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
 output_reductor = DataDrivenReductor(training_parameters, training_outputs,
                                      regressor=vkoga_output_regressor, target_quantity='output')
@@ -482,136 +470,6 @@ the machine learning surrogate is the complete time trajectory of reduced coeffi
 In the same fashion, setting `target_quantity='output'` yields a reduced model for prediction
 of output trajectories without requiring information about the solution states.
 
-A slightly different approach that is also implemented in pyMOR and uses a different type of
-neural network is described in the following section.
-
-### Long short-term memory neural networks for instationary problems
-
-So-called *recurrent neural networks* are especially well-suited for capturing time-dependent
-dynamics. These types of neural networks can treat input sequences of variable length (in our case
-sequences with a variable number of time steps) and store internal states that are passed from one
-time step to the next. Therefore, these networks implement an internal memory that keeps
-information over time. Furthermore, for each element of the input sequence, the same neural
-network is applied.
-
-In pyMOR, a specific type of recurrent neural network is implemented, namely a so-called
-*long short-term memory neural network (LSTM)*, first introduced in {cite}`HS97`, that tries to
-avoid problems like vanishing or exploding gradients that often occur during training of recurrent
-neural networks.
-
-#### The architecture of an LSTM neural network
-
-In an LSTM neural network, multiple so-called LSTM cells are chained with each other such that the
-cell state {math}`c_k` and the hidden state {math}`h_k` of the {math}`k`-th LSTM cell serve as the
-input hidden states for the {math}`k+1`-th LSTM cell. Therefore, information from former time
-steps can be available later. Each LSTM cell takes an input {math}`\mu(t_k)` and produces an
-output {math}`o(t_k)`. The following figure shows the general structure of an LSTM neural network
-that is also implemented in the same way in pyMOR:
-
-```{image} lstm.svg
-:alt: Long short-term neural network
-:width: 100%
-```
-
-#### The LSTM cell
-
-The main building block of an LSTM network is the *LSTM cell*, which is denoted by {math}`\Phi`,
-and sketched in the following figure:
-
-```{image} lstm_cell.svg
-:alt: LSTM cell
-:align: left
-```
-
-Here, {math}`\mu(t_k)` denotes the input of the network at the current time instance {math}`t_k`,
-while {math}`o(t_k)` denotes the output. The two hidden states for time instance `t_k` are given
-as the cell state {math}`c_k` and the hidden state {math}`h_k` that also serves as the output.
-Squares represent layers similar to those used in feedforward neural networks, where inside the
-square the applied activation function is mentioned, and circles denote element-wise
-operations like element-wise multiplication ({math}`\times`), element-wise addition ({math}`+`) or
-element-wise application of the hyperbolic tangent function ({math}`\tanh`). The filled black
-circle represents the concatenation of the inputs. Furthermore, {math}`\sigma` is the sigmoid
-activation function ({math}`\sigma(x)=\frac{1}{1+\exp(-x)}`), and {math}`\tanh` is the hyperbolic
-tangent activation function ({math}`\tanh(x)=\frac{\exp(x)-\exp(-x)}{\exp(x)+\exp(-x)}`) used for
-the respective layers in the LSTM network. Finally, the layer {math}`P` denotes a projection layer
-that projects vectors of the internal size to the hidden and output size. Hence, internally, the
-LSTM can deal with larger quantities and finally projects them onto a space with a desired size.
-Altogether, a single LSTM cell takes two hidden states and an input of the form
-{math}`(c_{k-1},h_{k-1},\mu(t_k))` and transforms them into new hidden states and an output state
-of the form {math}`(c_k,h_k,o(t_k))`.
-
-We will take a closer look at the individual components of an LSTM cell in the subsequent
-paragraphs.
-
-##### The forget gate
-
-```{image} lstm_cell_forget_gate.svg
-:alt: Forget gate of an LSTM cell
-:align: right
-```
-
-As the name already suggests, the *forget gate* determines which part of the cell state
-{math}`c_{k-1}` the network forgets when moving to the next cell state {math}`c_k`. The main
-component of the forget gate is a neural network layer consisting of an affine-linear function
-with adjustable weights and biases followed by a sigmoid nonlinearity. By applying the sigmoid
-activation function, the output of the layer is scaled to lie between 0 and 1. The cell state
-{math}`c_{k-1}` from the previous cell is (point-wise) multiplied by the output of the layer in
-the forget gate. Hence, small values in the output of the layer correspond to parts of the cell
-state that are diminished, while values near 1 mean that the corresponding parts of the cell
-state remain intact. As input of the forget gate serves the pair {math}`(h_{k-1},\mu(t_k))` and
-in the second step also the cell state {math}`c_{k-1}`.
-
-##### The input gate
-
-```{image} lstm_cell_input_gate.svg
-:alt: Input gate of an LSTM cell
-:align: right
-```
-
-To further change the cell state, an LSTM cell contains a so-called *input gate*. This gate mainly
-consists of two layers, a sigmoid layer and an hyperbolic tangent layer, acting on the pair
-{math}`(h_{k-1},\mu(t_k))`. As in the forget gate, the sigmoid layer determines which parts of the
-cell state to adjust. On the other hand, the hyperbolic tangent layer determines how to adjust the
-cell state. Using the hyperbolic tangent as activation function scales the output to be between -1
-and 1, and allows for small updates of the cell state. To finally compute the update, the outputs
-of the sigmoid and the hyperbolic tangent layer are multiplied entry-wise. Afterwards, the update
-is added to the cell state (after the cell state passed the forget gate). The new cell state is
-now prepared to be passed to the subsequent LSTM cell.
-
-##### The output gate
-
-```{image} lstm_cell_output_gate.svg
-:alt: Output gate of an LSTM cell
-:align: right
-```
-
-For computing the output {math}`o(t_k)` (and the new hidden state {math}`h_k`), the updated cell
-state {math}`c_k` is first of all entry-wise transformed using a hyperbolic tangent function such
-that the result again takes values between -1 and 1. Simultaneously, a neural network layer with a
-sigmoid activation function is applied to the concatenated pair {math}`(h_{k-1},\mu(t_k))` of
-hidden state and input. Both results are multiplied entry-wise. This results in a filtered version
-of the (normalized) cell state. Finally, a projection layer is applied such that the result of the
-output gate has the desired size and can take arbitrary real values (before, due to the sigmoid and
-hyperbolic tangent activation functions, the outcome was restricted to the interval from -1 to 1).
-The projection layer applies a linear function without an activation (similar to the last layer of
-a usual feedforward neural network but without bias). Altogether, the *output gate* produces an
-output {math}`o(t_k)` that is returned and a new hidden state {math}`h_k` that can be passed
-(together with the updated cell state {math}`c_k`) to the next LSTM cell.
-
-#### LSTMs for model order reduction
-
-The idea of the approach implemented in pyMOR is the following: Instead of passing the current
-time instance as an additional input of the neural network, we use an LSTM that takes at each time
-instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses
-the hidden states of the former time step. The output {math}`o(t_k)` of the LSTM (and therefore
-also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations of the reduced
-basis coefficients (if `target_quantity='solution'`) or approximations of the
-output quantities (`target_quantity='output'`). In order to use LSTMs in pyMOR, one simply
-initializes a {class}`~pymor.algorithms.ml.nn.neural_networks.LongShortTermMemoryNN` and
-creates a {class}`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor` with the LSTM.
-Everything else is automatically handled by pyMOR when using
-the {class}`~pymor.reductors.data_driven.DataDrivenReductor`.
-
 ### Instationary neural network reductors in practice
 
 In the following we apply different machine learning surrogates to a parametrized parabolic
@@ -667,17 +525,13 @@ def compute_errors(rom, reductor):
 
 We now run the {class}`~pymor.reductors.data_driven.DataDrivenReductor` using
 different machine learning surrogates (VKOGA, VKOGA with time-vectorization,
-fully-connected neural network, LSTM) and evaluate the performance of the
+fully-connected neural network) and evaluate the performance of the
 resulting reduced models:
 
 ```{code-cell} ipython3
 training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
 for mu in training_parameters:
     training_snapshots.append(fom.solve(mu))
-
-basis_size = 20
-RB, _ = pod(training_snapshots, modes=basis_size)
-projected_training_snapshots = training_snapshots.inner(RB)
 ```
 
 It is often useful for the machine learning training to scale inputs and outputs,
@@ -688,46 +542,28 @@ as well:
 from sklearn.preprocessing import MinMaxScaler
 
 vkoga_regressor = VKOGARegressor()
-vkoga_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    regressor=vkoga_regressor, target_quantity='solution',
-                                    reduced_basis=RB, T=fom.T, time_vectorized=False,
-                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+vkoga_reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                       regressor=vkoga_regressor, T=fom.T, time_vectorized=False,
+                                       input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler(),
+                                       pod_params={'modes': 20})
 vkoga_rom = vkoga_reductor.reduce()
 rel_errors_vkoga, speedups_vkoga = compute_errors(vkoga_rom, vkoga_reductor)
-```
 
-```{code-cell} ipython3
 vkoga_regressor_tv = VKOGARegressor()
-vkoga_reductor_tv = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                    regressor=vkoga_regressor_tv, target_quantity='solution',
-                                    reduced_basis=RB, T=fom.T, time_vectorized=True,
-                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+vkoga_reductor_tv = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                          regressor=vkoga_regressor_tv, T=fom.T, time_vectorized=True,
+                                          input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler(),
+                                          pod_params={'modes': 20})
 vkoga_rom_tv = vkoga_reductor_tv.reduce()
 rel_errors_vkoga_tv, speedups_vkoga_tv = compute_errors(vkoga_rom_tv, vkoga_reductor_tv)
-```
 
-```{code-cell} ipython3
 nn_regressor = NeuralNetworkRegressor(tol=None, restarts=0)
-nn_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                 regressor=nn_regressor, target_quantity='solution',
-                                 reduced_basis=RB, T=fom.T, time_vectorized=False,
-                                 input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
+nn_reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                    regressor=nn_regressor, T=fom.T, time_vectorized=False,
+                                    input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler(),
+                                    pod_params={'modes': 20})
 nn_rom = nn_reductor.reduce()
 rel_errors_nn, speedups_nn = compute_errors(nn_rom, nn_reductor)
-```
-
-```{code-cell} ipython3
-"""
-from pymor.algorithms.ml.nn.neural_networks import LongShortTermMemoryNN
-lstm_regressor = NeuralNetworkRegressor(LongShortTermMemoryNN(hidden_dimension=25, number_layers=1),
-                                        tol=None, restarts=0, learning_rate=0.01)
-lstm_reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                   regressor=lstm_regressor, target_quantity='solution',
-                                   reduced_basis=RB, T=fom.T, time_vectorized=False,
-                                   input_scaler=MinMaxScaler(), output_scaler=MinMaxScaler())
-lstm_rom = lstm_reductor.reduce()
-rel_errors_lstm, speedups_lstm = compute_errors(lstm_rom, lstm_reductor)
-"""
 ```
 
 We finally print the results:
@@ -740,13 +576,6 @@ print('Approach by Hesthaven and Ubbiali using feedforward ANNs:')
 print('---------------------------------------------------------')
 print(f'Average relative error: {np.average(rel_errors_nn)}')
 print(f'Median of speedup: {np.median(speedups_nn)}')
-print()
-"""
-print('Approach using long short-term memory ANNs:')
-print('-------------------------------------------')
-print(f'Average relative error: {np.average(rel_errors_lstm)}')
-print(f'Median of speedup: {np.median(speedups_lstm)}')
-"""
 print()
 print('Approach by Hesthaven and Ubbiali using VKOGA:')
 print('----------------------------------------------')

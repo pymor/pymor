@@ -18,9 +18,8 @@ from pymor.tools.typer import Choices
 
 def main(
     problem_number: int = Argument(..., min=0, max=1, help='Selects the problem to solve [0 or 1].'),
-    regressor: Choices('fcnn lstm vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
-                                                                   "using PyTorch (fully-connected or long short-term "
-                                                                   "memory networks), pyMOR's VKOGA algorithm or "
+    regressor: Choices('fcnn vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
+                                                                   "using PyTorch, pyMOR's VKOGA algorithm or "
                                                                    "Gaussian process regression using scikit-learn."),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
@@ -45,7 +44,7 @@ def main(
     one-dimensional domain. The discretization is based on pyMOR's built-in
     functionality.
     """
-    if (regressor == 'fcnn' or regressor == 'lstm') and not config.HAVE_TORCH:
+    if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
@@ -66,12 +65,6 @@ def main(
                                                     validation_ratio=validation_ratio, tol=1e-4)
         regressor_output = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
                                                   validation_ratio=validation_ratio, tol=1e-4)
-    elif regressor == 'lstm':
-        from pymor.algorithms.ml.nn import LongShortTermMemoryNN, NeuralNetworkRegressor
-        regressor_solution = NeuralNetworkRegressor(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                    validation_ratio=validation_ratio, tol=None, restarts=0)
-        regressor_output = NeuralNetworkRegressor(LongShortTermMemoryNN(hidden_dimension=30, number_layers=3),
-                                                  validation_ratio=validation_ratio, tol=None, restarts=0)
     elif regressor == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         regressor_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)

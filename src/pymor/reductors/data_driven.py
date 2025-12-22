@@ -101,6 +101,8 @@ class DataDrivenReductor(BasicObject):
             self.training_data = self._compute_data(training_parameters, snapshots=training_snapshots)
         if self.target_quantity == 'solution':
             self.dim_solution_space = len(self.training_data[0][1])
+            if not self.is_stationary and self.time_vectorized:
+                self.dim_solution_space = self.dim_solution_space // self.nt
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
