@@ -53,10 +53,6 @@ class DataDrivenReductor(BasicObject):
         regressors that is trained in the `reduce`-method.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
-    reduced_basis
-        |VectorArray| of basis vectors of the reduced space that is used for
-        reconstruction when the solution is the target quantity. If `None`,
-        the result of the regressor is returned by `reconstruct`.
     T
         In the instationary case, determines the final time until which to solve.
     time_vectorized
@@ -82,7 +78,7 @@ class DataDrivenReductor(BasicObject):
 
     def __init__(self, training_parameters, training_snapshots,
                  regressor=VKOGARegressor(GaussianKernel()), target_quantity='solution',
-                 reduced_basis=None, T=None, time_vectorized=False, output_functional=None,
+                 T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
@@ -103,10 +99,14 @@ class DataDrivenReductor(BasicObject):
             assert T is None
             self.is_stationary = True
 
+        self.dim_solution_space = None
+
         # compute training data
         # i.e. pairs of parameters (potentially including time) and reduced coefficients
         with self.logger.block('Computing training data ...'):
             self.training_data = self._compute_data(training_parameters, snapshots=training_snapshots)
+        if self.target_quantity == 'solution':
+            self.dim_solution_space = len(self.training_data[0][1])
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
@@ -174,18 +174,15 @@ class DataDrivenReductor(BasicObject):
     def _build_rom(self):
         """Construct the reduced order model."""
         with self.logger.block('Building ROM ...'):
-            dim_solution_space = None
-            if self.target_quantity == 'solution':
-                dim_solution_space = len(self.reduced_basis)
             if self.is_stationary:
                 rom = DataDrivenModel(self.regressor, target_quantity=self.target_quantity,
-                                      dim_solution_space=dim_solution_space, parameters=self.parameters,
+                                      dim_solution_space=self.dim_solution_space, parameters=self.parameters,
                                       output_functional=self.output_functional,
                                       input_scaler=self.input_scaler, output_scaler=self.output_scaler)
             else:
                 rom = DataDrivenInstationaryModel(self.T, self.nt, self.regressor, target_quantity=self.target_quantity,
-                                                  dim_solution_space=dim_solution_space, parameters=self.parameters,
-                                                  output_functional=self.output_functional,
+                                                  dim_solution_space=self.dim_solution_space,
+                                                  parameters=self.parameters, output_functional=self.output_functional,
                                                   input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                                                   time_vectorized=self.time_vectorized)
         return rom
@@ -193,13 +190,6 @@ class DataDrivenReductor(BasicObject):
     def extend_training_data(self, parameters, snapshots):
         """Add sequences of parameters and corresponding snapshots to the training data."""
         self.training_data.extend(self._compute_data(parameters, snapshots))
-
-    def reconstruct(self, u):
-        """Reconstruct high-dimensional vector from reduced vector `u`."""
-        assert self.target_quantity == 'solution'
-        if self.reduced_basis is not None:
-            return self.reduced_basis.lincomb(u.to_numpy())
-        return u
 
 
 class DataDrivenPODReductor(DataDrivenReductor):
@@ -263,7 +253,6 @@ class DataDrivenPODReductor(DataDrivenReductor):
             super().__init__(self.training_parameters, projected_training_snapshots,
                              regressor=self.regressor, target_quantity='solution',
                              output_functional=projected_output_functional,
-                             reduced_basis=self.reduced_basis,
                              T=self.T, time_vectorized=self.time_vectorized,
                              input_scaler=self.input_scaler, output_scaler=self.output_scaler)
 
@@ -277,3 +266,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
         """Add sequences of parameters and corresponding snapshots to the training data."""
         projected_snapshots = snapshots.inner(self.reduced_basis, product=self.product)
         self.training_data.extend(self._compute_data(parameters, projected_snapshots))
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self.reduced_basis.lincomb(u.to_numpy())

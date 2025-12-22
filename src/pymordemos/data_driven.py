@@ -87,7 +87,7 @@ def main(
 
     reductor = DataDrivenReductor(training_parameters[:1], projected_training_snapshots[:1],
                                   regressor=regressor_solution, target_quantity='solution',
-                                  reduced_basis=RB, input_scaler=input_scaler_solution,
+                                  input_scaler=input_scaler_solution,
                                   output_scaler=output_scaler_solution)
     rom = reductor.reduce()
 
@@ -133,7 +133,7 @@ def main(
 
         for mu in test_parameters:
             tic = time.perf_counter()
-            U_red.append(reductor.reconstruct(rom.solve(mu)))
+            U_red.append(RB.lincomb(rom.solve(mu).to_numpy()))
             time_red = time.perf_counter() - tic
             timings_red.append(time_red)
 

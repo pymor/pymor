@@ -67,6 +67,8 @@ class DataDrivenModel(Model):
         super().__init__(products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
 
+        assert target_quantity == 'solution' or output_functional is None
+
         self.__auto_init(locals())
         if self.target_quantity == 'solution':
             assert self.dim_solution_space

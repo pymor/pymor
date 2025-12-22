@@ -11,7 +11,7 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
-from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.reductors.data_driven import DataDrivenPODReductor
 from pymor.solvers.newton import NewtonSolver
 from pymor.tools.typer import Choices
 
@@ -69,12 +69,9 @@ def main(
     for mu in training_parameters:
         training_snapshots.append(fom.solve(mu))
 
-    RB, _ = pod(training_snapshots, l2_err=1e-5)
-    projected_training_snapshots = training_snapshots.inner(RB)
-
-    reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                                  regressor=regressor_solution, target_quantity='solution',
-                                  reduced_basis=RB, input_scaler=input_scaler, output_scaler=output_scaler)
+    reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                     regressor=regressor_solution,
+                                     input_scaler=input_scaler, output_scaler=output_scaler)
     rom = reductor.reduce()
 
     speedups = []
