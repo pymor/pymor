@@ -12,7 +12,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class DataDrivenModel(Model):
     """Class for models of stationary problems that use regressors for prediction.
 
-    This class implements a |Model| that uses an regressor for solution
+    This class implements a |Model| that uses a regressor for solution
     or output approximation.
 
     Parameters
