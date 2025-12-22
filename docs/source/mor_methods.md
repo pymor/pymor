@@ -172,15 +172,11 @@ training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
 for mu in training_parameters:
     training_snapshots.append(fom.solve(mu))
 
-from pymor.algorithms.pod import pod
-RB, _ = pod(training_snapshots, l2_err=1e-5)
-projected_training_snapshots = training_snapshots.inner(RB)
-
 # instantiate reductor with training parameters, snapshots, reduced basis and regressor
-from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.reductors.data_driven import DataDrivenPODReductor
 from pymor.algorithms.ml.nn import NeuralNetworkRegressor
-reductor = DataDrivenReductor(training_parameters, projected_training_snapshots,
-                              regressor=NeuralNetworkRegressor(), reduced_basis=RB)
+reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                 regressor=NeuralNetworkRegressor())
 rom = reductor.reduce(restarts=5)
 ```
 

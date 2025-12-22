@@ -267,7 +267,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
                              T=self.T, time_vectorized=self.time_vectorized,
                              input_scaler=self.input_scaler, output_scaler=self.output_scaler)
 
-        return super().reduce(kwargs)
+        return super().reduce(**kwargs)
 
     def _compute_reduced_basis(self):
         """Compute a reduced basis using POD."""
