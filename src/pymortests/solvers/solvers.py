@@ -13,6 +13,9 @@ from pymor.bindings.scipy import (
     ScipyLGMRESSolver,
     ScipyLSMRSolver,
     ScipyLSQRSolver,
+    ScipyLSTSQSolver,
+    ScipyLUSolveSolver,
+    ScipyQRLSTSQSolver,
     ScipySpSolveSolver,
 )
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -29,6 +32,7 @@ mat_op = NumpyMatrixOperator(mat)
 all_generic_solvers = [LGMRESSolver, LSMRSolver, LSQRSolver]
 all_scipy_sparse_solvers = [ScipyBicgStabSolver, ScipyBicgStabSpILUSolver, ScipyLGMRESSolver, ScipyLSMRSolver,
                             ScipyLSQRSolver, ScipySpSolveSolver]
+all_scipy_dense_solvers = [ScipyLUSolveSolver, ScipyLSTSQSolver, ScipyQRLSTSQSolver]
 
 @pytest.fixture(params=all_generic_solvers)
 def generic_solver(request):
@@ -37,6 +41,11 @@ def generic_solver(request):
 
 @pytest.fixture(params=all_generic_solvers + all_scipy_sparse_solvers)
 def numpy_sparse_solver(request):
+    return request.param()
+
+
+@pytest.fixture(params=all_scipy_dense_solvers)
+def numpy_dense_solver(request):
     return request.param()
 
 
@@ -64,16 +73,18 @@ def test_generic_adjoint_solvers(generic_solver):
     assert ((op.apply_adjoint(solution) - rhs).norm() / rhs.norm())[0] < 1e-6
 
 
-def test_numpy_dense_solvers():
-    rhs = mat_op.range.make_array(np.ones(10))
-    solution = mat_op.apply_inverse(rhs)
-    assert ((mat_op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
+def test_numpy_dense_solvers(numpy_dense_solver):
+    op = mat_op.with_(solver=numpy_dense_solver)
+    rhs = op.range.make_array(np.ones(10))
+    solution = op.apply_inverse(rhs)
+    assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
 
 
-def test_numpy_dense_adjoint_solvers():
-    rhs = mat_op.source.make_array(np.ones(10))
-    solution = mat_op.apply_inverse_adjoint(rhs)
-    assert ((mat_op.apply_adjoint(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
+def test_numpy_dense_adjoint_solvers(numpy_dense_solver):
+    op = mat_op.with_(solver=numpy_dense_solver)
+    rhs = op.source.make_array(np.ones(10))
+    solution = op.apply_inverse_adjoint(rhs)
+    assert ((op.apply_adjoint(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
 
 
 def test_numpy_sparse_solvers(numpy_sparse_solver):

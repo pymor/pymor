@@ -9,10 +9,12 @@ from scipy.linalg import (
     lstsq,
     lu_factor,
     lu_solve,
+    qr,
     solve,
     solve_continuous_are,
     solve_continuous_lyapunov,
     solve_discrete_lyapunov,
+    solve_triangular,
 )
 from scipy.linalg.lapack import get_lapack_funcs
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
@@ -311,6 +313,24 @@ class ScipyLSTSQSolver(ScipyLinearSolver):
         except np.linalg.LinAlgError as e:
             raise InversionError(f'{type(e)!s}: {e!s}') from e
         return R
+
+
+class ScipyQRLSTSQSolver(ScipyLinearSolver):
+
+    least_squares = True
+    _qr_factors = WeakRefCache()
+
+    def _solve_impl(self, matrix, V, initial_guess, promoted_type):
+        try:
+            Q, R = self._qr_factors.get(matrix)
+        except KeyError:
+            try:
+                Q, R = qr(matrix, mode='economic', check_finite=self.check_finite)
+            except np.linalg.LinAlgError as e:
+                raise InversionError(f'{type(e)!s}: {e!s}') from e
+            self._qr_factors.set(matrix, (Q, R))
+        U = solve_triangular(R, Q.T @ V, lower=False)
+        return U
 
 
 # unfortunately, this is necessary, as scipy does not
