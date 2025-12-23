@@ -47,9 +47,9 @@ def main(
     if regressor == 'fcnn':
         from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkRegressor
         regressor_solution = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
-                                                    validation_ratio=validation_ratio, tol=1e-5)
+                                                    validation_ratio=validation_ratio)
         regressor_output = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
-                                                  validation_ratio=validation_ratio, tol=1e-5)
+                                                  validation_ratio=validation_ratio)
     elif regressor == 'vkoga':
         kernel = GaussianKernel(length_scale=1.0)
         regressor_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
