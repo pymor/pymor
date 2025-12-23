@@ -126,7 +126,7 @@ ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
-ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements ## build the CI requirement files
+ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_fenicsx_requirements ci_conda_requirements ## build the CI requirement files
 
 ci_current_image:
 	$(DOCKER) build -t pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
