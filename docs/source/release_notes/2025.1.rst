@@ -22,7 +22,7 @@ Main new features
 Purely data-based neural network reductors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#2295] <https://github.com/pymor/pymor/pull/2295>`_,
-the :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` was adjusted such that
+the `pymor.reductors.neural_network.NeuralNetworkReductor` was adjusted such that
 it is now possible to use it also without a full order model at hand. It can be run
 completely data-driven only with parameter values and snapshot data. Moreover, a precomputed
 reduced basis can be passed as an input to the constructor of the reductor.
@@ -82,7 +82,7 @@ Merged stationary and instationary neural network-based reductors
 In `[#2295] <https://github.com/pymor/pymor/pull/2295>`_, the neural network-based reductors
 for instationary problems were removed and their functionality was merged into the respective
 reductors for stationary problems. Hence, there is no distinction between stationary and
-instationary case anymore and the reductors in :mod:`~pymor.reductors.neural_network` should
+instationary case anymore and the reductors in `pymor.reductors.neural_network` should
 be used for both scenarios.
 
 Further notable improvements

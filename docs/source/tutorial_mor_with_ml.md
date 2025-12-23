@@ -31,7 +31,7 @@ For training and evaluation of the neural networks, [PyTorch](<https://pytorch.o
 Kernel methods are implemented in pyMOR based on the vectorial kernel orthogonal
 greedy algorithm (VKOGA), see {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
 
-In this tutorial we will learn about feedforward neural networks and kernel greedy methods,
+In this tutorial we will learn about feedforward neural networks and greedy kernel methods,
 the basic idea of the approach by Hesthaven and Ubbiali, and how to use it in pyMOR.
 
 ## Feedforward neural networks
@@ -176,7 +176,7 @@ approach. It is therefore possible to use, for instance, kernel methods instead
 of neural networks as originally proposed in {cite}`HU18`. In pyMOR, the implementation
 can deal with any regressor fulfilling the scikit-learn interface. The neural networks
 and the kernel methods are implemented in pyMOR in such a way that they also follow
-the scikit-learn interface and the reductor only requires such an regressor.
+the scikit-learn interface and the reductor only requires such a regressor.
 In this tutorial, we will compare neural networks and kernel methods and show
 how they can be trained and used in the context of model order reduction.
 
@@ -357,10 +357,10 @@ Thus far, we were mainly interested in approximating the solution state
 {math}`u(\mu)\equiv u(\cdot,\mu)` for some parameter {math}`\mu`. If we consider an output
 functional {math}`\mathcal{J}(\mu):= J(u(\mu), \mu)`, one can use the reduced solution
 {math}`u_N(\mu)` for computing the output as {math}`\mathcal{J}(\mu)\approx J(u_N(\mu),\mu)`.
-However, when dealing with neural networks, one could also think about directly learning the
-mapping from parameter to output. That is, one can use a neural network to approximate
-{math}`\mathcal{J}\colon\mathcal{P}\to\mathbb{R}^q`, where {math}`q\in\mathbb{N}` denotes
-the output dimension.
+However, when dealing with supervised machine learning, one could also think about directly
+learning the mapping from parameter to output. That is, one can use a machine learning
+surrogate to approximate {math}`\mathcal{J}\colon\mathcal{P}\to\mathbb{R}^q`,
+where {math}`q\in\mathbb{N}` denotes the output dimension.
 
 In the following, we will extend our problem from the last section by an output functional
 and use the {class}`~pymor.reductors.data_driven.DataDrivenReductor` with the argument
@@ -458,7 +458,7 @@ and the median of the speedups amounts to
 np.median(outputs_speedups)
 ```
 
-## Neural networks for instationary problems
+## Machine learning methods for instationary problems
 
 To solve instationary problems using machine learning, we have extended the
 {class}`~pymor.reductors.data_driven.DataDrivenReductor` to also treat instationary cases,
@@ -470,7 +470,7 @@ the machine learning surrogate is the complete time trajectory of reduced coeffi
 In the same fashion, setting `target_quantity='output'` yields a reduced model for prediction
 of output trajectories without requiring information about the solution states.
 
-### Instationary neural network reductors in practice
+### Instationary machine learning reductors in practice
 
 In the following we apply different machine learning surrogates to a parametrized parabolic
 equation. First, we import the parametrized heat equation example from
@@ -587,9 +587,6 @@ print('----------------------------------------------------------------')
 print(f'Average relative error: {np.average(rel_errors_vkoga_tv)}')
 print(f'Median of speedup: {np.median(speedups_vkoga_tv)}')
 ```
-
-In this example, we observe that the LSTMs perform much better than the feedforward ANNs in terms
-of accuracy while the speedups of both methods lie in the same order of magnitude.
 
 Download the code:
 {download}`tutorial_mor_with_ml.md`
