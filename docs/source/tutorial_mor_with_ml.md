@@ -99,6 +99,45 @@ for regression problems from scikit-learn.
 
 ## Greedy kernel methods
 
+Another strategy for function approximation implemented in pyMOR is given by
+kernel methods. The approach is based on approximations constructed as linear
+combinations of a kernel function centered at a set of suitably selected points,
+the so-called centers. The function used for interpolation respectively regression
+of scalar-valued outputs therefore takes the form
+
+```{math}
+\Phi(x) = \sum\limits_{i=1}^{n} \alpha_i\cdot k(x,x_i)
+```
+
+for {math}`x\in\mathbb{R}^d` with coefficients
+{math}`\alpha_1,\ldots,\alpha_n\in\mathbb{R}` and centers
+{math}`x_1,\ldots,x_n\in\mathbb{R}^d`.
+
+For simplicty, we restrict the description given here to the case of an
+interpolation problem for given data points
+{math}`S=\{(\mu_i,h(\mu_i))\in\mathbb{R}^d\times\mathbb{R}: i=1,\ldots,N\}`. For our
+application later on, we will assume that {math}`\mu_1,\ldots,\mu_N\in\mathcal{P}`.
+Using a representer theorem, one can show that the centers in the interpolant should
+be chosen as the data points themselves, i.e. {math}`n=N` and {math}`x_i=\mu_i` for
+{math}`i=1,\ldots,n`. The coefficients {math}`\alpha_i` can then be computed as
+solution of a linear system using the interpolation conditions. To be more precise,
+
+```{math}
+K\alpha=f,\qquad K=[k(\mu_i,\mu_j)]_{i,j=1}^{n},\qquad f=[h(\mu_i)]_{i=1}^{n}.
+```
+
+Typically, one is interested in a sparse approximation of the kernel interpolant,
+in the sense that only a small subset of the set of data points is used as centers.
+The remaining question is how to select the data points for the kernel surrogate.
+A possible strategy is to use a greedy method for center selection, similar to
+the greedy algorithm for parameter selection described in
+{doc}`tutorial_basis_generation`. The implementation in pyMOR actually makes use
+of the same {meth}`weak greedy <pymor.algorithms.greedy.weak_greedy>` algorithm
+as for reduced basis construction. More details on the iterative construction
+of the kernel surrogates can be found in the documentation of the
+{class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` and in {cite}`WH13`
+as well as in {cite}`SH21`.
+
 ## A non-intrusive reduced order method using machine learning
 
 We now assume that we are given a parametric pyMOR {{ Model }} for which we want
