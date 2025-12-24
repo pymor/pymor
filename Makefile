@@ -51,7 +51,8 @@ CI_EXTRAS= \
 	--extra vtk \
 	--extra gmsh \
 	--extra ngsolve \
-	--extra scikit-fem
+	--extra scikit-fem \
+	--extra scikit-learn
 
 ci_current_requirements:
 	uv pip compile  \
@@ -83,6 +84,7 @@ ci_fenics_requirements:
 		--extra ann \
 		--extra ipyparallel \
 		--extra mpi \
+		--extra scikit-learn \
 		--python-version 3.11 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \

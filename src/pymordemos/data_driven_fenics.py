@@ -2,13 +2,18 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-from typer import Argument, run
+import time
 
+import numpy as np
+from typer import Argument, Option, run
+
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.core.exceptions import TorchMissingError
+from pymor.core.exceptions import SklearnMissingError, TorchMissingError
+from pymor.reductors.data_driven import DataDrivenPODReductor
 from pymor.solvers.newton import NewtonSolver
+from pymor.tools.typer import Choices
 
 DIM = 2
 GRID_INTERVALS = 50
@@ -16,31 +21,60 @@ FENICS_ORDER = 1
 
 
 def main(
-    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
-    validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
+    regressor: Choices('fcnn vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
+                                                              "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
+                                                              "process regression using scikit-learn."),
+    training_samples: int = Argument(..., help='Number of samples used for computing the reduced basis and '
+                                               'training the regressor.'),
+
+    validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
+    input_scaling: bool = Option(False, help='Scale the input of the regressor (i.e. the parameter).'),
+    output_scaling: bool = Option(False, help='Scale the output of the regressor (i.e. reduced coefficients or output '
+                                              'quantity.'),
 ):
-    """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
-    if not config.HAVE_TORCH:
+    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
+    if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
+    elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
+        raise SklearnMissingError
 
     fom, parameter_space = discretize_fenics()
 
-    from pymor.reductors.neural_network import NeuralNetworkReductor
-
     training_parameters = parameter_space.sample_uniformly(training_samples)
-    validation_parameters = parameter_space.sample_randomly(validation_samples)
-
-    reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters,
-                                     validation_parameters=validation_parameters,
-                                     l2_err=1e-4, ann_mse=1e-4)
-    rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
-                          restarts=100)
-
     test_parameters = parameter_space.sample_randomly(1)
 
-    speedups = []
+    if regressor == 'fcnn':
+        from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkRegressor
+        regressor_solution = NeuralNetworkRegressor(FullyConnectedNN(hidden_layers=[30, 30, 30]),
+                                                    validation_ratio=validation_ratio, tol=1e-5)
+    elif regressor == 'vkoga':
+        kernel = GaussianKernel(length_scale=1.0)
+        regressor_solution = VKOGARegressor(kernel=kernel, criterion='fp', max_centers=30, tol=1e-6, reg=1e-12)
+    elif regressor == 'gpr':
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        regressor_solution = GaussianProcessRegressor()
 
-    import time
+    if input_scaling or output_scaling:
+        from sklearn.preprocessing import MinMaxScaler
+    if input_scaling:
+        input_scaler = MinMaxScaler()
+    else:
+        input_scaler = None
+    if output_scaling:
+        output_scaler = MinMaxScaler()
+    else:
+        output_scaler = None
+
+    training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
+    for mu in training_parameters:
+        training_snapshots.append(fom.solve(mu))
+
+    reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                     regressor=regressor_solution,
+                                     input_scaler=input_scaler, output_scaler=output_scaler)
+    rom = reductor.reduce()
+
+    speedups = []
 
     print(f'Performing test on parameters of size {len(test_parameters)} ...')
 

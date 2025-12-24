@@ -11,7 +11,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 from packaging.version import parse
 
-from pymor.core.exceptions import DependencyMissingError, QtMissingError, TorchMissingError
+from pymor.core.exceptions import DependencyMissingError, QtMissingError, SklearnMissingError, TorchMissingError
 
 
 def _can_import(module):
@@ -172,6 +172,7 @@ _PACKAGES = {
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
     'SCIKIT_FEM': _get_version('skfem'),
     'SCIPY': _get_version('scipy', True),
+    'SKLEARN': _get_version('sklearn', True),
     'SLYCOT': _get_slycot_version,
     'SPHINX': _get_version('sphinx'),
     'TORCH': _get_version('torch', True),
@@ -198,6 +199,8 @@ class Config:
         if not getattr(self, f'HAVE_{dependency}'):
             if dependency == 'QT':
                 raise QtMissingError
+            elif dependency == 'SKLEARN':
+                raise SklearnMissingError
             elif dependency == 'TORCH':
                 raise TorchMissingError
             else:

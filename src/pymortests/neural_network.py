@@ -14,8 +14,8 @@ pytestmark = pytest.mark.builtin
 def test_linear_function_fitting(rng):
     import torch.optim as optim
 
-    from pymor.models.neural_network import FullyConnectedNN
-    from pymor.reductors.neural_network import multiple_restarts_training
+    from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN
+    from pymor.algorithms.ml.nn.train import multiple_restarts_training
 
     n = 100
     d_in = 3
@@ -33,7 +33,8 @@ def test_linear_function_fitting(rng):
 
     training_data = data[0:int(len(data)*validation_ratio)]
     validation_data = data[int(len(data)*validation_ratio):]
-    neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
+    neural_network = FullyConnectedNN([3 * (d_in + d_out), 3 * (d_in + d_out)],
+                                      input_dimension=d_in, output_dimension=d_out).double()
 
     max_restarts = 10
 
@@ -67,23 +68,25 @@ def test_no_training_data(rng):
 
     import torch
 
-    from pymor.models.neural_network import FullyConnectedNN
-    from pymor.reductors.neural_network import multiple_restarts_training
+    from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN
+    from pymor.algorithms.ml.nn.train import multiple_restarts_training
 
     n = 1000
     d_in = 3
     d_out = 2
     training_data = []
     validation_data = []
-    neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
+    neural_network = FullyConnectedNN([3 * (d_in + d_out), 3 * (d_in + d_out)],
+                                      input_dimension=d_in, output_dimension=d_out).double()
     best_neural_network, _ = multiple_restarts_training(training_data, validation_data, neural_network)
     assert np.allclose(best_neural_network(torch.DoubleTensor(rng.random((n, d_in)))).detach(), np.zeros(d_out))
 
 
 @skip_if_missing('TORCH')
 def test_issue_1649():
-    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel
+    from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN
+    from pymor.models.data_driven import DataDrivenModel
     from pymor.parameters.base import Parameters
     neural_network = FullyConnectedNN([3, 3, 3, 3]).double()
-    nn_model = NeuralNetworkModel(neural_network, Parameters(mu=1))
+    nn_model = DataDrivenModel(neural_network, parameters=Parameters(mu=1), dim_solution_space=3)
     assert nn_model.output_functional
