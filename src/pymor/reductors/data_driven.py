@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
+from pymor.algorithms.ml.vkoga import VKOGARegressor
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
@@ -45,6 +45,8 @@ class DataDrivenReductor(BasicObject):
     regressor
         Regressor with `fit` and `predict` methods similar to scikit-learn
         regressors that is trained in the `reduce`-method.
+        If `None` (which is also the default),
+        a :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` is used.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     T
@@ -71,12 +73,15 @@ class DataDrivenReductor(BasicObject):
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 regressor=VKOGARegressor(GaussianKernel()), target_quantity='solution',
+                 regressor=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
+
+        if self.regressor is None:
+            self.regressor = VKOGARegressor()
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
@@ -230,13 +235,15 @@ class DataDrivenPODReductor(DataDrivenReductor):
         Dict of additional parameters for the POD-method.
     """
 
-    def __init__(self, training_parameters, training_snapshots,
-                 regressor=VKOGARegressor(GaussianKernel()),
+    def __init__(self, training_parameters, training_snapshots, regressor=None,
                  T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None, product=None,
-                 pod_params={}):
+                 pod_params=None):
         self.reduced_basis = None
         self.__auto_init(locals())
+
+        if self.pod_params is None:
+            self.pod_params = {}
 
     def reduce(self, **kwargs):
         if self.reduced_basis is None:

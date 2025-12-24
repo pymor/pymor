@@ -21,8 +21,12 @@ class FullyConnectedNN(nn.Module, BasicObject):
 
     Parameters
     ----------
-    layer_sizes
-        List of sizes (i.e. number of neurons) for the layers of the neural network.
+    hidden_layers
+        List of sizes (i.e. number of neurons) for the hidden layers of the neural network.
+    input_dimension
+        Input dimension of the neural network.
+    output_dimension
+        Output dimension of the neural network.
     activation_function
         Function to use as activation function between the single layers.
     """
@@ -38,6 +42,17 @@ class FullyConnectedNN(nn.Module, BasicObject):
         self.activation_function = activation_function
 
     def set_input_output_dimensions(self, input_dimension, output_dimension):
+        """Set new values for input and output dimension of the neural network.
+
+        Initializes a new neural network with the updated input and output dimensions.
+
+        Parameters
+        ----------
+        input_dimension
+            Input dimension of the neural network.
+        output_dimension
+            Output dimension of the neural network.
+        """
         layer_sizes = [input_dimension]
         layer_sizes.extend(self.hidden_layers)
         layer_sizes.append(output_dimension)
@@ -58,7 +73,7 @@ class FullyConnectedNN(nn.Module, BasicObject):
 
         Returns
         -------
-        The output of the neural network for the input x.
+        The output of the neural network for the input `x`.
         """
         for i in range(len(self.layers) - 1):
             x = self.activation_function(self.layers[i](x))

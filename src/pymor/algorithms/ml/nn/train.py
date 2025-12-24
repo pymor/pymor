@@ -163,7 +163,6 @@ def train_neural_network(training_data, validation_data, neural_network,
 
             # iterate over batches
             for batch in dataloaders[phase]:
-                # scale inputs and outputs if desired
                 inputs = batch[0]
                 targets = batch[1]
 

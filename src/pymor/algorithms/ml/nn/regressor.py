@@ -41,13 +41,15 @@ class NeuralNetworkRegressor(BasicObject):
         :func:`~pymor.algorithms.ml.nn.train.multiple_restarts_training`
         is used. The default training parameters will be overriden by the
         additional training parameters provided here.
+        When using a learning rate scheduler, make sure to employ a scheduler
+        that steps per epoch and not per batch.
     """
 
     @defaults('neural_network', 'validation_ratio', 'tol')
     def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None, **kwargs):
         self.training_parameters = {'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
                                     'loss_function': None, 'restarts': 10, 'lr_scheduler': optim.lr_scheduler.StepLR,
-                                    'lr_scheduler_params': {'step_size': 10, 'gamma': 0.7},
+                                    'lr_scheduler_params': {'step_size': 100, 'gamma': 0.95},
                                     'es_scheduler_params': {'patience': 10, 'delta': 0.}, 'weight_decay': 0.,
                                     'log_loss_frequency': 0}
         for key, item in kwargs.items():
