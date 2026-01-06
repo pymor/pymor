@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils as utils
 
-from pymor.algorithms.ml.nn.utils import CustomDataset, EarlyStoppingScheduler
+from pymor.algorithms.ml.nn.utils import CustomDataset, EarlyStoppingScheduler, LRSchedulerWrapper
 from pymor.core.exceptions import NeuralNetworkTrainingError
 from pymor.core.logger import getLogger
 from pymor.tools.random import get_seed_seq
@@ -61,12 +61,14 @@ def train_neural_network(training_data, validation_data, neural_network,
         positive real number used as the (initial) step size of the optimizer;
         if not provided, 1 is taken as default value), `'loss_function'`
         (a loss function from PyTorch; if not provided, the MSE loss is taken
-        as default), `'lr_scheduler'` (a learning rate scheduler from the
-        PyTorch `optim.lr_scheduler` package; if not provided or `None`,
-        no learning rate scheduler is used), `'lr_scheduler_params'`
-        (a dictionary of additional parameters for the learning rate
-        scheduler), `'es_scheduler_params'` (a dictionary of additional
-        parameters for the early stopping scheduler), and `'weight_decay'`
+        as default), `'lr_scheduler_config'` (a dictionary containing the keys
+        `'scheduler'` (a learning rate scheduler from the
+        PyTorch `optim.lr_scheduler` package), `'interval'` (`'epoch'` or
+        `'batch'` clarifying if the scheduler steps epochwise or batchwise),
+        `'params'` (a dictionary of additional parameters for the
+        learning rate scheduler); if not provided or `None`,
+        no learning rate scheduler is used), `'es_scheduler_params'` (a dictionary of
+        additional parameters for the early stopping scheduler), and `'weight_decay'`
         (non-negative real number that determines the strength of the
         l2-regularization; if not provided or 0., no regularization is applied).
     log_loss_frequency
@@ -134,8 +136,17 @@ def train_neural_network(training_data, validation_data, neural_network,
                                               **training_parameters['es_scheduler_params'])
     else:
         es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
-    if training_parameters.get('lr_scheduler'):
-        lr_scheduler = training_parameters['lr_scheduler'](optimizer, **training_parameters['lr_scheduler_params'])
+
+    lr_scheduler_wrapper = None
+    if 'lr_scheduler_config' in training_parameters:
+        config = training_parameters['lr_scheduler_config']
+        if config['scheduler'] is not None:
+            scheduler_params = config.get('params', {})
+            scheduler = config['scheduler'](optimizer, **scheduler_params)
+            lr_scheduler_wrapper = LRSchedulerWrapper(
+                scheduler,
+                interval=config.get('interval', 'epoch'),
+            )
 
     # create the training and validation parameters as well as the respective data loaders
     training_dataset = CustomDataset(training_data)
@@ -186,6 +197,11 @@ def train_neural_network(training_data, validation_data, neural_network,
                 # update overall absolute loss
                 running_loss += loss * len(batch[0])
 
+                # lr_schedulers that steps batchwise
+                if lr_scheduler_wrapper is not None and lr_scheduler_wrapper.interval == 'batch':
+                    if phase == 'train':
+                        lr_scheduler_wrapper.step()
+
             # compute average loss
             if len(dataloaders[phase].dataset) > 0:
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
@@ -199,8 +215,10 @@ def train_neural_network(training_data, validation_data, neural_network,
             if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
                 logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
 
-            if training_parameters.get('lr_scheduler'):
-                lr_scheduler.step()
+            # lr_schedulers that steps epochwise
+            if lr_scheduler_wrapper is not None:
+                if phase == 'val' and lr_scheduler_wrapper.interval == 'epoch':
+                    lr_scheduler_wrapper.step(metrics=losses.get('val'))
 
             # check for early stopping
             if phase == 'val' and es_scheduler(losses, neural_network):

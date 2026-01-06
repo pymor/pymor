@@ -6,6 +6,7 @@ from pymor.core.config import config
 
 config.require('TORCH')
 
+import torch.optim as optim
 import torch.utils as utils
 
 from pymor.core.base import BasicObject
@@ -70,6 +71,35 @@ class EarlyStoppingScheduler(BasicObject):
             self.counter = 0
 
         return False
+
+
+class LRSchedulerWrapper(BasicObject):
+    """Wrapper to handle different LR scheduler interfaces uniformly.
+
+    Parameters
+    ----------
+    scheduler
+        A PyTorch learning rate scheduler.
+    interval
+        When to step: `'epoch'` or `'batch'`.
+    """
+
+    def __init__(self, scheduler, interval='epoch'):
+        self.scheduler = scheduler
+        self.interval = interval
+        self._requires_metric = isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau)
+
+    def step(self, metrics=None):
+        """Step the scheduler, passing metrics if required."""
+        if self._requires_metric:
+            if metrics is None:
+                raise ValueError(
+                    f'Scheduler {self.scheduler.__class__.__name__} requires a metric '
+                    f'(e.g., validation loss) but none was provided.'
+                )
+            self.scheduler.step(metrics)
+        else:
+            self.scheduler.step()
 
 
 class CustomDataset(utils.data.Dataset):
