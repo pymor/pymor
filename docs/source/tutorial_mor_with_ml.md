@@ -254,7 +254,7 @@ We now initialize regressors for feedforward neural networks
 ```{code-cell} ipython3
 from pymor.algorithms.ml.nn import FullyConnectedNN, NeuralNetworkRegressor
 neural_network = FullyConnectedNN(hidden_layers=[30, 30, 30])
-nn_regressor = NeuralNetworkRegressor(neural_network, tol=1e-4)
+nn_regressor = NeuralNetworkRegressor(neural_network, tol=1e-3)
 ```
 
 and kernel methods
@@ -626,6 +626,9 @@ print('----------------------------------------------------------------')
 print(f'Average relative error: {np.average(rel_errors_vkoga_tv)}')
 print(f'Median of speedup: {np.median(speedups_vkoga_tv)}')
 ```
+
+We observe that in this example, the time-vectorized version of VKOGA
+performs best in terms of accuracy and speedup.
 
 Download the code:
 {download}`tutorial_mor_with_ml.md`
