@@ -198,9 +198,8 @@ def train_neural_network(training_data, validation_data, neural_network,
                 running_loss += loss * len(batch[0])
 
                 # lr_schedulers that steps batchwise
-                if lr_scheduler_wrapper is not None and lr_scheduler_wrapper.interval == 'batch':
-                    if phase == 'train':
-                        lr_scheduler_wrapper.step()
+                if phase == 'train' and lr_scheduler_wrapper is not None and lr_scheduler_wrapper.interval == 'batch':
+                    lr_scheduler_wrapper.step()
 
             # compute average loss
             if len(dataloaders[phase].dataset) > 0:
@@ -216,9 +215,8 @@ def train_neural_network(training_data, validation_data, neural_network,
                 logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
 
             # lr_schedulers that steps epochwise
-            if lr_scheduler_wrapper is not None:
-                if phase == 'val' and lr_scheduler_wrapper.interval == 'epoch':
-                    lr_scheduler_wrapper.step(metrics=losses.get('val'))
+            if phase == 'val' and lr_scheduler_wrapper is not None and lr_scheduler_wrapper.interval == 'epoch':
+                lr_scheduler_wrapper.step(metrics=losses.get('val'))
 
             # check for early stopping
             if phase == 'val' and es_scheduler(losses, neural_network):

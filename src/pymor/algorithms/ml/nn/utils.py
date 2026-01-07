@@ -86,6 +86,7 @@ class LRSchedulerWrapper(BasicObject):
 
     def __init__(self, scheduler, interval='epoch'):
         self.scheduler = scheduler
+        assert interval in ('epoch', 'batch')
         self.interval = interval
         self._requires_metric = isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau)
 
