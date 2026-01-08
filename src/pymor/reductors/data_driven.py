@@ -39,7 +39,7 @@ class DataDrivenReductor(BasicObject):
     training_snapshots
         Iterable containing the training snapshots of the regressor.
         Contains the solutions (reduced coefficients w.r.t. the reduced basis
-        or outputs associated to the parameters in `training_parameters`.
+        or outputs) associated to the parameters in `training_parameters`.
         In the case of a time-dependent problem, the snapshots are assumed to be
         equidistant in time.
     regressor
