@@ -7,8 +7,14 @@ import pytest
 
 from pymor.models.basic import StationaryModel
 from pymor.models.saddle_point import SaddlePointModel
-from pymor.operators.block import BlockColumnOperator, BlockOperator
-from pymor.operators.constructions import AdjointOperator, LincombOperator, VectorOperator, ZeroOperator
+from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    IdentityOperator,
+    LincombOperator,
+    VectorOperator,
+    ZeroOperator,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.tools.frozendict import FrozenDict
@@ -148,25 +154,44 @@ def test_products_with_both_keys_correct_mapping(operators, vectors):
     Pp = NumpyMatrixOperator(np.eye(P.dim))
 
     model = SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product=Pu, p_product=Pp)
+    assert model.u_product == Pu
+    assert model.p_product == Pp
 
-    assert model.products['u'] == Pu
-    assert model.products['p'] == Pp
+    # Check that products dict contains the mixed block diagonal
+    assert 'mixed' in model.products
+    assert isinstance(model.products['mixed'], BlockDiagonalOperator)
 
-    # Also check space-compatibility kept
-    assert model.products['u'].source == U
-    assert model.products['u'].range == U
-    assert model.products['p'].source == P
-    assert model.products['p'].range == P
+    # Check that the block diagonal has the correct blocks
+    mixed_product = model.products['mixed']
+    assert mixed_product.blocks[0, 0] == Pu
+    assert mixed_product.blocks[1, 1] == Pp
+    assert model.u_product.source == U
+    assert model.u_product.range == U
+    assert model.p_product.source == P
+    assert model.p_product.range == P
 
 
 def test_products_single_key_allowed(operators, vectors):
     A, B, C = operators
     U = A.range
+    P = B.range
     f_u, g_p = vectors
 
     Pu = NumpyMatrixOperator(np.eye(U.dim))
     model = SaddlePointModel(A=A, B=B, C=C, f=f_u, g=g_p, u_product=Pu)
-    assert model.products['u'] is Pu
+
+    assert model.u_product is Pu
+    assert model.p_product is None
+
+    # Check that products dict contains the mixed block diagonal
+    assert 'mixed' in model.products
+    assert isinstance(model.products['mixed'], BlockDiagonalOperator)
+
+    # Check that the block diagonal has Pu and an IdentityOperator for p
+    mixed_product = model.products['mixed']
+    assert mixed_product.blocks[0, 0] == Pu
+    assert isinstance(mixed_product.blocks[1, 1], IdentityOperator)
+    assert mixed_product.blocks[1, 1].source == P
 
 
 def test_assert_mismatched_A_source_range(spaces, operators, vectors):
