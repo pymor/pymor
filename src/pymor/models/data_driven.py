@@ -19,9 +19,10 @@ class DataDrivenModel(Model):
     ----------
     regressor
         Regressor with `fit` and `predict` methods similar to scikit-learn
-        regressors that is trained in the `reduce`-method.
+        regressors that is used for prediction in `_compute`.
     target_quantity
-        Either `'solution'` or `'output'`, determines which quantity to learn.
+        Either `'solution'` or `'output'`, determines which quantity is predicted
+        by the regressor.
     parameters
         |Parameters| of the reduced order model (the same as used in the full-order
         model).
@@ -114,9 +115,10 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         Number of time steps.
     regressor
         Regressor with `fit` and `predict` methods similar to scikit-learn
-        regressors that is trained in the `reduce`-method.
+        regressors that is used for prediction in `_compute`.
     target_quantity
-        Either `'solution'` or `'output'`, determines which quantity to learn.
+        Either `'solution'` or `'output'`, determines which quantity is predicted
+        by the regressor.
     parameters
         |Parameters| of the reduced order model (the same as used in the full-order
         model).
