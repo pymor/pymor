@@ -50,9 +50,31 @@ and :mod:`~pymordemos.vkoga_2d_input`.
 
 RB methods for saddle-point problems (Stokes equation)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-(also mention StationaryLSRBReductor)
-- `[#2448] Reductor for the stationary Stokes equation <https://github.com/pymor/pymor/pull/2448>`_
-- `[#2485] add saddle point model <https://github.com/pymor/pymor/pull/2485>`_
+In `[#2448] <https://github.com/pymor/pymor/pull/2448>`_, we added new reductors for
+saddle-point problems, in particular for the Stokes equations. We implemented a
+:class:`~pymor.reductors.stokes.SupremizerGalerkinStokesReductor`, that enriches the
+reduced velocity basis with pressure supremizers in order to ensure inf-sup stability of the
+reduced model. Furthermore, we implemented a :class:`pymor.reductors.stokes.LSRBStokesReductor`
+that projects the least-squares functional of the Stokes problem onto the reduced spaces.
+This reductor can be either used by Galerkin projection of the normal equations or by applying a
+Petrov-Galerkin projection in combination with a least-squares solver to the overdetermined
+reduced system.
+Further, a :class:`~pymor.reductors.basic.StationaryLSRBReductor` was added. This reductor can
+be used for general stationary problems and also allows to solve the reduced problem by solving
+and projecting the normal equations or via the least-squares approach. It servers as the base class
+for the :class:`pymor.reductors.stokes.LSRBStokesReductor`.
+To guarantee efficient offline-online decomposition of the novel Stokes reductors, new handling for
+block operators was implemented in `[#2474] <https://github.com/pymor/pymor/pull/2474>`_, mainly to
+support :class:`~pymor.operators.block.BlockOperators` in
+:meth:`~pymor.algorithms.simplify.expand`.
+The new Stokes reductors are demonstrated in the :mod:`pymordemos.stokes` demo script.
+
+In  `[#2485] <https://github.com/pymor/pymor/pull/2485>`_, we added a
+:class:`~pymor.models.saddle_point.SaddlePointModel` class to represent saddle-point models in
+pyMOR. This model allows for the easy construction of saddle-point models by providing the block
+operators and right-hand sides. It is compatible with the newly implemented Stokes reductors and
+is used in  :meth:`pymor.models.examples.stokes_2Dexample` to create a Stokes problem example
+in two spatial dimensions.
 
 Q-DEIM algorithm
 ~~~~~~~~~~~~~~~~
@@ -84,7 +106,6 @@ Further notable improvements
 - `[#2468] Advertise print_cached_methods when showing pyMOR config <https://github.com/pymor/pymor/pull/2468>`_
 - `[#2471] Add type annotations for @defaults and @cached <https://github.com/pymor/pymor/pull/2471>`_
 - `[#2473] Add use_umfpack option to ScipySpSolveSolver class. <https://github.com/pymor/pymor/pull/2473>`_
-- `[#2474] add logic for BlockOperators in simplify <https://github.com/pymor/pymor/pull/2474>`_
 - `[#2475] bugfix neural_network reductor returning only last epoch instead of best network <https://github.com/pymor/pymor/pull/2475>`_
 - `[#2476] Automatically remove MPI object when ObjectId dies <https://github.com/pymor/pymor/pull/2476>`_
 - `[#2477] implement conjugate method for ParameterFunctional <https://github.com/pymor/pymor/pull/2477>`_
