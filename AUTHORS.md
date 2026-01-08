@@ -29,6 +29,7 @@
   * `range_spaces` and `source_spaces` parameters for `BlockOperatorBase.__init__`
   * allow ndarrays with `object` `dtype` in `RuleTable.get_children`
   * correct Hamiltonian in linear wave equation demo
+  * implementation of wrapper for handling different learning rate schedulers
 
 * @franciuprise
   * fixed jupyter visualizer with matplotlib backend
