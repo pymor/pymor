@@ -1,11 +1,11 @@
-pyMOR 2025.2 (January 9, 2025)
---------------------------------
+pyMOR 2025.2 (January 9, 2026)
+------------------------------
 
 We are proud to announce the release of pyMOR 2025.2!
 
 ADD SUMMARY OF CHANGES
 
-pyMOR 2025.1 contains contributions by Max Bindhak, Timo Plath, Sven Ullmann and
+pyMOR 2025.2 contains contributions by Max Bindhak, Timo Plath, Sven Ullmann and
 @franciuprise. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
 for more details.
 
@@ -13,10 +13,40 @@ for more details.
 Main new features
 ^^^^^^^^^^^^^^^^^
 
-ML-based reductors and VKOGA algorithm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#2484] VKOGA implementation <https://github.com/pymor/pymor/pull/2484>`_
-- `[#2498] Data driven reductor <https://github.com/pymor/pymor/pull/2498>`_
+Data-driven reductors and VKOGA algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#2498] <https://github.com/pymor/pymor/pull/2498>`_,
+we implemented a :class:`~pymor.reductors.data_driven.DataDrivenReductor` that can
+be used to approximate the solution or the output of a model as a parametric
+quantity by training a machine learning surrogate. The reductor can be used for
+stationary and instationary problems (in the latter case, it is possible to treat
+time as an additional input for the machine learning or consider a time-vectorized
+version predicting a whole trajectory at once). Furthermore, it is now possible to
+apply different machine learning methods, such as neural networks (still implemented
+in pyMOR using PyTorch), kernel methods (purely |NumPy|-based implementation available
+in pyMOR as well, see description below) or any regressor from scikit-learn.
+For convenience, we implemented a
+:class:`~pymor.reductors.data_driven.DataDrivenPODReductor` that computes a reduced
+basis from snapshot data using proper orthogonal decomposition and performs the
+orthogonal projection of the training snapshots onto the reduced basis in order to
+generate the required training data for the machine learning surrogate.
+The `NeuralNetworkReductor` was removed entirely but its behavior can be replicated
+using the :class:`~pymor.reductors.data_driven.DataDrivenPODReductor` in combination
+with the :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`.
+Many details on the ML-based reductor and its usage are given in
+the respective :doc:`../tutorial_mor_with_ml`.
+
+In `[#2484] <https://github.com/pymor/pymor/pull/2484>`_, the vectorial kernel
+orthogonal greedy algorithm (VKOGA) was implemented. The selection of interpolation
+centers is performed using pyMOR's :meth:`~pymor.algorithms.greedy.weak_greedy`.
+The interpolant is extended efficiently using a Newton basis and a Cholesky
+decomposition of the kernel matrix.
+The :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` can be used similar
+to other scikit-learn regressors as machine learning surrogate in the
+:class:`~pymor.reductors.data_driven.DataDrivenReductor`. In addition, it can also
+be applied independent of model order reduction as surrogate in regression of
+vector-valued data, see for instance the demo scripts :mod:`~pymordemos.vkoga`
+and :mod:`~pymordemos.vkoga_2d_input`.
 
 RB methods for saddle-point problems (Stokes equation)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
