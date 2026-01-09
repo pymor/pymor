@@ -165,10 +165,17 @@ We provide bindings for the following solver libraries:
 
 * [FEniCS](https://fenicsproject.org)
 
-    MPI-compatible wrapper classes for dolfin linear algebra data structures are
-    shipped with pyMOR (`pymor.bindings.fenics`).
+    MPI-compatible wrapper classes for dolfin linear algebra data structures
+    and nonlinear operators are shipped with pyMOR (`pymor.bindings.fenics`).
     For an example see `pymordemos.thermalblock`, `pymordemos.thermalblock_simple`.
-    It is tested using FEniCS version 2019.1.0.
+    The bindings are tested using FEniCS version 2019.1.0.
+
+* [FEniCSx](https://fenicsproject.org)
+
+    Wrapper classes for dolfinx linear algebra data structures and nonlinear
+    operators are shipped with pyMOR (`pymor.bindings.fenicsx`).
+    For an example see `pymordemos.thermalblock_simple`.
+    The bindings are tested using FEniCSx 0.10.
 
 * [deal.II](https://dealii.org)
 
@@ -182,7 +189,7 @@ We provide bindings for the following solver libraries:
     For an example see `pymordemos.thermalblock_simple`.
     It is tested using NGSolve version v6.2.2104.
 
-A simple example for direct integration of pyMOR with a a custom solver
+A simple example for direct integration of pyMOR with a custom solver
 can be found in `pymordemos.minimal_cpp_demo`.
 
 An alternative approach is to import system matrices from file and use
