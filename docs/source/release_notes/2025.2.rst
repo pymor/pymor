@@ -5,12 +5,11 @@ We are proud to announce the release of pyMOR 2025.2!
 
 This release includes improved support for data-driven model order reduction
 using machine learning methods such as artificial neural networks or the
-Vectorial Kernel Orthogonal Greedy Algorithm (VKOGA).
-Support for saddle-point problems, such as the
-Stokes equations, has been improved, including dedicated supremizer enrichment
-and least-squares Petrov-Galerkin (LSPG) reductors. Furthermore, the Q-DEIM
-algorithm for empirical interpolation and bindings for the FEniCSx PDE solver
-library have been added.
+Vectorial Kernel Orthogonal Greedy Algorithm (VKOGA). Support for saddle-point
+problems, such as the Stokes equations, has been improved, including dedicated
+supremizer enrichment and least-squares Petrov-Galerkin (LSPG) reductors.
+Furthermore, the Q-DEIM algorithm for empirical interpolation and bindings
+for the FEniCSx PDE solver library have been added.
 
 pyMOR 2025.2 contains contributions by Maximilian Bindhak, Timo Plath, Sven Ullmann
 and @franciuprise. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
