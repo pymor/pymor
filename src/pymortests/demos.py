@@ -61,11 +61,20 @@ SUCCESSIVE_CONSTRAINTS_ARGS = (
     ('coercivity_estimation_scm', []),
 )
 
-NEURAL_NETWORK_ARGS = (
-    ('neural_networks', [15, 20, 3]),
-    ('neural_networks_fenics', [15, 3]),
-    ('neural_networks_instationary', [0, 10, 3, 15, 3]),
-    ('neural_networks_instationary', [1, 15, 3, 20, 3]),
+DATA_DRIVEN_ARGS = (
+    ('data_driven', ['vkoga', 15, 20]),
+    ('data_driven', ['gpr', 15, 20]),
+    ('data_driven', ['vkoga', 15, 20, '--input-scaling', '--output-scaling']),
+    ('data_driven_instationary', [0, 'vkoga', 10, 3, 15]),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20]),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--time-vectorized']),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--input-scaling', '--output-scaling']),
+    ('data_driven_instationary', [1, 'vkoga', 15, 3, 20, '--time-vectorized', '--input-scaling', '--output-scaling']),
+    ('data_driven_instationary', [1, 'fcnn', 15, 3, 20]),
+    ('data_driven_instationary', [1, 'gpr', 15, 3, 20]),
+    ('data_driven_fenics', ['vkoga', 15, '--input-scaling', '--output-scaling']),
+    ('data_driven_fenics', ['fcnn', 15, '--input-scaling', '--output-scaling']),
+    ('data_driven_fenics', ['gpr', 15, '--input-scaling', '--output-scaling']),
 )
 
 THERMALBLOCK_ARGS = (
@@ -168,6 +177,8 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=fp']),
     ('vkoga', ['--greedy-criterion=f']),
     ('vkoga', ['--greedy-criterion=p']),
+    ('vkoga', ['--kernel=Matern']),
+    ('vkoga', ['--kernel=RationalQuadratic']),
 )
 
 VKOGA_2D_INPUT_ARGS = (
@@ -183,7 +194,7 @@ STOKES_REDUCTOR_ARGS = (
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
-    + NEURAL_NETWORK_ARGS
+    + DATA_DRIVEN_ARGS
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS
@@ -214,9 +225,9 @@ def _skip_if_no_solver(param):
     for check, package in [
             (lambda s: 'fenics' in s, ('FENICS', 'FENICSX')),
             (lambda s: 'ngsolve' in s, 'NGSOLVE'),
-            (lambda s: 'neural_' in s, 'TORCH'),
-            (lambda s: 'neural_networks_instationary' in s, 'FENICS'),
-            (lambda s: 'neural_networks_fenics' in s, 'FENICS'),
+            (lambda s: 'fcnn' in s, 'TORCH'),
+            (lambda s: 'data_driven_instationary' in s, 'FENICS'),
+            (lambda s: 'data_driven_fenics' in s, 'FENICS'),
             (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
             (lambda s: 'thermalblock' in s and 'simple' not in s and 'fenics' in s, 'FENICS'),
             (lambda s: 'stokes' in s, 'SCIKIT_FEM'),

@@ -8,13 +8,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.vkoga import GaussianKernel, VKOGARegressor
+from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
+from pymor.core.config import config
+from pymor.core.exceptions import SklearnMissingError
 from pymor.tools.random import new_rng
 from pymor.tools.typer import Choices
 
 
 def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                                       help='Method for sampling the training points'),
+         kernel: Choices('Gaussian Matern RationalQuadratic') = Option('Gaussian',
+                                                                       help='Kernel to use in VKOGA.'),
          num_training_points: int = Option(40, help='Number of training points in the weak greedy algorithm.'),
          greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
          max_centers: int = Option(20, help='Maximum number of selected centers in the greedy algorithm.'),
@@ -24,7 +28,17 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
                                                 'Only used when `kernel = diagonal`.')):
     """Approximates a function with 2d output from training data using VKOGA."""
     m = 2
-    kernel = GaussianKernel(length_scale)
+    if kernel in ('Matern', 'RationalQuadratic') and not config.HAVE_SKLEARN:
+        raise SklearnMissingError
+
+    if kernel == 'Gaussian':
+        kernel = GaussianKernel(length_scale)
+    elif kernel == 'Matern':
+        from sklearn.gaussian_process.kernels import Matern
+        kernel = Matern(length_scale)
+    elif kernel == 'RationalQuadratic':
+        from sklearn.gaussian_process.kernels import RationalQuadratic
+        kernel = RationalQuadratic(length_scale)
 
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':
@@ -35,10 +49,10 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
 
     F = np.column_stack([np.sin(2*np.pi*X).ravel(), np.cos(2*np.pi*X).ravel()])
 
-    estimator = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
-    estimator.fit(X, F)
+    regressor = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
+    regressor.fit(X, F)
 
-    weak_greedy_result = estimator._weak_greedy_result
+    weak_greedy_result = regressor._weak_greedy_result
     print('Result of the weak greedy algorithm:')
     print(weak_greedy_result)
 
@@ -64,7 +78,7 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
 
-    plot_vkoga_results(estimator, X, F)
+    plot_vkoga_results(regressor, X, F)
 
 
 if __name__ == '__main__':

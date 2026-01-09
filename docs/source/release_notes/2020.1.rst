@@ -86,7 +86,7 @@ particular users can now learn about:
 - :doc:`../tutorial_builtin_discretizer`.
 - :doc:`../tutorial_basis_generation`
 - :doc:`../tutorial_bt`
-- :doc:`../tutorial_mor_with_anns`
+- `tutorial_mor_with_anns`
 - :doc:`../tutorial_external_solver`
 
 

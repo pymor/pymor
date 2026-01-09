@@ -9,7 +9,7 @@ tutorial_bt
 tutorial_interpolation
 tutorial_ph
 tutorial_unstable_lti_systems
-tutorial_mor_with_anns
+tutorial_mor_with_ml
 tutorial_optimization
 tutorial_interact
 tutorial_vectorarray
