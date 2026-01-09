@@ -15,6 +15,7 @@ from pymor.algorithms.pod import pod
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
         return_reduced_coefficients=False):
+
     """Principal component analysis (PCA) wrapper that centers `A`
     around the mean and then applies 'pod'.
 
@@ -82,15 +83,15 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
     logger = getLogger('pymor.algorithms.pca.pca')
 
-    # compute empirical mean and center A around the mean
+    logger.info('Computing empirical mean and centering data ... ')
     weights = np.full(len(A), 1.0 / len(A))
     mean = A.lincomb(weights)
     A_mean = A - mean
 
-    # apply pod to centered data A_mean
-    POD, SVALS, COEFFS = pod(A_mean, product=product, modes=modes, rtol=rtol,
-                             atol=atol, l2_err=l2_err, method=method,
-                             orth_tol=orth_tol, return_reduced_coefficients=True)
+    with logger.block('Applying POD to centered data ...'):
+        POD, SVALS, COEFFS = pod(A_mean, product=product, modes=modes, rtol=rtol,
+                                 atol=atol, l2_err=l2_err, method=method,
+                                 orth_tol=orth_tol, return_reduced_coefficients=True)
 
     if return_reduced_coefficients:
         return POD, SVALS, COEFFS, mean
