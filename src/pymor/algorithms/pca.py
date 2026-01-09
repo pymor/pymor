@@ -86,6 +86,4 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
                                  atol=atol, l2_err=l2_err, method=method,
                                  orth_tol=orth_tol, return_reduced_coefficients=True)
 
-    if return_reduced_coefficients:
-        return pod_results, mean
     return pod_results, mean
