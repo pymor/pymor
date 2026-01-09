@@ -2,20 +2,18 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 
+from pymor.algorithms.pod import pod
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
-from pymor.algorithms.pod import pod
 
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
         return_reduced_coefficients=False):
-
     """Principal component analysis (PCA) wrapper that centers `A` and applies 'pod'.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
@@ -66,8 +64,8 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     mean
         |VectorArray| containing the empirical mean of the input `A`.
         The input |VectorArray| is centered by subtracting this mean
-        before applying 'pod'. To approximately reconstruct original snapshots add
-        the mean back, e.g.:
+        before applying 'pod'. To approximately reconstruct original snapshots
+        add the mean back, e.g.:
         ``reconstructed = POD.lincomb(COEFFS) + mean``
     """
     assert isinstance(A, VectorArray)
@@ -82,7 +80,7 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
     with logger.block('Applying POD to centered data ...'):
         pod_results = pod(A_mean, product=product, modes=modes, rtol=rtol,
-                                 atol=atol, l2_err=l2_err, method=method,
-                                 orth_tol=orth_tol, return_reduced_coefficients=True)
+                          atol=atol, l2_err=l2_err, method=method,
+                          orth_tol=orth_tol, return_reduced_coefficients=True)
 
     return pod_results, mean
