@@ -13,8 +13,26 @@
 
 ### pyMOR 2025.2
 
+* Maximilian Bindhak, @maxbindhak
+  * UMFPACK support in `ScipySpSolveSolver`
+
+* Timo Plath, @TiPlath
+  * fixed ANN reductors always using last epoch instead of best network
+
 * Sven Ullmann, @ullmannsven
+  * `SaddlePointModel`
+  * `StationaryLSRBReductor`, `SupremizerGalerkinStokesReductor`,
+    `LSRBStokesReductor`, `stokes` demo
   * efficiency improvements for the Vectorial Kernel Orthogonal Greedy Algorithm (VKOGA)
+  * `ParameterFunctional.conjugate`
+  * `expand` rules for `BlockOperators`
+  * `range_spaces` and `source_spaces` parameters for `BlockOperatorBase.__init__`
+  * allow ndarrays with `object` `dtype` in `RuleTable.get_children`
+  * correct Hamiltonian in linear wave equation demo
+  * implementation of wrapper for handling different learning rate schedulers
+
+* @franciuprise
+  * fixed jupyter visualizer with matplotlib backend
 
 ### pyMOR 2025.1
 
