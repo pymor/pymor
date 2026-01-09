@@ -16,8 +16,7 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
         return_reduced_coefficients=False):
 
-    """Principal component analysis (PCA) wrapper that centers `A`
-    around the mean and then applies 'pod'.
+    """Principal component analysis (PCA) wrapper that centers `A` around the mean and then applies 'pod'.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
     return values of this method are the |VectorArray| of left singular
