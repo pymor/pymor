@@ -31,48 +31,42 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     Parameters
     ----------
     A
-        The |VectorArray| for which the POD is to be computed.
+        See :class:`~pymor.algorithms.pod`.
     product
-        Inner product |Operator| w.r.t. which the POD is computed.
+        See :class:`~pymor.algorithms.pod`.
     modes
-        If not `None`, at most the first `modes` POD modes (singular
-        vectors) are returned.
+        See :class:`~pymor.algorithms.pod`.
     rtol
-        Singular values smaller than this value multiplied by the
-        largest singular value are ignored.
+        See :class:`~pymor.algorithms.pod`.
     atol
-        Singular values smaller than this value are ignored.
+        See :class:`~pymor.algorithms.pod`.
     l2_err
-        Do not return more modes than needed to bound the
-        l2-approximation error by this value. I.e. the number of
-        returned modes is at most ::
-
-            argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
-
-        where `s_n` denotes the n-th singular value.
+        See :class:`~pymor.algorithms.pod`.
     method
-        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
-        (`'method_of_snapshots'` or `'qr_svd'`).
+        See :class:`~pymor.algorithms.pod`.
     orth_tol
-        POD modes are reorthogonalized if the orthogonality error is
-        above this value.
+        See :class:`~pymor.algorithms.pod`.
     return_reduced_coefficients
-        Determines whether or not to also return the right singular
-        vectors, which determine the reduced coefficients.
+        See :class:`~pymor.algorithms.pod`.
 
     Returns
     -------
-    POD
-        |VectorArray| of POD modes.
-    SVALS
-        One-dimensional |NumPy array| of singular values.
-    COEFFS
-        If `return_reduced_coefficients` is `True`, a |NumPy array|
-        of right singular vectors as conjugated rows.
+    pod_results
+        a tuple `(PRINCIPAL_COMPONENTS, SVALS)` or
+        `(PRINCIPAL_COMPONENTS, SVALS, COEFFS)` depending on the value of
+        `return_reduced_coefficients`:
+
+        PRINCIPAL_COMPONENTS
+            |VectorArray| of PCA coordinates.
+        SVALS
+            One-dimensional |NumPy array| of singular values.
+        COEFFS
+            If `return_reduced_coefficients` is `True`, a |NumPy array|
+            of right singular vectors as conjugated rows.
     mean
         |VectorArray| containing the empirical mean of the input `A`.
         The input |VectorArray| is centered by subtracting this mean
-        before applying 'pod'. To reconstruct original snapshots add
+        before applying 'pod'. To approximately reconstruct original snapshots add
         the mean back, e.g.:
         ``reconstructed = POD.lincomb(COEFFS) + mean``
     """
@@ -88,10 +82,10 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     A_mean = A - mean
 
     with logger.block('Applying POD to centered data ...'):
-        POD, SVALS, COEFFS = pod(A_mean, product=product, modes=modes, rtol=rtol,
+        pod_results = pod(A_mean, product=product, modes=modes, rtol=rtol,
                                  atol=atol, l2_err=l2_err, method=method,
                                  orth_tol=orth_tol, return_reduced_coefficients=True)
 
     if return_reduced_coefficients:
-        return POD, SVALS, COEFFS, mean
-    return POD, SVALS, mean
+        return pod_results, mean
+    return pod_results, mean

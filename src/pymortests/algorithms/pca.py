@@ -42,7 +42,7 @@ def test_pca(vector_array, method):
     U_ref, s_ref = pod(A_mean_expected, method=method)
 
     # call PCA
-    U_pca, s_pca, mean_pca = pca(A, method=method)
+    pod_results, mean_pca = pca(A, method=method)
 
     # input must not be modified
     assert np.all(almost_equal(A, B))
@@ -51,10 +51,10 @@ def test_pca(vector_array, method):
     assert np.all(almost_equal(mean_pca, mean_expected))
 
     # modes and singular values must match POD on centered data
-    assert len(U_pca) == len(s_pca) == len(U_ref) == len(s_ref)
-    assert np.allclose(s_pca, s_ref, rtol=1e-12, atol=1e-12)
+    assert len(pod_results[0]) == len(pod_results[1]) == len(U_ref) == len(s_ref)
+    assert np.allclose(pod_results[1], s_ref, rtol=1e-12, atol=1e-12)
     # orthonormality of returned modes (sanity)
-    assert np.allclose(U_pca.gramian(), np.eye(len(s_pca)), atol=1e-10)
+    assert np.allclose(pod_results[0].gramian(), np.eye(len(pod_results[1])), atol=1e-10)
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,
           HealthCheck.too_slow, HealthCheck.data_too_large])
@@ -82,7 +82,7 @@ def test_pca_with_coefficients(vector_array, method):
     U_ref, s_ref, c_ref = pod(A_mean_expected, method=method, return_reduced_coefficients=True)
 
     # call PCA
-    U_pca, s_pca, c_pca, mean_pca = pca(A, method=method, return_reduced_coefficients=True)
+    pod_results, mean_pca = pca(A, method=method, return_reduced_coefficients=True)
 
     # input must not be modified
     assert np.all(almost_equal(A, B))
@@ -91,15 +91,15 @@ def test_pca_with_coefficients(vector_array, method):
     assert np.all(almost_equal(mean_pca, mean_expected))
 
     # modes and singular values must match POD on centered data
-    assert len(U_pca) == len(s_pca) == len(U_ref) == len(s_ref)
-    assert np.allclose(s_pca, s_ref, rtol=1e-12, atol=1e-12)
+    assert len(pod_results[0]) == len(pod_results[1]) == len(U_ref) == len(s_ref)
+    assert np.allclose(pod_results[1], s_ref, rtol=1e-12, atol=1e-12)
     # orthonormality of returned modes (sanity)
-    assert np.allclose(U_pca.gramian(), np.eye(len(s_pca)), atol=1e-10)
+    assert np.allclose(pod_results[0].gramian(), np.eye(len(pod_results[1])), atol=1e-10)
     # reconstruction check of mean centered data
     U_ref.scal(s_ref)
     UsVh_ref = U_ref.lincomb(c_ref)
-    U_pca.scal(s_pca)
-    UsVh_pca = U_pca.lincomb(c_pca)
+    pod_results[0].scal(pod_results[1])
+    UsVh_pca = pod_results[0].lincomb(pod_results[2])
     assert spla.norm((UsVh_ref - UsVh_pca).norm()) / spla.norm(A_mean_expected.norm()) < 1e-8
     # reconstruction check of original data
     recon = UsVh_pca + mean_pca
