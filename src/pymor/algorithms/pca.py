@@ -76,10 +76,9 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
     logger = getLogger('pymor.algorithms.pca.pca')
 
-    logger.info('Computing empirical mean and centering data ... ')
-    weights = np.full(len(A), 1.0 / len(A))
-    mean = A.lincomb(weights)
-    A_mean = A - mean
+    logger.info('Centering data around the mean ... ')
+    mean = A.mean()
+    A_mean = A - A.mean()
 
     with logger.block('Applying POD to centered data ...'):
         pod_results = pod(A_mean, product=product, modes=modes, rtol=rtol,

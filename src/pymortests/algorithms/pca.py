@@ -34,8 +34,7 @@ def test_pca(vector_array, method):
     B = A.copy()
 
     # compute expected mean and centered data
-    weights = np.full(len(A), 1.0 / len(A))
-    mean_expected = A.lincomb(weights)
+    mean_expected = A.mean()
     A_mean_expected = A - mean_expected
 
     # reference POD on centered data
@@ -74,8 +73,7 @@ def test_pca_with_coefficients(vector_array, method):
     B = A.copy()
 
     # compute expected mean and centered data
-    weights = np.full(len(A), 1.0 / len(A))
-    mean_expected = A.lincomb(weights)
+    mean_expected = A.mean()
     A_mean_expected = A - mean_expected
 
     # reference POD on centered data
