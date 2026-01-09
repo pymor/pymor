@@ -5,14 +5,15 @@
 import numpy as np
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
+from pymor.algorithms.ml.vkoga.kernels import GaussianKernel
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
 
 class VKOGARegressor(BasicObject):
-    """Scikit-learn-style estimator using the :class:`VKOGASurrogate`.
+    """Scikit-learn-style regressor using the :class:`VKOGASurrogate`.
 
-    The estimator uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
+    The regressor uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
     to select centers according to the given criterion.
 
     The algorithm is described in :cite:`WH13` and :cite:`SH21`.
@@ -20,13 +21,13 @@ class VKOGARegressor(BasicObject):
     Parameters
     ----------
     kernel
-        Kernel to use in the estimator. The kernel is assumed to have a scalar-valued output.
+        Kernel to use in the regressor. The kernel is assumed to have a scalar-valued output.
         For vector-valued outputs, the interpolant uses vector-valued coefficients,
         i.e., the prediction is computed as a linear combination of kernel evaluations
         with vector-valued weights. The interface of the kernel needs to follow the scikit-learn
         interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
         and a `diag`-method for computing the diagonal of the kernel matrix are required.
-        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.vkoga.kernels`.
+        For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.ml.vkoga.kernels`.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
     max_centers
@@ -37,8 +38,8 @@ class VKOGARegressor(BasicObject):
         Regularization parameter for the kernel interpolation.
     """
 
-    @defaults('criterion', 'max_centers', 'tol', 'reg')
-    def __init__(self, kernel, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
+    @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
+    def __init__(self, kernel=GaussianKernel(), criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
         self._surrogate = None
 
@@ -54,7 +55,7 @@ class VKOGARegressor(BasicObject):
 
         Returns
         -------
-        The trained estimator.
+        The trained regressor.
         """
         X = np.asarray(X)
         Y = np.asarray(Y)

@@ -167,12 +167,16 @@ coercivity_estimator, _, _ = construct_scm_functionals(
 from pymor.models.examples import thermal_block_example
 fom = thermal_block_example(diameter=1/10)
 
-# instantiate reductor with training and validation parameters and desired errors
-from pymor.reductors.neural_network import NeuralNetworkReductor
-reductor = NeuralNetworkReductor(fom,
-                                 training_parameters=fom.parameters.space(0.1, 1).sample_uniformly(2),
-                                 validation_parameters=fom.parameters.space(0.1, 1).sample_randomly(5),
-                                 ann_mse=None, scale_outputs=True)
+training_parameters = fom.parameters.space(0.1, 1).sample_uniformly(2)
+training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
+for mu in training_parameters:
+    training_snapshots.append(fom.solve(mu))
+
+# instantiate reductor with training parameters, snapshots, reduced basis and regressor
+from pymor.reductors.data_driven import DataDrivenPODReductor
+from pymor.algorithms.ml.nn import NeuralNetworkRegressor
+reductor = DataDrivenPODReductor(training_parameters, training_snapshots,
+                                 regressor=NeuralNetworkRegressor())
 rom = reductor.reduce(restarts=5)
 ```
 
