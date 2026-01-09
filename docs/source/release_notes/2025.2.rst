@@ -3,10 +3,16 @@ pyMOR 2025.2 (January 9, 2026)
 
 We are proud to announce the release of pyMOR 2025.2!
 
-ADD SUMMARY OF CHANGES
+This release includes improved support for data-driven model order reduction
+using artificial neural networks or the Vectorial Kernel Orthogonal
+Greedy Algorithm (VKOGA). Support for saddle-point problems, such as the
+Stokes equations, has been improved, including dedicated supremizer enrichment
+and least-squares Petrov-Galerkin (LSPG) reductors. Furthermore, the Q-DEIM
+algorithm for empirical interpolation and bindings for the FEniCSx PDE solver
+library have been added.
 
-pyMOR 2025.2 contains contributions by Max Bindhak, Timo Plath, Sven Ullmann and
-@franciuprise. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+pyMOR 2025.2 contains contributions by Maximilian Bindhak, Timo Plath, Sven Ullmann
+and @franciuprise. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
 for more details.
 
 
@@ -16,73 +22,74 @@ Main new features
 Data-driven reductors and VKOGA algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#2498] <https://github.com/pymor/pymor/pull/2498>`_,
-we implemented a :class:`~pymor.reductors.data_driven.DataDrivenReductor` that can
-be used to approximate the solution or the output of a model as a parametric
-quantity by training a machine learning surrogate. The reductor can be used for
-stationary and instationary problems (in the latter case, it is possible to treat
-time as an additional input for the machine learning or consider a time-vectorized
-version predicting a whole trajectory at once). Furthermore, it is now possible to
-apply different machine learning methods, such as neural networks (still implemented
-in pyMOR using PyTorch), kernel methods (purely |NumPy|-based implementation available
-in pyMOR as well, see description below) or any regressor from scikit-learn.
-For convenience, we implemented a
-:class:`~pymor.reductors.data_driven.DataDrivenPODReductor` that computes a reduced
-basis from snapshot data using proper orthogonal decomposition and performs the
-orthogonal projection of the training snapshots onto the reduced basis in order to
-generate the required training data for the machine learning surrogate.
-The `NeuralNetworkReductor` was removed entirely but its behavior can be replicated
+we introduced a general :class:`~pymor.reductors.data_driven.DataDrivenReductor`
+that approximates the solution or output of a model as a parametric quantity by
+training a machine learning surrogate. The reductor can be used for both
+stationary and time-dependent problems (in the latter case, treating time as an
+additional input parameter or predicting a whole time trajectory at once).
+Furthermore, it is now possible to use different machine learning methods, including
+neural networks (implemented in pyMOR using PyTorch), kernel methods (see below),
+or any regressor from scikit-learn. We also added
+:class:`~pymor.reductors.data_driven.DataDrivenPODReductor`, which follows an approach
+similar to :cite:`HU18` by first computing a reduced basis from snapshot data using
+Proper Orthogonal Decomposition (POD) and then generating the required training data
+for the machine learning surrogate by performing an orthogonal projection of the
+training snapshots onto the reduced basis.
+
+The `NeuralNetworkReductor` has been removed. Its behavior can be replicated
 using the :class:`~pymor.reductors.data_driven.DataDrivenPODReductor` in combination
 with the :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`.
-Many details on the ML-based reductor and its usage are given in
-the respective :doc:`../tutorial_mor_with_ml`.
+A detailed tutorial on the ML-based reductors and their usage
+:doc:`has been been added <../tutorial_mor_with_ml>`.
 
-In `[#2484] <https://github.com/pymor/pymor/pull/2484>`_, the vectorial kernel
-orthogonal greedy algorithm (VKOGA) was implemented. The selection of interpolation
-centers is performed using pyMOR's :meth:`~pymor.algorithms.greedy.weak_greedy`.
-The interpolant is extended efficiently using a Newton basis and a Cholesky
-decomposition of the kernel matrix.
-The :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` can be used similar
-to other scikit-learn regressors as machine learning surrogate in the
-:class:`~pymor.reductors.data_driven.DataDrivenReductor`. In addition, it can also
-be applied independent of model order reduction as surrogate in regression of
-vector-valued data, see for instance the demo scripts :mod:`~pymordemos.vkoga`
+In `[#2484] <https://github.com/pymor/pymor/pull/2484>`_, the Vectorial Kernel
+Orthogonal Greedy Algorithm (VKOGA) :cite:`WH13` was implemented. The selection of
+interpolation centers is performed using pyMOR's :meth:`~pymor.algorithms.greedy.weak_greedy`
+algorithm. The interpolant is extended efficiently using a Newton basis and a Cholesky
+decomposition of the kernel matrix. The
+:class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` can be used similarly
+to other `scikit-learn <https://scikit-learn.org/>`_ regressors as a machine learning
+surrogate in the :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+It can also be applied independently of model order reduction as a surrogate in regression of
+vector-valued data. See, for instance, the demo scripts :mod:`~pymordemos.vkoga`
 and :mod:`~pymordemos.vkoga_2d_input`.
 
-RB methods for saddle-point problems (Stokes equation)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[#2448] <https://github.com/pymor/pymor/pull/2448>`_, we added new reductors for
-saddle-point problems, in particular for the Stokes equations. We implemented a
-:class:`~pymor.reductors.stokes.SupremizerGalerkinStokesReductor`, that enriches the
-reduced velocity basis with pressure supremizers in order to ensure inf-sup stability of the
-reduced model. Furthermore, we implemented a :class:`pymor.reductors.stokes.LSRBStokesReductor`
-that projects the least-squares functional of the Stokes problem onto the reduced spaces.
-This reductor can be either used by Galerkin projection of the normal equations or by applying a
-Petrov-Galerkin projection in combination with a least-squares solver to the overdetermined
-reduced system.
-Further, a :class:`~pymor.reductors.basic.StationaryLSRBReductor` was added. This reductor can
-be used for general stationary problems and also allows to solve the reduced problem by solving
-and projecting the normal equations or via the least-squares approach. It servers as the base class
-for the :class:`pymor.reductors.stokes.LSRBStokesReductor`.
-To guarantee efficient offline-online decomposition of the novel Stokes reductors, new handling for
-block operators was implemented in `[#2474] <https://github.com/pymor/pymor/pull/2474>`_, mainly to
-support :class:`~pymor.operators.block.BlockOperators` in
-:meth:`~pymor.algorithms.simplify.expand`.
-The new Stokes reductors are demonstrated in the :mod:`pymordemos.stokes` demo script.
-
-In  `[#2485] <https://github.com/pymor/pymor/pull/2485>`_, we added a
+RB methods for saddle-point problems (Stokes equations)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#2485] <https://github.com/pymor/pymor/pull/2485>`_, we added the
 :class:`~pymor.models.saddle_point.SaddlePointModel` class to represent saddle-point models in
-pyMOR. This model allows for the easy construction of saddle-point models by providing the block
-operators and right-hand sides. It is compatible with the newly implemented Stokes reductors and
-is used in  :meth:`pymor.models.examples.stokes_2Dexample` to create a Stokes problem example
-in two spatial dimensions.
+pyMOR. An example of such a model is provided by :meth:`~pymor.models.examples.stokes_2Dexample`,
+which discretizes a Stokes problem in two spatial dimensions.
+
+In `[#2448] <https://github.com/pymor/pymor/pull/2448>`_, we added new reductors for
+:class:`SaddlePointModels <pymor.models.saddle_point.SaddlePointModel>`, in particular for the
+Stokes equations. We implemented a :class:`~pymor.reductors.stokes.SupremizerGalerkinStokesReductor`,
+which enriches the reduced velocity basis with pressure supremizers to ensure inf-sup stability
+of the reduced model. Additionally, we implemented a :class:`~pymor.reductors.stokes.LSRBStokesReductor`,
+which minimizes the least-squares residual of the Stokes problem over the reduced space.
+The minimization problem can be either solved by Galerkin projection of the normal equations or by
+Petrov-Galerkin projection in combination with a least-squares solver for the overdetermined
+reduced system. :class:`~pymor.reductors.stokes.LSRBStokesReductor` is a subclass of
+:class:`~pymor.reductors.basic.StationaryLSRBReductor`, which implements
+least-squares residual minimization for general stationary problems.
+The new Stokes reductors are demonstrated in the :mod:`pymordemos.stokes` demo script.
 
 Q-DEIM algorithm
 ~~~~~~~~~~~~~~~~
-- `[#2493] Implement Q-DEIM algorithm <https://github.com/pymor/pymor/pull/2493>`_
+As an alternative to the EI-Greedy algorithm for empirical interpolation, pyMOR now also
+implements the :func:`Q-DEIM <pymor.algorithms.ei.qdeim>` algorithm :cite:`DG16`, which often
+leads to more stable interpolation operators than the classical algorithm.
+:func:`Q-DEIM <pymor.algorithms.ei.qdeim>` is based on a pivoted QR decomposition of the
+transposed snapshot data matrix and can be used with any input data that can be converted to
+|NumPy arrays| `[#2493] <https://github.com/pymor/pymor/pull/2493>`_.
 
 Bindings for FEniCSx
 ~~~~~~~~~~~~~~~~~~~~
-- `[#2491] FEniCSx bindings <https://github.com/pymor/pymor/pull/2491>`_
+This release adds support for the `FEniCSx <https://fenicsproject.org/>`_ PDE solver library
+`[#2491] <https://github.com/pymor/pymor/pull/2491>`_. The bindings offer similar
+functionality as our bindings for legacy FEniCS, including support for nonlinear operators
+and localized operator evaluation. Support for MPI-distributed FEniCSx models will be added
+in a future release.
 
 
 Backward incompatible changes
@@ -90,11 +97,23 @@ Backward incompatible changes
 
 `solver_options` replaced by |Solver| objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#2440] Replace solver_options by Solver classes <https://github.com/pymor/pymor/pull/2440>`_
+Previously, pyMOR offered `solver_options` dictionaries as a way to customize the solvers used in
+:meth:`~pymor.operators.interface.Operator.apply_inverse` and related methods. However, this approach
+made it impossible to implement new solvers for existing |Operators| without modifying the
+respective |Operator| class. It was hard to obtain a list of possible options, and it was unclear
+if and how new |Operators| constructed from other |Operators| infer their `solver_options` from
+the these |Operators|. In this release, we addressed these issues by replacing `solver_options`
+with |Solver| objects, which can be attached to every |Operator| via the `solver` parameter of
+its constructor. Available options for customizing a |Solver| are now exposed as attributes of
+respective |Solver| class. Inheritance of |Solvers| via interface methods such as
+:meth:`~pymor.operators.interface.Operator.assemble` is now clearly documented. For a detailed
+overview, see `[#2440] <https://github.com/pymor/pymor/pull/2440>`_.
+
 
 Dropped Python 3.9 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#2467] Increase minimum required python version to 3.10 <https://github.com/pymor/pymor/pull/2467>`_
+Support for Python version 3.9 was dropped `[#2467] <https://github.com/pymor/pymor/pull/2467>`_.
+The oldest supported version now is Python 3.10.
 
 
 Further notable improvements
@@ -106,6 +125,7 @@ Further notable improvements
 - `[#2468] Advertise print_cached_methods when showing pyMOR config <https://github.com/pymor/pymor/pull/2468>`_
 - `[#2471] Add type annotations for @defaults and @cached <https://github.com/pymor/pymor/pull/2471>`_
 - `[#2473] Add use_umfpack option to ScipySpSolveSolver class. <https://github.com/pymor/pymor/pull/2473>`_
+- `[#2474] add logic for BlockOperators in simplify <https://github.com/pymor/pymor/pull/2474>`_
 - `[#2475] bugfix neural_network reductor returning only last epoch instead of best network <https://github.com/pymor/pymor/pull/2475>`_
 - `[#2476] Automatically remove MPI object when ObjectId dies <https://github.com/pymor/pymor/pull/2476>`_
 - `[#2477] implement conjugate method for ParameterFunctional <https://github.com/pymor/pymor/pull/2477>`_
