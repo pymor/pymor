@@ -40,7 +40,7 @@ The `NeuralNetworkReductor` has been removed. Its behavior can be replicated
 using the :class:`~pymor.reductors.data_driven.DataDrivenPODReductor` in combination
 with the :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`.
 A detailed tutorial on the ML-based reductors and their usage
-:doc:`has been been added <../tutorial_mor_with_ml>`.
+:doc:`has been added <../tutorial_mor_with_ml>`.
 
 In `[#2484] <https://github.com/pymor/pymor/pull/2484>`_, the Vectorial Kernel
 Orthogonal Greedy Algorithm (VKOGA) :cite:`WH13` was implemented. The selection of
@@ -105,7 +105,7 @@ if and how new |Operators| constructed from other |Operators| infer their `solve
 the these |Operators|. In this release, we addressed these issues by replacing `solver_options`
 with |Solver| objects, which can be attached to every |Operator| via the `solver` parameter of
 its constructor. Available options for customizing a |Solver| are now exposed as attributes of
-respective |Solver| class. Inheritance of |Solvers| via interface methods such as
+the respective |Solver| class. Inheritance of |Solvers| via interface methods such as
 :meth:`~pymor.operators.interface.Operator.assemble` is now clearly documented. For a detailed
 overview, see `[#2440] <https://github.com/pymor/pymor/pull/2440>`_.
 
