@@ -381,6 +381,25 @@ class VectorArray(BasicObject):
         self._copy_impl_if_multiple_refs()
         self.impl.axpy(alpha, x.impl, self.ind, x.ind)
 
+    def mean(self):
+        """Return the mean of the |VectorArray|.
+
+        The mean is computed as the linear combination of the vectors with
+        equal weights 1/n, i.e. ::
+
+            mean = ∑ self[j] * (1/n)
+
+        Returns
+        -------
+        A |VectorArray| containing a single vector equal to the mean
+        of the vectors in the original |VectorArray|.
+
+        """
+        n = len(self)
+        assert n > 0
+        weights = np.full(n, 1.0 / n)
+        return self.lincomb(weights)
+
     def inner(self, other, product=None):
         """Returns the inner products between |VectorArray| elements.
 
