@@ -519,6 +519,24 @@ class VectorArray(BasicObject):
         assert coefficients.shape[0] == len(self)
         return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
 
+    def mean(self):
+        """Returns the mean of the |VectorArray|.
+
+        The mean is computed as the linear combination of the vectors with
+        equal weights 1/n where n is the length of the |VectorArray|, i.e. ::
+
+            mean = ∑ self[j] * (1/n)
+
+        Returns
+        -------
+        A |VectorArray| containing a single vector equal to the mean
+        of the vectors in the original |VectorArray|.
+        """
+        n = len(self)
+        assert n > 0
+        weights = np.full(n, 1.0 / n)
+        return self.lincomb(weights)
+
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
 
