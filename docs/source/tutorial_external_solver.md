@@ -228,7 +228,8 @@ and {meth}`~pymor.vectorarrays.list.CopyOnWriteVector.axpy`. To use this, we nee
 {meth}`!_scal`
 and {meth}`!_axpy` in addition to all the abstract
 methods from  {class}`~pymor.vectorarrays.list.CopyOnWriteVector`. We can get away
-with using just a stub that raises an {class}`~NotImplementedError` in some methods that are not actually called in our example.
+with using just a stub that raises an {class}`~NotImplementedError` in some methods that are not actually called in
+our example.
 
 ```{code-cell} ipython3
 from pymor.operators.interface import Operator
