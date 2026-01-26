@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import inspect
+
 import numpy as np
 
 from pymor.algorithms.ml.vkoga import VKOGARegressor
@@ -47,6 +49,11 @@ class DataDrivenReductor(BasicObject):
         regressors that is trained in the `reduce`-method.
         If `None` (which is also the default),
         a :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` is used.
+        Alternatively, one can pass a class which will be instantiated using
+        the attributes in `regressor_parameters`.
+    regressor_parameters
+        Dictionary with parameters for regressor instantiation. This will be used
+        only when a class instead of a regressor object is passed as `regressor`.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     T
@@ -73,15 +80,17 @@ class DataDrivenReductor(BasicObject):
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 regressor=None, target_quantity='solution',
+                 regressor=VKOGARegressor, regressor_parameters=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
 
-        if self.regressor is None:
-            self.regressor = VKOGARegressor()
+        if inspect.isclass(self.regressor):
+            if self.regressor_parameters is None:
+                self.regressor_parameters = {}
+            self.regressor = self.regressor(**regressor_parameters)
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
