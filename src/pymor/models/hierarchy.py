@@ -11,7 +11,7 @@ from pymor.reductors.data_driven import DataDrivenReductor
 
 
 class DDRBModelHierarchy(Model):
-    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol):
+    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None):
         self.__auto_init(locals())
         self.__dict__.pop('dd_model', None)
 
@@ -55,6 +55,7 @@ class DDRBModelHierarchy(Model):
 
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
+            # Compute ML solution and estimate error
             if len(self.dd_models) == 0:
                 dd_solution = self._rb_model.solution_space.zeros()
             else:
@@ -66,46 +67,57 @@ class DDRBModelHierarchy(Model):
             if dd_estimated_error <= self.tol:
                 data['solution'] = self.rb_reductor.reconstruct(dd_solution)
 
+                # Keep track of ML solves
                 self.used_model.append('ML')
                 self.estimated_errors.append(dd_estimated_error[0])
             else:
+                # Compute RB solution and estimate error
                 rb_solution = self._rb_model.solve(mu)
                 rb_estimated_error = self._rb_model.error_estimator.estimate_error(rb_solution, mu, self._rb_model)
                 self.logger.info(f'Estimated error of RB: {rb_estimated_error}')
+
                 if rb_estimated_error <= self.tol:
                     data['solution'] = self.rb_reductor.reconstruct(rb_solution)
-                    # Extend training data of `dd_reductors`
+
+                    # Extend training data of data driven reductors and reduce again
                     sum_dims = 0
                     for i, red in enumerate(self.dd_reductors):
                         red.extend_training_data([mu], rb_solution.to_numpy()[sum_dims:sum_dims+red.dim_solution_space])
                         self.dd_models[i] = red.reduce()
                         sum_dims += red.dim_solution_space
 
+                    # Keep track of RB solves
                     self.used_model.append('RB')
                     self.estimated_errors.append(rb_estimated_error[0])
                 else:
+                    # Compute FOM solution
                     fom_solution = self.fom.solve(mu)
                     data['solution'] = fom_solution
-                    # Extend reduced basis of `rb_reductor`
-                    # TODO: For instationary problems:
-                    # compress solution trajectory first before extending the basis!
+
+                    # Extend reduced basis of RB reductor and reduce again
                     old_rb_size = len(self.rb_reductor.bases['RB'])
-                    self.rb_reductor.extend_basis(fom_solution)
+                    extension_data = fom_solution
+                    if self.compression is not None:  # Perform additional compression if desired
+                        extension_data = self.compression(fom_solution)
+                    self.rb_reductor.extend_basis(extension_data)
                     self._rb_model = self.rb_reductor.reduce()
+
+                    # Project FOM solution onto reduced basis
                     projected_fom_solution = self.rb_reductor.bases['RB'].inner(fom_solution)
 
+                    # Extend training data of data driven reductors and reduce again
                     sum_dims = 0
                     for i, red in enumerate(self.dd_reductors):
                         red.extend_training_data([mu], projected_fom_solution[sum_dims:sum_dims+red.dim_solution_space])
                         self.dd_models[i] = red.reduce()
                         sum_dims += red.dim_solution_space
 
-                    # Add new dd_model to `self.dd_models`
-                    # in order to account for new basis components
+                    # Add new data driven reductor and model to account for new basis components
                     self.dd_reductors.append(DataDrivenReductor([mu], projected_fom_solution[old_rb_size:],
                                                                 **self.dd_reductor_parameters))
                     self.dd_models.append(self.dd_reductors[-1].reduce())
 
+                    # Keep track of FOM solves
                     self.used_model.append('FOM')
                     self.estimated_errors.append(0.)
 
