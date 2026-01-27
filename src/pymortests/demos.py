@@ -174,6 +174,7 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=p']),
     ('vkoga', ['--kernel=Matern']),
     ('vkoga', ['--kernel=RationalQuadratic']),
+    ('vkoga', ['--grid-search-parameter-optimization']),
 )
 
 VKOGA_2D_INPUT_ARGS = (

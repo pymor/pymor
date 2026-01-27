@@ -41,7 +41,48 @@ class VKOGARegressor(BasicObject):
     @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
     def __init__(self, kernel=GaussianKernel(), criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
-        self._surrogate = None
+
+    def get_params(self, deep=True):
+        """Returns a dict of the init-parameters of the estimator, together with their values."""
+        params = {
+            'kernel': self.kernel,
+            'criterion': self.criterion,
+            'max_centers': self.max_centers,
+            'tol': self.tol,
+            'reg': self.reg
+        }
+        if deep and hasattr(self.kernel, 'get_params'):
+            kernel_params = self.kernel.get_params(deep=True)
+            for name, value in kernel_params.items():
+                params[f'kernel__{name}'] = value
+        return params
+
+    def set_params(self, **params):
+        """Set the parameters of the estimator and the kernel."""
+        kernel_params = {}
+
+        for key, value in params.items():
+            if key.startswith('kernel__'):
+                kernel_params[key[len('kernel__'):]] = value
+            else:
+                setattr(self, key, value)
+
+        if kernel_params:
+            if not hasattr(self.kernel, 'set_params'):
+                raise ValueError('Kernel does not support parameter setting')
+            self.kernel.set_params(**kernel_params)
+
+        return self
+
+    def score(self, X, y):
+        """Return the coefficient of determination on the data."""
+        y_pred = self.predict(X)
+
+        y_mean = np.mean(y)
+        ss_res = np.sum((y - y_pred) ** 2)
+        ss_tot = np.sum((y - y_mean) ** 2)
+
+        return 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
 
     def fit(self, X, Y):
         """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
@@ -84,7 +125,7 @@ class VKOGARegressor(BasicObject):
         -------
         Prediction obtained by the :class:`VKOGASurrogate`.
         """
-        if self._surrogate is None:
+        if not hasattr(self, '_surrogate'):
             raise RuntimeError('Call fit() before predict().')
         return self._surrogate.predict(X)
 
