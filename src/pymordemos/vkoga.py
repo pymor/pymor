@@ -15,6 +15,7 @@ from pymor.tools.random import new_rng
 
 app = App(help_on_error=True)
 
+
 @app.default
 def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          kernel: Literal['Gaussian', 'Matern', 'RationalQuadratic'] = 'Gaussian',
@@ -23,7 +24,8 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          max_centers: int = 20,
          tol: float = 1e-6,
          reg: float = 1e-12,
-         length_scale: float = 1.0):
+         length_scale: float = 1.0,
+         grid_search_parameter_optimization: bool = False):
     """Approximates a function with 2d output from training data using VKOGA.
 
     Parameters
@@ -44,9 +46,12 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
         Regularization parameter for the kernel interpolation.
     length_scale
         The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+    grid_search_parameter_optimization
+        Perform a grid search in order to optimize the hyperparameters
+        of the kernel surrogate and the VKOGA greedy search.
     """
     m = 2
-    if kernel in ('Matern', 'RationalQuadratic') and not config.HAVE_SKLEARN:
+    if (kernel in ('Matern', 'RationalQuadratic') or grid_search_parameter_optimization) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
     if kernel == 'Gaussian':
@@ -68,7 +73,17 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
     F = np.column_stack([np.sin(2*np.pi*X).ravel(), np.cos(2*np.pi*X).ravel()])
 
     regressor = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
-    regressor.fit(X, F)
+    if grid_search_parameter_optimization:
+        print('Running grid search for best parameters in the VKOGA:')
+        from sklearn.model_selection import GridSearchCV
+        gs = GridSearchCV(regressor, {'reg': [1e-12, 1e-10, 1e-8],
+                                      'criterion': ['fp', 'f', 'p'],
+                                      'kernel__length_scale': [0.5, 1.0, 2.0]}).fit(X, F)
+        regressor = gs.best_estimator_
+        print('Best parameters:')
+        print(gs.best_params_)
+    else:
+        regressor.fit(X, F)
 
     weak_greedy_result = regressor._weak_greedy_result
     print('Result of the weak greedy algorithm:')

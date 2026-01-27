@@ -51,3 +51,13 @@ class GaussianKernel:
         """Return the diagonal of the kernel matrix."""
         X = np.atleast_2d(X)
         return np.ones(X.shape[0])
+
+    def get_params(self, deep=True):
+        """Returns a dict of the init-parameters of the kernel, together with their values."""
+        return {'length_scale': self.length_scale}
+
+    def set_params(self, **params):
+        """Set the parameters of the kernel."""
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
