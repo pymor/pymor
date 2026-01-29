@@ -53,11 +53,33 @@ class GaussianKernel:
         return np.ones(X.shape[0])
 
     def get_params(self, deep=True):
-        """Returns a dict of the init-parameters of the kernel, together with their values."""
+        """Returns a dict of the init-parameters of the kernel, together with their values.
+
+        The argument `deep=True` is required to match the scikit-learn interface.
+
+        Parameters
+        ----------
+        deep
+            Since the kernel has no subobjects with parameters, this parameter is only
+            required to match the scikit-learn interface via duck-typing.
+
+        Returns
+        -------
+        A dictionary of parameters and respective values of the kernel.
+        """
         return {'length_scale': self.length_scale}
 
     def set_params(self, **params):
-        """Set the parameters of the kernel."""
+        """Set the parameters of the kernel.
+
+        Parameters
+        ----------
+        Kernel parameters to set.
+
+        Returns
+        -------
+        An instance of the kernel with the new parameters.
+        """
         for key, value in params.items():
             setattr(self, key, value)
         return self

@@ -28,6 +28,7 @@ class VKOGARegressor(BasicObject):
         interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
         and a `diag`-method for computing the diagonal of the kernel matrix are required.
         For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.ml.vkoga.kernels`.
+        If `kernel=None` is passed, a Gaussian kernel will be initialized by default.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
     max_centers
@@ -39,11 +40,24 @@ class VKOGARegressor(BasicObject):
     """
 
     @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
-    def __init__(self, kernel=GaussianKernel(), criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
+    def __init__(self, kernel=None, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
+        self.kernel = GaussianKernel() if kernel is None else kernel
 
     def get_params(self, deep=True):
-        """Returns a dict of the init-parameters of the estimator, together with their values."""
+        """Returns a dict of the init-parameters of the estimator, together with their values.
+
+        The argument `deep=True` is required to match the scikit-learn interface.
+
+        Parameters
+        ----------
+        deep
+            If `True`, the parameters for this estimator and for the kernel will be returned.
+
+        Returns
+        -------
+        A dictionary of parameters and respective values of the estimator.
+        """
         params = {
             'kernel': self.kernel,
             'criterion': self.criterion,
@@ -58,12 +72,22 @@ class VKOGARegressor(BasicObject):
         return params
 
     def set_params(self, **params):
-        """Set the parameters of the estimator and the kernel."""
+        """Set the parameters of the estimator and the kernel.
+
+        Parameters
+        ----------
+        Estimator parameters to set.
+
+        Returns
+        -------
+        An instance of the estimator with the new parameters.
+        """
         kernel_params = {}
+        prefix = 'kernel__'
 
         for key, value in params.items():
-            if key.startswith('kernel__'):
-                kernel_params[key[len('kernel__'):]] = value
+            if key.startswith(prefix):
+                kernel_params[key.removeprefix(prefix)] = value
             else:
                 setattr(self, key, value)
 
@@ -74,13 +98,33 @@ class VKOGARegressor(BasicObject):
 
         return self
 
-    def score(self, X, y):
-        """Return the coefficient of determination on the data."""
+    def score(self, X, y, sample_weight=None):
+        """Return the coefficient of determination on the data.
+
+        Parameters
+        ----------
+        X
+            Test samples for which to check the score.
+        y
+            Ground truth target values associated to the test samples.
+        sample_weight
+            Vector for weighting the different test samples.
+
+        Returns
+        -------
+        The (weighted) coefficient of determination (:math:`R^2`-score) on the test samples.
+        """
         y_pred = self.predict(X)
 
-        y_mean = np.mean(y)
-        ss_res = np.sum((y - y_pred) ** 2)
-        ss_tot = np.sum((y - y_mean) ** 2)
+        if sample_weight is None:
+            y_mean = np.mean(y)
+            ss_res = np.sum((y - y_pred) ** 2)
+            ss_tot = np.sum((y - y_mean) ** 2)
+        else:
+            sample_weight = np.asarray(sample_weight)
+            y_mean = np.average(y, weights=sample_weight)
+            ss_res = np.sum(sample_weight * (y - y_pred) ** 2)
+            ss_tot = np.sum(sample_weight * (y - y_mean) ** 2)
 
         return 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
 
