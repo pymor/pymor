@@ -292,8 +292,9 @@ class PAAAReductor(BasicObject):
         denom = np.prod([len(self.itpl_part[k])-max_rks[k] for k in range(len(self.itpl_part))])
         if denom == 0 or d_nsp % denom != 0:
             return None
-        max_rks[max_idx] = len(self.itpl_part[max_idx]) - d_nsp / denom
-        max_rks[max_idx] = round(max_rks[max_idx])
+        max_rks[max_idx] = len(self.itpl_part[max_idx]) - d_nsp // denom
+        if max_rks[max_idx] < 0:
+            return None
         for i in range(len(max_rks)):
             self.itpl_part[i] = self.itpl_part[i][0:max_rks[i]+1]
 
