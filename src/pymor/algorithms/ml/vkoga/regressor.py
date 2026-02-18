@@ -115,12 +115,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         # power2 = trace(k(x,x)) for each training point
         self._power2 = self.kernel.diag(self.X_train) + self.reg
 
-    def _find_training_indices(self, mus):
-        """Find nearest neighbors of mus within training data points."""
-        diff = self.X_train[None, :, :] - mus[:, None, :]
-        dists = np.linalg.norm(diff, axis=2)
-        return dists.argmin(axis=1)
-
     def predict(self, X):
         X = np.asarray(X)
         if self._centers is None:
@@ -131,9 +125,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
         return K @ coeff
 
     def evaluate(self, mus, return_all_values=False):
-        mus = np.asarray(self.X_train[mus])
-        idxs = self._find_training_indices(mus)
-        Xc = mus
+        mus = np.asarray(mus)
+        idxs = mus
+        Xc = self.X_train[idxs]
         p2 = self._power2[idxs]
 
         if self.criterion in ('fp', 'f'):
@@ -150,7 +144,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if return_all_values:
             return scores
         idx = np.argmax(scores)
-        return scores[idx], mus[idx]
+        return scores[idx], Xc[idx]
 
     def extend(self, mu):
         r"""Extends the kernel interpolant by adding a new center and updating all quantities.
