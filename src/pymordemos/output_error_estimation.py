@@ -2,28 +2,42 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.basic import *
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    fom_number: int = Argument(..., help=('Selects FOMs [0, 1, 2] for elliptic problems and [3, 4] for '
-                                          'parabolic problems with scalar and vector valued outputs.')),
-    grid_intervals: int = Argument(..., help='Grid interval count.'),
-    training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
-    modes: int = Argument(..., help='Number of basis functions for the RB space (generated with POD)'),
-    reductor_count: int = Argument(..., help='Reductor type for elliptic problems: \
-                                   0: SimpleCoerciveReductor \
-                                   1: CoerciveRBReductor. \
-                                   For parabolic FOMs [3, 4] ParabolicRBReductor is used.')):
-    set_log_levels({'pymor': 'WARN'})
-    """Example script for using output error estimation"""
+    fom_number: Literal[0, 1, 2, 3, 4],
+    grid_intervals: int,
+    training_samples: int,
+    modes: int,
+    reductor_count: Literal[0, 1]
+):
+    """Example script for using output error estimation.
 
-    assert fom_number in [0, 1, 2, 3, 4], f'No FOM available for fom_number {fom_number}'
+    Parameters
+    ----------
+    fom_number
+        Selects FOMs [0, 1, 2] for elliptic problems and [3, 4] for parabolic problems with scalar
+        and vector valued outputs.
+    grid_intervals
+        Grid interval count.
+    training_samples
+        Number of samples used for training the reduced basis.
+    modes
+        Number of basis functions for the RB space (generated with POD)
+    reductor_count
+        Reductor type for elliptic problems: 0: SimpleCoerciveReductor; 1: CoerciveRBReductor.
+        For parabolic FOMs [3, 4] ParabolicRBReductor is used.
+    """
+    set_log_levels({'pymor': 'WARN'})
 
     # elliptic case
     if fom_number == 0:
@@ -157,4 +171,4 @@ def create_fom(grid_intervals, vector_valued_output=False):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

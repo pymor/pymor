@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import SecondOrderModel
@@ -25,12 +25,19 @@ from pymor.reductors.sobt import (
 from pymor.reductors.sor_irka import SORIRKAReductor
 from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
+app = App(help_on_error=True)
 
-def main(
-        n: int = Argument(101, help='Order of the full second-order model (odd number).'),
-        r: int = Argument(5, help='Order of the ROMs.'),
-):
-    """Parametric string example."""
+@app.default
+def main(n: int = 101, r: int = 5):
+    """Parametric string example.
+
+    Parameters
+    ----------
+    n
+        Order of the full second-order model (odd number).
+    r
+        Order of the ROMs.
+    """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
         'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
@@ -84,4 +91,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

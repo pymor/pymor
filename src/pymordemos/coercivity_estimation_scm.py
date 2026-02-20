@@ -5,7 +5,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from cyclopts import App
 
 from pymor.algorithms.scm import construct_scm_functionals
 from pymor.basic import *
@@ -20,13 +20,28 @@ GRID_INTERVALS = 10     # pyMOR/FEniCS
 # Main script                                                                                      #
 ####################################################################################################
 
+app = App(help_on_error=True)
+
+@app.default
 def main(
-    num_training_parameters: int = Option(50, help='Number of test parameters.'),
-    num_test_parameters: int = Option(10, help='Number of test parameters.'),
-    max_extensions: int = Option(10, help='Maximum number of extensions of the constraint parameter set.'),
-    num_neighbors: int = Option(5, help='Number of neighbors in the parameter space used to compute bounds.')
+    num_training_parameters: int = 50,
+    num_test_parameters: int = 10,
+    max_extensions: int = 10,
+    num_neighbors: int = 5
 ):
-    """Simplified version of the thermalblock demo to showcase the successive constraints method."""
+    """Simplified version of the thermalblock demo to showcase the successive constraints method.
+
+    Parameters
+    ----------
+    num_training_parameters
+        Number of test parameters.
+    num_test_parameters
+        Number of test parameters.
+    max_extensions
+        Maximum number of extensions of the constraint parameter set.
+    num_neighbors
+        Number of neighbors in the parameter space used to compute bounds.
+    """
     problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     fom, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
@@ -59,4 +74,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

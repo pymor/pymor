@@ -2,18 +2,35 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typer import Argument, Option, run
+from typing import Literal
+
+from cyclopts import App
 
 from pymor.core.config import config
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    dim: int = Argument(..., help='Spatial dimension of the problem.'),
-    n: int = Argument(..., help='Number of mesh intervals per spatial dimension.'),
-    order: int = Argument(..., help='Finite element order.'),
-    visualize: bool = Option(True, help='Visualize solution and reduczed solution'),
+    dim: Literal[2, 3],
+    n: int,
+    order: int,
+    /, *,
+    visualize: bool = True
 ):
-    """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
+    """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM.
+
+    Parameters
+    ----------
+    dim
+        Spatial dimension of the problem.
+    n
+        Number of mesh intervals per spatial dimension.
+    order
+        Finite element order.
+    visualize
+        Visualize solution and reduczed solution.
+    """
     if not config.HAVE_FENICS and not config.HAVE_FENICSX:
         from pymor.core.exceptions import DependencyMissingError
         raise DependencyMissingError('Neither FEniCSx nor legacy FEniCSs have been found.')
@@ -181,4 +198,4 @@ def discretize_fenicsx(dim, n, order):
     return fom
 
 if __name__ == '__main__':
-    run(main)
+    app()

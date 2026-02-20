@@ -2,19 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Simplified version of the thermalblock demo.
+from typing import Literal
 
-Usage:
-  thermalblock_simple.py MODEL ALG SNAPSHOTS RBSIZE TEST
-
-Arguments:
-"""
-
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
@@ -29,20 +22,38 @@ TEXT = 'pyMOR'
 # Main script                                                                                      #
 ####################################################################################################
 
+app = App(help_on_error=True)
+
+@app.default
 def main(
-    model: Choices('pymor fenics ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
-    alg: Choices('naive greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
-    snapshots: int = Argument(
-        ...,
-        help='naive: ignored.\n\n'
-             'greedy/pod: Number of training_set parameters per block'
-             '(in total SNAPSHOTS^(XBLOCKS * YBLOCKS) parameters).\n\n'
-             'adaptive_greedy: size of validation set.'
-    ),
-    rbsize: int = Argument(..., help='Size of the reduced basis.'),
-    test: int = Argument(..., help='Number of parameters for stochastic error estimation.'),
-    visualize: bool = Option(True, help='Visualize solution and reduczed solution'),
+    model: Literal['pymor', 'fenics', 'ngsolve', 'pymor_text'],
+    alg: Literal['naive', 'greedy', 'adaptive_greedy', 'pod'],
+    snapshots: int,
+    rbsize: int,
+    test: int,
+    /, *,
+    visualize: bool = True
 ):
+    """Simplified version of the 'thermalblock' demo script.
+
+    Parameters
+    ----------
+    model
+        High-dimensional model.
+    alg
+        The model reduction algorithm to use.
+    snapshots
+        naive: ignored;
+        greedy/pod: Number of training_set parameters per block
+        (in total SNAPSHOTS^(XBLOCKS * YBLOCKS) parameters);
+        adaptive_greedy: size of validation set.
+    rbsize
+        Size of the reduced basis.
+    test
+        Number of parameters for stochastic error estimation.
+    visualize
+        Visualize solution and reduczed solution
+    """
     # discretize
     ############
     if model == 'pymor':
@@ -451,4 +462,4 @@ def reduce_pod(fom, reductor, parameter_space, snapshots, basis_size):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

@@ -3,35 +3,54 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import time
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.reductors.data_driven import DataDrivenReductor
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    regressor: Choices('fcnn vkoga gpr') = Argument(..., help="Regressor to use. Options are neural networks "
-                                                              "using PyTorch, pyMOR's VKOGA algorithm or Gaussian "
-                                                              "process regression using scikit-learn."),
-    grid_intervals: int = Argument(..., help='Grid interval count.'),
-    training_samples: int = Argument(..., help='Number of samples used for computing the reduced basis and '
-                                               'training the regressor.'),
-
-    fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
-    vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
-    validation_ratio: float = Option(0.1, help='Ratio of training data used for validation of the neural networks.'),
-    input_scaling: bool = Option(False, help='Scale the input of the regressor (i.e. the parameter).'),
-    output_scaling: bool = Option(False, help='Scale the output of the regressor (i.e. reduced coefficients or output '
-                                              'quantity.'),
+    regressor: Literal['fcnn', 'vkoga', 'gpr'],
+    grid_intervals: int,
+    training_samples: int,
+    /, *,
+    fv: bool = False,
+    vis: bool = False,
+    validation_ratio: float = 0.1,
+    input_scaling: bool = False,
+    output_scaling: bool = False
 ):
-    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali)."""
+    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
+
+    Parameters
+    ----------
+    regressor
+        Regressor to use. Options are neural networks using PyTorch, pyMOR's VKOGA algorithm
+        or Gaussian process regression using scikit-learn.
+    grid_intervals
+        Grid interval count.
+    training_samples
+        Number of samples used for computing the reduced basis and training the regressor.
+    fv
+        Use finite volume discretization instead of finite elements.
+    vis
+        Visualize full order solution and reduced solution for a test set.
+    validation_ratio
+        Ratio of training data used for validation of the neural networks.
+    input_scaling
+        Scale the input of the regressor (i.e. the parameter).
+    output_scaling
+        Scale the output of the regressor (i.e. reduced coefficients or output quantity.
+    """
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
@@ -202,4 +221,4 @@ def create_fom(fv, grid_intervals):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

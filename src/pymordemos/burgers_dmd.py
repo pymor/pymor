@@ -2,41 +2,63 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Burgers demo with different applications of Dynamic Mode Decomposition."""
-
 import sys
 import time
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.dmd import dmd
 from pymor.analyticalproblems.burgers import burgers_problem
 from pymor.discretizers.builtin import discretize_instationary_fv
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-        exp: float = Argument(..., help='Exponent'),
-
-        atol: float = Option(None, help='Absolute tolerance'),
-        continuous_time: bool = Option(False, help='Show continuous time system eigenvalues.'),
-        grid: int = Option(100, help='Use grid with this number of elements.'),
-        initial_data: Choices('sin bump') = Option('sin', help='Select the initial data.'),
-        modes: int = Option(None, help='Number of DMD modes'),
-        nt: int = Option(1000, help='Number of time steps.'),
-        periodic: bool = Option(True,
-                                help='If not, solve with dirichlet boundary conditions on left and bottom boundary.'),
-        rtol: float = Option(None, help='Relative tolerance'),
-        v: float = Option(10., help='Speed in x-direction.'),
+    exp: float,
+    /, *,
+    atol: float | None = None,
+    continuous_time: bool = False,
+    grid: int = 100,
+    initial_data: Literal['sin', 'bump'] = 'sin',
+    modes: int | None = None,
+    nt: int = 1000,
+    periodic: bool = True,
+    rtol: float | None = None,
+    v: float = 10.
 ):
-    """Solves a one-dimensional Burgers-type equation.
+    """Burgers demo with different applications of Dynamic Mode Decomposition.
 
     See pymor.analyticalproblems.burgers for more details.
+
+    Parameters
+    ----------
+    exp
+        Exponent.
+    atol
+        Absolute tolerance.
+    continuous_time
+        Show continuous time system eigenvalues.
+    grid
+        Use grid with this number of elements.
+    initial_data
+        Select the initial data.
+    modes
+        Number of DMD modes
+    nt
+        Number of time steps.
+    periodic
+        If not, solve with dirichlet boundary conditions on left and bottom boundary.
+    rtol
+        Relative tolerance
+    v
+        Speed in x-direction.
     """
     print('Setup Problem ...')
-    problem = burgers_problem(v=v, initial_data_type=initial_data.value, circle=periodic)
+    problem = burgers_problem(v=v, initial_data_type=initial_data, circle=periodic)
 
     print('Discretize ...')
     m, data = discretize_instationary_fv(
@@ -87,4 +109,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

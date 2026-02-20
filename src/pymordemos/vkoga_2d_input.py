@@ -2,24 +2,40 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Demo of the VKOGA algorithm for function approximation with a two-dimensional input."""
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from cyclopts import App
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
-def main(num_training_points: int = Option(100, help='Number of training points in the weak greedy algorithm.'),
-         greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
-         max_centers: int = Option(40, help='Maximum number of selected centers in the greedy algorithm.'),
-         tol: float = Option(1e-6, help='Tolerance for the weak greedy algorithm.'),
-         reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
-         length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
-                                                'Only used when `kernel = diagonal`.')):
-    """Approximates a function with 2d input and 2d output from training data using VKOGA."""
+@app.default
+def main(num_training_points: int = 100,
+         greedy_criterion: Literal['fp', 'f', 'p'] = 'fp',
+         max_centers: int = 40,
+         tol: float = 1e-6,
+         reg: float = 1e-12,
+         length_scale: float = 1.0):
+    """Approximates a function with 2d input and 2d output from training data using VKOGA.
+
+    Parameters
+    ----------
+    num_training_points
+        Number of training points in the weak greedy algorithm.
+    greedy_criterion
+        Selection criterion for the greedy algorithm.
+    max_centers
+        Maximum number of selected centers in the greedy algorithm.
+    tol
+        Tolerance for the weak greedy algorithm.
+    reg
+        Regularization parameter for the kernel interpolation.
+    length_scale
+        The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+    """
     # define kernel
     kernel = GaussianKernel(length_scale)
 
@@ -84,4 +100,4 @@ def main(num_training_points: int = Option(100, help='Number of training points 
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

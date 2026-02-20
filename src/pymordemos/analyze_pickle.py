@@ -7,11 +7,12 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, Option, Typer
+from cyclopts import App
+from cyclopts.types import ExistingPath, PositiveInt
 
 from pymor.core.pickle import load
 
-app = Typer(help="""
+app = App(help_on_error=True, help="""
 This demo loads a pickled reduced model, solves for random
 parameters, estimates the reduction errors and then visualizes these
 estimates. If the detailed model and the reductor are
@@ -22,19 +23,27 @@ The needed data files are created by the thermal block demo, by
 setting the '--pickle' option.
 """[1:])
 
-REDUCED_DATA = Argument(..., help='File containing the pickled reduced model.')
-SAMPLES = Argument(..., min=1, help='Number of parameter samples to test with. ')
-ERROR_NORM = Option(None, help='Name of norm in which to compute the errors.')
-
-
-@app.command()
+@app.command
 def histogram(
-    reduced_data: str = REDUCED_DATA,
-    samples: int = SAMPLES,
-
-    detailed_data: str = Option(None, help='File containing the high-dimensional model and the reductor.'),
-    error_norm: str = ERROR_NORM
+    reduced_data: ExistingPath,
+    samples: PositiveInt,
+    /, *,
+    detailed_data: str | None = None,
+    error_norm: str | None = None,
 ):
+    """Generate histogram.
+
+    Parameters
+    ----------
+    reduced_data
+        File containing the pickled reduced model.
+    samples
+        Number of parameter samples to test with.
+    detailed_data
+        File containing the high-dimensional model and the reductor.
+    error_norm
+        Name of norm in which to compute the errors.
+    """
     print('Loading reduced model ...')
     with open(reduced_data, 'rb') as f:
         rom, parameter_space = load(f)
@@ -154,13 +163,28 @@ def histogram(
 
 @app.command()
 def convergence(
-    reduced_data: str = REDUCED_DATA,
-    detailed_data: str = Argument(..., help='File containing the high-dimensional model and the reductor.'),
-    samples: int = SAMPLES,
-
-    error_norm: str = ERROR_NORM,
-    ndim: int = Option(None, help='Number of reduced basis dimensions for which to estimate the error.')
+    reduced_data: ExistingPath,
+    detailed_data: ExistingPath,
+    samples: PositiveInt,
+    *,
+    error_norm: str | None = None,
+    ndim: int | None = None
 ):
+    """Generate convergence plot.
+
+    Parameters
+    ----------
+    reduced_data
+        File containing the pickled reduced model.
+    detailed_data
+        File containing the high-dimensional model and the reductor.
+    samples
+        Number of parameter samples to test with.
+    error_norm
+        Name of norm in which to compute the errors.
+    ndim
+        Number of reduced basis dimensions for which to estimate the error.
+    """
     print('Loading reduced model ...')
     with open(reduced_data, 'rb') as f:
         rom, parameter_space = load(f)

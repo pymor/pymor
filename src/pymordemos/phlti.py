@@ -6,8 +6,8 @@ from functools import partial
 from time import perf_counter
 
 import numpy as np
+from cyclopts import App
 from matplotlib import pyplot as plt
-from typer import Argument, run
 
 from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
@@ -17,13 +17,21 @@ from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
 
+app = App(help_on_error=True)
 
-def main(
-        n: int = Argument(100, help='Order of the mass-spring-damper system.'),
-        m: int = Argument(2, help='Number of inputs and outputs of the mass-spring-damper system.'),
-        max_reduced_order: int = Argument(20, help=('The maximum reduced order (at least 2). '
-                                                    'Every even order below is used.')),
-):
+@app.default
+def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
+    """MOR for a port-Hamiltonian system.
+
+    Parameters
+    ----------
+    n
+        Order of the mass-spring-damper system.
+    m
+        Number of inputs and outputs of the mass-spring-damper system.
+    max_reduced_order
+        The maximum reduced order (at least 2). Every even order below is used.
+    """
     fom = msd_example(n, m)
 
     # tolerance for solving the Riccati equation instead of KYP-LMI
@@ -89,4 +97,4 @@ def main(
     plt.show()
 
 if __name__ == '__main__':
-    run(main)
+    app()

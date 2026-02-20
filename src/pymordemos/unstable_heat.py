@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.logger import set_log_levels
@@ -14,11 +14,10 @@ from pymor.reductors.bt import FDBTReductor
 from pymor.reductors.h2 import GapIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
+app = App(help_on_error=True, help_format='plaintext')
 
-def main(
-        l: float = Argument(50, help='Parameter for instability.'),
-        r: int = Argument(10, help='Order of the ROMs.'),
-):
+@app.default
+def main(l: float = 50., r: int = 10):
     r"""1D unstable heat equation demo.
 
     Discretization of the PDE:
@@ -36,6 +35,12 @@ def main(
             & t > 0
         \end{align}
 
+    Parameters
+    ----------
+    l
+        Parameter for instability.
+    r
+        Order of the ROMs.
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
@@ -77,4 +82,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

@@ -5,7 +5,7 @@
 import time
 
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.functions import ExpressionFunction
@@ -15,12 +15,10 @@ from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesR
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
-def main(
-    mu_low: float = Argument(0.01),
-    mu_high: float = Argument(1000),
-    modes: int = Argument(50),
-    n_tests: int = Argument(10)
-):
+app = App(help_on_error=True)
+
+@app.default
+def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: int = 10):
     """This example demonstrates a MOR workflow for a 2D Stokes equation.
 
     The script first computes POD bases for the velocity and pressure spaces
@@ -137,4 +135,4 @@ def print_results(speedups, errors_u, errors_p):
     print()
 
 if __name__ == '__main__':
-    run(main)
+    app()
