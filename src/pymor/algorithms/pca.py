@@ -5,10 +5,10 @@
 import numpy as np
 
 from pymor.algorithms.pod import pod
-from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
+
 
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
@@ -80,4 +80,3 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     if return_reduced_coefficients:
         return (mean, principal_coponents, svals, coeffs)
     return (mean, principal_coponents, svals)
-
