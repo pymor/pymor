@@ -48,18 +48,13 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
     Returns
     -------
-    pod_results
-        a tuple `(PRINCIPAL_COMPONENTS, SVALS)` or
-        `(PRINCIPAL_COMPONENTS, SVALS, COEFFS)` depending on the value of
-        `return_reduced_coefficients`:
-
-        PRINCIPAL_COMPONENTS
-            |VectorArray| of PCA coordinates.
-        SVALS
-            One-dimensional |NumPy array| of singular values.
-        COEFFS
-            If `return_reduced_coefficients` is `True`, a |NumPy array|
-            of right singular vectors as conjugated rows.
+    principal_components
+        |VectorArray| of PCA coordinates.
+    svals
+        One-dimensional |NumPy array| of singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     mean
         |VectorArray| containing the empirical mean of the input `A`.
         The input |VectorArray| is centered by subtracting this mean
@@ -79,8 +74,10 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     A_mean = A - mean
 
     with logger.block('Applying POD to centered data ...'):
-        pod_results = pod(A_mean, product=product, modes=modes, rtol=rtol,
+         principal_coponents, svals, coeffs = pod(A_mean, product=product, modes=modes, rtol=rtol,
                           atol=atol, l2_err=l2_err, method=method,
                           orth_tol=orth_tol, return_reduced_coefficients=True)
+    if return_reduced_coefficients:
+        return (mean, principal_coponents, svals, coeffs)
+    return (mean, principal_coponents, svals)
 
-    return pod_results, mean
