@@ -83,7 +83,6 @@ ci_fenics_requirements:
 		--extra tests \
 		--extra ann \
 		--extra ipyparallel \
-		--extra mpi \
 		--extra scikit-learn \
 		--python-version 3.11 \
 		--python-platform x86_64-manylinux_2_31 \
