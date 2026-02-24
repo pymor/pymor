@@ -24,7 +24,7 @@ FEniCS and deal.II support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 pyMOR now includes wrapper classes for integrating PDE solvers
 written with the `dolfin` library of the `FEniCS <https://fenicsproject.org>`_
-project. For a usage example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
+project. For a usage example, see :meth:`!pymordemos.thermalblock_simple.discretize_fenics`.
 Experimental support for `deal.II <https://dealii.org>`_ can be
 found in the `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_
 repository of the pyMOR GitHub organization.
@@ -71,7 +71,7 @@ objects.
 
 The resulting objects can be used on MPI rank 0 (including interactive
 Python sessions) without any further changes to pyMOR or the user code.
-For an example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
+For an example, see :meth:`!pymordemos.thermalblock_simple.discretize_fenics`.
 
 
 New reduction algorithms
@@ -83,7 +83,7 @@ New reduction algorithms
 - :meth:`!reduce_parabolic` reduces linear parabolic
   problems using :meth:`!reduce_generic_rb` and
   assembles an error estimator similar to :cite:`GP05`, :cite:`HO08`.
-  The :mod:`~pymordemos.parabolic_mor` demo contains a simple sample
+  The :mod:`!parabolic_mor` demo contains a simple sample
   application using this reductor `[#190] <https://github.com/pymor/pymor/issues/190>`_.
 
 - The :meth:`~pymor.algorithms.image.estimate_image` and
@@ -124,7 +124,7 @@ Improvements to pyMOR's discretization tookit
   :meth:`!discretize_parabolic_fv` methods can
   be used to build continuous finite element or finite volume `Discretizations`
   from a given :class:`!pymor.analyticalproblems.parabolic.ParabolicProblem`.
-  The :mod:`~pymordemos.parabolic` demo demonstrates the use of these methods
+  The :mod:`!parabolic` demo demonstrates the use of these methods
   `[#189] <https://github.com/pymor/pymor/issues/189>`_.
 
 - The :mod:`!pymor.discretizers.disk` module contains methods to create stationary and
@@ -221,7 +221,7 @@ Additional new features
     :class:`!NumpyListVectorArrayMatrixOperator`
     which can apply |NumPy|/|SciPy| matrices to a |ListVectorArray|.
     This `OperatorInterface` is mainly intended for performance testing purposes.
-    The :mod:`~pymordemos.thermalblock` demo now has an option
+    The :mod:`!thermalblock` demo now has an option
     `--list-vector-array` for using this operator instead of |NumpyMatrixOperator|.
 
 - Log indentation support `[#230] <https://github.com/pymor/pymor/pull/230>`_.
