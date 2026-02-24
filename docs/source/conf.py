@@ -138,6 +138,7 @@ nitpick_ignore = [
 ]
 nitpick_ignore_regex = [
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
+    ('py:class', r'Annotated\[.*')
 ]
 
 
