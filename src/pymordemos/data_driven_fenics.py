@@ -46,6 +46,7 @@ def main(
     output_scaling
         Scale the output of the regressor (i.e. reduced coefficients or output quantity.).
     """
+    config.require('FENICS')
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
