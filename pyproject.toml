@@ -142,8 +142,8 @@ full-compiled = [
 ]
 
 [project.scripts]
-pymor-demo = "pymor.scripts.pymor_demo:run"
-pymor-vis = "pymor.scripts.pymor_vis:run"
+pymor-demo = "pymor.scripts.pymor_demo:app"
+pymor-vis = "pymor.scripts.pymor_vis:app"
 
 [project.urls]
 homepage = "https://pymor.org"
