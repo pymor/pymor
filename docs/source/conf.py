@@ -137,7 +137,6 @@ nitpick_ignore = [
     ('py:class', 'F'),
 ]
 nitpick_ignore_regex = [
-    ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
 ]
 
