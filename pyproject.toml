@@ -142,6 +142,7 @@ full-compiled = [
 ]
 
 [project.scripts]
+pymor-config = "pymor.scripts.pymor_config:app"
 pymor-demo = "pymor.scripts.pymor_demo:app.meta"
 pymor-vis = "pymor.scripts.pymor_vis:app"
 
