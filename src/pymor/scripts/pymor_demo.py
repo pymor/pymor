@@ -18,7 +18,9 @@ demos = tuple(m.name for m in iter_modules(pymordemos.__path__))
 app = App(help_on_error=True)
 
 @app.default
-def main(demo: Literal[demos], /, *args: Annotated[str, Parameter(allow_leading_hyphen=True)]):
+def main(demo: Literal[demos], /,
+         *args: Annotated[str, Parameter(allow_leading_hyphen=True)],
+         help: Annotated[bool, Parameter(name=['--help-for-demo'], show=False)] = False):
     """Runs a pyMOR demo script.
 
     Parameters
@@ -30,6 +32,8 @@ def main(demo: Literal[demos], /, *args: Annotated[str, Parameter(allow_leading_
     """
     app = import_module('pymordemos.' + demo).app
     app._name = 'pymor-demo ' + demo
+    if help:
+        args += ('--help',)
     try:
         app(args)
     except DependencyMissingError as e:
@@ -48,5 +52,14 @@ Missing dependency: {e.dependency}
         sys.exit(1)
 
 
+app.meta.help_flags = []
+
+@app.meta.default
+def help_handler(*tokens: Annotated[str, Parameter(show=False, allow_leading_hyphen=True)]):
+    if not all(t in app.help_flags for t in tokens):
+        tokens = ['--help-for-demo' if t in app.help_flags else t for t in tokens]
+    app(tokens)
+
+
 if __name__ == '__main__':
-    app()
+    app.meta()

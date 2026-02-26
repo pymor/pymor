@@ -142,7 +142,7 @@ full-compiled = [
 ]
 
 [project.scripts]
-pymor-demo = "pymor.scripts.pymor_demo:app"
+pymor-demo = "pymor.scripts.pymor_demo:app.meta"
 pymor-vis = "pymor.scripts.pymor_vis:app"
 
 [project.urls]
