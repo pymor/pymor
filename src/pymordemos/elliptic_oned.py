@@ -2,7 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typer import Argument, Option, run
+from typing import Literal
+
+from cyclopts import App
 
 from pymor.analyticalproblems.domaindescriptions import LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -10,14 +12,26 @@ from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunct
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.parameters.functionals import ProjectionParameterFunctional
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    problem_number: int = Argument(..., min=0, max=1, help='Selects the problem to solve [0 or 1].'),
-    n: int = Argument(..., help='Grid interval count.'),
-
-    fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
+    problem_number: Literal[0, 1],
+    n: int,
+    /, *,
+    fv: bool = False,
 ):
-    """Solves the Poisson equation in 1D using pyMOR's builtin discretization toolkit."""
+    """Solves the Poisson equation in 1D using pyMOR's builtin discretization toolkit.
+
+    Parameters
+    ----------
+    problem_number
+        Selects the problem to solve [0 or 1].
+    n
+        Grid interval count.
+    fv
+        Use finite volume discretization instead of finite elements.
+    """
     rhss = [ExpressionFunction('10', 1),
             ExpressionFunction('(x[0] - 0.5)**2 * 1000', 1)]
     rhs = rhss[problem_number]
@@ -52,4 +66,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

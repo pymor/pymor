@@ -8,8 +8,6 @@ from importlib import import_module
 from tempfile import mkdtemp
 
 import pytest
-from typer import Typer
-from typer.testing import CliRunner
 
 import pymordemos  # noqa: F401
 from pymor.core.config import is_macos_platform, is_windows_platform
@@ -21,9 +19,6 @@ from pymor.core.exceptions import (
 )
 from pymor.tools.mpi import parallel
 from pymortests.base import BUILTIN_DISABLED, check_results, runmodule
-
-runner = CliRunner()
-
 
 DISCRETIZATION_ARGS = (
     ('elliptic', [0, 0, 0, 0]),
@@ -313,14 +308,9 @@ def test_demos(demo_args):
     # https://docs.pytest.org/en/stable/writing_plugins.html#assertion-rewriting
     pytest.register_assert_rewrite(module)
     module = import_module(module)
-    if hasattr(module, 'app'):
-        app = module.app
-    else:
-        app = Typer()
-        app.command()(module.main)
     args = [str(arg) for arg in args]
-    result = _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
-    assert result.exit_code == 0
+    module.app.result_action = 'return_value'
+    _test_demo(lambda: module.app(args))
 
 
 @pytest.mark.builtin
@@ -388,10 +378,9 @@ def test_thermalblock_ipython(ipy_args):
 def test_thermalblock_results(thermalblock_args):
     _skip_if_no_solver(thermalblock_args)
     from pymordemos import thermalblock
-    app = Typer()
-    app.command()(thermalblock.main)
     args = [str(arg) for arg in thermalblock_args[1]]
-    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
+    thermalblock.app.result_action = 'return_value'
+    _test_demo(lambda: thermalblock.app(args))
     results = thermalblock.test_results
     # due to the symmetry of the problem and the random test parameters, the estimated
     # error may change a lot
@@ -407,10 +396,9 @@ def test_thermalblock_results(thermalblock_args):
 @pytest.mark.builtin
 def test_burgers_ei_results():
     from pymordemos import burgers_ei
-    app = Typer()
-    app.command()(burgers_ei.main)
     args = list(map(str, [1, 2, 2, 5, 2, 5])) + ['--grid=20']
-    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
+    burgers_ei.app.result_action = 'return_value'
+    _test_demo(lambda: burgers_ei.app(args))
     ei_results, greedy_results = burgers_ei.test_results
     ei_results['greedy_max_errs'] = greedy_results['max_errs']
     check_results('test_burgers_ei_results', args, ei_results,
@@ -421,7 +409,7 @@ def test_burgers_ei_results():
 def test_parabolic_mor_results():
     from pymordemos import parabolic_mor
     args = ['pymor', 'greedy', 5, 20, 3]
-    results = _test_demo(lambda: parabolic_mor.main(*args))
+    results = _test_demo(lambda: parabolic_mor.app(map(str, args)))
     check_results('test_parabolic_mor_results', args, results,
                   (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',

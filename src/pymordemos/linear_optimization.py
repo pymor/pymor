@@ -4,16 +4,26 @@
 
 
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.basic import *
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    grid_intervals: int = Argument(..., help='Grid interval count.'),
-    training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
+    grid_intervals: int,
+    training_samples: int
 ):
-    """Example script for solving linear PDE-constrained parameter optimization problems."""
+    """Example script for solving linear PDE-constrained parameter optimization problems.
+
+    Parameters
+    ----------
+    grid_intervals
+        Grid interval count.
+    training_samples
+        Number of samples used for training the reduced basis.
+    """
     fom, mu_bar = create_fom(grid_intervals)
 
     parameter_space = fom.parameters.space(0, np.pi)
@@ -156,4 +166,4 @@ def report(result, parse, data, reference_mu):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

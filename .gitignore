@@ -75,6 +75,7 @@ Pipfile.lock
 src/pymortests/testdata/check_results/test_check_check_results_miss*
 docs/_build/
 docs/source/autoapi/
+docs/source/demos/
 docs/coverage
 docs/*.png
 docs/pymor_defaults.py

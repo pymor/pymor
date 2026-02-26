@@ -3,16 +3,27 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from typer import Option, run
+from cyclopts import App
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.basic import *
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-        n: int = Option(4, help='Dimension of the state.'),
-        M: int = Option(10, help='Number of data pairs.')
+    n: int = 4,
+    M: int = 10,
 ):
+    """DMD system identification demo.
+
+    Parameters
+    ----------
+    n
+        Dimension of the state.
+    M
+        Number of data pairs.
+    """
     A = get_rng().random((n, n))
     A = A / np.linalg.norm(A)
     print(f'A: {A}')
@@ -37,4 +48,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

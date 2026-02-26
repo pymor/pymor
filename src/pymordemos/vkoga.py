@@ -2,31 +2,49 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Demo of the VKOGA algorithm for function approximation."""
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from cyclopts import App
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError
 from pymor.tools.random import new_rng
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
-def main(training_points_sampling: Choices('random uniform') = Option('random',
-                                                                      help='Method for sampling the training points'),
-         kernel: Choices('Gaussian Matern RationalQuadratic') = Option('Gaussian',
-                                                                       help='Kernel to use in VKOGA.'),
-         num_training_points: int = Option(40, help='Number of training points in the weak greedy algorithm.'),
-         greedy_criterion: Choices('fp f p') = Option('fp', help='Selection criterion for the greedy algorithm.'),
-         max_centers: int = Option(20, help='Maximum number of selected centers in the greedy algorithm.'),
-         tol: float = Option(1e-6, help='Tolerance for the weak greedy algorithm.'),
-         reg: float = Option(1e-12, help='Regularization parameter for the kernel interpolation.'),
-         length_scale: float = Option(1.0, help='The length scale parameter of the kernel. '
-                                                'Only used when `kernel = diagonal`.')):
-    """Approximates a function with 2d output from training data using VKOGA."""
+@app.default
+def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
+         kernel: Literal['Gaussian', 'Matern', 'RationalQuadratic'] = 'Gaussian',
+         num_training_points: int = 40,
+         greedy_criterion: Literal['fp', 'f', 'p'] = 'fp',
+         max_centers: int = 20,
+         tol: float = 1e-6,
+         reg: float = 1e-12,
+         length_scale: float = 1.0):
+    """Approximates a function with 2d output from training data using VKOGA.
+
+    Parameters
+    ----------
+    training_points_sampling
+        Method for sampling the training points
+    kernel
+        Kernel to use in VKOGA.
+    num_training_points
+        Number of training points in the weak greedy algorithm.
+    greedy_criterion
+        Selection criterion for the greedy algorithm.
+    max_centers
+        Maximum number of selected centers in the greedy algorithm.
+    tol
+        Tolerance for the weak greedy algorithm.
+    reg
+        Regularization parameter for the kernel interpolation.
+    length_scale
+        The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+    """
     m = 2
     if kernel in ('Matern', 'RationalQuadratic') and not config.HAVE_SKLEARN:
         raise SklearnMissingError
@@ -82,4 +100,4 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

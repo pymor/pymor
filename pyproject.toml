@@ -25,6 +25,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
+  "cyclopts",
   "diskcache",
   "matplotlib>=3.5.0",
   "numpy>=1.21,!=1.25.0", # 1.25.0 crashes CI
@@ -34,7 +35,6 @@ dependencies = [
   "qtpy>=2.3.1",
   "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
   "threadpoolctl",
-  "typer",
 ]
 
 [project.optional-dependencies]
@@ -142,8 +142,8 @@ full-compiled = [
 ]
 
 [project.scripts]
-pymor-demo = "pymor.scripts.pymor_demo:run"
-pymor-vis = "pymor.scripts.pymor_vis:run"
+pymor-demo = "pymor.scripts.pymor_demo:app"
+pymor-vis = "pymor.scripts.pymor_vis:app"
 
 [project.urls]
 homepage = "https://pymor.org"

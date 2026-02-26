@@ -34,6 +34,7 @@ test: ## run tests
 	xvfb-run pytest
 
 docs: ## build the docs
+	PYTHONPATH=${PWD}/src/:${PYTHONPATH} python ./docs/generate_demo_docs.py
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 	./docs/fix_myst_in_notebooks.sh
 

@@ -4,12 +4,27 @@
 
 import os
 
-import typer
+from cyclopts import App
 
 from pymor.core.pickle import load
 
+app = App(help_on_error=True)
 
-def main(filename: str, delete: bool = typer.Option(False, help='Delete file when done.')):
+@app.default
+def main(filename: str, delete: bool = False):
+    """Visualize pickled data from built-in discretization toolkit.
+
+    The pickled data has to be a dict of visualizer arguments
+    (grid, |VectorArray|, further options) along with a `dim` key,
+    which is used to select the visualizer to be used.
+
+    Parameters
+    ----------
+    filename
+        The pickled data.
+    delete
+        Delete file when done.
+    """
     try:
         with open(filename, 'rb') as f:
             data = load(f)
@@ -29,9 +44,5 @@ def main(filename: str, delete: bool = typer.Option(False, help='Delete file whe
             os.remove(filename)
 
 
-def run():
-    typer.run(main)
-
-
 if __name__ == '__main__':
-    run()
+    app()

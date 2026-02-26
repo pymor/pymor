@@ -5,9 +5,10 @@
 import math
 import sys
 import time
+from typing import Literal
 
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.ei import interpolate_operators
 from pymor.algorithms.greedy import rb_greedy
@@ -15,47 +16,99 @@ from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    exp_min: float = Argument(..., help='Minimal exponent'),
-    exp_max: float = Argument(..., help='Maximal exponent'),
-    ei_snapshots: int = Argument(..., help='Number of snapshots for empirical interpolation.'),
-    ei_size: int = Argument(..., help='Number of interpolation DOFs.'),
-    snapshots: int = Argument(..., help='Number of snapshots for basis generation.'),
-    rb_size: int = Argument(..., help='Size of the reduced basis.'),
-
-    cache_region: Choices('none memory disk persistent') = Option(
-        'disk',
-        help='Name of cache region to use for caching solution snapshots.'
-    ),
-    ei_alg: Choices('ei_greedy deim qdeim') = Option('ei_greedy', help='Interpolation algorithm to use.'),
-    grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
-    grid_type: Choices('rect tria') = Option('rect', help='Type of grid to use.'),
-    initial_data: Choices('sin bump') = Option('sin', help='Select the initial data (sin, bump).'),
-    ipython_engines: int = Option(
-        0,
-        help='If positive, the number of IPython cluster engines to use for parallel greedy search. '
-             'If zero, no parallelization is performed.'),
-    ipython_profile: str = Option(None, help='IPython profile to use for parallelization.'),
-    lxf_lambda: float = Option(1., help='Parameter lambda in Lax-Friedrichs flux.'),
-    periodic: bool = Option(True, help='If not, solve with dirichlet boundary conditions on left and bottom boundary.'),
-    nt: int = Option(100, help='Number of time steps.'),
-    num_flux: Choices('lax_friedrichs engquist_osher') = Option('engquist_osher', help='Numerical flux to use.'),
-    plot_err: bool = Option(False, help='Plot error.'),
-    plot_ei_err: bool = Option(False, help='Plot empirical interpolation error.'),
-    plot_error_landscape: bool = Option(False, help='Calculate and show plot of reduction error vs. basis sizes.'),
-    plot_error_landscape_M: int = Option(10, help='Number of collateral basis sizes to test.'),
-    plot_error_landscape_N: int = Option(10, help='Number of basis sizes to test.'),
-    plot_solutions: bool = Option(False, help='Plot some example solutions.'),
-    test: int = Option(10, help='Number of snapshots to use for stochastic error estimation.'),
-    vx: float = Option(1., help='Speed in x-direction.'),
-    vy: float = Option(1., help='Speed in y-direction.'),
+    exp_min: float,
+    exp_max: float,
+    ei_snapshots: int,
+    ei_size: int,
+    snapshots: int,
+    rb_size: int,
+    /, *,
+    cache_region: Literal['none', 'memory', 'disk', 'persistent'] = 'disk',
+    ei_alg: Literal['ei_greedy', 'deim', 'qdeim'] = 'ei_greedy',
+    grid: int = 60,
+    grid_type: Literal['rect', 'tria'] = 'rect',
+    initial_data: Literal['sin', 'bump'] = 'sin',
+    ipython_engines: int = 0,
+    ipython_profile: str | None = None,
+    lxf_lambda: float = 1.,
+    periodic: bool = True,
+    nt: int = 100,
+    num_flux: Literal['lax_friedrichs', 'engquist_osher'] = 'engquist_osher',
+    plot_err: bool = False,
+    plot_ei_err: bool = False,
+    plot_error_landscape: bool = False,
+    plot_error_landscape_M: int = 10,
+    plot_error_landscape_N: int = 10,
+    plot_solutions: bool = False,
+    test: int = 10,
+    vx: float = 1.,
+    vy: float = 1.
 ):
-    """Reduction of a two-dimensional Burgers-type equation using empirical interpolation."""
+    """Reduction of a two-dimensional Burgers-type equation using empirical interpolation.
+
+    Parameters
+    ----------
+    exp_min
+        Minimal exponent.
+    exp_max
+        Maximal exponent.
+    ei_snapshots
+        Number of snapshots for empirical interpolation.
+    ei_size
+        Number of interpolation DOFs.
+    snapshots
+        Number of snapshots for basis generation.
+    rb_size
+        Size of the reduced basis.
+    cache_region
+        Name of cache region to use for caching solution snapshots.
+    ei_alg
+        Interpolation algorithm to use.
+    grid
+        Use grid with (2*NI)*NI elements.
+    grid_type
+        Type of grid to use.
+    initial_data
+        Select the initial data (sin, bump).
+    ipython_engines:
+        If positive, the number of IPython cluster engines to use for parallel greedy search.
+        If zero, no parallelization is performed.
+    ipython_profile
+        IPython profile to use for parallelization.
+    lxf_lambda
+        Parameter lambda in Lax-Friedrichs flux.
+    periodic
+        If not, solve with dirichlet boundary conditions on left and bottom boundary.
+    nt
+        Number of time steps.
+    num_flux
+        Numerical flux to use.
+    plot_err
+        Plot error.
+    plot_ei_err
+        Plot empirical interpolation error.
+    plot_error_landscape
+        Calculate and show plot of reduction error vs. basis sizes.
+    plot_error_landscape_M
+        Number of collateral basis sizes to test.
+    plot_error_landscape_N
+        Number of basis sizes to test.
+    plot_solutions
+        Plot some example solutions.
+    test
+        Number of snapshots to use for stochastic error estimation.
+    vx
+        Speed in x-direction.
+    vy
+        Speed in y-direction.
+    """
     print('Setup Problem ...')
-    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data.value,
+    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
                                  parameter_range=(exp_min, exp_max), torus=periodic)
 
     print('Discretize ...')
@@ -65,7 +118,7 @@ def main(
         problem,
         diameter=1. / grid,
         grid_type=RectGrid if grid_type == 'rect' else TriaGrid,
-        num_flux=num_flux.value,
+        num_flux=num_flux,
         lxf_lambda=lxf_lambda,
         nt=nt
     )
@@ -74,7 +127,7 @@ def main(
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = (f'pymordemos.burgers_ei {vx} {vy} {initial_data}'
                     f'{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}')
-        fom.enable_caching(cache_region.value, cache_id)
+        fom.enable_caching(cache_region, cache_id)
 
     print(fom.operator.grid)
 
@@ -96,7 +149,7 @@ def main(
                                          problem.parameter_space.sample_uniformly(ei_snapshots),
                                          error_norm=fom.l2_norm, product=fom.l2_product,
                                          max_interpolation_dofs=ei_size,
-                                         alg=ei_alg.value,
+                                         alg=ei_alg,
                                          pool=pool)
 
     if plot_ei_err:
@@ -232,4 +285,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

@@ -2,11 +2,11 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
 from time import perf_counter
+from typing import Literal
 
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.algorithms.bfgs import error_aware_bfgs
 from pymor.algorithms.greedy import rb_greedy
@@ -15,13 +15,10 @@ from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaPa
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
+app = App(help_on_error=True)
 
-def main(
-    output_number: int = Argument(..., help=('Selects type of output functional [0, 1], '
-                                             'where 0 stands for linear and 1 for a quadratic output.')),
-    grid_intervals: int = Argument(..., help='Grid interval count.'),
-    training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
-):
+@app.default
+def main(output_number: Literal[0, 1], grid_intervals: int, training_samples: int):
     """Error aware trust-region method for PDE-constrained parameter optimization problems.
 
     This demo compares three different approaches for solving PDE-constrained parameter
@@ -35,6 +32,15 @@ def main(
 
     The methods are compared in terms of computational time, iterations,
     optimization error, and FOM/ROM evaluations.
+
+    Parameters
+    ----------
+    output_number
+        Selects type of output functional, where 0 stands for linear and 1 for a quadratic output.
+    grid_intervals
+        Grid interval count.
+    training_samples
+        Number of samples used for training the reduced basis.
     """
     assert output_number in [0, 1]
     if output_number == 0:
@@ -146,4 +152,4 @@ def report(mu, output, reference_mu, reference_output, data, parse, descriptor=N
 
 
 if __name__ == '__main__':
-    run(main)
+    app()
