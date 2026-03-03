@@ -69,7 +69,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
             remove.append(i)
             continue
 
-        if i == 0:
+        if i == offset:
             A[0].scal(1 / initial_norm)
             R[i, i] = initial_norm
         else:
