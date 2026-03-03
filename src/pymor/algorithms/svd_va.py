@@ -156,6 +156,12 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     with logger.block('Computing SVD of R ...'):
         U2, s, Vh = spla.svd(R, lapack_driver=svd_lapack_driver())
 
+    if s.size == 0:
+        U = A.space.empty()
+        s = np.array([])
+        Vh = np.zeros((0, len(A)))
+        return U, s ,Vh
+
     with logger.block('Choosing the number of modes ...'):
         selected_modes = _select_modes(s, modes, rtol, atol, l2_err)
         U2 = U2[:, :selected_modes]
