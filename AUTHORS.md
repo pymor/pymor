@@ -2,7 +2,7 @@
 
 ## Main developers
 
-* Linus Balicki, @lbalicki (2020-)
+* Linus Balicki, @lbalicki (2020-2026)
 * René Fritze, @renefritze (2012-2024)
 * Hendrik Kleikamp, @HenKlei (2022-)
 * Petar Mlinarić, @pmli (2016-)

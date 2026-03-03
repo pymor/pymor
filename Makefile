@@ -34,6 +34,7 @@ test: ## run tests
 	xvfb-run pytest
 
 docs: ## build the docs
+	PYTHONPATH=${PWD}/src/:${PYTHONPATH} python ./docs/generate_demo_docs.py
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 	./docs/fix_myst_in_notebooks.sh
 
@@ -83,7 +84,6 @@ ci_fenics_requirements:
 		--extra tests \
 		--extra ann \
 		--extra ipyparallel \
-		--extra mpi \
 		--extra scikit-learn \
 		--python-version 3.11 \
 		--python-platform x86_64-manylinux_2_31 \

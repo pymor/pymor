@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.hapod import dist_vectorarray_hapod, inc_vectorarray_hapod
 from pymor.algorithms.pod import pod
@@ -14,21 +14,47 @@ from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, discretize_instationary_fv
 from pymor.tools.table import format_table
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    tol: float = Argument(..., help='Prescribed mean l2 approximation error.'),
-    dist: int = Argument(..., help='Number of slices for distributed HAPOD.'),
-    inc: int = Argument(..., help='Number of steps for incremental HAPOD.'),
-
-    arity: int = Option(None, help='Arity of distributed HAPOD tree'),
-    grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
-    nt: int = Option(100, help='Number of time steps.'),
-    omega: float = Option(0.9, help='Parameter omega from HAPOD algorithm.'),
-    procs: int = Option(0, help='Number of processes to use for parallelization.'),
-    snap: int = Option(20, help='Number of snapshot trajectories to compute.'),
-    threads: int = Option(0, help='Number of threads to use for parallelization.'),
+    tol: float,
+    dist: int,
+    inc: int,
+    /, *,
+    arity: int | None = None,
+    grid: int = 60,
+    nt: int = 100,
+    omega: float = 0.9,
+    procs: int = 0,
+    snap: int = 20,
+    threads: int = 0
 ):
-    """Compression of snapshot data with the HAPOD algorithm from [HLR18]."""
+    """Compression of snapshot data with the HAPOD algorithm from [HLR18].
+
+    Parameters
+    ----------
+    tol
+        Prescribed mean l2 approximation error.
+    dist
+        Number of slices for distributed HAPOD.
+    inc
+        Number of steps for incremental HAPOD.
+    arity
+        Arity of distributed HAPOD tree
+    grid
+        Use grid with (2*NI)*NI elements.
+    nt
+        Number of time steps.
+    omega
+        Parameter omega from HAPOD algorithm.
+    procs
+        Number of processes to use for parallelization.
+    snap
+        Number of snapshot trajectories to compute.
+    threads
+        Number of threads to use for parallelization.
+    """
     assert procs == 0 or threads == 0
 
     executor = ProcessPoolExecutor(procs) if procs > 0 else \
@@ -73,4 +99,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

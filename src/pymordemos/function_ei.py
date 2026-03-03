@@ -5,7 +5,7 @@
 import sys
 
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.ei import interpolate_function
 from pymor.algorithms.error import reduction_error_analysis
@@ -17,18 +17,41 @@ from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    ei_snapshots: int = Argument(..., help='Number of snapshots for empirical interpolation.'),
-    ei_size: int = Argument(..., help='Number of interpolation DOFs.'),
-    snapshots: int = Argument(..., help='Number of snapshots for basis generation.'),
-    rb_size: int = Argument(..., help='Size of the reduced basis.'),
-    grid: int = Option(100, help='Use grid with 4*NI*NI elements'),
-    plot_ei_err: bool = Option(False, help='Plot empirical interpolation error.'),
-    plot_solutions: bool = Option(False, help='Plot some example solutions.'),
-    test: int = Option(10, help='Number of snapshots to use for stochastic error estimation.'),
+    ei_snapshots: int,
+    ei_size: int,
+    snapshots: int,
+    rb_size: int,
+    /, *,
+    grid: int = 100,
+    plot_ei_err: bool = False,
+    plot_solutions: bool = False,
+    test: int = 10
 ):
-    """Reduction of a problem without parameter separability using empirical interpolation."""
+    """Reduction of a problem without parameter separability using empirical interpolation.
+
+    Parameters
+    ----------
+    ei_snapshots
+        Number of snapshots for empirical interpolation.
+    ei_size
+        Number of interpolation DOFs.
+    snapshots
+        Number of snapshots for basis generation.
+    rb_size
+        Size of the reduced basis.
+    grid
+        Use grid with 4*NI*NI elements
+    plot_ei_err
+        Plot empirical interpolation error.
+    plot_solutions
+        Plot some example solutions.
+    test
+        Number of snapshots to use for stochastic error estimation.
+    """
     problem = StationaryProblem(
         domain=RectDomain(),
 
@@ -108,4 +131,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

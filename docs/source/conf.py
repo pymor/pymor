@@ -137,8 +137,8 @@ nitpick_ignore = [
     ('py:class', 'F'),
 ]
 nitpick_ignore_regex = [
-    ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
+    ('py:class', r'Annotated\[.*')
 ]
 
 
@@ -316,11 +316,10 @@ def linkcode_resolve(domain, info):
     return None
 
 
-autoapi_dirs = [src_dir / 'pymor', src_dir / 'pymordemos']
+autoapi_dirs = [src_dir / 'pymor']
 autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
-autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
 suppress_warnings = ['autoapi', 'config.cache']
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
 autoapi_member_order = 'groupwise'

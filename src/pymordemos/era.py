@@ -4,7 +4,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
@@ -66,10 +66,17 @@ def compute_markov_parameters(sys, n=100):
         x = A @ x
     return mp
 
+app = App(help_on_error=True)
 
-def main(
-        n: int = Argument(10, help='Order of the full model.')
-):
+@app.default
+def main(n: int = 10):
+    """ERA system identification demo.
+
+    Parameters
+    ----------
+    n
+        Order of the full model.
+    """
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
     sampling_time = 0.1
@@ -103,4 +110,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

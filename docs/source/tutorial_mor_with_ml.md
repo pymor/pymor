@@ -383,7 +383,8 @@ training data, the approach presented here can easily be applied to {{ Models }}
 originating from external solvers, without requiring any access to {{ Operators }}
 internal to the solver. Examples using FEniCS for stationary and instationary problems
 together with the {class}`~pymor.reductors.data_driven.DataDrivenReductor` are provided
-in {mod}`~pymordemos.data_driven_fenics` and {mod}`~pymordemos.data_driven_instationary`.
+in {ref}`cyclopts-pymor-demo-data_driven_fenics` and
+{ref}`cyclopts-pymor-demo-data_driven_instationary` demo scripts.
 Furthermore, the strategy is also applicable when no full-order model is available at all.
 Given a set of training snapshots (for instance read from a file), a reduced basis can be
 computed using a data-driven compression method such as POD, the snapshots can be

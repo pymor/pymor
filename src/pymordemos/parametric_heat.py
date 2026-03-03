@@ -4,7 +4,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.config import config
@@ -256,12 +256,19 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
     plt.show()
 
+app = App(help_on_error=True)
 
-def main(
-        diameter: float = Argument(0.01, help='Diameter option for the domain discretizer.'),
-        r: int = Argument(5, help='Order of the ROMs.'),
-):
-    """Parametric 1D heat equation example."""
+@app.default
+def main(diameter: float = 0.01, r: int = 5):
+    """Parametric 1D heat equation example.
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    r
+        Order of the ROMs.
+    """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
         'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
@@ -293,4 +300,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

@@ -2,62 +2,64 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
-import importlib
-import pkgutil
-import runpy
 import sys
+from importlib import import_module
+from pkgutil import iter_modules
+from typing import Annotated, Literal
+
+from cyclopts import App
+from cyclopts.types import Parameter
 
 import pymordemos
+from pymor.core.exceptions import DependencyMissingError
+
+demos = tuple(m.name for m in iter_modules(pymordemos.__path__))
+
+app = App(help_on_error=True)
+
+@app.default
+def main(demo: Literal[demos], /,
+         *args: Annotated[str, Parameter(allow_leading_hyphen=True)],
+         help: Annotated[bool, Parameter(name=['--help-for-demo'], show=False)] = False):
+    """Runs a pyMOR demo script.
+
+    Parameters
+    ----------
+    demo
+        Name of the demo script to run.
+    args
+        Arguments for the demo script.
+    """
+    app = import_module('pymordemos.' + demo).app
+    app._name = 'pymor-demo ' + demo
+    if help:
+        args += ('--help',)
+    try:
+        app(args)
+    except DependencyMissingError as e:
+        print(f"""
+
+------------------------------------------------------------
+DEPENDENCY MISSING
+
+An optional depenency that is needed to run this demo script
+could not be found!
+
+Missing dependency: {e.dependency}
+------------------------------------------------------------
+
+"""[1:-1])
+        sys.exit(1)
 
 
-def run():
-    def _run(module):
-        # only need to remove the modname from args, rest is automatic
-        del sys.argv[1]
-        runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
-        sys.exit(0)
+app.meta.help_flags = []
 
-    modules = []
-    shorts = []
-    fails = {}
-    for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
-        short = module_name[len('pymordemos.'):]
-        modules.append(module_name)
-        shorts.append(short)
-        try:
-            importlib.import_module(module_name)
-        except (ImportError, ModuleNotFoundError) as e:
-            fails[short] = e
-
-    def usage():
-        msg = f"""Usage:
-    {sys.argv[0]} DEMO_NAME | -h [DEMO_OPTIONS]
-
-Arguments:
-    -h           this message
-    DEMO_NAME    select one from these: {",".join(shorts)}
-    DEMO_OPTIONS any arguments for the demo, including -h for detailed help
-"""
-        print(msg)
-        if len(fails):
-            print('\nThere are some pyMOR demos for which additional packages need to be installed:')
-            print('\t'+'\n\t'.join(fails))
-            print('\nYou can try to `pip install pymor[full]` to install optional dependencies.\n')
-        sys.exit(0)
-
-    if len(sys.argv) < 2:
-        usage()
-    demo = sys.argv[1]
-    if demo in shorts:
-        if demo in fails:
-            print(str(fails[demo]))
-            print(f'\nThe {demo} pyMOR demo needs additional packages to be installed (see above error for details).')
-            print('\nYou can try to `pip install pymor[full]` to install optional dependencies.\n')
-            sys.exit(-1)
-        _run(modules[shorts.index(demo)])
-    usage()
+@app.meta.default
+def help_handler(*tokens: Annotated[str, Parameter(show=False, allow_leading_hyphen=True)]):
+    if not all(t in app.help_flags for t in tokens):
+        tokens = ['--help-for-demo' if t in app.help_flags else t for t in tokens]
+    app(tokens)
 
 
 if __name__ == '__main__':
-    run()
+    app.meta()

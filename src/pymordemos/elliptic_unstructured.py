@@ -3,22 +3,33 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.analyticalproblems.domaindescriptions import CircularSectorDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.discretizers.builtin import discretize_stationary_cg
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    angle: float = Argument(..., help='The angle of the circular sector.'),
-    num_points: int = Argument(..., help='The number of points that form the arc of the circular sector.'),
-    clscale: float = Argument(..., help='Mesh element size scaling factor.'),
+    angle: float,
+    num_points: int,
+    clscale: float
 ):
     """Solves the 2D-Poisson equation on a circular sector of radius 1 with an unstructured mesh.
 
     Note that Gmsh (https://gmsh.info/) is required for meshing.
+
+    Parameters
+    ----------
+    angle
+        The angle of the circular sector.
+    num_points
+        The number of points that form the arc of the circular sector.
+    clscale
+        Mesh element size scaling factor.
     """
     problem = StationaryProblem(
         domain=CircularSectorDomain(angle, radius=1, num_points=num_points),
@@ -47,4 +58,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

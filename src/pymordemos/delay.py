@@ -3,21 +3,32 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import matplotlib.pyplot as plt
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.models.examples import transfer_function_delay_example
 from pymor.reductors.h2 import TFIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-        tau: float = Argument(1, help='Time delay.'),
-        a: float = Argument(-0.1, help='Pole without delay.'),
-        r: int = Argument(8, help='Order of the TF-IRKA ROM.'),
+    tau: float = 1,
+    a: float = -0.1,
+    r: int = 8,
 ):
     """Delay demo.
 
     Full-order model as a transfer function `exp(-tau*s) / (s - a)`.
+
+    Parameters
+    ----------
+    tau
+        Time delay.
+    a
+        Pole without delay.
+    r
+        Order of the TF-IRKA ROM.
     """
     plt.rcParams['axes.grid'] = True
 
@@ -33,4 +44,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

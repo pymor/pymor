@@ -4,11 +4,6 @@
 
 from importlib import import_module
 
-from typer import Typer
-from typer.testing import CliRunner
-
-runner = CliRunner()
-
 
 class Demos:
     version = 1
@@ -40,13 +35,8 @@ class Demos:
 
     def run_demo(self, module, args):
         module = import_module(module)
-        if hasattr(module, 'app'):
-            app = module.app
-        else:
-            app = Typer()
-            app.command()(module.main)
         args = [str(arg) for arg in args]
-        runner.invoke(app, args, catch_exceptions=False)
+        module.app(args)
 
     # thermalblock
     def time_thermalblock_small(self):

@@ -3,26 +3,36 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from typer import Argument, Option, Typer
+from cyclopts import App
 
 from pymor.basic import *
 
-app = Typer(help="Solve parabolic equations using pyMOR's builtin discretization toolkit.")
-FV = Option(False, help='Use finite volume discretization instead of finite elements.')
-GRID = Option(100, help='Use grid with NIxNI intervals.')
-NT = Option(100, help='Number of time steps.')
-RECT = Option(False, help='Use RectGrid instead of TriaGrid.')
+app = App(help_on_error=True)
 
-
-@app.command()
+@app.command
 def heat(
-    top: float = Argument(..., help='The heat diffusion coefficient for the top bars.'),
-
-    fv: bool = FV,
-    grid: int = GRID,
-    nt: int = NT,
-    rect: bool = RECT,
+    top: float,
+    /, *,
+    fv: bool = False,
+    grid: int = 100,
+    nt: int = 100,
+    rect: bool = False,
 ):
+    """Heat conduction problem.
+
+    Parameters
+    ----------
+    top
+        The heat diffusion coefficient for the top bars.
+    fv
+        Use finite volume discretization instead of finite elements.
+    grid
+        Use grid with NIxNI intervals.
+    nt
+        Number of time steps.
+    rect
+        Use RectGrid instead of TriaGrid.
+    """
     problem = InstationaryProblem(
 
         StationaryProblem(
@@ -59,13 +69,28 @@ def heat(
 
 @app.command()
 def dar(
-    speed: float = Argument(..., help='The advection speed.'),
-
-    fv: bool = FV,
-    grid: int = GRID,
-    nt: int = NT,
-    rect: bool = RECT,
+    speed: float,
+    /, *,
+    fv: bool = False,
+    grid: int = 100,
+    nt: int = 100,
+    rect: bool = False,
 ):
+    """Diffusion advection reaction problem.
+
+    Parameters
+    ----------
+    speed
+        The advection speed.
+    fv
+        Use finite volume discretization instead of finite elements.
+    grid
+        Use grid with NIxNI intervals.
+    nt
+        Number of time steps.
+    rect
+        Use RectGrid instead of TriaGrid.
+    """
     problem = InstationaryProblem(
 
         StationaryProblem(

@@ -3,8 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import sys
+from typing import Literal
 
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
@@ -14,51 +15,77 @@ from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parallel.default import new_parallel_pool
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
-from pymor.tools.typer import Choices
 
+app = App(help_on_error=True)
 
+@app.default
 def main(
-    rbsize: int = Argument(..., help='Size of the reduced basis.'),
-
-    cache_region: Choices('none memory disk persistent') = Option(
-        'none',
-        help='Name of cache region to use for caching solution snapshots.'
-    ),
-    error_estimator: bool = Option(True, help='Use error estimator for basis generation.'),
-    gamma: float = Option(0.2, help='Weight factor for age penalty term in refinement indicators.'),
-    grid: int = Option(100, help='Use grid with 2*NI*NI elements.'),
-    ipython_engines: int = Option(
-        0,
-        help='If positive, the number of IPython cluster engines to use for parallel greedy search. '
-             'If zero, no parallelization is performed.'
-    ),
-    ipython_profile: str = Option(None, help='IPython profile to use for parallelization.'),
-    list_vector_array: bool = Option(
-        False,
-        help='Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.'
-    ),
-    pickle: str = Option(
-        None,
-        help='Pickle reduced discretization, as well as reductor and high-dimensional model to files with this prefix.'
-    ),
-    plot_err: bool = Option(False, help='Plot error.'),
-    plot_solutions: bool = Option(False, help='Plot some example solutions.'),
-    plot_error_sequence: bool = Option(False, help='Plot reduction error vs. basis size.'),
-    product: Choices('euclidean h1') = Option(
-        'h1',
-        help='Product  w.r.t. which to orthonormalize and calculate Riesz representatives.'
-    ),
-    reductor: Choices('traditional residual_basis') = Option(
-        'residual_basis',
-        help='Reductor (error estimator) to choose (traditional, residual_basis).'
-    ),
-    rho: float = Option(1.1, help='Maximum allowed ratio between error on validation set and on training set.'),
-    test: int = Option(10, help='Use COUNT snapshots for stochastic error estimation.'),
-    theta: float = Option(0., help='Ratio of elements to refine.'),
-    validation_mus: int = Option(0, help='Size of validation set.'),
-    visualize_refinement: bool = Option(True, help='Visualize the training set refinement indicators.'),
+    rbsize: int,
+    /, *,
+    cache_region: Literal['none', 'memory', 'disk', 'persistent'] = 'none',
+    error_estimator: bool = True,
+    gamma: float = 0.2,
+    grid: int = 100,
+    ipython_engines: int = 0,
+    ipython_profile: str | None = None,
+    list_vector_array: bool = False,
+    pickle: str | None = None,
+    plot_err: bool = False,
+    plot_solutions: bool = False,
+    plot_error_sequence: bool = False,
+    product: Literal['euclidean', 'h1'] = 'h1',
+    reductor: Literal['traditional', 'residual_basis'] = 'residual_basis',
+    rho: float = 1.1,
+    test: int = 10,
+    theta: float = 0.,
+    validation_mus: int = 0,
+    visualize_refinement: bool = True
 ):
-    """Modified thermalblock demo using adaptive greedy basis generation algorithm."""
+    """Modified thermalblock demo using adaptive greedy basis generation algorithm.
+
+    Parameters
+    ----------
+    rbsize
+        Size of the reduced basis.
+    cache_region
+        Name of cache region to use for caching solution snapshots.
+    error_estimator
+        Use error estimator for basis generation.
+    gamma
+        Weight factor for age penalty term in refinement indicators.
+    grid
+        Use grid with 2*NI*NI elements.
+    ipython_engines
+        If positive, the number of IPython cluster engines to use for parallel greedy search.
+        If zero, no parallelization is performed.
+    ipython_profile
+        IPython profile to use for parallelization.
+    list_vector_array
+        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
+    pickle
+        Pickle reduced discretization, as well as reductor and high-dimensional model
+        to files with this prefix.
+    plot_err
+        Plot error.
+    plot_solutions
+        Plot some example solutions.
+    plot_error_sequence
+        Plot reduction error vs. basis size.
+    product
+        Product  w.r.t. which to orthonormalize and calculate Riesz representatives.
+    reductor
+        Reductor (error estimator) to choose (traditional, residual_basis).
+    rho
+        Maximum allowed ratio between error on validation set and on training set.
+    test
+        Use COUNT snapshots for stochastic error estimation.
+    theta
+        Ratio of elements to refine.
+    validation_mus
+        Size of validation set.
+    visualize_refinement
+        Visualize the training set refinement indicators.
+    """
     problem = thermal_block_problem(num_blocks=(2, 2))
     functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': 2}),
@@ -78,7 +105,7 @@ def main(
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = f'pymordemos.thermalblock_adaptive {grid}'
-        fom.enable_caching(cache_region.value, cache_id)
+        fom.enable_caching(cache_region, cache_id)
 
     if plot_solutions:
         print('Showing some solutions')
@@ -168,4 +195,4 @@ Greedy basis generation:
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

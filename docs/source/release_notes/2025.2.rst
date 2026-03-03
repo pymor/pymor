@@ -51,8 +51,8 @@ decomposition of the kernel matrix. The
 to other `scikit-learn <https://scikit-learn.org/>`_ regressors as a machine learning
 surrogate in the :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
 It can also be applied independently of model order reduction as a surrogate in regression of
-vector-valued data. See, for instance, the demo scripts :mod:`~pymordemos.vkoga`
-and :mod:`~pymordemos.vkoga_2d_input`.
+vector-valued data. See, for instance, the demo scripts :mod:`!vkoga`
+and :mod:`!vkoga_2d_input`.
 
 RB methods for saddle-point problems (Stokes equations)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ Petrov-Galerkin projection in combination with a least-squares solver for the ov
 reduced system. :class:`~pymor.reductors.stokes.LSRBStokesReductor` is a subclass of
 :class:`~pymor.reductors.basic.StationaryLSRBReductor`, which implements
 least-squares residual minimization for general stationary problems.
-The new Stokes reductors are demonstrated in the :mod:`pymordemos.stokes` demo script.
+The new Stokes reductors are demonstrated in the :mod:`!stokes` demo script.
 
 Q-DEIM algorithm
 ~~~~~~~~~~~~~~~~

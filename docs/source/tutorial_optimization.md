@@ -606,7 +606,7 @@ assert sum(np.concatenate([subproblem_data[i]['line_search_iterations'] for i in
 ```
 
 Note: A more extensive showcase of the trust-region methods is implemented
-in the respective demo {mod}`~pymordemos.trust_region`.
+in the respective {ref}`cyclopts-pymor-demo-trust_region` demo script.
 
 ## Conclusion and some general words about MOR methods for optimization
 

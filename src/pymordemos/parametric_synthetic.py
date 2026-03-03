@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-from typer import Argument, run
+from cyclopts import App
 
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
@@ -15,14 +15,20 @@ from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
+app = App(help_on_error=True, help_format='rst')
 
-def main(
-        n: int = Argument(100, help='Order of the FOM.'),
-        r: int = Argument(10, help='Order of the ROMs.'),
-):
+@app.default
+def main(n: int = 100, r: int = 10):
     """Synthetic parametric demo.
 
     See the `MOR Wiki page <http://modelreduction.org/index.php/Synthetic_parametric_model>`_.
+
+    Parameters
+    ----------
+    n
+        Order of the FOM.
+    r
+        Order of the ROMs.
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
@@ -74,4 +80,4 @@ def main(
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

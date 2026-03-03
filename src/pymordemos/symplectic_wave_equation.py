@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from cyclopts import App
 from scipy.sparse import diags
-from typer import Argument, run
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.symplectic import psd_complex_svd, psd_cotangent_lift, psd_svd_like_decomp
@@ -20,11 +20,10 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 SYMPLECTIC_METHODS = ['cotangent_lift', 'complex_svd', 'svd_like']
 METHODS = ['pod'] + SYMPLECTIC_METHODS
 
+app = App(help_on_error=True)
 
-def main(
-    final_time: float = Argument(10., help='Final time of the simulation'),
-    rbsize: int = Argument(80, help='Maximal reduced basis size'),
-):
+@app.default
+def main(final_time: float = 10., rbsize: int = 80):
     """Symplectic MOR experiment for linear wave equation discretized with FD.
 
     The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
@@ -39,6 +38,13 @@ def main(
     their respective projection error.
 
     Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
+
+    Parameters
+    ----------
+    final_time
+        Final time of the simulation
+    rbsize
+        Maximal reduced basis size
     """
     from matplotlib import pyplot as plt
 
@@ -180,4 +186,4 @@ def run_mor(fom, U_fom, method, red_dims):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()

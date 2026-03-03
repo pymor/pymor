@@ -2,12 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from typing import Literal
+
 import numpy as np
-from typer import Argument, Option, run
+from cyclopts import App
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.basic import *
-from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 GRID_INTERVALS = 50
@@ -20,24 +21,42 @@ DT = 1. / NT
 # Main script                                                                                      #
 ####################################################################################################
 
+app = App(help_on_error=True, result_action='return_value')
+
+@app.default
 def main(
-    backend: Choices('pymor fenics') = Argument(..., help='Discretization toolkit to use.'),
-    alg: Choices('greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
-    snapshots: int = Argument(
-        ...,
-        help='greedy/pod: number of training set parameters\n\n'
-             'adaptive_greedy: size of validation set.'
-    ),
-    rbsize: int = Argument(..., help='Size of the reduced basis.'),
-    test: int = Argument(..., help='Number of test parameters for reduction error estimation.'),
-    pickle: bool = Option(
-        True,
-        help='Pickle reduced model and error analysis results to files.'
-    ),
-    plot_err: bool = Option(False, help='Plot error'),
-    plot_error_sequence: bool = Option(False, help='Plot reduction error vs. basis size.'),
+    backend: Literal['pymor', 'fenics'],
+    alg: Literal['greedy', 'adaptive_greedy', 'pod'],
+    snapshots: int,
+    rbsize: int,
+    test: int,
+    /, *,
+    pickle: bool = True,
+    plot_err: bool =False,
+    plot_error_sequence: bool = False
 ):
-    """Reduced basis approximation of the heat equation."""
+    """Reduced basis approximation of the heat equation.
+
+    Parameters
+    ----------
+    backend
+        Discretization toolkit to use.
+    alg
+        The model reduction algorithm to use.
+    snapshots
+        greedy/pod: number of training set parameters;
+        adaptive_greedy: size of validation set.
+    rbsize
+        Size of the reduced basis.
+    test
+        Number of test parameters for reduction error estimation.
+    pickle
+        Pickle reduced model and error analysis results to files.
+    plot_err
+        Plot error
+    plot_error_sequence
+        Plot reduction error vs. basis size.
+    """
     # discretize
     ############
     if backend == 'pymor':
@@ -251,4 +270,4 @@ def reduce_pod(fom, reductor, parameter_space, snapshots, basis_size):
 
 
 if __name__ == '__main__':
-    run(main)
+    app()
