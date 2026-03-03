@@ -99,7 +99,7 @@ def test_pca_with_coefficients(vector_array, method):
     UsVh_ref = U_ref.lincomb(c_ref)
     principal_components.scal(svals)
     UsVh_pca = principal_components.lincomb(coeffs)
-    assert spla.norm((UsVh_ref - UsVh_pca).norm()) / spla.norm(A_mean_expected.norm()) < 1e-6
+    assert spla.norm((UsVh_ref - UsVh_pca).norm()) < 1e-12
     # reconstruction check of original data
     recon = UsVh_pca + mean_pca
     assert spla.norm((A - recon).norm()) / spla.norm(A.norm()) < 1e-6
