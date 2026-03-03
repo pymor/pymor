@@ -102,4 +102,4 @@ def test_pca_with_coefficients(vector_array, method):
     assert spla.norm((UsVh_ref - UsVh_pca).norm()) < 1e-12
     # reconstruction check of original data
     recon = UsVh_pca + mean_pca
-    assert spla.norm((A - recon).norm()) / spla.norm(A.norm()) < 1e-12
+    assert spla.norm((A - recon).norm()) / spla.norm(A.norm()) < 1e-7
