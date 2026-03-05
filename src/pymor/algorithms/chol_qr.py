@@ -11,9 +11,11 @@ from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
+_INNER_ITERS = 10
+_RTOL = 1e-13
 
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
-                    recompute_shift=False, check_finite=True, copy=True, product_norm=None):
+                    recompute_shift=False, remove_dependent=False, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
@@ -61,6 +63,11 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         If `True`, the shift is recomputed in iterations in which the Cholesky decomposition fails.
         Even for an ill-conditioned `A` (at least for matrix condition numbers up to 10^20)
         is it able to compute an orthonormal basis at the cost of higher runtimes.
+    remove_dependent
+        Experimental flag. If `True`, tries to detect linearly dependent vectors in `A`
+        and remove them. Additionally, if `return_R` is set, a potentially
+        upper-trapezoidal factor `R` is returned. It holds `A \approx Q@R`,
+        but with higher expected errors.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
         performance gain, but may result in problems (crashes, non-termination) if the
@@ -84,53 +91,115 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
 class _CholQRStruct:
     r"""Helper class for managing the parameters and options."""
 
-    def __init__(self, A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
-                 recompute_shift=False, check_finite=True, copy=True, product_norm=None):
+    def __init__(self, A, product, return_R, maxiter, offset, orth_tol,
+                 recompute_shift, remove_dependent, check_finite, copy, product_norm):
         assert isinstance(A, VectorArray)
         assert 0 <= offset <= len(A)
-        assert A.dim >= len(A)
+        if not remove_dependent:
+            assert A.dim >= len(A)
         assert 0 < maxiter
         assert orth_tol is None or 0 < orth_tol
 
+        # set input parameters
         self.A = A.copy() if copy else A
         self.product = product
         self.return_R = return_R
         self.maxiter = maxiter
         self.offset = offset
         self.orth_tol = orth_tol
+        self.remove_dependent = remove_dependent
         self.check_finite = check_finite
         self.product_norm = product_norm
 
-        self.shift = 0
+        # define additional variables required inside subroutines
         self.m, self.n = A.dim, len(A[offset:])
+        self.Bi = None
+        self.Ri = None
+        self.shift = 0
+        self.dtype = None
+        self.eps = None
         self.chol_kernel = self._recomputed_shifted_chol_kernel if recompute_shift else self._basic_shifted_chol_kernel
+        self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
+
+        if remove_dependent:
+            self.inds = np.arange(self.n) # indices of not removed vectors
 
         if self.maxiter == 1:
             self.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
 
-        self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
-
 
     def _compute_gramian_and_offset_matrix(self):
+        r"""Helper routine for `shifted_chol_qr` perfoming multiple steps.
+
+        1. Given an offset `A = [Q1, A2]`, the routine computes `B = Q1.H @ A2` and
+           `X = A2.H @ A2`. If no offset is given, `B` is going to be dimensionless.
+        2. Evaluates a unifiable datatype of `B` and `X` and casts both of them into that type.
+           In particular for `ListVectorArray`s there might be a type mismatch.
+           Sets the datatype as a class argument for usage in other routines.
+        3. If a offset is given, a term `B.H@B` is subtracted from `X`.
+        4. If the flag `remove_dependent` is set and its not the first iteration, try to determine
+           linearly dependent vectors and remove them.
+        """
+        global _RTOL
         A = self.A
         product = self.product
         offset = self.offset
 
+        # Step 1
         if isinstance(A, ListVectorArray):
             # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
-            B = A[offset:].inner(A[:offset], product=product)
+            B = A[:offset].inner(A[offset:], product=product)
             X = A[offset:].gramian(product)
         else:
-            B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-        B = B.conj()
+            B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
+
+        # Step 2
+        if self.dtype:
+            dtype = self.dtype
+        else:
+            self.dtype = dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
+            self.eps = np.finfo(dtype).eps
+            self.trmm = spla.get_blas_funcs('trmm', dtype=dtype)
+            self.trtri = spla.get_lapack_funcs('trtri', dtype=dtype)
+            if self.remove_dependent:
+                self.potrf = spla.get_lapack_funcs('potrf', dtype=dtype)
+
+        B = B.astype(dtype=dtype, copy=False)
+        if self.Bi is None:
+            self.Bi = B
+        X = X.astype(dtype=dtype, copy=False)
+
+        # Step 3
+        X -= B.conj().T@B
+
+        # Step 4
+        # do not perform vector removal in the first iteration
+        # otherwise one might have to reconstruct a trapezoidal R afterwards
+        if self.remove_dependent and self.Ri is not None:
+            # diagonal of X contains the pairwise result of inner-products
+            # the vectors A[offset:]
+            diag = np.abs(np.diag(X))
+            M = np.max(diag)
+            if self.offset > 0:
+                M = max(M, 1) # length of orthogonal vectors is 1
+
+            # find vectors that are to short relative to the longest vector in A
+            remove = np.where(M*_RTOL >= diag)[0]
+            if len(remove) > 0:
+                self.inds = np.delete(self.inds, remove)
+                self.Ri = np.delete(self.Ri, remove, axis=0)
+                B = np.delete(B, remove, axis=1)
+                X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
+                del self.A[remove + offset]
+
         return B, X
 
 
     def _compute_shift(self, X):
         m = self.m
-        n = self.n
+        n = len(X)
 
-        shift = 11*np.finfo(self.dtype).eps
+        shift = 11*self.eps
         if self.product is None:
             shift *= m*n+n*(n+1)
         else:
@@ -139,22 +208,27 @@ class _CholQRStruct:
                 self.product_norm = np.sqrt(np.abs(eigs(self.product, k=1)[0][0]))
             shift *= (2*m*np.sqrt(m*n)+n*(n+1))*self.product_norm
 
-        if self.n == 1:
-            ew = X[0,0] # spsla.eigsh returns a warning for n == 1; in that case the largest ew is trivial anyway
-        else:
+        # eigsh outputs warnings, if n <= 2; it also throws an exception,
+        # if X is a zero matrix (or is close to)
+        use_eigh = n <= 2 or X.max() - X.min() < self.eps
+        if not use_eigh:
             try:
                 ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
-            except spsla.ArpackNoConvergence as e:
+            except spla.ArpackNoConvergence as e:
                 self.logger.warning(f'ARPACK failed with: {e}')
                 self.logger.info('Proceeding with dense solver.')
-                ew = spla.eigh(X, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+                use_eigh = True
 
-        shift = max(shift*ew, np.finfo(self.dtype).eps)  # ensure that shift is non-zero
+        if use_eigh:
+            ew = spla.eigh(X, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+
+        shift = max(shift*ew, self.eps) # ensure that shift is non-zero
         return shift
 
 
     def _basic_shifted_chol_kernel(self, X):
-        for _ in range(100):
+        global _INNER_ITERS
+        for _ in range(_INNER_ITERS):
             try:
                 R = spla.cholesky(X, overwrite_a=False, check_finite=self.check_finite)
                 return R
@@ -169,8 +243,9 @@ class _CholQRStruct:
 
 
     def _recomputed_shifted_chol_kernel(self, X):
+        global _INNER_ITERS
         shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
-        for i in range(100):
+        for i in range(_INNER_ITERS):
             try:
                 R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=self.check_finite)
                 return R
@@ -186,41 +261,61 @@ class _CholQRStruct:
 
 
     def solve(self):
+        r"""Computes QR factorization of A in place.
+
+        Given an input matrix `A = [Q1, A2]` with
+        - `Q1` being orthogonal and of dimension `m x offset`
+        - and `A2` of dimension `m x n`.
+
+        Consider the Gramian `X = A.H * A = [Q1.H * Q1, Q1.H * A2] = [I,   B ]`,
+                                           `[A2.H * Q1, A2.H * A2] = [B.H, X2]`
+
+        its Cholesky factorization is given by `R = [I, B ]` with `R2 = X2 - B.H * B`.
+                                                   `[0, R2]`
+
+        Then, the the QR factorization of `A` is given by
+        `A = [Q1, A2] = [Q1, Q2] * R` with `R = [I, B ]`. Hence, `Q2 = (A2 - Q1*B) * inv(R2)`.
+                                               `[0, R2]`
+
+        In case the offset is 0, i.e., the `Q1` has 0 vectors,
+        the other matrices `I` and `B` are also dimensionless.
+
+        One can perform multiple iterations in order to reduce errors. Here, we use the
+        loss of orthogonality (||Q.H*Q - I||F = ||X - I||F) as a stopping criterium.
+
+        Consider we have a QR decomposition `qr(A) = QR`. In a second iteration one would compute
+        `qr(Q) * R = Q^*R^ * R`. `Q^` becomes the solution `Q$`
+        and `R^ * R` the solution factor `R$`. Given the structure of the `R` factors,
+        one only has to evaluate `B$ = B + B^*R2` and `R2$ = R2^.H *R2`.
+        """
         A = self.A
         offset = self.offset
 
-        if offset == len(A):
-            return A, np.eye(len(A))
+        if offset == len(A) or A.dim == 0:
+            return (A, np.eye(len(A))) if self.return_R else A
 
         B, X = self._compute_gramian_and_offset_matrix()
-        self.dtype = dtype = np.promote_types(X.dtype, np.float32)
-        B = B.astype(dtype=dtype, copy=False)
 
-        trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
-
-        iter = 1
-        while iter <= self.maxiter:
-            self.iter = iter
+        for iter in range(1,self.maxiter+1):
             with self.logger.block(f'Iteration {iter}'):
-                # This will compute the Cholesky factor of the lower right block
-                # and keep applying shifts if it breaks down.
-                X -= B@B.T
-                self.shift = 0
+                # This will compute the Cholesky factor of the upper right block
+                # depending on the kernel it might apply shifts if it breaks down
                 Rx = self.chol_kernel(X)
 
+                # update blocks of full R
+                if self.Ri is None:
+                    self.Ri = Rx
+                else:
+                    self.Bi += B @ self.Ri
+                    # does not properly overwrite Ri
+                    self.Ri = self.trmm(1, Rx, self.Ri, overwrite_b=True)
+
                 # orthogonalize
-                Rinv = trtri(Rx)[0]
-                A_todo = A[:offset].lincomb(-B.T@Rinv) + A[offset:].lincomb(Rinv)
+                Rinv = self.trtri(Rx)[0]
+                A_todo = A[:offset].lincomb(-B@Rinv) + A[offset:].lincomb(Rinv)
                 del A[offset:]
                 A.append(A_todo)
-
-                # update blocks of R
-                if iter == 1:
-                    Bi = B.T
-                    Ri = Rx
-                else:
-                    Bi += B.T @ Rx
-                    trmm(1, Rx, Ri, overwrite_b=True)
+                del A_todo
 
                 # computation not needed in the last iteration
                 if iter < self.maxiter:
@@ -235,14 +330,18 @@ class _CholQRStruct:
                     if res <= self.orth_tol*np.sqrt(len(A)):
                         break
                     elif iter == self.maxiter:
-                        raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
-                        Consider increasing maxiter or enabling recompute_shift or using gram_schmidt.')
+                        raise AccuracyError(
+"""Orthonormality could not be achieved within the given tolerance.
+Consider increasing maxiter or enabling recompute_shift or using gram_schmidt."""
+                        )
 
-                iter += 1
+        if not self.return_R:
+            return A
 
         # construct R from blocks
-        R = np.eye(len(A), dtype=dtype)
-        R[:offset, offset:] = Bi
-        R[offset:, offset:] = Ri
+        R = np.zeros([offset+self.Ri.shape[0], offset+self.n], dtype=self.dtype)
+        R[:offset,:offset] = np.eye(offset)
+        R[:offset, offset:] = self.Bi.astype(self.dtype, copy=False)
+        R[offset:, offset:] = self.Ri.astype(self.dtype, copy=False)
 
-        return (A, R) if self.return_R else A
+        return (A, R)
