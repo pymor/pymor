@@ -247,7 +247,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
 
     def reduce(self, **kwargs):
         if self.reduced_basis is None:
-            self.reduced_basis, _ = self._compute_reduced_basis()
+            self.reduced_basis = self._compute_reduced_basis()
             projected_training_snapshots = self.training_snapshots.inner(self.reduced_basis, product=self.product)
             projected_output_functional = None
             if self.output_functional is not None:
@@ -263,7 +263,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
 
     def _compute_reduced_basis(self):
         """Compute a reduced basis using POD."""
-        return pod(self.training_snapshots, **self.pod_params)
+        return pod(self.training_snapshots, **self.pod_params)[0]
 
     def extend_training_data(self, parameters, snapshots):
         """Add sequences of parameters and corresponding snapshots to the training data."""
