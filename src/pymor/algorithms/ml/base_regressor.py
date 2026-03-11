@@ -9,6 +9,7 @@ from pymor.core.base import BasicObject
 
 class BaseRegressor(BasicObject):
     def _get_extra_params(self):
+        """Allows to handle special parameters of the regressor in `get_params`."""
         return dict()
 
     def get_params(self, deep=True):
@@ -36,6 +37,7 @@ class BaseRegressor(BasicObject):
         return params | self._get_extra_params()
 
     def _set_extra_param(self, key, param):
+        """Allows to handle special parameters of the regressor in `set_params`."""
         raise NotImplementedError('`_set_extra_param` not available for this regressor')
 
     def set_params(self, **params):
