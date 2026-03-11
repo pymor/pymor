@@ -5,12 +5,12 @@
 import numpy as np
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
+from pymor.algorithms.ml.base_regressor import BaseRegressor
 from pymor.algorithms.ml.vkoga.kernels import GaussianKernel
-from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 
 
-class VKOGARegressor(BasicObject):
+class VKOGARegressor(BaseRegressor):
     """Scikit-learn-style regressor using the :class:`VKOGASurrogate`.
 
     The regressor uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
@@ -39,98 +39,13 @@ class VKOGARegressor(BasicObject):
         Regularization parameter for the kernel interpolation.
     """
 
+    _params = ('kernel', 'criterion', 'max_centers', 'tol', 'reg')
+    _nested_object = 'kernel'
+
     @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
     def __init__(self, kernel=None, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
         self.kernel = GaussianKernel() if kernel is None else kernel
-
-    def get_params(self, deep=True):
-        """Returns a dict of the init-parameters of the estimator, together with their values.
-
-        The argument `deep=True` is required to match the scikit-learn interface.
-
-        Parameters
-        ----------
-        deep
-            If `True`, the parameters for this estimator and for the kernel will be returned.
-
-        Returns
-        -------
-        A dictionary of parameters and respective values of the estimator.
-        """
-        params = {
-            'kernel': self.kernel,
-            'criterion': self.criterion,
-            'max_centers': self.max_centers,
-            'tol': self.tol,
-            'reg': self.reg
-        }
-        if deep and hasattr(self.kernel, 'get_params'):
-            kernel_params = self.kernel.get_params(deep=True)
-            for name, value in kernel_params.items():
-                params[f'kernel__{name}'] = value
-        return params
-
-    def set_params(self, **params):
-        """Set the parameters of the estimator and the kernel.
-
-        Supports nested parameter setting for the kernel using
-        the ``kernel__`` prefix (e.g. ``kernel__length_scale``).
-
-        Parameters
-        ----------
-        params
-            Estimator parameters to set.
-
-        Returns
-        -------
-        An instance of the estimator with the new parameters.
-        """
-        kernel_params = {}
-        prefix = 'kernel__'
-
-        for key, value in params.items():
-            if key.startswith(prefix):
-                kernel_params[key.removeprefix(prefix)] = value
-            else:
-                setattr(self, key, value)
-
-        if kernel_params:
-            if not hasattr(self.kernel, 'set_params'):
-                raise ValueError('Kernel does not support parameter setting')
-            self.kernel.set_params(**kernel_params)
-
-        return self
-
-    def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination on the data.
-
-        Parameters
-        ----------
-        X
-            Test samples for which to check the score.
-        y
-            Ground truth target values associated to the test samples.
-        sample_weight
-            Vector for weighting the different test samples.
-
-        Returns
-        -------
-        The (weighted) coefficient of determination (:math:`R^2`-score) on the test samples.
-        """
-        y_pred = self.predict(X)
-
-        if sample_weight is None:
-            y_mean = np.mean(y)
-            ss_res = np.sum((y - y_pred) ** 2)
-            ss_tot = np.sum((y - y_mean) ** 2)
-        else:
-            sample_weight = np.asarray(sample_weight)
-            y_mean = np.average(y, weights=sample_weight)
-            ss_res = np.sum(sample_weight * (y - y_pred) ** 2)
-            ss_tot = np.sum(sample_weight * (y - y_mean) ** 2)
-
-        return 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
 
     def fit(self, X, Y):
         """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
