@@ -1,7 +1,8 @@
-FROM quay.io/podman/stable:v4.5.0
+FROM quay.io/podman/stable:v5.8.0
 
 RUN yum install -y python3-pip make git && \
-    pip3 install --no-cache-dir python-gitlab==3.14.0
+    pip3 install --root-user-action=ignore --no-cache-dir python-gitlab==8.1.0 && \
+    sed -i 's/driver = ".*"/driver = "vfs"/' /etc/containers/storage.conf
 
 CMD /bin/bash
 
