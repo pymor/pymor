@@ -8,9 +8,22 @@ from pymor.core.base import BasicObject
 
 
 class BaseRegressor(BasicObject):
-    def _get_extra_params(self):
-        """Allows to handle special parameters of the regressor in `get_params`."""
-        return dict()
+    """Base-class for scikit-learn-style regressors.
+
+    This class provides the `get_params` and `set_params` methods as well as
+    a `score` function (computing the coefficient of determination) required
+    to use the hyperparameter tuning methods of scikit-learn.
+    In order to make use of the functionality, an inheriting regressor only
+    needs to provide a tuple of init-parameters as strings (the `_params`
+    class-attribute). If the regressor also contains another object with
+    hyperparameters that might be adjusted, the `_nested_object` string
+    referring to that attribute can be set. Special parameter handling can
+    further be implemented by overriding the `_get_extra_params`
+    and `_set_extra_param` methods, respectively.
+    """
+
+    _params = tuple()
+    _nested_object = None
 
     def get_params(self, deep=True):
         """Returns a dict of the init-parameters of the estimator, together with their values.
@@ -36,9 +49,9 @@ class BaseRegressor(BasicObject):
                     params[f'{self._nested_object}__{name}'] = value
         return params | self._get_extra_params()
 
-    def _set_extra_param(self, key, param):
-        """Allows to handle special parameters of the regressor in `set_params`."""
-        raise NotImplementedError('`_set_extra_param` not available for this regressor')
+    def _get_extra_params(self):
+        """Allows to handle special parameters of the regressor in `get_params`."""
+        return dict()
 
     def set_params(self, **params):
         """Set the parameters of the estimator and the nested object.
@@ -74,6 +87,10 @@ class BaseRegressor(BasicObject):
             nested.set_params(**nested_object_params)
 
         return self
+
+    def _set_extra_param(self, key, param):
+        """Allows to handle special parameters of the regressor in `set_params`."""
+        raise NotImplementedError('`_set_extra_param` not available for this regressor')
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination on the data.
