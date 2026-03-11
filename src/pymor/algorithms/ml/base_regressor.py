@@ -110,6 +110,9 @@ class BaseRegressor(BasicObject):
         """
         y_pred = self.predict(X)
 
+        y = np.asarray(y)
+        y_pred = np.asarray(y_pred).reshape(y.shape)
+
         if sample_weight is None:
             y_mean = np.mean(y)
             ss_res = np.sum((y - y_pred) ** 2)
