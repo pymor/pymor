@@ -60,6 +60,39 @@ class FullyConnectedNN(nn.Module, BasicObject):
         self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1])).double()
                             for i in range(len(layer_sizes) - 1)])
 
+    def get_params(self, deep=True):
+        """Returns a dict of the init-parameters, following the scikit-learn estimator interface.
+
+        Parameters
+        ----------
+        deep
+            If `True`, returns parameters for nested objects.
+
+        Returns
+        -------
+        A dictionary of parameters and respective values.
+        """
+        return {
+            'hidden_layers': self.hidden_layers,
+            'activation_function': self.activation_function,
+        }
+
+    def set_params(self, **params):
+        """Set the parameters of the neural network.
+
+        Parameters
+        ----------
+        params
+            Parameters to set.
+
+        Returns
+        -------
+        The neural network with updated parameters.
+        """
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
     def forward(self, x):
         """Performs the forward pass through the neural network.
 
