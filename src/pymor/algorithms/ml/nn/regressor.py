@@ -8,6 +8,7 @@ config.require('TORCH')
 
 from numbers import Number
 
+import numpy as np
 import torch
 import torch.optim as optim
 
@@ -57,6 +58,99 @@ class NeuralNetworkRegressor(BasicObject):
         assert 0 < validation_ratio < 1
 
         self.__auto_init(locals())
+
+    def get_params(self, deep=True):
+        """Returns a dict of the init-parameters, following the scikit-learn estimator interface.
+
+        The argument `deep=True` is required to match the scikit-learn interface.
+
+        Parameters
+        ----------
+        deep
+            If `True`, the parameters for this estimator and the neural network will be returned.
+
+        Returns
+        -------
+        A dictionary of parameters and respective values of the estimator.
+        """
+        params = {
+            'neural_network': self.neural_network,
+            'validation_ratio': self.validation_ratio,
+            'tol': self.tol,
+        }
+        # expose training parameters as top-level params
+        for k, v in self.training_parameters.items():
+            params[k] = v
+        # expose neural network sub-parameters
+        if deep and hasattr(self.neural_network, 'get_params'):
+            nn_params = self.neural_network.get_params(deep=True)
+            for name, value in nn_params.items():
+                params[f'neural_network__{name}'] = value
+        return params
+
+    def set_params(self, **params):
+        """Set the parameters of the estimator and nested objects.
+
+        Supports nested parameter setting for the neural network using
+        the ``neural_network__`` prefix (e.g. ``neural_network__hidden_layers``).
+
+        Parameters
+        ----------
+        params
+            Estimator parameters to set.
+
+        Returns
+        -------
+        An instance of the estimator with the new parameters.
+        """
+        nn_params = {}
+        prefix = 'neural_network__'
+
+        for key, value in params.items():
+            if key.startswith(prefix):
+                nn_params[key.removeprefix(prefix)] = value
+            elif key in ('neural_network', 'validation_ratio', 'tol'):
+                setattr(self, key, value)
+            else:
+                # training parameter
+                self.training_parameters[key] = value
+
+        if nn_params:
+            if not hasattr(self.neural_network, 'set_params'):
+                raise ValueError('Neural network does not support parameter setting')
+            self.neural_network.set_params(**nn_params)
+
+        return self
+
+    def score(self, X, y, sample_weight=None):
+        """Return the coefficient of determination on the data.
+
+        Parameters
+        ----------
+        X
+            Test samples for which to check the score.
+        y
+            Ground truth target values associated to the test samples.
+        sample_weight
+            Vector for weighting the different test samples.
+
+        Returns
+        -------
+        The (weighted) coefficient of determination (:math:`R^2`-score) on the test samples.
+        """
+        y_pred = self.predict(X)
+
+        if sample_weight is None:
+            y_mean = np.mean(y)
+            ss_res = np.sum((y - y_pred) ** 2)
+            ss_tot = np.sum((y - y_mean) ** 2)
+        else:
+            sample_weight = np.asarray(sample_weight)
+            y_mean = np.average(y, weights=sample_weight)
+            ss_res = np.sum(sample_weight * (y - y_pred) ** 2)
+            ss_tot = np.sum(sample_weight * (y - y_mean) ** 2)
+
+        return 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
 
     def fit(self, X, Y, **kwargs):
         """Fit neural network using PyTorch optimization algorithms.

@@ -74,9 +74,13 @@ class VKOGARegressor(BasicObject):
     def set_params(self, **params):
         """Set the parameters of the estimator and the kernel.
 
+        Supports nested parameter setting for the kernel using
+        the ``kernel__`` prefix (e.g. ``kernel__length_scale``).
+
         Parameters
         ----------
-        Estimator parameters to set.
+        params
+            Estimator parameters to set.
 
         Returns
         -------
