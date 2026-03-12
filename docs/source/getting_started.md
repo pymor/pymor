@@ -259,10 +259,10 @@ parameters or problems.
 All demos can be found in the [src/pymordemos](https://github.com/pymor/pymor/tree/main/src/pymordemos)
 directory of the source repository.
 
-The demo scripts can be launched directly from the source tree:
+The demo scripts can be run directly from the source tree:
 
 ```
-./thermalblock.py --plot-err --plot-solutions 3 2 3 32
+python3 ./thermalblock.py --plot-err --plot-solutions 3 2 3 32
 ```
 
 or by using the `pymor-demo` script that is installed with pyMOR:
