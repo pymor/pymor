@@ -182,11 +182,17 @@ class DataDrivenInstationaryModel(DataDrivenModel):
             if self.input_scaler is not None:
                 inputs = self.input_scaler.transform(inputs)
         else:
-            if self.input_scaler is not None:
-                inputs = np.array([self.input_scaler.transform(np.atleast_2d(mu.at_time(t).to_numpy())).flatten()
-                                   for t in np.linspace(0., self.T, self.nt)])
+            if not mu.has_time_dependent_values:
+                times = np.linspace(0., self.T, self.nt)
+                # build inputs matching the column order of mu.at_time(t).to_numpy()
+                keys = sorted(list(mu.keys()) + ['t'])
+                columns = {k: np.tile(mu[k], self.nt) for k in mu}
+                columns['t'] = times
+                inputs = np.column_stack([columns[k] for k in keys])
             else:
                 inputs = np.array([mu.at_time(t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+            if self.input_scaler is not None:
+                inputs = self.input_scaler.transform(inputs)
         # pass batch of inputs to regressor
         U = self.regressor.predict(inputs)
         if self.output_scaler is not None:
