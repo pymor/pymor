@@ -12,12 +12,13 @@ import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.core.config import is_scipy_mkl
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 
+# from pymor.core.config import is_scipy_mkl
 
-@pytest.mark.xfail
+
+# @pytest.mark.xfail
 @pyst.given_vector_arrays()
 @settings(deadline=None)
 def test_shifted_chol_qr(vector_array):
@@ -50,10 +51,10 @@ def test_shifted_chol_qr(vector_array):
     assert np.all(almost_equal(onb, U))
 
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
-    if is_scipy_mkl():
-        pytest.xfail('fails with mkl')
+    # if is_scipy_mkl():
+        # pytest.xfail('fails with mkl')
     _, _, U, _, p, _ = operator_with_arrays_and_products
 
     assume(len(U) >= 1 and not contains_zero_vector(U))
@@ -84,7 +85,7 @@ def test_chol_qr_empty(copy):
     Q, R = shifted_chol_qr(V, return_R=True, copy=copy)
     assert len(V) == len(Q) == 0
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 @pyst.given_vector_arrays()
 def test_shifted_chol_qr_with_offset(vector_array):
     U = vector_array
@@ -117,7 +118,7 @@ def test_shifted_chol_qr_with_offset(vector_array):
     assert np.allclose(Rgs, R)
 
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 @pyst.given_vector_arrays()
 @settings(deadline=None)
 def test_recalculated_shifted_chol_qr(vector_array):
@@ -147,7 +148,7 @@ def test_recalculated_shifted_chol_qr(vector_array):
     assert np.all(almost_equal(onb, U))
 
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 def test_recalculated_shifted_chol_qr_with_product(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
 
