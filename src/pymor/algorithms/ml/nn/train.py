@@ -177,25 +177,27 @@ def train_neural_network(training_data, validation_data, neural_network,
                 inputs = batch[0]
                 targets = batch[1]
 
-                with torch.set_grad_enabled(phase == 'train'):
+                if phase == 'train':
                     def closure(inputs=inputs, targets=targets):
-                        if torch.is_grad_enabled():
-                            optimizer.zero_grad()
+                        optimizer.zero_grad()
                         outputs = neural_network(inputs)
                         loss = loss_function(outputs, targets)
-                        if loss.requires_grad:
-                            loss.backward()
-                        return loss.item()
+                        loss.backward()
+                        return loss
 
-                    # perform optimization step
-                    if phase == 'train':
-                        optimizer.step(closure)
-
-                    # compute loss of current batch
-                    loss = closure()
+                    # LBFGS requires closure for internal line search
+                    if isinstance(optimizer, optim.LBFGS):
+                        loss = optimizer.step(closure)
+                    else:
+                        loss = closure()
+                        optimizer.step()
+                else:
+                    with torch.no_grad():
+                        outputs = neural_network(inputs)
+                        loss = loss_function(outputs, targets)
 
                 # update overall absolute loss
-                running_loss += loss * len(batch[0])
+                running_loss += loss.item() * len(batch[0])
 
                 # lr_schedulers that steps batchwise
                 if phase == 'train' and lr_scheduler_wrapper is not None and lr_scheduler_wrapper.interval == 'batch':
