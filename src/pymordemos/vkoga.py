@@ -15,6 +15,7 @@ from pymor.tools.random import new_rng
 
 app = App(help_on_error=True)
 
+
 @app.default
 def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          kernel: Literal['Gaussian', 'Matern', 'RationalQuadratic'] = 'Gaussian',
@@ -23,7 +24,9 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          max_centers: int = 20,
          tol: float = 1e-6,
          reg: float = 1e-12,
-         length_scale: float = 1.0):
+         length_scale: float = 1.0,
+         grid_search_parameter_optimization: bool = False,
+         num_points_plotting: int = 200):
     """Approximates a function with 2d output from training data using VKOGA.
 
     Parameters
@@ -44,11 +47,17 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
         Regularization parameter for the kernel interpolation.
     length_scale
         The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+    grid_search_parameter_optimization
+        Perform a grid search in order to optimize the hyperparameters
+        of the kernel surrogate and the VKOGA greedy search.
+    num_points_plotting
+        Number of points used for plotting of the approximation result.
     """
     m = 2
-    if kernel in ('Matern', 'RationalQuadratic') and not config.HAVE_SKLEARN:
+    if (kernel in ('Matern', 'RationalQuadratic') or grid_search_parameter_optimization) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
+    # define kernel
     if kernel == 'Gaussian':
         kernel = GaussianKernel(length_scale)
     elif kernel == 'Matern':
@@ -58,6 +67,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
         from sklearn.gaussian_process.kernels import RationalQuadratic
         kernel = RationalQuadratic(length_scale)
 
+    # training data
     assert training_points_sampling in ('uniform', 'random')
     if training_points_sampling == 'uniform':
         X = np.linspace(0, 1, num_training_points)[:, None]
@@ -67,36 +77,45 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
 
     F = np.column_stack([np.sin(2*np.pi*X).ravel(), np.cos(2*np.pi*X).ravel()])
 
+    # set up regressor
     regressor = VKOGARegressor(kernel=kernel, criterion=greedy_criterion, max_centers=max_centers, tol=tol, reg=reg)
-    regressor.fit(X, F)
+    if grid_search_parameter_optimization:
+        print('Running grid search for best parameters in the VKOGA:')
+        from sklearn.model_selection import GridSearchCV
+        gs = GridSearchCV(regressor, {'reg': [1e-12, 1e-10, 1e-8],
+                                      'criterion': ['fp', 'f', 'p'],
+                                      'kernel__length_scale': [0.5, 1.0, 2.0]}).fit(X, F)
+        regressor = gs.best_estimator_
+        print('Best parameters:')
+        print(gs.best_params_)
+    else:
+        regressor.fit(X, F)
 
     weak_greedy_result = regressor._weak_greedy_result
     print('Result of the weak greedy algorithm:')
     print(weak_greedy_result)
 
-    def plot_vkoga_results(vkoga, X_train, F_train, n_points=200):
-        X_dense = np.linspace(X_train.min(), X_train.max(), n_points)[:, None]
-        F_pred = vkoga.predict(X_dense)
+    # visualization
+    X_dense = np.linspace(X.min(), X.max(), num_points_plotting)[:, None]
+    F_pred = regressor.predict(X_dense)
 
-        fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+    fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
-        titles = [r'$f_1(x)$', r'$f_2(x)$']
-        for i in range(m):
-            axs[i].plot(X_dense, F_pred[:, i], 'r-', lw=2, label='VKOGA surrogate')
-            axs[i].scatter(X_train, F_train[:, i], c='k', s=30, label='Training data', alpha=0.6)
-            axs[i].scatter(vkoga._surrogate._centers[:, 0],
-                           F_train[vkoga._surrogate._centers_idx, i],
-                           c='b', s=60, label='Selected centers', zorder=5)
-            axs[i].set_ylabel(titles[i])
-            axs[i].grid(True, alpha=0.3)
-            axs[i].legend(loc='best')
+    titles = [r'$f_1(x)$', r'$f_2(x)$']
+    for i in range(m):
+        axs[i].plot(X_dense, F_pred[:, i], 'r-', lw=2, label='VKOGA surrogate')
+        axs[i].scatter(X, F[:, i], c='k', s=30, label='Training data', alpha=0.6)
+        axs[i].scatter(regressor._surrogate._centers[:, 0],
+                       F[regressor._surrogate._centers_idx, i],
+                       c='b', s=60, label='Selected centers', zorder=5)
+        axs[i].set_ylabel(titles[i])
+        axs[i].grid(True, alpha=0.3)
+        axs[i].legend(loc='best')
 
-        axs[1].set_xlabel('x')
-        plt.suptitle('VKOGA Surrogate vs Training Data')
-        plt.tight_layout(rect=[0, 0, 1, 0.96])
-        plt.show()
-
-    plot_vkoga_results(regressor, X, F)
+    axs[1].set_xlabel(r'$x$')
+    plt.suptitle('VKOGA Surrogate vs Training Data')
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':

@@ -4,8 +4,10 @@
 
 import numpy as np
 
+from pymor.algorithms.ml.base_estimator import BaseEstimator
 
-class GaussianKernel:
+
+class GaussianKernel(BaseEstimator):
     r"""Standalone Gaussian (RBF) kernel with scikit-learn-like interface.
 
     .. math::
@@ -18,6 +20,8 @@ class GaussianKernel:
     length_scale
         The length scale parameter of the kernel.
     """
+
+    _params = ('length_scale',)
 
     def __init__(self, length_scale=1.0):
         assert length_scale > 0.

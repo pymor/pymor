@@ -9,10 +9,10 @@ config.require('TORCH')
 import torch
 import torch.nn as nn
 
-from pymor.core.base import BasicObject
+from pymor.algorithms.ml.base_estimator import BaseEstimator
 
 
-class FullyConnectedNN(nn.Module, BasicObject):
+class FullyConnectedNN(nn.Module, BaseEstimator):
     """Class for neural networks with fully connected layers.
 
     This class implements neural networks consisting of linear and fully connected layers.
@@ -30,6 +30,8 @@ class FullyConnectedNN(nn.Module, BasicObject):
     activation_function
         Function to use as activation function between the single layers.
     """
+
+    _params = ('hidden_layers', 'activation_function')
 
     def __init__(self, hidden_layers, input_dimension=None, output_dimension=None, activation_function=torch.tanh):
         super().__init__()
