@@ -2,28 +2,43 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Demo of the VKOGA algorithm for function approximation."""
+"""Demo of neural networks for function approximation."""
+
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from cyclopts import App
 
 from pymor.algorithms.ml.nn import NeuralNetworkRegressor
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissingError
 from pymor.tools.random import new_rng
-from pymor.tools.typer import Choices
+
+app = App(help_on_error=True)
 
 
-def main(training_points_sampling: Choices('random uniform') = Option('random',
-                                                                      help='Method for sampling the training points'),
-         num_training_points: int = Option(40, help='Number of training points in the neural network training.'),
-         grid_search_parameter_optimization: bool = Option(False, help='Perform a grid search in order to optimize the '
-                                                                       'hyperparameters of the neural network and '
-                                                                       'the optimization during training.'),
-         num_points_plotting: int = Option(200, help='Number of points used for plotting '
-                                                     'of the approximation result.')):
-    """Approximates a function with 2d output from training data using a neural network."""
+@app.default
+def main(
+    training_points_sampling: Literal['random', 'uniform'] = 'random',
+    num_training_points: int = 40,
+    grid_search_parameter_optimization: bool = False,
+    num_points_plotting: int = 200
+):
+    """Approximates a function with 2d output from training data using a neural network.
+
+    Parameters
+    ----------
+    training_points_sampling
+        Method for sampling the training points.
+    num_training_points
+        Number of training points in the neural network training.
+    grid_search_parameter_optimization
+        Perform a grid search in order to optimize the hyperparameters
+        of the neural network and the optimization during training.
+    num_points_plotting
+        Number of points used for plotting of the approximation result.
+    """
     m = 2
     if not config.HAVE_TORCH:
         raise TorchMissingError
@@ -74,4 +89,4 @@ def main(training_points_sampling: Choices('random uniform') = Option('random',
 
 
 if __name__ == '__main__':
-    run(main)
+    app()
