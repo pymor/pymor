@@ -355,29 +355,32 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
     Returns
     -------
     fom
-        Discretized Stokes equation as a |SaddlePointModel|.
+        Discretized Stokes equation as a |StationaryModel|.
     """
     import numpy as np
 
     from pymor.core.config import config
     config.require('SCIKIT_FEM')
 
-    from skfem.assembly import Basis, asm
+    from skfem.assembly import Basis
     from skfem.element import ElementTriP1, ElementTriP2, ElementVector
     from skfem.mesh import MeshTri
-    from skfem.models.general import divergence
-    from skfem.models.poisson import mass, vector_laplace
-    from skfem.utils import bmat, condense
 
     from pymor.analyticalproblems.functions import ExpressionFunction, Function
     from pymor.bindings.scipy import ScipySpSolveSolver
-    from pymor.discretizers.skfem.cg import VectorL2Functional
-    from pymor.models.saddle_point import SaddlePointModel
-    from pymor.operators.constructions import LincombOperator
-    from pymor.operators.numpy import NumpyMatrixOperator
+    from pymor.discretizers.skfem.cg import (
+        ConstraintOperator,
+        DivergenceOperator,
+        L2ProductOperator,
+        VectorL2Functional,
+        VectorL2ProductOperator,
+        VectorLaplaceOperator,
+    )
+    from pymor.models.basic import StationaryModel
+    from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator
+    from pymor.operators.constructions import AdjointOperator, LincombOperator, VectorOperator
     from pymor.parameters.base import Parameters
     from pymor.parameters.functionals import ExpressionParameterFunctional
-    from pymor.vectorarrays.numpy import NumpyVectorSpace
 
     if rhs is None:
         rhs = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
@@ -392,48 +395,29 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
     element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
     basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
 
-    # assemble
-    A = asm(vector_laplace, basis['u'])
-    B = (-1) * asm(divergence, basis['u'], basis['p'])
-    C = asm(mass, basis['p'])
-    u_product = A
-    p_product = C
-
-    K = bmat([[A, B.T], [B, 0 * C]], 'csr')
-    f = VectorL2Functional(basis['u'], rhs).assemble().as_range_array().to_numpy().reshape(-1)
-    rhs = np.concatenate([f, basis['p'].zeros()])
-
     # dirichlet boundary values, fix one pressure node to zero
     D_u = basis['u'].get_dofs().flatten()
     D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
-    D_all = np.concatenate([D_u, D_p + A.shape[0]])
 
-    # condense
-    K_c, rhs_c, _, I = condense(K, rhs, D=D_all, expand=True)
-    free_u = len(I[I < A.shape[0]])
+    # assemble system matrices and rhs
+    A = VectorLaplaceOperator(basis['u'], dirichlet_dofs=D_u).assemble()
+    B = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=D_u, dirichlet_test_dofs=None).assemble()
+    C = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=None, dirichlet_test_dofs=D_p).assemble()
+    D = ConstraintOperator(basis['p'], constrained_dofs=D_p).assemble()
+    f = VectorL2Functional(basis['u'], rhs, dirichlet_dofs=D_u).assemble()
 
-    # extract blocks
-    A_c = K_c[:free_u, :free_u]
-    B_c = K_c[free_u:, :free_u]
-
-    all_u = np.arange(u_product.shape[0])
-    all_p = np.arange(p_product.shape[0])
-    free_idx_u = np.setdiff1d(all_u, D_u)
-    free_idx_p = np.setdiff1d(all_p, D_p)
-    u_product_c = u_product[np.ix_(free_idx_u, free_idx_u)]
-    p_product_c = p_product[np.ix_(free_idx_p, free_idx_p)]
+    # products
+    u_product = VectorLaplaceOperator(basis['u']).assemble() + VectorL2ProductOperator(basis['u']).assemble()
+    p_product = L2ProductOperator(basis['p']).assemble()
 
     # build operators and fom
     mu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
-    A = LincombOperator(operators=[NumpyMatrixOperator(A_c)], coefficients=[mu])
-    B = NumpyMatrixOperator(B_c)
+    A = LincombOperator(operators=[A], coefficients=[mu])
 
-    U_space = NumpyVectorSpace(free_u)
-    f = U_space.make_array(rhs_c[:free_u])
+    products = {'mixed': BlockDiagonalOperator(blocks=[u_product, p_product])}
+    operator = BlockOperator([[A, AdjointOperator(B)], [C, D]], solver=ScipySpSolveSolver())
+    rhs = BlockColumnOperator([f, VectorOperator(B.range.zeros())])
 
-    u_product = NumpyMatrixOperator(u_product_c)
-    p_product = NumpyMatrixOperator(p_product_c)
-
-    fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product, solver=ScipySpSolveSolver())
+    fom = StationaryModel(operator=operator, rhs=rhs, products=products)
 
     return fom

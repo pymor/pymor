@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from packaging.version import parse
 from skfem import Basis, BilinearForm, BoundaryFacetBasis, LinearForm, asm, enforce, projection
-from skfem.helpers import dot, grad
+from skfem.helpers import ddot, div, dot, grad
 from skfem.visuals.matplotlib import plot, show
 
 from pymor.algorithms.preassemble import preassemble as preassemble_
@@ -56,6 +56,44 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
 
                 enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
         return A
+
+
+class SKFemMixedBilinearFormOperator(NumpyMatrixBasedOperator):
+
+    sparse = True
+
+    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None,
+                 dirichlet_test_dofs=None, solver=None, name=None):
+        self.source = NumpyVectorSpace(trial_basis.N)
+        self.range = NumpyVectorSpace(test_basis.N)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        pass
+
+    def _assemble(self, mu=None):
+        form = BilinearForm(self.build_form(mu))
+        M = asm(form, self.trial_basis, self.test_basis)
+        M = self._zero_matrix_entries(M, rows=self.dirichlet_test_dofs, cols=self.dirichlet_trial_dofs)
+
+        return M
+
+    def _zero_matrix_entries(self, M, rows=None, cols=None):
+        rows = np.asarray(rows if rows is not None else [], dtype=int)
+        cols = np.asarray(cols if cols is not None else [], dtype=int)
+
+        if rows.size == 0 and cols.size == 0:
+            return M
+
+        M = M.tolil(copy=True)
+
+        if rows.size > 0:
+            M[rows, :] = 0
+
+        if cols.size > 0:
+            M[:, cols] = 0
+
+        return M.tocsr()
 
 
 class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
@@ -108,12 +146,31 @@ class L2ProductOperator(SKFemBilinearFormOperator):
         return bf
 
 
+class VectorL2ProductOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False,
+                 coefficient_function=None, solver=None, name=None):
+        self.__auto_init(locals())
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs,
+                         dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=solver, name=name)
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            if self.coefficient_function is None:
+                return dot(u, v)
+            else:
+                c = _eval_pymor_function(self.coefficient_function, w.x, mu)
+                return dot(u, v) * c
+        return bf
+
+
 class AdvectionOperator(SKFemBilinearFormOperator):
 
-    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
-                 name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=solver,
-                         name=name)
+    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False,
+                 solver=None, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -123,9 +180,49 @@ class AdvectionOperator(SKFemBilinearFormOperator):
         return bf
 
 
+class DivergenceOperator(SKFemMixedBilinearFormOperator):
+
+    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None, dirichlet_test_dofs=None,
+                 solver=None, name=None):
+        super().__init__(trial_basis, test_basis, dirichlet_trial_dofs=dirichlet_trial_dofs,
+                         dirichlet_test_dofs=dirichlet_test_dofs, solver=solver, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return v * div(u)
+        return bf
+
+
+class ConstraintOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, constrained_dofs=None, solver=None, name=None):
+        super().__init__(basis, dirichlet_dofs=constrained_dofs,
+                         dirichlet_clear_diag=False, solver=solver, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return 0. * u * v
+        return bf
+
+
+class VectorLaplaceOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=None, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return ddot(grad(u), grad(v))
+        return bf
+
+
 class L2Functional(SKFemLinearFormOperator):
 
-    def __init__(self, basis, function, dirichlet_dofs=None, dirichlet_data=None, name=None):
+    def __init__(self, basis, function, dirichlet_dofs=None, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, name=name)
         self.__auto_init(locals())
 
@@ -162,6 +259,24 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
         D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu), self.basis,
                        I=self.dirichlet_dofs)
+        F = np.zeros(self.range.dim)
+        F[self.dirichlet_dofs] = D
+        return F.reshape((-1, 1))
+
+
+class VectorBoundaryDirichletFunctional(NumpyMatrixBasedOperator):
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, basis, dirichlet_data, dirichlet_dofs=None, name=None):
+        assert len(dirichlet_data.shape_range) == 1
+        assert dirichlet_data.shape_range[0] > 1
+        self.__auto_init(locals())
+        self.range = NumpyVectorSpace(basis.N)
+
+    def _assemble(self, mu=None):
+        D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu),
+                       self.basis, I=self.dirichlet_dofs)
         F = np.zeros(self.range.dim)
         F[self.dirichlet_dofs] = D
         return F.reshape((-1, 1))

@@ -44,8 +44,11 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
         snapshots_u.append(sol_u)
         snapshots_p.append(sol_p)
 
-    basis_u, _ = pod(snapshots_u, modes=modes, rtol=1e-17, orth_tol=1e-17, product=fom_stokes.u_product)
-    basis_p, _ = pod(snapshots_p, modes=modes, rtol=1e-17, orth_tol=1e-17, product=fom_stokes.p_product)
+    u_product = fom_stokes.products['mixed'].blocks[0, 0]
+    p_product = fom_stokes.products['mixed'].blocks[1, 1]
+
+    basis_u, _ = pod(snapshots_u, modes=modes, rtol=1e-17, orth_tol=1e-17, product=u_product)
+    basis_p, _ = pod(snapshots_p, modes=modes, rtol=1e-17, orth_tol=1e-17, product=p_product)
 
     speedups = {}
     errors_u = {}
@@ -60,24 +63,24 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
         # construct reduced order model
         if method == 'supremizer_galerkin':
             reductor_stokes = SupremizerGalerkinStokesReductor(fom_stokes,
-                                                                         RB_u=basis_u,
-                                                                         RB_p=basis_p,
-                                                                         u_product = fom_stokes.u_product,
-                                                                         p_product=fom_stokes.p_product)
+                                                               RB_u=basis_u,
+                                                               RB_p=basis_p,
+                                                               u_product=u_product,
+                                                               p_product=p_product)
         elif method == 'ls-normal':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=True)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product=u_product,
+                                                 p_product=p_product,
+                                                 use_normal_equations=True)
         elif method == 'ls-ls':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=False)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product=u_product,
+                                                 p_product=p_product,
+                                                 use_normal_equations=False)
         else:
             raise ValueError(f'Unknown projection method {method}')
 
