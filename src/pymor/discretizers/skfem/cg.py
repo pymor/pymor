@@ -146,6 +146,25 @@ class L2ProductOperator(SKFemBilinearFormOperator):
         return bf
 
 
+class VectorL2ProductOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False,
+                 coefficient_function=None, solver=None, name=None):
+        self.__auto_init(locals())
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs,
+                         dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=solver, name=name)
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            if self.coefficient_function is None:
+                return dot(u, v)
+            else:
+                c = _eval_pymor_function(self.coefficient_function, w.x, mu)
+                return dot(u, v) * c
+        return bf
+
+
 class AdvectionOperator(SKFemBilinearFormOperator):
 
     def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False,
@@ -172,6 +191,19 @@ class DivergenceOperator(SKFemMixedBilinearFormOperator):
     def build_form(self, mu):
         def bf(u, v, w):
             return v * div(u)
+        return bf
+
+
+class ConstraintOperator(SKFemBilinearFormOperator):
+
+    def __init__(self, basis, constrained_dofs=None, solver=None, name=None):
+        super().__init__(basis, dirichlet_dofs=constrained_dofs,
+                         dirichlet_clear_diag=False, solver=solver, name=name)
+        self.__auto_init(locals())
+
+    def build_form(self, mu):
+        def bf(u, v, w):
+            return 0. * u * v
         return bf
 
 
@@ -227,6 +259,24 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
         D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu), self.basis,
                        I=self.dirichlet_dofs)
+        F = np.zeros(self.range.dim)
+        F[self.dirichlet_dofs] = D
+        return F.reshape((-1, 1))
+
+
+class VectorBoundaryDirichletFunctional(NumpyMatrixBasedOperator):
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, basis, dirichlet_data, dirichlet_dofs=None, name=None):
+        assert len(dirichlet_data.shape_range) == 1
+        assert dirichlet_data.shape_range[0] > 1
+        self.__auto_init(locals())
+        self.range = NumpyVectorSpace(basis.N)
+
+    def _assemble(self, mu=None):
+        D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu),
+                       self.basis, I=self.dirichlet_dofs)
         F = np.zeros(self.range.dim)
         F[self.dirichlet_dofs] = D
         return F.reshape((-1, 1))
