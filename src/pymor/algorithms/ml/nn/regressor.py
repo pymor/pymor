@@ -47,7 +47,7 @@ class NeuralNetworkRegressor(BaseRegressor):
     _nested_object = 'neural_network'
 
     @defaults('neural_network', 'validation_ratio', 'tol')
-    def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None, **kwargs):
+    def __init__(self, neural_network=None, validation_ratio=0.1, tol=None, **kwargs):
         self.training_parameters = {'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
                                     'loss_function': None, 'restarts': 10, 'lr_scheduler_config':
                                     {'scheduler': optim.lr_scheduler.StepLR, 'interval': 'epoch',
@@ -60,6 +60,7 @@ class NeuralNetworkRegressor(BaseRegressor):
         assert 0 < validation_ratio < 1
 
         self.__auto_init(locals())
+        self.neural_network = FullyConnectedNN([30, 30, 30]) if neural_network is None else neural_network
 
     def _get_extra_params(self):
         return dict(self.training_parameters)
