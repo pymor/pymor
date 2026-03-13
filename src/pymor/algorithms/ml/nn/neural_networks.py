@@ -9,10 +9,10 @@ config.require('TORCH')
 import torch
 import torch.nn as nn
 
-from pymor.core.base import BasicObject
+from pymor.algorithms.ml.base_estimator import BaseEstimator
 
 
-class FullyConnectedNN(nn.Module, BasicObject):
+class FullyConnectedNN(nn.Module, BaseEstimator):
     """Class for neural networks with fully connected layers.
 
     This class implements neural networks consisting of linear and fully connected layers.
@@ -30,6 +30,8 @@ class FullyConnectedNN(nn.Module, BasicObject):
     activation_function
         Function to use as activation function between the single layers.
     """
+
+    _params = ('hidden_layers', 'activation_function')
 
     def __init__(self, hidden_layers, input_dimension=None, output_dimension=None, activation_function=torch.tanh):
         super().__init__()
@@ -59,39 +61,6 @@ class FullyConnectedNN(nn.Module, BasicObject):
         self.layers = nn.ModuleList()
         self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1])).double()
                             for i in range(len(layer_sizes) - 1)])
-
-    def get_params(self, deep=True):
-        """Returns a dict of the init-parameters, following the scikit-learn estimator interface.
-
-        Parameters
-        ----------
-        deep
-            If `True`, returns parameters for nested objects.
-
-        Returns
-        -------
-        A dictionary of parameters and respective values.
-        """
-        return {
-            'hidden_layers': self.hidden_layers,
-            'activation_function': self.activation_function,
-        }
-
-    def set_params(self, **params):
-        """Set the parameters of the neural network.
-
-        Parameters
-        ----------
-        params
-            Parameters to set.
-
-        Returns
-        -------
-        The neural network with updated parameters.
-        """
-        for key, value in params.items():
-            setattr(self, key, value)
-        return self
 
     def forward(self, x):
         """Performs the forward pass through the neural network.
