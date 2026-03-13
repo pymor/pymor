@@ -38,7 +38,7 @@ def main(*, show_defaults: bool = False, show_cached_methods: bool = False, all:
     Parameters
     ----------
     show_defaults
-        Also show values of all pymor defaults.
+        Also show values of all pyMOR defaults.
     show_cached_methods
         Also show which methods are cached by default.
     all
