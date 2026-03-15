@@ -164,6 +164,12 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     with logger.block('Computing QR decomposition ...'):
         Q, R = gram_schmidt(A, product=product, return_R=True, check=False)
 
+    if R.size == 0:
+        U = A.space.empty()
+        s = np.array([])
+        Vh = np.zeros((0, len(A)))
+        return U, s ,Vh
+
     with logger.block('Computing SVD of R ...'):
         U2, s, Vh = spla.svd(R, lapack_driver=svd_lapack_driver())
 
