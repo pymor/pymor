@@ -232,7 +232,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
         raise NotImplementedError
     if p.nonlinear_reaction_derivative is not None:
         raise NotImplementedError
-    if not p.domain.boundary_types <= {'dirichlet', 'neumann'}:
+    if not set(p.domain.boundary_types) <= {'dirichlet', 'neumann'}:
         raise NotImplementedError
 
     mesh, boundary_facets = discretize_domain(p.domain, mesh_type=mesh_type, diameter=diameter)
