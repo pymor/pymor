@@ -70,7 +70,7 @@ def discretize_domain(domain_description, diameter=1 / 100, mesh_type=None):
     def discretize_DiscDomain():
         mt = mesh_type or skfem.MeshTri
         # init_circle takes nrefs: each refinement roughly halves edge length
-        # initial boundary has 4 edges of length ~sqrt(2) on the unit circle
+        # initial boundary has 4 edges of length \approx \sqrt(2) on the unit circle
         # after nrefs: boundary edge length \approx 2\pi / (4 * 2^nrefs)
         nrefs = max(1, int(np.ceil(np.log2(2 * np.pi * domain_description.radius / (4 * diameter)))))
         mesh = mt.init_circle(nrefs=nrefs)
