@@ -8,10 +8,16 @@ import numpy as np
 from cyclopts import App
 
 from pymor.algorithms.pod import pod
+from pymor.analyticalproblems.domaindescriptions import DiscDomain
 from pymor.analyticalproblems.functions import ExpressionFunction
+from pymor.analyticalproblems.stokes import StokesProblem
+from pymor.bindings.scipy import ScipySpSolveSolver
 from pymor.core.config import config
-from pymor.models.examples import stokes_2Dexample
+from pymor.discretizers.skfem.cg import discretize_stokes_cg
+from pymor.parameters.base import Parameters
+from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesReductor
+from pymor.tools.random import new_rng
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
@@ -30,16 +36,22 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
     """
     # sets up the discrete Stokes model
     config.require('SCIKIT_FEM')
+
+    domain = DiscDomain(radius=1)
+    parameter_ranges = {'mu': (mu_low, mu_high)}
     body_force = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
-    fom_stokes = stokes_2Dexample(rhs=body_force)
+    viscosity = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    stokes_problem = StokesProblem(domain, rhs=body_force, viscosity=viscosity, parameter_ranges=parameter_ranges)
+    fom_stokes, _ = discretize_stokes_cg(stokes_problem, diameter=1/10, solver=ScipySpSolveSolver())
+
 
     # compute snapshot for the pressure and the velocity space
     snapshots_u = fom_stokes.solution_space.subspaces[0].empty()
     snapshots_p = fom_stokes.solution_space.subspaces[1].empty()
 
     for i in range(modes):
-        rng = np.random.default_rng(i)
-        mu = {'mu': rng.uniform(mu_low, mu_high)}
+        with new_rng(i):
+            mu = stokes_problem.parameter_space.sample_randomly(1)[0]
         sol_u, sol_p = fom_stokes.solve(mu).blocks
         snapshots_u.append(sol_u)
         snapshots_p.append(sol_p)
@@ -54,8 +66,8 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
     errors_u = {}
     errors_p = {}
 
-    rng = np.random.default_rng(442)
-    mus = rng.uniform(mu_low, mu_high, n_tests).tolist()
+    with new_rng(442):
+        mus = stokes_problem.parameter_space.sample_uniformly(n_tests)
     results_fom = [evaluate_fom_once(fom_stokes, mu) for mu in mus]
 
     for method in PROJECTION_METHODS:
@@ -97,8 +109,9 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
 def evaluate_fom_once(fom, mu):
     # FOM solve & timing
     tic_fom = time.perf_counter()
-    fom_u, fom_p = fom.solve(mu).blocks
+    fom_sol = fom.solve(mu)
     t_fom = time.perf_counter() - tic_fom
+    fom_u, fom_p = fom_sol.blocks
 
     return {'fom_u': fom_u, 'fom_p': fom_p, 't_fom': t_fom}
 

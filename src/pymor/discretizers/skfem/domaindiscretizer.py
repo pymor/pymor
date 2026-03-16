@@ -7,12 +7,15 @@ from pymor.core.config import config
 config.require('SCIKIT_FEM')
 
 
+from dataclasses import replace
+
 import numpy as np
 import skfem
 
 from pymor.analyticalproblems.domaindescriptions import (
     CircleDomain,
     CylindricalDomain,
+    DiscDomain,
     LineDomain,
     PolygonalDomain,
     RectDomain,
@@ -64,12 +67,39 @@ def discretize_domain(domain_description, diameter=1 / 100, mesh_type=None):
 
         return mesh, boundary_facets
 
+    def discretize_DiscDomain():
+        mt = mesh_type or skfem.MeshTri
+        # init_circle takes nrefs: each refinement roughly halves edge length
+        # initial boundary has 4 edges of length ~sqrt(2) on the unit circle
+        # after nrefs: boundary edge length \approx 2\pi / (4 * 2^nrefs)
+        nrefs = max(1, int(np.ceil(np.log2(2 * np.pi * domain_description.radius / (4 * diameter)))))
+        mesh = mt.init_circle(nrefs=nrefs)
+
+        # scale to desired radius, as init_circle only creates a unit circle.
+        if domain_description.radius != 1.0:
+            # mesh.p has shape (dim, nvertices), so we need to multiply each column with the radius
+            tmp = mesh.p * domain_description.radius
+            mesh = replace(mesh, doflocs=tmp)
+
+        mesh = mesh.with_boundaries(
+            {'boundary': lambda x: np.isclose(np.linalg.norm(x, axis=0), domain_description.radius)}
+        )
+
+        boundary_facets = {}
+        if domain_description.boundary is not None:
+            boundary_facets[domain_description.boundary] = mesh.boundaries['boundary']
+
+        return mesh, boundary_facets
+
+
     if isinstance(domain_description, RectDomain):
         return discretize_RectDomain()
     elif isinstance(domain_description, CylindricalDomain):
         raise NotImplementedError
     elif isinstance(domain_description, TorusDomain):
         raise NotImplementedError
+    elif isinstance(domain_description, DiscDomain):
+        return discretize_DiscDomain()
     elif isinstance(domain_description, PolygonalDomain):
         # from pymor.discretizers.builtin.domaindiscretizers.gmsh import discretize_gmsh
         # return discretize_gmsh(domain_description, clscale=diameter)

@@ -11,16 +11,19 @@ import warnings
 import numpy as np
 from packaging.version import parse
 from skfem import Basis, BilinearForm, BoundaryFacetBasis, LinearForm, asm, enforce, projection
+from skfem.element import Element, ElementTriP1, ElementTriP2, ElementVector
 from skfem.helpers import ddot, div, dot, grad
 from skfem.visuals.matplotlib import plot, show
 
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction
+from pymor.analyticalproblems.stokes import StokesProblem
 from pymor.core.base import ImmutableObject
 from pymor.discretizers.skfem.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator
+from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -275,8 +278,8 @@ class VectorBoundaryDirichletFunctional(NumpyMatrixBasedOperator):
         self.range = NumpyVectorSpace(basis.N)
 
     def _assemble(self, mu=None):
-        D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu),
-                       self.basis, I=self.dirichlet_dofs)
+        D = projection(lambda x: _eval_pymor_function(self.dirichlet_data, x, mu=mu), self.basis,
+                       I=self.dirichlet_dofs)
         F = np.zeros(self.range.dim)
         F[self.dirichlet_dofs] = D
         return F.reshape((-1, 1))
@@ -454,6 +457,114 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
         'basis': basis,
         'boundary_facets': boundary_facets,
         'dirichlet_dofs': dirichlet_dofs,
+    }
+
+    if preassemble:
+        data['unassembled_m'] = m
+        m = preassemble_(m)
+
+    return m, data
+
+
+def discretize_stokes_cg(analytical_problem, diameter=None, mesh_type=None, element=None, preassemble=True,
+                         solver=None):
+    """Discretizes a |StokesProblem| with finite elements using scikit-fem.
+
+    Parameters
+    ----------
+    analytical_problem
+        The |StokesProblem| to discretize.
+    diameter
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
+    mesh_type
+        If not `None`, a `skfem.Mesh` to be used for discretizing the domain of
+        `analytical_problem`.
+    element
+        Dictionary mapping variable names ``u``, ``p`` to `skfem.Element` to be used for building
+        the finite element space. If `None`, `ElementTriP2` is used for the velocity variable ``u``
+        and `ElementTriP1` for the pressure variable ``p``, corresponding to the Taylor-Hood
+        element pair.
+    preassemble
+        If `True`, preassemble all operators in the resulting |Model|.
+    solver
+        The |Solver| to be used.
+
+    Returns
+    -------
+    m
+        The |Model| that has been generated.
+    data
+        Dictionary with the following entries:
+
+        :mesh:
+            The generated `skfem.Mesh`.
+        :basis_u:
+            The generated `skfem.Basis` for the velocity variable.
+        :basis_p:
+            The generated `skfem.Basis` for the pressure variable.
+        :boundary_facets:
+            Dict of `boundary_facets` of `mesh` per boundary type.
+        :dirichlet_dofs:
+            DOFs of the `skfem.Basis` associated with the Dirichlet boundary.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
+    """
+    assert isinstance(analytical_problem, StokesProblem)
+
+    p = analytical_problem
+
+    if not set(p.domain.boundary_types) <= {'dirichlet', 'neumann'}:
+        raise NotImplementedError
+
+    mesh, boundary_facets = discretize_domain(p.domain, mesh_type=mesh_type, diameter=diameter)
+
+    if element is not None:
+        if not isinstance(element, dict):
+            raise ValueError('element must be a dict mapping variable names to skfem.Elements')
+        if set(element.keys()) != {'u', 'p'}:
+            raise ValueError("element dict must have keys 'u' and 'p'")
+        else:
+            if not isinstance(element['u'], Element):
+                raise ValueError("element['u'] must be a skfem.Element")
+            if not isinstance(element['p'], Element):
+                raise ValueError("element['p'] must be a skfem.Element")
+    else:
+        element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
+
+    basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
+
+    D_u = basis['u'].get_dofs().flatten() if p.domain.has_dirichlet else None
+    D_p = np.array(basis['p'].get_dofs().flatten()[[0]]) if p.domain.has_dirichlet else None
+
+    A = LincombOperator(operators=[VectorLaplaceOperator(basis['u'], dirichlet_dofs=D_u)], coefficients=[p.viscosity])
+    B = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=D_u, dirichlet_test_dofs=None)
+    C = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=None, dirichlet_test_dofs=D_p)
+    D = ConstraintOperator(basis['p'], constrained_dofs=D_p)
+    L = BlockOperator([[A, B.H], [C, D]], solver=solver)
+
+    f = VectorL2Functional(basis['u'], p.rhs, dirichlet_dofs=D_u)
+
+    if p.dirichlet_data is not None and D_u is not None:
+        dirichlet_basis = BoundaryFacetBasis(mesh, element['u'], facets=boundary_facets['dirichlet'])
+        f_boundary = VectorBoundaryDirichletFunctional(dirichlet_basis, p.dirichlet_data, dirichlet_dofs=D_u)
+        f = f + f_boundary
+
+    F = BlockColumnOperator([f, VectorOperator(B.range.zeros())])
+
+    # h1 product for velocity, l2 product for pressure
+    # and a block diagonal product for the whole system
+    u_product = VectorLaplaceOperator(basis['u']) + VectorL2ProductOperator(basis['u'])
+    p_product = L2ProductOperator(basis['p'])
+    products = {'mixed': BlockDiagonalOperator(blocks=[u_product, p_product], solver=solver)}
+
+    m  = StationaryModel(L, F, products=products)
+
+    data = {
+        'mesh': mesh,
+        'basis_u': basis['u'],
+        'basis_p': basis['p'],
+        'boundary_facets': boundary_facets,
+        'dirichlet_dofs': D_u,
     }
 
     if preassemble:
