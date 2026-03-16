@@ -90,3 +90,14 @@ class BaseEstimator(BasicObject):
     def _set_extra_param(self, key, param):
         """Allows to handle special parameters of the regressor in `set_params`."""
         raise NotImplementedError('`_set_extra_param` not available for this regressor')
+
+    def __sklearn_tags__(self):
+        """Return tags required for compatibility with scikit-learn's estimator interface."""
+        from sklearn.utils._tags import Tags, TargetTags
+        return Tags(
+            estimator_type=None,
+            target_tags=TargetTags(required=False),
+            transformer_tags=None,
+            regressor_tags=None,
+            classifier_tags=None,
+        )
