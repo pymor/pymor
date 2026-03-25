@@ -81,7 +81,7 @@ def test_pca_with_coefficients(vector_array, method):
     U_ref, s_ref, c_ref = pod(A_mean_expected, method=method, return_reduced_coefficients=True)
 
     # call PCA
-    mean_pca, principal_components, svals, scores = pca(A, method=method, return_scores=True)
+    mean_pca, principal_components, svals, coeffs = pca(A, method=method, return_reduced_coefficients=True)
 
     # input must not be modified
     assert np.all(almost_equal(A, B))
@@ -98,7 +98,7 @@ def test_pca_with_coefficients(vector_array, method):
     U_ref.scal(s_ref)
     UsVh_ref = U_ref.lincomb(c_ref)
     principal_components.scal(svals)
-    UsVh_pca = principal_components.lincomb(scores)
+    UsVh_pca = principal_components.lincomb(coeffs)
     assert spla.norm((UsVh_ref - UsVh_pca).norm()) < 1e-12
     # reconstruction check of original data
     recon = UsVh_pca + mean_pca

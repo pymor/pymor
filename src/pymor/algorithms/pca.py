@@ -12,7 +12,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
-        return_scores=False, copy=True):
+        return_reduced_coefficients=False, copy=True):
     """Principal component analysis (PCA) wrapper that centers `A` and applies 'pod'.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
@@ -45,7 +45,7 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         See :class:`~pymor.algorithms.pod`.
     orth_tol
         See :class:`~pymor.algorithms.pod`.
-    return_scores
+    return_reduced_coefficients
         See :class:`~pymor.algorithms.pod`.
     copy
         If `True` (default) create a centered copy of `A`. If `False` subtract the mean
@@ -58,8 +58,8 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         |VectorArray| of PCA coordinates.
     svals
         One-dimensional |NumPy array| of singular values.
-    scores
-        If `return_scores` is `True`, a |NumPy array|
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
         of right singular vectors as conjugated rows.
     mean
         |VectorArray| containing the empirical mean of the input `A`.
@@ -78,10 +78,10 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     A.axpy(-1, mean)
 
     with logger.block('Applying POD to centered data ...'):
-        principal_coponents, svals, scores = pod(A, product=product, modes=modes, rtol=rtol,
+        principal_coponents, svals, coeffs = pod(A, product=product, modes=modes, rtol=rtol,
                                                     atol=atol, l2_err=l2_err, method=method,
                                                     orth_tol=orth_tol, return_reduced_coefficients=True)
 
-    if return_scores:
-        return mean, principal_coponents, svals, scores
+    if return_reduced_coefficients:
+        return mean, principal_coponents, svals, coeffs
     return mean, principal_coponents, svals
