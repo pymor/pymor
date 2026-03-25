@@ -12,7 +12,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
-        return_scores=False):
+        return_scores=False, copy=True):
     """Principal component analysis (PCA) wrapper that centers `A` and applies 'pod'.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
@@ -47,6 +47,10 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         See :class:`~pymor.algorithms.pod`.
     return_scores
         See :class:`~pymor.algorithms.pod`.
+    copy
+        If `True` (default) create a centered copy of `A`. If `False` subtract the mean
+        from `A` in-place and return the modified `A` as the
+        centered data.
 
     Returns
     -------
@@ -68,7 +72,12 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     logger.info('Centering data around the mean ... ')
     weights = np.full(len(A), 1.0 / len(A))
     mean = A.lincomb(weights)
-    A_mean = A - mean
+
+    if copy:
+        A_mean = A - mean
+    else:
+        A.axpy(-1, mean)
+        A_mean = A
 
     with logger.block('Applying POD to centered data ...'):
          principal_coponents, svals, scores = pod(A_mean, product=product, modes=modes, rtol=rtol,
