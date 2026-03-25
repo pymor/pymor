@@ -75,14 +75,17 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
     if copy:
         A_mean = A - mean
+        with logger.block('Applying POD to centered data ...'):
+            principal_coponents, svals, scores = pod(A_mean, product=product, modes=modes, rtol=rtol,
+                                                     atol=atol, l2_err=l2_err, method=method,
+                                                     orth_tol=orth_tol, return_reduced_coefficients=True)
     else:
         A.axpy(-1, mean)
-        A_mean = A
+        with logger.block('Applying POD to centered data ...'):
+            principal_coponents, svals, scores = pod(A, product=product, modes=modes, rtol=rtol,
+                                                     atol=atol, l2_err=l2_err, method=method,
+                                                     orth_tol=orth_tol, return_reduced_coefficients=True)
 
-    with logger.block('Applying POD to centered data ...'):
-         principal_coponents, svals, scores = pod(A_mean, product=product, modes=modes, rtol=rtol,
-                          atol=atol, l2_err=l2_err, method=method,
-                          orth_tol=orth_tol, return_reduced_coefficients=True)
     if return_scores:
         return mean, principal_coponents, svals, scores
     return mean, principal_coponents, svals
