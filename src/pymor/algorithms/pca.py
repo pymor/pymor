@@ -77,5 +77,5 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
                           atol=atol, l2_err=l2_err, method=method,
                           orth_tol=orth_tol, return_reduced_coefficients=True)
     if return_reduced_coefficients:
-        return (mean, principal_coponents, svals, coeffs)
-    return (mean, principal_coponents, svals)
+        return mean, principal_coponents, svals, coeffs
+    return mean, principal_coponents, svals
