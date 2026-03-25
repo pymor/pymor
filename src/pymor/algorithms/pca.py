@@ -64,7 +64,6 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert method in ('method_of_snapshots', 'qr_svd')
 
     logger = getLogger('pymor.algorithms.pca.pca')
 
