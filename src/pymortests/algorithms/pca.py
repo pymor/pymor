@@ -103,3 +103,25 @@ def test_pca_with_coefficients(vector_array, method):
     # reconstruction check of original data
     recon = UsVh_pca + mean_pca
     assert spla.norm((A - recon).norm()) / spla.norm(A.norm()) < 1e-7
+
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,
+          HealthCheck.too_slow, HealthCheck.data_too_large])
+@given_vector_arrays(method=sampled_from(methods))
+def test_pca_copy_flag(vector_array, method):
+    """Verify that `copy=True` leaves input unchanged and `copy=False` modifies it in-place."""
+    A = vector_array
+    assume(len(A) > 1 and A.dim > 1)
+    assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
+
+    # keep original for comparison
+    A_orig = A.copy()
+
+    # default behavior (copy=True): input must not be modified
+    mean_def, pcs_def, s_def = pca(A, method=method)
+    assert np.all(almost_equal(A, A_orig))
+
+    # copy=False: operate on a fresh copy and ensure it gets modified in-place
+    C = A_orig.copy()
+    C_before = C.copy()
+    mean_no_copy, pcs_no_copy, s_no_copy = pca(C, method=method, copy=False)
+    assert not np.all(almost_equal(C, C_before))
