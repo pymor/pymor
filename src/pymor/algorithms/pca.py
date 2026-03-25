@@ -12,18 +12,20 @@ from pymor.vectorarrays.interface import VectorArray
 
 def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10,
-        return_reduced_coefficients=False):
+        return_scores=False):
     """Principal component analysis (PCA) wrapper that centers `A` and applies 'pod'.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
     return values of this method are the |VectorArray| of left singular
     vectors and a |NumPy array| of singular values of the singular value
-    decomposition of `A` centered around the mean, where the inner
+    decomposition of `A` centered around the `mean`, where the inner
     product on R^(`dim(A)`) is given by `product` and the inner product
     on R^(`len(A)`) is the Euclidean inner product. If desired, also
     the right singular vectors, which correspond to the reduced
     coefficients of `A` w.r.t. the left singular vectors and singular
-    values, are returned.
+    values, are returned. To approximately reconstruct the original `A`,
+    add the mean back, e.g.:
+        ``reconstructed = principal_components.lincomb(coeffs) + mean``
 
     Parameters
     ----------
@@ -43,7 +45,7 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         See :class:`~pymor.algorithms.pod`.
     orth_tol
         See :class:`~pymor.algorithms.pod`.
-    return_reduced_coefficients
+    return_scores
         See :class:`~pymor.algorithms.pod`.
 
     Returns
@@ -52,15 +54,11 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         |VectorArray| of PCA coordinates.
     svals
         One-dimensional |NumPy array| of singular values.
-    coeffs
-        If `return_reduced_coefficients` is `True`, a |NumPy array|
+    scores
+        If `return_scores` is `True`, a |NumPy array|
         of right singular vectors as conjugated rows.
     mean
         |VectorArray| containing the empirical mean of the input `A`.
-        The input |VectorArray| is centered by subtracting this mean
-        before applying 'pod'. To approximately reconstruct original snapshots
-        add the mean back, e.g.:
-        ``reconstructed = POD.lincomb(COEFFS) + mean``
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
@@ -73,9 +71,9 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     A_mean = A - mean
 
     with logger.block('Applying POD to centered data ...'):
-         principal_coponents, svals, coeffs = pod(A_mean, product=product, modes=modes, rtol=rtol,
+         principal_coponents, svals, scores = pod(A_mean, product=product, modes=modes, rtol=rtol,
                           atol=atol, l2_err=l2_err, method=method,
                           orth_tol=orth_tol, return_reduced_coefficients=True)
-    if return_reduced_coefficients:
-        return mean, principal_coponents, svals, coeffs
+    if return_scores:
+        return mean, principal_coponents, svals, scores
     return mean, principal_coponents, svals
