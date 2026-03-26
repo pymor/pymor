@@ -214,7 +214,7 @@ class _CholQRStruct:
         if not use_eigh:
             try:
                 ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
-            except spla.ArpackNoConvergence as e:
+            except spsla.ArpackNoConvergence as e:
                 self.logger.warning(f'ARPACK failed with: {e}')
                 self.logger.info('Proceeding with dense solver.')
                 use_eigh = True
