@@ -209,8 +209,8 @@ class _CholQRStruct:
             shift *= (2*m*np.sqrt(m*n)+n*(n+1))*self.product_norm
 
         # eigsh outputs warnings, if n <= 2; it also throws an exception,
-        # if X is a zero matrix (or is close to)
-        use_eigh = n <= 2 or X.max() - X.min() < self.eps
+        # if X is a zero matrix (or is close to) or contains subnormal numbers
+        use_eigh = n <= 2 or X.max() - X.min() < self.eps or np.any((X != 0) & (np.abs(X) < np.finfo(self.dtype).tiny))
         if not use_eigh:
             try:
                 ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]

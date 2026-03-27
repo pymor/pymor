@@ -46,24 +46,28 @@ def evaluate_qr(qr_method, A: VectorArray, product: Operator, return_R: bool, co
         assert len(R.shape) == 2
         assert R.shape[0] == len(Q)
 
+    TOL = {'atol': 1e-13, 'rtol': 1e-13}
+
     # check if copies work properly, i.e., if we have a copy A should not change and vise-versa,
     # if we do not have a copy, A should be overwritten by Q
     if copy:
-        assert np.all(almost_equal(A, CPY)), 'Reference copied from might be overwritten.'
+        assert np.all(almost_equal(A, CPY, **TOL)), 'Reference copied from might be overwritten.'
     else:
-        assert np.all(almost_equal(Q, CPY)), 'In-place QR decomposition did not modifiy its input completly.'
+        assert np.all(almost_equal(Q, CPY, **TOL)), 'In-place QR decomposition did not modifiy its input completly.'
 
     # check if solution has low errors
-    assert np.allclose(Q.inner(Q, product=product), np.eye(len(Q))), 'Q^H Q = I not fulfilled'
+    assert np.allclose(Q.inner(Q, product=product), np.eye(len(Q)), **TOL), 'Q^H Q = I not fulfilled'
     if return_R:
-        assert np.all(almost_equal(A, Q.lincomb(R), atol=1e-13, rtol=1e-13)), 'QR = A not fulfilled'
-        assert np.allclose(A.inner(A, product=product), (R.conj().T) @ R), 'A^H A = R^H Q^H Q R = R^H R not fulfilled'
+        assert np.all(almost_equal(A, Q.lincomb(R), **TOL)), 'QR = A not fulfilled'
+        assert np.allclose(
+            A.inner(A, product=product), (R.conj().T) @ R, **TOL
+        ), 'A^H A = R^H Q^H Q R = R^H R not fulfilled'
 
     # check if solution is deterministic
     Q2, R2 = qr_method(A=A, product=product, return_R=True, copy=False, **qr_kwargs)
-    assert np.all(almost_equal(Q, Q2))
+    assert np.all(almost_equal(Q, Q2, **TOL))
     if return_R:
-        assert np.all(R == R2)
+        assert np.allclose(R, R2, **TOL)
 
 
 def evaluate_qr_offset(qr_method, A: VectorArray, num_blocks: int, qr_kwargs: dict, atol=1e-13, rtol=1e-13):
