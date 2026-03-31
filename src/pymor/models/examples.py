@@ -341,13 +341,13 @@ def stokes_2Dexample(domain=None, diameter=None, rhs=None, mu_low=0.01, mu_high=
         \nabla \cdot u(x, \mu) & = 0 \text{ in } \Omega
 
     with homogeneous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
-    and :math:`\Omega` is the desired domain. To eliminate the singularity of the saddle-point
+    and :math:`\Omega` is the chosen domain. To eliminate the singularity of the saddle-point
     system, one pressure node is set to zero.
 
     Parameters
     ----------
     domain
-        The domain of the Stokes problem. If `None`, the unit disk is used.
+        The domain :math:`\Omega` of the Stokes problem. If `None`, the unit disk is used.
     diameter
         If not `None`, the diameter option for the domain discretizer.
     rhs
@@ -383,6 +383,8 @@ def stokes_2Dexample(domain=None, diameter=None, rhs=None, mu_low=0.01, mu_high=
         assert rhs.dim_domain == 2
         assert rhs.shape_range == (2,)
 
+    assert mu_low > 0
+    assert mu_high > mu_low
     parameter_ranges = {'mu': (mu_low, mu_high)}
 
     viscosity = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
