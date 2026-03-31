@@ -170,10 +170,10 @@ class VectorL2ProductOperator(SKFemBilinearFormOperator):
 
 class AdvectionOperator(SKFemBilinearFormOperator):
 
-    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False,
-                 solver=None, name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
-                         solver=solver, name=name)
+    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
+                 name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=solver,
+                         name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -185,8 +185,8 @@ class AdvectionOperator(SKFemBilinearFormOperator):
 
 class DivergenceOperator(SKFemMixedBilinearFormOperator):
 
-    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None, dirichlet_test_dofs=None,
-                 solver=None, name=None):
+    def __init__(self, trial_basis, test_basis, dirichlet_trial_dofs=None, dirichlet_test_dofs=None, solver=None,
+                 name=None):
         super().__init__(trial_basis, test_basis, dirichlet_trial_dofs=dirichlet_trial_dofs,
                          dirichlet_test_dofs=dirichlet_test_dofs, solver=solver, name=name)
         self.__auto_init(locals())
@@ -213,8 +213,8 @@ class ConstraintOperator(SKFemBilinearFormOperator):
 class VectorLaplaceOperator(SKFemBilinearFormOperator):
 
     def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
-                         solver=None, name=name)
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=None,
+                         name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
