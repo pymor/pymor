@@ -330,8 +330,8 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
 
     return fom
 
-def stokes_2Dexample(mesh_resolution=4, rhs=None):
-    r"""Return a discretization of a parametric, stationary Stokes equation on the unit disk.
+def stokes_2Dexample(domain=None, diameter=None, rhs=None, mu_low=0.01, mu_high=1000):
+    r"""Return a discretization of a parametric Stokes equation in two spatial dimensions.
 
     Discretizes the following Stokes equation
 
@@ -341,83 +341,52 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
         \nabla \cdot u(x, \mu) & = 0 \text{ in } \Omega
 
     with homogeneous Dirichlet boundary conditions, where :math:`\mu` is the dynamic viscosity
-    and :math:`\Omega` is the unit disk. To eliminate the singularity of the saddle-point system,
-    one pressure node is set to zero.
+    and :math:`\Omega` is the desired domain. To eliminate the singularity of the saddle-point
+    system, one pressure node is set to zero.
 
     Parameters
     ----------
-    mesh_resolution
-        The number of mesh refinements performed by the scikit-fem discretizer on the unit disk.
+    domain
+        The domain of the Stokes problem. If `None`, the unit disk is used.
+    diameter
+        If not `None`, the diameter option for the domain discretizer.
     rhs
         The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
         If `None`, a default right-hand side is chosen.
+    mu_low
+        Lower bound for the viscosity parameter.
+    mu_high
+        Upper bound for the viscosity parameter.
 
     Returns
     -------
     fom
         Discretized Stokes equation as a |StationaryModel|.
     """
-    import numpy as np
-
-    from pymor.core.config import config
-    config.require('SCIKIT_FEM')
-
-    from skfem.assembly import Basis
-    from skfem.element import ElementTriP1, ElementTriP2, ElementVector
-    from skfem.mesh import MeshTri
-
-    from pymor.analyticalproblems.functions import ExpressionFunction, Function
+    from pymor.analyticalproblems.domaindescriptions import DiscDomain, DomainDescription
+    from pymor.analyticalproblems.functions import ExpressionFunction
+    from pymor.analyticalproblems.stokes import StokesProblem
     from pymor.bindings.scipy import ScipySpSolveSolver
-    from pymor.discretizers.skfem.cg import (
-        ConstraintOperator,
-        DivergenceOperator,
-        L2ProductOperator,
-        VectorL2Functional,
-        VectorL2ProductOperator,
-        VectorLaplaceOperator,
-    )
-    from pymor.models.basic import StationaryModel
-    from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator
-    from pymor.operators.constructions import AdjointOperator, LincombOperator, VectorOperator
+    from pymor.discretizers.skfem.cg import discretize_stokes_cg
     from pymor.parameters.base import Parameters
     from pymor.parameters.functionals import ExpressionParameterFunctional
 
+    if domain is None:
+        domain = DiscDomain(radius=1)
+    else:
+        assert isinstance(domain, DomainDescription)
+        assert domain.dim == 2
+
     if rhs is None:
         rhs = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
+    else:
+        assert rhs.dim_domain == 2
+        assert rhs.shape_range == (2,)
 
-    assert isinstance(rhs, Function)
-    assert rhs.dim_domain == 2
-    assert rhs.shape_range == (2,)
+    parameter_ranges = {'mu': (mu_low, mu_high)}
 
-    mesh = MeshTri.init_circle(mesh_resolution)
-
-    # Taylor-Hood discretization
-    element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
-    basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
-
-    # dirichlet boundary values, fix one pressure node to zero
-    D_u = basis['u'].get_dofs().flatten()
-    D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
-
-    # assemble system matrices and rhs
-    A = VectorLaplaceOperator(basis['u'], dirichlet_dofs=D_u).assemble()
-    B = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=D_u, dirichlet_test_dofs=None).assemble()
-    C = (-1) * DivergenceOperator(basis['u'], basis['p'], dirichlet_trial_dofs=None, dirichlet_test_dofs=D_p).assemble()
-    D = ConstraintOperator(basis['p'], constrained_dofs=D_p).assemble()
-    f = VectorL2Functional(basis['u'], rhs, dirichlet_dofs=D_u).assemble()
-
-    # products
-    u_product = VectorLaplaceOperator(basis['u']).assemble() + VectorL2ProductOperator(basis['u']).assemble()
-    p_product = L2ProductOperator(basis['p']).assemble()
-
-    # build operators and fom
-    mu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
-    A = LincombOperator(operators=[A], coefficients=[mu])
-
-    products = {'mixed': BlockDiagonalOperator(blocks=[u_product, p_product])}
-    operator = BlockOperator([[A, AdjointOperator(B)], [C, D]], solver=ScipySpSolveSolver())
-    rhs = BlockColumnOperator([f, VectorOperator(B.range.zeros())])
-
-    fom = StationaryModel(operator=operator, rhs=rhs, products=products)
+    viscosity = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    stokes_problem = StokesProblem(domain, rhs=rhs, viscosity=viscosity, parameter_ranges=parameter_ranges)
+    fom, _ = discretize_stokes_cg(stokes_problem, diameter=diameter, solver=ScipySpSolveSolver())
 
     return fom

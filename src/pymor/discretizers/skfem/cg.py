@@ -516,7 +516,7 @@ def discretize_stokes_cg(analytical_problem, diameter=None, mesh_type=None, elem
     if not set(p.domain.boundary_types) <= {'dirichlet', 'neumann'}:
         raise NotImplementedError
 
-    mesh, boundary_facets = discretize_domain(p.domain, mesh_type=mesh_type, diameter=diameter)
+    mesh, boundary_facets = discretize_domain(p.domain, diameter=diameter, mesh_type=mesh_type)
 
     if element is not None:
         if not isinstance(element, dict):

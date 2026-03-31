@@ -23,7 +23,10 @@ from pymor.analyticalproblems.domaindescriptions import (
 )
 
 
-def discretize_domain(domain_description, diameter=1 / 100, mesh_type=None):
+def discretize_domain(domain_description, diameter=None, mesh_type=None):
+
+    if diameter is None:
+        diameter = 1 / 10
 
     def discretize_RectDomain():
         mt = mesh_type or skfem.MeshQuad
