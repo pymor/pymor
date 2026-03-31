@@ -64,7 +64,7 @@ class VKOGARegressor(BasicObject):
         surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
 
         # use X as training set in the weak greedy algorithm
-        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=self.max_centers)
+        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=min(len(X), self.max_centers))
 
         self._surrogate = surrogate
         # store the results of the weak greedy algorithm for inspection/plotting
