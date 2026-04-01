@@ -30,14 +30,14 @@ def test_chol_qr_empty(copy):
 @pytest.mark.parametrize('copy', [False, True])
 @pytest.mark.parametrize('recompute_shift', [False, True])
 @pytest.mark.parametrize('orth_tol', [None, 1e-13])
-@pytest.mark.parametrize('remove_dependent', [False, True])
-def test_chol_qr_parameters(va_space, n, return_R, copy, recompute_shift, orth_tol, remove_dependent):
+@pytest.mark.parametrize('rtol', [0, 1e-13, 1e-8])
+def test_chol_qr_parameters(va_space, n, return_R, copy, recompute_shift, orth_tol, rtol):
     # larger hilbert matrices are more ill-conditioned,
     # but are never rank-deficient in exact arithmetic
     A = hilbert(n)
     A = va_space(n).from_numpy(A)
     evaluate_qr(shifted_chol_qr, A, None, return_R, copy,
-        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': orth_tol, 'remove_dependent': remove_dependent}
+        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': orth_tol, 'rtol': rtol}
     )
 
 
@@ -48,7 +48,7 @@ def test_chol_qr_with_offset(num_blocks, recompute_shift):
     n = 500
     A = NumpyVectorSpace(n).from_numpy(hilbert(n))
     evaluate_qr_offset(shifted_chol_qr, A, num_blocks,
-        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 5e-15, 'remove_dependent': True}
+        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 5e-15}
     )
 
 

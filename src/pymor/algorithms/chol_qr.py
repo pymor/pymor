@@ -6,16 +6,17 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse.linalg as spsla
 
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
 _INNER_ITERS = 10
-_RTOL = 1e-13
 
+@defaults('maxiter', 'orth_tol', 'recompute_shift', 'rtol', 'check_finite')
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
-                    recompute_shift=False, remove_dependent=False, check_finite=True, copy=True, product_norm=None):
+                    recompute_shift=False, rtol=1e-13, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
@@ -63,9 +64,11 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         If `True`, the shift is recomputed in iterations in which the Cholesky decomposition fails.
         Even for an ill-conditioned `A` (at least for matrix condition numbers up to 10^20)
         is it able to compute an orthonormal basis at the cost of higher runtimes.
-    remove_dependent
-        If `True`, tries to detect zero vectors (and if offset is used, linearly dependent vectors,)
-        in `A` and remove them. Additionally, if `return_R` is set, a potentially
+    rtol
+        If zero, it removes zero vectors. Otherwise, if greater than zero, it removes too
+        small vectors (relative to the longest vector). Furthermore, if offset is used,
+        it might remove linearly dependent vectors. Decision is based on the diagonal of
+        the initial Gramian. Additionally, if `return_R` is set, a potentially
         upper-trapezoidal factor `R` is returned. It holds `A \approx Q@R`.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
@@ -91,13 +94,13 @@ class _CholQRStruct:
     r"""Helper class for managing the parameters and options."""
 
     def __init__(self, A, product, return_R, maxiter, offset, orth_tol,
-                 recompute_shift, remove_dependent, check_finite, copy, product_norm):
+                 recompute_shift, rtol, check_finite, copy, product_norm):
         assert isinstance(A, VectorArray)
         assert 0 <= offset <= len(A)
-        if not remove_dependent:
-            assert A.dim >= len(A)
+        assert A.dim >= len(A)
         assert 0 < maxiter
         assert orth_tol is None or 0 < orth_tol
+        assert rtol >= 0
 
         # set input parameters
         self.A = A.copy() if copy else A
@@ -106,7 +109,7 @@ class _CholQRStruct:
         self.maxiter = maxiter
         self.offset = offset
         self.orth_tol = orth_tol
-        self.remove_dependent = remove_dependent
+        self.rtol = rtol
         self.check_finite = check_finite
         self.product_norm = product_norm
 
@@ -152,8 +155,6 @@ class _CholQRStruct:
             self.eps = np.finfo(dtype).eps
             self.trmm = spla.get_blas_funcs('trmm', dtype=dtype)
             self.trtri = spla.get_lapack_funcs('trtri', dtype=dtype)
-            if self.remove_dependent:
-                self.potrf = spla.get_lapack_funcs('potrf', dtype=dtype)
 
         B = B.astype(dtype=dtype, copy=False)
         X = X.astype(dtype=dtype, copy=False)
@@ -268,29 +269,27 @@ class _CholQRStruct:
 
         B, X = self._compute_gramian_and_offset_matrix()
 
-        if self.remove_dependent:
-            # diagonal of X contains the pairwise result of inner-products
-            # the vectors A[offset:]
-            diag = np.abs(np.diag(X))
-            M = np.max(diag)
-            if self.offset > 0:
-                M = max(M, 1) # length of orthogonal vectors is 1
+        # diagonal of X contains the pairwise result of inner-products
+        # the vectors A[offset:]
+        diag = np.abs(np.diag(X))
+        M = np.max(diag)
+        if self.offset > 0:
+            M = max(M, 1) # length of orthogonal vectors is 1
 
-            # find vectors that are to short relative to the longest vector in A
-            # used squared relative tolerance, since diagonal contains squared norms of vectors
-            global _RTOL
-            remove = np.where(M*_RTOL**2 >= diag)[0]
-            if len(remove) == self.n:
-                del A[offset:]
-                return (A, np.hstack([np.eye(offset), B])) if self.return_R else A
-            elif len(remove) > 0:
-                B_rem = B[:,remove]
-                B = np.delete(B, remove, axis=1)
-                X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
-                remove += offset
-                A_rem = A[remove].copy()
-                del A[remove]
-                self.n -= len(remove)
+        # find vectors that are to short relative to the longest vector in A
+        # used squared relative tolerance, since diagonal contains squared norms of vectors
+        remove = np.where(M*self.rtol**2 >= diag)[0]
+        if len(remove) == self.n:
+            del A[offset:]
+            return (A, np.hstack([np.eye(offset), B])) if self.return_R else A
+        elif len(remove) > 0:
+            B_rem = B[:,remove]
+            B = np.delete(B, remove, axis=1)
+            X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
+            remove += offset
+            A_rem = A[remove].copy()
+            del A[remove]
+            self.n -= len(remove)
 
         for iter in range(1,self.maxiter+1):
             with self.logger.block(f'Iteration {iter}'):
