@@ -64,10 +64,9 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         Even for an ill-conditioned `A` (at least for matrix condition numbers up to 10^20)
         is it able to compute an orthonormal basis at the cost of higher runtimes.
     remove_dependent
-        Experimental flag. If `True`, tries to detect linearly dependent vectors in `A`
-        and remove them. Additionally, if `return_R` is set, a potentially
-        upper-trapezoidal factor `R` is returned. It holds `A \approx Q@R`,
-        but with higher expected errors.
+        If `True`, tries to detect zero vectors (and if offset is used, linearly dependent vectors,)
+        in `A` and remove them. Additionally, if `return_R` is set, a potentially
+        upper-trapezoidal factor `R` is returned. It holds `A \approx Q@R`.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
         performance gain, but may result in problems (crashes, non-termination) if the
@@ -113,16 +112,11 @@ class _CholQRStruct:
 
         # define additional variables required inside subroutines
         self.m, self.n = A.dim, len(A[offset:])
-        self.Bi = None
-        self.Ri = None
         self.shift = 0
         self.dtype = None
         self.eps = None
         self.chol_kernel = self._recomputed_shifted_chol_kernel if recompute_shift else self._basic_shifted_chol_kernel
         self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
-
-        if remove_dependent:
-            self.inds = np.arange(self.n) # indices of not removed vectors
 
         if self.maxiter == 1:
             self.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
@@ -135,12 +129,9 @@ class _CholQRStruct:
            `X = A2.H @ A2`. If no offset is given, `B` is going to be dimensionless.
         2. Evaluates a unifiable datatype of `B` and `X` and casts both of them into that type.
            In particular for `ListVectorArray`s there might be a type mismatch.
-           Sets the datatype as a class argument for usage in other routines.
+           Sets the datatype and required LAPACK routine wrappers as class arguments.
         3. If a offset is given, a term `B.H@B` is subtracted from `X`.
-        4. If the flag `remove_dependent` is set and its not the first iteration, try to determine
-           linearly dependent vectors and remove them.
         """
-        global _RTOL
         A = self.A
         product = self.product
         offset = self.offset
@@ -165,32 +156,10 @@ class _CholQRStruct:
                 self.potrf = spla.get_lapack_funcs('potrf', dtype=dtype)
 
         B = B.astype(dtype=dtype, copy=False)
-        if self.Bi is None:
-            self.Bi = B
         X = X.astype(dtype=dtype, copy=False)
 
         # Step 3
         X -= B.conj().T@B
-
-        # Step 4
-        # do not perform vector removal in the first iteration
-        # otherwise one might have to reconstruct a trapezoidal R afterwards
-        if self.remove_dependent and self.Ri is not None:
-            # diagonal of X contains the pairwise result of inner-products
-            # the vectors A[offset:]
-            diag = np.abs(np.diag(X))
-            M = np.max(diag)
-            if self.offset > 0:
-                M = max(M, 1) # length of orthogonal vectors is 1
-
-            # find vectors that are to short relative to the longest vector in A
-            remove = np.where(M*_RTOL >= diag)[0]
-            if len(remove) > 0:
-                self.inds = np.delete(self.inds, remove)
-                self.Ri = np.delete(self.Ri, remove, axis=0)
-                B = np.delete(B, remove, axis=1)
-                X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
-                del self.A[remove + offset]
 
         return B, X
 
@@ -294,7 +263,34 @@ class _CholQRStruct:
         if offset == len(A) or A.dim == 0:
             return (A, np.eye(len(A))) if self.return_R else A
 
+        Ri = Bi = None # accumulated R and B over multiple iterations
+        A_rem = B_rem = None
+
         B, X = self._compute_gramian_and_offset_matrix()
+
+        if self.remove_dependent:
+            # diagonal of X contains the pairwise result of inner-products
+            # the vectors A[offset:]
+            diag = np.abs(np.diag(X))
+            M = np.max(diag)
+            if self.offset > 0:
+                M = max(M, 1) # length of orthogonal vectors is 1
+
+            # find vectors that are to short relative to the longest vector in A
+            # used squared relative tolerance, since diagonal contains squared norms of vectors
+            global _RTOL
+            remove = np.where(M*_RTOL**2 >= diag)[0]
+            if len(remove) == self.n:
+                del A[offset:]
+                return (A, np.hstack([np.eye(offset), B])) if self.return_R else A
+            elif len(remove) > 0:
+                B_rem = B[:,remove]
+                B = np.delete(B, remove, axis=1)
+                X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
+                remove += offset
+                A_rem = A[remove].copy()
+                del A[remove]
+                self.n -= len(remove)
 
         for iter in range(1,self.maxiter+1):
             with self.logger.block(f'Iteration {iter}'):
@@ -303,12 +299,13 @@ class _CholQRStruct:
                 Rx = self.chol_kernel(X)
 
                 # update blocks of full R
-                if self.Ri is None:
-                    self.Ri = Rx
+                if Ri is None:
+                    Ri = Rx
+                    Bi = B
                 else:
-                    self.Bi += B @ self.Ri
+                    Bi += B @ Ri
                     # does not properly overwrite Ri
-                    self.Ri = self.trmm(1, Rx, self.Ri, overwrite_b=True)
+                    Ri = self.trmm(1, Rx, Ri, overwrite_b=True)
 
                 # orthogonalize
                 Rinv = self.trtri(Rx)[0]
@@ -339,9 +336,15 @@ Consider increasing maxiter or enabling recompute_shift or using gram_schmidt.""
             return A
 
         # construct R from blocks
-        R = np.zeros([offset+self.Ri.shape[0], offset+self.n], dtype=self.dtype)
+        R = np.zeros([offset+Ri.shape[0], offset+self.n], dtype=self.dtype)
         R[:offset,:offset] = np.eye(offset)
-        R[:offset, offset:] = self.Bi.astype(self.dtype, copy=False)
-        R[offset:, offset:] = self.Ri.astype(self.dtype, copy=False)
+        R[:offset, offset:] = Bi.astype(self.dtype, copy=False)
+        R[offset:, offset:] = Ri.astype(self.dtype, copy=False)
+
+        if B_rem is not None:
+            # compute linear dependence of removed vectors to the orthnormal basis
+            # and insert them back into R
+            T = A[offset:].inner(A_rem, product=self.product)
+            R = np.insert(R, [r-i for i,r in enumerate(remove)], values=np.vstack([B_rem, T]), axis=1)
 
         return (A, R)
