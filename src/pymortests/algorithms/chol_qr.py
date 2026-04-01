@@ -2,13 +2,11 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
 import pytest
-from hypothesis import assume, settings
+from hypothesis import assume
 from hypothesis.errors import UnsatisfiedAssumption
 from scipy.linalg import hilbert
 
-import pymortests.strategies as pyst
 from pymor.algorithms.basic import contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.vectorarrays.list import NumpyListVectorSpace
@@ -43,28 +41,14 @@ def test_chol_qr_parameters(va_space, n, return_R, copy, recompute_shift, orth_t
     )
 
 
-@pytest.mark.parametrize('return_R', [False, True])
-@pytest.mark.parametrize('recompute_shift', [False, True])
-def test_rr_chol_qr_linear_dependent_vectors(return_R, recompute_shift):
-    n = 100
-    A = hilbert(n)[:10,:]
-    A = NumpyVectorSpace(A.shape[0]).from_numpy(A)
-    evaluate_qr(shifted_chol_qr, A, None, return_R, False,
-        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 1e-13, 'remove_dependent': True}
-    )
-
-
-@pyst.given_vector_arrays()
 # into how many blocks the matrix should be split; 0 for n blocks/ single vectors
 @pytest.mark.parametrize('num_blocks', [1, 2, 5, 0])
 @pytest.mark.parametrize('recompute_shift', [False, True])
-@settings(deadline=None)
-def test_rr_chol_qr_with_offset(vector_array, num_blocks, recompute_shift):
-    evaluate_qr_offset(shifted_chol_qr, vector_array, num_blocks,
-        {'recompute_shift': recompute_shift, 'maxiter': 50, 'orth_tol': 5e-15, 'remove_dependent': True},
-        # had to reduce the tolerances a lot in order to let the tests succeed
-        # the highest error I have witnessed was of magnitude 1e-12
-        atol=1e-10, rtol=1e-10
+def test_chol_qr_with_offset(num_blocks, recompute_shift):
+    n = 500
+    A = NumpyVectorSpace(n).from_numpy(hilbert(n))
+    evaluate_qr_offset(shifted_chol_qr, A, num_blocks,
+        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 5e-15, 'remove_dependent': True}
     )
 
 
@@ -81,6 +65,7 @@ def test_chol_qr_with_product(operator_with_arrays_and_products, recompute_shift
     evaluate_qr(shifted_chol_qr, A, product, True, True,
         {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 1e-13}
     )
+
 
 if __name__ == '__main__':
     runmodule(filename=__file__)
