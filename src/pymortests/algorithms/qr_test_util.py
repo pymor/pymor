@@ -3,10 +3,14 @@ import numpy as np
 from hypothesis import assume
 
 from pymor.algorithms.basic import almost_equal
+from pymor.core.config import is_scipy_mkl
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
 
-TOL = {'atol': 1e-13, 'rtol': 1e-13}
+if is_scipy_mkl():
+    TOL = {'atol': 1e-12, 'rtol': 1e-13}
+else:
+    TOL = {'atol': 1e-13, 'rtol': 1e-13}
 
 def evaluate_qr(qr_method, A: VectorArray, product: Operator, return_R: bool, copy: bool, qr_kwargs: dict):
     r"""Calls a given `qr_method` to compute the QR factorization of `A`.

@@ -9,10 +9,13 @@ from scipy.linalg import hilbert
 
 from pymor.algorithms.basic import contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
+from pymor.core.config import is_scipy_mkl
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.algorithms.qr_test_util import evaluate_qr, evaluate_qr_offset
 from pymortests.base import runmodule
+
+ORTH_TOL = 1e-13 if is_scipy_mkl() else 5e-15
 
 
 @pytest.mark.builtin
@@ -29,7 +32,7 @@ def test_chol_qr_empty(copy):
 @pytest.mark.parametrize('return_R', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
 @pytest.mark.parametrize('recompute_shift', [False, True])
-@pytest.mark.parametrize('orth_tol', [None, 1e-13])
+@pytest.mark.parametrize('orth_tol', [None, ORTH_TOL])
 @pytest.mark.parametrize('rtol', [0, 1e-13, 1e-8])
 def test_chol_qr_parameters(va_space, n, return_R, copy, recompute_shift, orth_tol, rtol):
     # larger hilbert matrices are more ill-conditioned,
@@ -48,7 +51,7 @@ def test_chol_qr_with_offset(num_blocks, recompute_shift):
     n = 500
     A = NumpyVectorSpace(n).from_numpy(hilbert(n))
     evaluate_qr_offset(shifted_chol_qr, A, num_blocks,
-        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 5e-15}
+        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': ORTH_TOL}
     )
 
 
@@ -63,7 +66,7 @@ def test_chol_qr_with_product(operator_with_arrays_and_products, recompute_shift
         pytest.xfail(f'{UnsatisfiedAssumption.__qualname__} was raised')
 
     evaluate_qr(shifted_chol_qr, A, product, True, True,
-        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': 1e-13}
+        {'recompute_shift': recompute_shift, 'maxiter': 10, 'orth_tol': ORTH_TOL}
     )
 
 
