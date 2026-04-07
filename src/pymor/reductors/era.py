@@ -144,9 +144,9 @@ class ERAReductor(CacheableObject):
         of the Markov parameters :math:`\epsilon` is bounded by
 
         .. math::
-            \epsilon^2 =
-            \sum_{i = 1}^{2 s - 1}
-            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
+            \epsilon = \lVert G-G_r\rVert_{\mathcal{H}_2}=
+            \left(\sum_{i = 1}^{2 s - 1}
+            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2\right)^{1/2}
             \leq
             \sigma_{r + 1}(\mathcal{H})
             \sqrt{r + p + m},
@@ -159,9 +159,9 @@ class ERAReductor(CacheableObject):
         With tangential projection, the bound is given by
 
         .. math::
-            \epsilon^2 =
-            \sum_{i = 1}^{2 s - 1}
-            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
+            \epsilon = \lVert G-G_r\rVert_{\mathcal{H}_2}=
+            \left(\sum_{i = 1}^{2 s - 1}
+            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2\right)^{1/2}
             \leq
             4 \left(
                 \sum_{i = n_L + 1}^p \sigma_i^2(\Theta_L)
@@ -170,7 +170,9 @@ class ERAReductor(CacheableObject):
             + 2 \sigma_{r + 1}(\mathcal{H}) \sqrt{r + n_L + n_R},
 
         where :math:`\Theta_L,\,\Theta_R` is the matrix of horizontally or vertically stacked Markov
-        parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details.
+        parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details and note that there
+        present bound is squared due to a typographical error in :cite:`K78` that was reported in
+        :cite:`PS26`.
         """
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
@@ -257,11 +259,70 @@ class ERAReductor(CacheableObject):
 
 
 class RandomizedERAReductor(ERAReductor):
-    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True, rrf_opts={},
+    r"""Randomized Eigensystem Realization Algorithm reductor.
+
+    Constructs a (reduced) realization from a sequence of Markov parameters :math:`h_i`, for
+    :math:`i\in\{1,\,\dots,\,2s-1\}`, :math:`s\in\mathbb{N}`, by a (reduced) randomized orthogonal
+    factorization of the Hankel matrix of Markov parameters.
+
+    See :class:`ERAReductor` for details on the method and the error bounds. The main difference to
+    :class:`ERAReductor` is that the conventional SVD of the Hankel matrix is replaced by a
+    randomized SVD for greater efficiency. This implies that any tangential projections for systems
+    with many in- or outputs need to be performed beforehand, i.e. by setting `num_left` and
+    `num_right` in the constructor.
+
+    The basic randomized ERA algorithm is based on :cite:`MKSC21`. Several computational
+    improvements, i.e., a memory-efficient Cholesky QR algorithm :cite:`BPS25` and a fast
+    leave-one-out error estimator :cite:`ET24`, are implemented on top of that. Further, a heuristic
+    error estimator is implemented which enables an adaptive refinement of the ROM that reuses
+    previous computations. The heuristic error estimator, as well as the adaptive numerical
+    algorithm, are described in detail in :cite:`PS26`.
+
+    Attributes
+    ----------
+    data
+        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
+        Has to be one- or three-dimensional with either::
+
+            data.shape == (n,)
+
+        for scalar-valued Markov parameters or::
+
+            data.shape == (n, p, m)
+
+        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
+        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
+    sampling_time
+        A number that denotes the sampling time of the system (in seconds).
+    force_stability
+        Whether the Markov parameters are zero-padded to double the length in order to enforce
+        Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
+    feedthrough
+        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        defines the feedthrough of the realization. Defaults to `None`.
+    allow_transpose
+        Whether to allow the computation of the transposed problem, i.e., the randomized SVD of
+        :math:`\mathcal{H}^\top`. This can be computationally beneficial if the number of inputs is
+        larger than the number of outputs, as it reduces the second dimension of the Hankel matrix.
+        The transposition only happens internally and is resolved after randomized SVD such that the
+        in- and output dimensionality of the ROM is not affected. Defaults to `True`.
+    rrf_opts
+        Dictionary of options to pass to the constructor of |RandomizedRangeFinder| for the
+        randomized SVD of the Hankel matrix. See :class:`RandomizedRangeFinder` for details. It is
+        recommended to use a memory-efficient QR method, e.g., `shifted_chol_qr`, for better
+        performance, as well as two power iterations for a good balance of accuracy and speed.
+        Defaults to `{'qr_method': 'shifted_chol_qr', 'power_iterations': 2}`.
+    num_left
+        Number of left (output) directions for tangential projection.
+    num_right
+        Number of right (input) directions for tangential projection.
+    """
+
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
+                 rrf_opts={'qr_method': 'shifted_chol_qr', 'power_iterations': 2},
                  num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability=force_stability, feedthrough=feedthrough)
         self.__auto_init(locals())
-        #data = data.copy()
         if num_left is not None or num_right is not None:
             self.logger.info('Computing the projected Markov parameters ...')
             data = self._project_markov_parameters(num_left, num_right)
@@ -274,7 +335,7 @@ class RandomizedERAReductor(ERAReductor):
             self.logger.info('Using transposed formulation.')
             self._H = self._H.H
         self._last_sv_U_V = None
-        self._rrf = RandomizedRangeFinder(self._H, **rrf_opts)
+        self._rrf = RandomizedRangeFinder(self._H, error_estimator='loo', **rrf_opts)
         self._rrf._draw_samples = self._draw_samples
 
     @cached
@@ -297,6 +358,21 @@ class RandomizedERAReductor(ERAReductor):
         return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim].T)
 
     def reduce(self, r=None, tol=None):
+        """Construct a reduced realization with randomized methods.
+
+        Parameters
+        ----------
+        r
+            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
+        tol
+            Tolerance for the heuristic estimator of the relative error. For details, see Section
+            5.1 in :cite:`PS26`.
+
+        Returns
+        -------
+        rom
+            Reduced-order |LTIModel|.
+        """
         if tol is not None:
             tol *= self._weighted_h2_norm()
         last_basis_size = len(self._rrf.Q[-1])
