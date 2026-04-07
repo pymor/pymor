@@ -182,6 +182,7 @@ common = """
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
+.. |RandomizedRangeFinder| replace:: :class:`randmomized range finder <pymor.algorithms.rand_la.RandomizedRangeFinder>`
 """  # noqa: E501
 
 substitutions = interfaces + common
