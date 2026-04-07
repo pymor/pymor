@@ -66,8 +66,9 @@ tests = [
   "pytest-datadir",
   "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
 ]
-ci-conda = [
-  "pyopengl!=3.1.7,!=3.1.9,!=3.1.10", # CI crashes
+ci = [
+  {include-group = "docs-additional"},
+  {include-group = "tests"},
 ]
 # additional dependencies for pyMOR development
 dev = [
@@ -78,6 +79,14 @@ dev = [
 ]
 
 [project.optional-dependencies]
+ci-conda = [
+  "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
+  "nbmake",
+  "pytest-cov",
+  "pytest-datadir",
+  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
+  "pyopengl!=3.1.7,!=3.1.9,!=3.1.10", # CI crashes
+]
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
 ann = [
