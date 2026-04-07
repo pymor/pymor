@@ -15,9 +15,10 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
                     recompute_shift=False, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
-    This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
-    of its Gramian matrix according to :cite:`FKNYY20`. For ill-conditioned matrices, the Cholesky
-    factorization will break down. In this case a diagonal shift will be applied to the Gramian.
+    This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations of its
+    Gramian matrix according to :cite:`FKNYY20`. For ill-conditioned matrices, the Cholesky
+    factorization will break down. In this case a diagonal shift will be applied to the Gramian, see
+    :cite:`BPS25` for details.
 
     - `shifted_chol_qr(A, maxiter=3, orth_tol=None)` is equivalent to the shifted CholeskyQR3
       algorithm (Algorithm 4.2 in :cite:`FKNYY20`).
