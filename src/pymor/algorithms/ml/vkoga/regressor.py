@@ -8,6 +8,7 @@ from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
 from pymor.algorithms.ml.vkoga.kernels import GaussianKernel
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
+from pymor.core.exceptions import ExtensionError
 
 
 class VKOGARegressor(BasicObject):
@@ -287,6 +288,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
             idx_in_X = int(matches[0])
         else:
             idx_in_X = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
+
+        if self._centers_idx is not None and idx_in_X in self._centers_idx:
+            raise ExtensionError('Center already selected.')
 
         # update the residual
         if self._V is None and self._z is None:
