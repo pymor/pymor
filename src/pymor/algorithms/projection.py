@@ -14,6 +14,7 @@ from pymor.operators.constructions import (
     ConstantOperator,
     IdentityOperator,
     LincombOperator,
+    LinearInputOperator,
     ProjectedOperator,
     QuadraticFunctional,
     SelectionOperator,
@@ -215,6 +216,14 @@ class ProjectRules(RuleTable):
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
         return self.replace_children(op).with_(solver=None)
+
+    @match_class(LinearInputOperator)
+    def action_LinearInputOperator(self, op):
+        range_basis, source_basis = self.range_basis, self.source_basis
+        if source_basis is not None:
+            raise RuleNotMatchingError('source_basis must be None for LinearInputOperator')
+        projected_B = project(op.B, range_basis, None)
+        return op.with_(B=projected_B)
 
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):
