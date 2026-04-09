@@ -219,10 +219,9 @@ class ProjectRules(RuleTable):
 
     @match_class(LinearInputOperator)
     def action_LinearInputOperator(self, op):
-        range_basis, source_basis = self.range_basis, self.source_basis
-        if source_basis is not None:
+        if self.source_basis is not None:
             raise RuleNotMatchingError('source_basis must be None for LinearInputOperator')
-        projected_B = project(op.B, range_basis, None)
+        projected_B = project(op.B, self.range_basis, None)
         return op.with_(B=projected_B)
 
     @match_class(SelectionOperator)
@@ -376,6 +375,12 @@ class ProjectToSubbasisRules(RuleTable):
             raise RuleNotMatchingError
         blocks = [self.apply(b) for b in op.blocks.ravel()]
         return op.with_(blocks=blocks)
+
+    @match_class(LinearInputOperator)
+    def action_LinearInputOperator(self, op):
+        if self.dim_source is not None:
+            raise RuleNotMatchingError('dim_source must be None for LinearInputOperator')
+        return op.with_(B=project_to_subbasis(op.B, dim_range=self.dim_range, dim_source=None))
 
     @match_class(ProjectedOperator)
     def action_ProjectedOperator(self, op):
