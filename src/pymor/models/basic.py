@@ -75,7 +75,14 @@ class StationaryModel(Model):
         assert rhs.linear
         assert output_functional.source == operator.source
 
-        super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        try:
+            dim_input = [op.parameters['input']
+                         for op in [operator, rhs, output_functional] if 'input' in op.parameters].pop()
+        except IndexError:
+            dim_input = 0
+
+        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
+                         visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.solution_space = operator.source
