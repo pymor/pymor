@@ -149,7 +149,7 @@ class DDRBModelHierarchy(Model):
     def _compute(self, quantities, data, mu):
         update = bool(quantities & {'solution', 'output'})
 
-        if quantities & {'solution', 'output', 'solution_error_estimate'}:
+        if quantities & {'solution', 'output', 'solution_error_estimate', 'output_error_estimate'}:
             self._solve_reduced(data, mu, update=update)
 
             if 'solution' in quantities:
@@ -168,5 +168,14 @@ class DDRBModelHierarchy(Model):
             if 'solution_error_estimate' in quantities:
                 data['solution_error_estimate'] = data['_estimated_error']
                 quantities.remove('solution_error_estimate')
+
+            if 'output_error_estimate' in quantities:
+                if '_reduced_solution' in data:
+                    data['output_error_estimate'] = self._rb_model.error_estimator.estimate_output_error(
+                        data['_reduced_solution'], mu, self._rb_model)
+                else:
+                    # FOM path: no estimation error
+                    data['output_error_estimate'] = np.zeros((self.dim_output, 1))
+                quantities.remove('output_error_estimate')
 
         super()._compute(quantities, data, mu=mu)
