@@ -73,7 +73,8 @@ DATA_DRIVEN_ARGS = (
 )
 
 ADAPTIVE_MODEL_HIERARCHY_ARGS = (
-    ('hierarchy', ['vkoga', 20, 50])
+    ('hierarchy', [0, 'vkoga', 20, 50])
+    ('hierarchy', [1, 'vkoga', 20, 50, '--time-steps=10'])
 )
 
 THERMALBLOCK_ARGS = (
