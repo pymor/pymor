@@ -19,20 +19,32 @@ app = App(help_on_error=True)
 
 @app.default
 def main(
+    problem_number: Literal[0, 1],
     regressor: Literal['fcnn', 'vkoga', 'gpr'],
     grid_intervals: int,
     num_parameters: int,
     /, *,
+    time_steps: int = 10,
     fv: bool = False,
     vis: bool = False,
     validation_ratio: float = 0.1,
     input_scaling: bool = False,
     output_scaling: bool = False,
 ):
-    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
+    """Adaptive model hierarchy combining reduced basis and machine learning methods.
+
+    Problem number 0 considers the incompressible Navier-Stokes equations in
+    a two-dimensional cavity with the Reynolds number as parameter.
+    The discretization is based on FEniCS.
+
+    Problem number 1 considers a parametrized Burgers equation on a
+    one-dimensional domain. The discretization is based on pyMOR's built-in
+    functionality.
 
     Parameters
     ----------
+    problem_number
+        Selects the problem to solve [0 or 1].
     regressor
         Regressor to use. Options are neural networks using PyTorch, pyMOR's VKOGA algorithm
         or Gaussian process regression using scikit-learn.
@@ -40,6 +52,8 @@ def main(
         Grid interval count.
     num_parameters
         Number of parameters to evaluate the hierarchy for.
+    time_steps
+        Number of time steps used for discretization (only used if `problem_number` is 1).
     fv
         Use finite volume discretization instead of finite elements.
     vis
@@ -56,9 +70,9 @@ def main(
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
-    fom = create_fom(fv, grid_intervals)
+    assert problem_number in (0, 1), f'Unknown problem number {problem_number}'
 
-    parameter_space = fom.parameters.space((0.1, 1))
+    fom, parameter_space = create_fom(problem_number, fv, grid_intervals, time_steps)
 
     parameters = parameter_space.sample_randomly(num_parameters)
 
@@ -87,11 +101,20 @@ def main(
     else:
         output_scaler = None
 
-    rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
+    compression = None
+    if problem_number == 0:
+        rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
+    else:
+        from pymor.reductors.parabolic import ParabolicRBReductor
+        rb_reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product,
+                                          coercivity_estimator=ProjectionParameterFunctional('diffusion'))
+        compression = lambda U: pod(U, product=fom.h1_0_semi_product)[0]
+
     dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters,
-                              'input_scaler': input_scaler, 'output_scaler': output_scaler}
+                              'input_scaler': input_scaler, 'output_scaler': output_scaler,
+                              'time_vectorized': problem_number == 1}
     tol = 5e-3
-    hierarchy = DDRBModelHierarchy(fom, rb_reductor, dd_reductor_parameters, tol)
+    hierarchy = DDRBModelHierarchy(fom, rb_reductor, dd_reductor_parameters, tol, compression=compression)
 
     print(f'Performing test on parameter set of size {len(parameters)} ...')
     U = fom.solution_space.empty(reserve=len(parameters))
@@ -111,14 +134,15 @@ def main(
         timings_red.append(time.perf_counter() - tic)
         U_red.append(data['solution'])
         used_models.append(data['_used_model'])
-        estimated_errors.append(data['_estimated_error'][0])
+        estimated_errors.append(np.max(data['_estimated_error']))
 
     timings_fom = np.array(timings_fom)
     timings_red = np.array(timings_red)
     estimated_errors = np.array(estimated_errors)
 
     print(f'Mean speedup: {np.mean(timings_fom / timings_red)}')
-    relative_errors = (U - U_red).norm() / U.norm()
+    norms = U.norm()
+    relative_errors = (U - U_red).norm() / np.where(norms > 0, norms, 1.)
     print(f'Mean errors: {np.mean(relative_errors)}')
 
     n = len(used_models)
@@ -171,29 +195,36 @@ def main(
         plt.show()
 
 
-def create_fom(fv, grid_intervals):
-    f = LincombFunction(
-        [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.1])
-    g = LincombFunction(
-        [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.5])
-
-    problem = StationaryProblem(
-        domain=RectDomain(),
-        rhs=f,
-        diffusion=LincombFunction(
-            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-            [ProjectionParameterFunctional('mu'), 1]),
-        dirichlet_data=g,
-        name='2DProblem'
-    )
-
+def create_fom(problem_number, fv, grid_intervals, time_steps):
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
-    fom, _ = discretizer(problem, diameter=1. / int(grid_intervals))
+    if problem_number == 0:
+        f = LincombFunction(
+            [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.1])
+        g = LincombFunction(
+            [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.5])
 
-    return fom
+        problem = StationaryProblem(
+            domain=RectDomain(),
+            rhs=f,
+            diffusion=LincombFunction(
+                [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
+                [ProjectionParameterFunctional('mu'), 1]),
+            dirichlet_data=g,
+            name='2DProblem'
+        )
+
+        discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
+        fom, _ = discretizer(problem, diameter=1. / int(grid_intervals))
+        parameter_space = fom.parameters.space((0.1, 1))
+    else:
+        stationary_part = text_problem(text='p')
+        problem = InstationaryProblem(stationary_part, initial_data=ConstantFunction(0., 2), T=1.)
+        fom, _ = discretize_instationary_cg(problem, diameter=5., nt=time_steps)
+        parameter_space = fom.parameters.space((0.1, 1))
+
+    return fom, parameter_space
 
 
 if __name__ == '__main__':

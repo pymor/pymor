@@ -10,8 +10,7 @@ from pymor.reductors.data_driven import DataDrivenReductor
 
 
 class DDRBModelHierarchy(Model):
-    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None,
-                 retrain_interval=1):
+    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None, retrain_interval=1):
         self.__auto_init(locals())
         self.__dict__.pop('dd_model', None)
 
@@ -39,7 +38,7 @@ class DDRBModelHierarchy(Model):
         sum_dims = 0
         for i, red in enumerate(self.dd_reductors):
             coeffs = reduced_coefficients[sum_dims:sum_dims+red.dim_solution_space]
-            red.extend_training_data([mu], coeffs)
+            red.extend_training_data([mu], coeffs.T)
             self._pending_retrains[i] += 1
             if self._pending_retrains[i] >= self.retrain_interval:
                 self.dd_models[i] = red.reduce()
@@ -61,14 +60,15 @@ class DDRBModelHierarchy(Model):
 
         # Compute ML solution and estimate error
         if len(self.dd_models) == 0:
-            dd_solution = self._rb_model.solution_space.zeros()
+            nt = getattr(getattr(self._rb_model, 'time_stepper', None), 'nt', 0)
+            dd_solution = self._rb_model.solution_space.zeros(nt + 1)
         else:
             dd_solution_np = np.vstack([dd_model.solve(mu).to_numpy() for dd_model in self.dd_models])
             dd_solution = self._rb_model.solution_space.make_array(dd_solution_np)
         dd_estimated_error = self._rb_model.error_estimator.estimate_error(dd_solution, mu, self._rb_model)
-        self.logger.info(f'Estimated error of ML: {dd_estimated_error}')
+        self.logger.info(f'Estimated error of ML: {np.max(dd_estimated_error)}')
 
-        if dd_estimated_error <= self.tol:
+        if np.max(dd_estimated_error) <= self.tol:
             data['_reduced_solution'] = dd_solution
             data['_used_model'] = 'ML'
             data['_estimated_error'] = dd_estimated_error
@@ -77,9 +77,9 @@ class DDRBModelHierarchy(Model):
         # Compute RB solution and estimate error
         rb_solution = self._rb_model.solve(mu)
         rb_estimated_error = self._rb_model.error_estimator.estimate_error(rb_solution, mu, self._rb_model)
-        self.logger.info(f'Estimated error of RB: {rb_estimated_error}')
+        self.logger.info(f'Estimated error of RB: {np.max(rb_estimated_error)}')
 
-        if rb_estimated_error <= self.tol:
+        if np.max(rb_estimated_error) <= self.tol:
             data['_reduced_solution'] = rb_solution
             data['_used_model'] = 'RB'
             data['_estimated_error'] = rb_estimated_error
@@ -115,8 +115,9 @@ class DDRBModelHierarchy(Model):
         self._update_dd_models(mu, projected_fom_solution[:old_rb_size])
 
         # Add new data driven reductor and model to account for new basis components
-        self.dd_reductors.append(DataDrivenReductor([mu], projected_fom_solution[old_rb_size:],
-                                                    **self.dd_reductor_parameters))
+        T = getattr(self.fom, 'T', None)
+        self.dd_reductors.append(DataDrivenReductor([mu], projected_fom_solution[old_rb_size:].T,
+                                                    T=T, **self.dd_reductor_parameters))
         self.dd_models.append(self.dd_reductors[-1].reduce())
         self._pending_retrains.append(0)
 
