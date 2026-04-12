@@ -10,21 +10,41 @@ from pymor.reductors.data_driven import DataDrivenReductor
 
 
 class DDRBModelHierarchy(Model):
-    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None):
+    def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None,
+                 retrain_interval=1):
         self.__auto_init(locals())
         self.__dict__.pop('dd_model', None)
 
         assert isinstance(rb_reductor, ProjectionBasedReductor)
         assert compression is None or callable(compression)
+        assert isinstance(retrain_interval, int)
+        assert retrain_interval >= 1
 
         self.dd_reductors = []
         self.dd_models = []
         self._rb_model = self.rb_reductor.reduce()
+        self._pending_retrains = []
 
         self.solution_space = fom.solution_space
         self.dim_output = fom.dim_output
 
         super().__init__(products=fom.products, visualizer=fom.visualizer)
+
+    def _update_dd_models(self, mu, reduced_coefficients):
+        """Extend DD reductors with new training data and retrain if needed.
+
+        Training data is always accumulated in the reductor. When `retrain_interval`
+        new samples have been added, the regressor is retrained from scratch.
+        """
+        sum_dims = 0
+        for i, red in enumerate(self.dd_reductors):
+            coeffs = reduced_coefficients[sum_dims:sum_dims+red.dim_solution_space]
+            red.extend_training_data([mu], coeffs)
+            self._pending_retrains[i] += 1
+            if self._pending_retrains[i] >= self.retrain_interval:
+                self.dd_models[i] = red.reduce()
+                self._pending_retrains[i] = 0
+            sum_dims += red.dim_solution_space
 
     def _solve_reduced(self, data, mu, update=True):
         """Solve the hierarchy and return the reduced solution.
@@ -65,12 +85,7 @@ class DDRBModelHierarchy(Model):
             data['_estimated_error'] = rb_estimated_error
 
             if update:
-                # Extend training data of data driven reductors and reduce again
-                sum_dims = 0
-                for i, red in enumerate(self.dd_reductors):
-                    red.extend_training_data([mu], rb_solution.to_numpy()[sum_dims:sum_dims+red.dim_solution_space])
-                    self.dd_models[i] = red.reduce()
-                    sum_dims += red.dim_solution_space
+                self._update_dd_models(mu, rb_solution.to_numpy())
 
             return
 
@@ -95,17 +110,14 @@ class DDRBModelHierarchy(Model):
         # Project FOM solution onto reduced basis
         projected_fom_solution = self.rb_reductor.bases['RB'].inner(fom_solution)
 
-        # Extend training data of data driven reductors and reduce again
-        sum_dims = 0
-        for i, red in enumerate(self.dd_reductors):
-            red.extend_training_data([mu], projected_fom_solution[sum_dims:sum_dims+red.dim_solution_space])
-            self.dd_models[i] = red.reduce()
-            sum_dims += red.dim_solution_space
+        # Extend training data of existing data driven reductors
+        self._update_dd_models(mu, projected_fom_solution[:old_rb_size])
 
         # Add new data driven reductor and model to account for new basis components
         self.dd_reductors.append(DataDrivenReductor([mu], projected_fom_solution[old_rb_size:],
                                                     **self.dd_reductor_parameters))
         self.dd_models.append(self.dd_reductors[-1].reduce())
+        self._pending_retrains.append(0)
 
     def _compute(self, quantities, data, mu):
         update = bool(quantities & {'solution', 'output'})
