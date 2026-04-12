@@ -12,7 +12,6 @@ from pymor.reductors.data_driven import DataDrivenReductor
 class DDRBModelHierarchy(Model):
     def __init__(self, fom, rb_reductor, dd_reductor_parameters, tol, compression=None, retrain_interval=1):
         self.__auto_init(locals())
-        self.__dict__.pop('dd_model', None)
 
         assert isinstance(rb_reductor, ProjectionBasedReductor)
         assert compression is None or callable(compression)
