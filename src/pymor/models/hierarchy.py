@@ -100,7 +100,7 @@ class DDRBModelHierarchy(Model):
         data['_estimated_error'] = np.array([0.])
 
         # Extend reduced basis of RB reductor and reduce again
-        old_rb_size = len(self.rb_reductor.bases['RB'])
+        old_rb_size = self._rb_model.order
         extension_data = fom_solution
         if self.compression is not None:  # Perform additional compression if desired
             extension_data = self.compression(fom_solution)
@@ -108,7 +108,8 @@ class DDRBModelHierarchy(Model):
         self._rb_model = self.rb_reductor.reduce()
 
         # Project FOM solution onto reduced basis
-        projected_fom_solution = self.rb_reductor.bases['RB'].inner(fom_solution)
+        projected_fom_solution = self.rb_reductor.bases['RB'].inner(fom_solution,
+                                                                    product=self.rb_reductor.products.get('RB'))
 
         # Extend training data of existing data driven reductors
         self._update_dd_models(mu, projected_fom_solution[:old_rb_size])
@@ -118,6 +119,8 @@ class DDRBModelHierarchy(Model):
                                                     **self.dd_reductor_parameters))
         self.dd_models.append(self.dd_reductors[-1].reduce())
         self._pending_retrains.append(0)
+
+        assert sum(red.dim_solution_space for red in self.dd_reductors) == self._rb_model.order
 
     def _compute(self, quantities, data, mu):
         update = bool(quantities & {'solution', 'output'})
