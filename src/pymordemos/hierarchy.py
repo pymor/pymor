@@ -42,7 +42,7 @@ def main(
     fv
         Use finite volume discretization instead of finite elements.
     vis
-        Visualize full order solution and reduced solution for a test set.
+        Visualize estimated errors for the queried parameters.
     validation_ratio
         Ratio of training data used for validation of the neural networks.
     input_scaling
@@ -115,7 +115,8 @@ def main(
     print(f'Mean errors: {np.mean(relative_errors)}')
 
     hierarchy.print_summary()
-    hierarchy.plot_summary()
+    if vis:
+        hierarchy.plot_summary()
 
 
 def create_fom(fv, grid_intervals):
