@@ -5,6 +5,7 @@
 import time
 from typing import Literal
 
+import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import App
 
@@ -103,20 +104,40 @@ def main(
 
     timings_red = []
     U_red = fom.solution_space.empty(reserve=len(parameters))
+    used_models = []
+    estimated_errors = []
     for mu in parameters:
         tic = time.perf_counter()
-        U_red.append(hierarchy.solve(mu))
+        data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
         time_red = time.perf_counter() - tic
+        U_red.append(data['solution'])
         timings_red.append(time_red)
+        used_models.append(data['_used_model'])
+        estimated_errors.append(data['_estimated_error'][0])
 
     print(f'Mean speedup: {np.mean(np.array(timings_fom) / np.array(timings_red))}')
 
     relative_errors = (U - U_red).norm() / U.norm()
     print(f'Mean errors: {np.mean(relative_errors)}')
 
-    hierarchy.print_summary()
+    n = len(used_models)
+    for model in ('FOM', 'RB', 'ML'):
+        count = used_models.count(model)
+        print(f'\t{model}: {count}\t(ratio: {count/n*100:.2f}%)')
+
     if vis:
-        hierarchy.plot_summary()
+        estimated_errors = np.array(estimated_errors)
+        fig, ax = plt.subplots()
+        for model, marker in (('ML', '*'), ('RB', '.')):
+            idx = [i for i, m in enumerate(used_models) if m == model]
+            if idx:
+                ax.plot(idx, estimated_errors[idx], marker, label=model)
+        ax.set_xlabel('parameter index')
+        ax.set_ylabel('error estimate')
+        ax.semilogy()
+        ax.legend()
+        ax.set_title('Estimated errors')
+        plt.show()
 
 
 def create_fom(fv, grid_intervals):
