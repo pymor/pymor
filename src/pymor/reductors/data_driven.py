@@ -109,6 +109,8 @@ class DataDrivenReductor(BasicObject):
 
         self.dim_solution_space = None
 
+        self._n_trained = 0
+
         # compute training data
         # i.e. pairs of parameters (potentially including time) and reduced coefficients
         with self.logger.block('Computing training data ...'):
@@ -123,6 +125,14 @@ class DataDrivenReductor(BasicObject):
     def reduce(self, **kwargs):
         """Reduce by training a machine learning surrogate.
 
+        If the regressor supports incremental extension via an `extend` method
+        and has already been fitted, only the new training data (added via
+        :meth:`extend_training_data`) is passed to `extend`. Otherwise, the
+        regressor is fully retrained on all training data.
+
+        Note that incremental extension is only used when no scalers are
+        configured, since scalers need to be refitted on the full dataset.
+
         Parameters
         ----------
         kwargs
@@ -133,24 +143,36 @@ class DataDrivenReductor(BasicObject):
         -------
         The data-driven reduced model.
         """
-        # run the actual training of the regressor
-        with self.logger.block('Training of machine learning method ...'):
-            # fit input and output scaler if required
-            if self.input_scaler is not None:
-                X = [x[0] for x in self.training_data]
-                self.input_scaler = self.input_scaler.fit(X)
-                X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
-            else:
-                X = [x[0] for x in self.training_data]
-            if self.output_scaler is not None:
-                Y = [x[1] for x in self.training_data]
-                self.output_scaler = self.output_scaler.fit(Y)
-                Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
-            else:
-                Y = [x[1] for x in self.training_data]
-            # fit regressor to training data
-            self.regressor = self.regressor.fit(X, Y, **kwargs)
+        new_data = self.training_data[self._n_trained:]
 
+        use_extend = (self._n_trained > 0
+                      and len(new_data) > 0
+                      and hasattr(self.regressor, 'extend')
+                      and self.input_scaler is None
+                      and self.output_scaler is None)
+
+        if use_extend:
+            with self.logger.block('Extending machine learning method ...'):
+                X_new = np.array([x[0] for x in new_data])
+                Y_new = np.array([x[1] for x in new_data])
+                self.regressor.extend(X_new, Y_new)
+        else:
+            with self.logger.block('Training of machine learning method ...'):
+                if self.input_scaler is not None:
+                    X = [x[0] for x in self.training_data]
+                    self.input_scaler = self.input_scaler.fit(X)
+                    X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
+                else:
+                    X = [x[0] for x in self.training_data]
+                if self.output_scaler is not None:
+                    Y = [x[1] for x in self.training_data]
+                    self.output_scaler = self.output_scaler.fit(Y)
+                    Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
+                else:
+                    Y = [x[1] for x in self.training_data]
+                self.regressor = self.regressor.fit(X, Y, **kwargs)
+
+        self._n_trained = len(self.training_data)
         return self._build_rom()
 
     def _compute_data(self, parameters, snapshots):
