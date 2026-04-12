@@ -47,8 +47,7 @@ class DataDrivenReductor(BasicObject):
     regressor
         Regressor with `fit` and `predict` methods similar to scikit-learn
         regressors that is trained in the `reduce`-method.
-        If `None` (which is also the default),
-        a :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` is used.
+        Defaults to :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
         Alternatively, one can pass a class which will be instantiated using
         the attributes in `regressor_parameters`.
     regressor_parameters
