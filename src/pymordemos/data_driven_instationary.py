@@ -73,12 +73,9 @@ def main(
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
-    fom, plot_function = create_fom(problem_number, grid_intervals, time_steps)
+    assert problem_number in (0, 1), f'Unknown problem number {problem_number}'
 
-    if problem_number == 0:
-        parameter_space = fom.parameters.space(1., 50.)
-    else:
-        parameter_space = fom.parameters.space(1., 2.)
+    fom, plot_function, parameter_space = create_fom(problem_number, grid_intervals, time_steps)
 
     training_parameters = parameter_space.sample_uniformly(training_samples)
     test_parameters = parameter_space.sample_randomly(10)
@@ -199,7 +196,8 @@ def create_fom(problem_number, grid_intervals, time_steps):
     if problem_number == 0:
         config.require('FENICS')
         fom, plot_function = discretize_navier_stokes(grid_intervals, time_steps)
-    elif problem_number == 1:
+        parameter_space = fom.parameters.space(1., 50.)
+    else:
         problem = burgers_problem()
         f = LincombFunction(
             [ExpressionFunction('1.', 1), ConstantFunction(1., 1)],
@@ -208,10 +206,9 @@ def create_fom(problem_number, grid_intervals, time_steps):
 
         fom, _ = discretize_instationary_fv(problem, diameter=1. / grid_intervals, nt=time_steps)
         plot_function = fom.visualize
-    else:
-        raise ValueError(f'Unknown problem number {problem_number}')
+        parameter_space = fom.parameters.space(1., 2.)
 
-    return fom, plot_function
+    return fom, plot_function, parameter_space
 
 
 def discretize_navier_stokes(n, nt):
