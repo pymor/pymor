@@ -16,6 +16,7 @@ class DDRBModelHierarchy(Model):
         self.__dict__.pop('dd_model', None)
 
         assert isinstance(rb_reductor, ProjectionBasedReductor)
+        assert compression is None or callable(compression)
 
         self.dd_reductors = []
         self.dd_models = []
@@ -56,13 +57,17 @@ class DDRBModelHierarchy(Model):
         axs.set_title('Estimated errors')
         plt.show()
 
-    def _solve_reduced(self, data, mu):
-        """Solve the hierarchy and return the reduced solution, extending bases as needed.
+    def _solve_reduced(self, data, mu, update=True):
+        """Solve the hierarchy and return the reduced solution.
 
         The reduced solution, used model type, and estimated error are stored in `data`.
         If the FOM fallback is used, `data['solution']` is set to the FOM solution directly.
+
+        If `update` is `True`, bases and training data are extended as needed.
+        If `update` is `False`, only the error estimation is performed without
+        modifying the hierarchy.
         """
-        if '_reduced_solution' in data or '_used_model' in data:
+        if '_estimated_error' in data:
             return
 
         # Compute ML solution and estimate error
@@ -77,8 +82,10 @@ class DDRBModelHierarchy(Model):
         if dd_estimated_error <= self.tol:
             data['_reduced_solution'] = dd_solution
             data['_used_model'] = 'ML'
-            self.used_model.append('ML')
-            self.estimated_errors.append(dd_estimated_error[0])
+            data['_estimated_error'] = dd_estimated_error
+            if update:
+                self.used_model.append('ML')
+                self.estimated_errors.append(dd_estimated_error[0])
             return
 
         # Compute RB solution and estimate error
@@ -89,22 +96,29 @@ class DDRBModelHierarchy(Model):
         if rb_estimated_error <= self.tol:
             data['_reduced_solution'] = rb_solution
             data['_used_model'] = 'RB'
+            data['_estimated_error'] = rb_estimated_error
 
-            # Extend training data of data driven reductors and reduce again
-            sum_dims = 0
-            for i, red in enumerate(self.dd_reductors):
-                red.extend_training_data([mu], rb_solution.to_numpy()[sum_dims:sum_dims+red.dim_solution_space])
-                self.dd_models[i] = red.reduce()
-                sum_dims += red.dim_solution_space
+            if update:
+                # Extend training data of data driven reductors and reduce again
+                sum_dims = 0
+                for i, red in enumerate(self.dd_reductors):
+                    red.extend_training_data([mu], rb_solution.to_numpy()[sum_dims:sum_dims+red.dim_solution_space])
+                    self.dd_models[i] = red.reduce()
+                    sum_dims += red.dim_solution_space
 
-            self.used_model.append('RB')
-            self.estimated_errors.append(rb_estimated_error[0])
+                self.used_model.append('RB')
+                self.estimated_errors.append(rb_estimated_error[0])
+            return
+
+        if not update:
+            data['_estimated_error'] = rb_estimated_error
             return
 
         # Compute FOM solution
         fom_solution = self.fom.solve(mu)
         data['solution'] = fom_solution
         data['_used_model'] = 'FOM'
+        data['_estimated_error'] = np.array([0.])
 
         # Extend reduced basis of RB reductor and reduce again
         old_rb_size = len(self.rb_reductor.bases['RB'])
@@ -133,8 +147,10 @@ class DDRBModelHierarchy(Model):
         self.estimated_errors.append(0.)
 
     def _compute(self, quantities, data, mu):
-        if 'solution' in quantities or 'output' in quantities:
-            self._solve_reduced(data, mu)
+        update = bool(quantities & {'solution', 'output'})
+
+        if quantities & {'solution', 'output', 'solution_error_estimate'}:
+            self._solve_reduced(data, mu, update=update)
 
             if 'solution' in quantities:
                 if 'solution' not in data:
@@ -148,5 +164,9 @@ class DDRBModelHierarchy(Model):
                 else:
                     data['output'] = self._rb_model.output_functional.apply(data['_reduced_solution'], mu=mu).to_numpy()
                 quantities.remove('output')
+
+            if 'solution_error_estimate' in quantities:
+                data['solution_error_estimate'] = data['_estimated_error']
+                quantities.remove('solution_error_estimate')
 
         super()._compute(quantities, data, mu=mu)
