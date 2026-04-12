@@ -99,24 +99,25 @@ def main(
     for mu in parameters:
         tic = time.perf_counter()
         U.append(fom.solve(mu))
-        time_fom = time.perf_counter() - tic
-        timings_fom.append(time_fom)
+        timings_fom.append(time.perf_counter() - tic)
 
-    timings_red = []
     U_red = fom.solution_space.empty(reserve=len(parameters))
+    timings_red = []
     used_models = []
     estimated_errors = []
     for mu in parameters:
         tic = time.perf_counter()
         data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
-        time_red = time.perf_counter() - tic
+        timings_red.append(time.perf_counter() - tic)
         U_red.append(data['solution'])
-        timings_red.append(time_red)
         used_models.append(data['_used_model'])
         estimated_errors.append(data['_estimated_error'][0])
 
-    print(f'Mean speedup: {np.mean(np.array(timings_fom) / np.array(timings_red))}')
+    timings_fom = np.array(timings_fom)
+    timings_red = np.array(timings_red)
+    estimated_errors = np.array(estimated_errors)
 
+    print(f'Mean speedup: {np.mean(timings_fom / timings_red)}')
     relative_errors = (U - U_red).norm() / U.norm()
     print(f'Mean errors: {np.mean(relative_errors)}')
 
@@ -126,17 +127,47 @@ def main(
         print(f'\t{model}: {count}\t(ratio: {count/n*100:.2f}%)')
 
     if vis:
-        estimated_errors = np.array(estimated_errors)
-        fig, ax = plt.subplots()
+        model_colors = {'FOM': 'C0', 'RB': 'C1', 'ML': 'C2'}
+        fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+        # Model usage counts
+        models = ('FOM', 'RB', 'ML')
+        counts = [used_models.count(m) for m in models]
+        axes[0].bar(models, counts, color=[model_colors[m] for m in models])
+        axes[0].set_ylabel('count')
+        axes[0].set_title('Model usage')
+
+        # Runtime box plots
+        timing_data = [timings_fom]
+        labels = ['FOM (direct)']
+        colors = [model_colors['FOM']]
+        for model in models:
+            idx = [i for i, m in enumerate(used_models) if m == model]
+            if idx:
+                timing_data.append(timings_red[idx])
+                labels.append(f'Hierarchy ({model})')
+                colors.append(model_colors[model])
+        bplot = axes[1].boxplot(timing_data, labels=labels, patch_artist=True)
+        for patch, color in zip(bplot['boxes'], colors, strict=True):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+        axes[1].set_yscale('log')
+        axes[1].set_ylabel('time [s]')
+        axes[1].set_title('Runtimes')
+
+        # Estimated errors
         for model, marker in (('ML', '*'), ('RB', '.')):
             idx = [i for i, m in enumerate(used_models) if m == model]
             if idx:
-                ax.plot(idx, estimated_errors[idx], marker, label=model)
-        ax.set_xlabel('parameter index')
-        ax.set_ylabel('error estimate')
-        ax.semilogy()
-        ax.legend()
-        ax.set_title('Estimated errors')
+                axes[2].plot(idx, estimated_errors[idx], marker,
+                             color=model_colors[model], label=model)
+        axes[2].set_xlabel('parameter index')
+        axes[2].set_ylabel('error estimate')
+        axes[2].semilogy()
+        axes[2].legend()
+        axes[2].set_title('Estimated errors')
+
+        fig.tight_layout()
         plt.show()
 
 
