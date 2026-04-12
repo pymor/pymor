@@ -77,12 +77,22 @@ class DataDrivenReductor(BasicObject):
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
         before passing them to the regressor.
+    input_scaler_fitted
+        If `True`, the `input_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`. This enables the incremental
+        `extend` path for regressors that support it. Useful when the scaler
+        has been pre-fitted based on domain knowledge (e.g., the parameter space
+        bounds).
+    output_scaler_fitted
+        If `True`, the `output_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`.
     """
 
     def __init__(self, training_parameters, training_snapshots,
                  regressor=VKOGARegressor, regressor_parameters=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
-                 input_scaler=None, output_scaler=None):
+                 input_scaler=None, output_scaler=None,
+                 input_scaler_fitted=False, output_scaler_fitted=False):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
@@ -122,6 +132,22 @@ class DataDrivenReductor(BasicObject):
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
+    def _scale_data(self, data):
+        """Apply input and output scalers to training data."""
+        X = np.array([x[0] for x in data])
+        Y = np.array([x[1] for x in data])
+        if self.input_scaler is not None:
+            if not self.input_scaler_fitted:
+                self.input_scaler = self.input_scaler.fit(X)
+                self.input_scaler_fitted = True
+            X = self.input_scaler.transform(X)
+        if self.output_scaler is not None:
+            if not self.output_scaler_fitted:
+                self.output_scaler = self.output_scaler.fit(Y)
+                self.output_scaler_fitted = True
+            Y = self.output_scaler.transform(Y)
+        return X, Y
+
     def reduce(self, **kwargs):
         """Reduce by training a machine learning surrogate.
 
@@ -130,8 +156,9 @@ class DataDrivenReductor(BasicObject):
         :meth:`extend_training_data`) is passed to `extend`. Otherwise, the
         regressor is fully retrained on all training data.
 
-        Note that incremental extension is only used when no scalers are
-        configured, since scalers need to be refitted on the full dataset.
+        Incremental extension requires that all scalers are either pre-fitted
+        (via the `input_scaler_fitted` / `output_scaler_fitted` flags) or not
+        used, since unfitted scalers need to be refitted on the full dataset.
 
         Parameters
         ----------
@@ -145,31 +172,21 @@ class DataDrivenReductor(BasicObject):
         """
         new_data = self.training_data[self._n_trained:]
 
+        scalers_ready = ((self.input_scaler is None or self.input_scaler_fitted)
+                         and (self.output_scaler is None or self.output_scaler_fitted))
+
         use_extend = (self._n_trained > 0
                       and len(new_data) > 0
                       and hasattr(self.regressor, 'extend')
-                      and self.input_scaler is None
-                      and self.output_scaler is None)
+                      and scalers_ready)
 
         if use_extend:
             with self.logger.block('Extending machine learning method ...'):
-                X_new = np.array([x[0] for x in new_data])
-                Y_new = np.array([x[1] for x in new_data])
-                self.regressor.extend(X_new, Y_new)
+                X_new, Y_new = self._scale_data(new_data)
+                self.regressor.extend(np.array(X_new), np.array(Y_new))
         else:
             with self.logger.block('Training of machine learning method ...'):
-                if self.input_scaler is not None:
-                    X = [x[0] for x in self.training_data]
-                    self.input_scaler = self.input_scaler.fit(X)
-                    X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
-                else:
-                    X = [x[0] for x in self.training_data]
-                if self.output_scaler is not None:
-                    Y = [x[1] for x in self.training_data]
-                    self.output_scaler = self.output_scaler.fit(Y)
-                    Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
-                else:
-                    Y = [x[1] for x in self.training_data]
+                X, Y = self._scale_data(self.training_data)
                 self.regressor = self.regressor.fit(X, Y, **kwargs)
 
         self._n_trained = len(self.training_data)
