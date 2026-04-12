@@ -25,7 +25,7 @@ def main(
     num_parameters: int,
     /, *,
     time_steps: int = 10,
-    fv: bool = False,
+    time_vectorized: bool = True,
     vis: bool = False,
     validation_ratio: float = 0.1,
     input_scaling: bool = False,
@@ -33,13 +33,8 @@ def main(
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 
-    Problem number 0 considers the incompressible Navier-Stokes equations in
-    a two-dimensional cavity with the Reynolds number as parameter.
-    The discretization is based on FEniCS.
-
-    Problem number 1 considers a parametrized Burgers equation on a
-    one-dimensional domain. The discretization is based on pyMOR's built-in
-    functionality.
+    Problem number 0 considers an elliptic problem and problem number 1 considers
+    a parabolic problem.
 
     Parameters
     ----------
@@ -54,8 +49,8 @@ def main(
         Number of parameters to evaluate the hierarchy for.
     time_steps
         Number of time steps used for discretization (only used if `problem_number` is 1).
-    fv
-        Use finite volume discretization instead of finite elements.
+    time_vectorized
+        Predict the whole time trajectory at once or iteratively.
     vis
         Visualize estimated errors for the queried parameters.
     validation_ratio
@@ -72,7 +67,7 @@ def main(
 
     assert problem_number in (0, 1), f'Unknown problem number {problem_number}'
 
-    fom, parameter_space = create_fom(problem_number, fv, grid_intervals, time_steps)
+    fom, parameter_space = create_fom(problem_number, grid_intervals, time_steps)
 
     parameters = parameter_space.sample_randomly(num_parameters)
 
@@ -105,14 +100,13 @@ def main(
     if problem_number == 0:
         rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
     else:
-        from pymor.reductors.parabolic import ParabolicRBReductor
         rb_reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product,
                                           coercivity_estimator=ProjectionParameterFunctional('diffusion'))
         compression = lambda U: pod(U, product=fom.h1_0_semi_product)[0]
 
     dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters,
                               'input_scaler': input_scaler, 'output_scaler': output_scaler,
-                              'time_vectorized': problem_number == 1}
+                              'time_vectorized': (problem_number == 1 and time_vectorized)}
     tol = 5e-3
     hierarchy = DDRBModelHierarchy(fom, rb_reductor, dd_reductor_parameters, tol, compression=compression)
 
@@ -195,7 +189,7 @@ def main(
         plt.show()
 
 
-def create_fom(problem_number, fv, grid_intervals, time_steps):
+def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
         f = LincombFunction(
@@ -215,8 +209,7 @@ def create_fom(problem_number, fv, grid_intervals, time_steps):
             name='2DProblem'
         )
 
-        discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
-        fom, _ = discretizer(problem, diameter=1. / int(grid_intervals))
+        fom, _ = discretize_stationary_cg(problem, diameter=1. / int(grid_intervals))
         parameter_space = fom.parameters.space((0.1, 1))
     else:
         stationary_part = text_problem(text='p')
