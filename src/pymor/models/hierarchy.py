@@ -24,7 +24,10 @@ class DDRBModelHierarchy(Model):
         self.used_model = []
         self.estimated_errors = []
 
-        super().__init__()
+        self.solution_space = fom.solution_space
+        self.dim_output = fom.dim_output
+
+        super().__init__(products=fom.products, visualizer=fom.visualizer)
 
     def print_summary(self):
         print('Number of successful calls:')
