@@ -72,6 +72,10 @@ DATA_DRIVEN_ARGS = (
     ('data_driven_fenics', ['gpr', 15, '--input-scaling', '--output-scaling']),
 )
 
+ADAPTIVE_MODEL_HIERARCHY_ARGS = (
+    ('hierarchy', ['vkoga', 20, 50])
+)
+
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
     ('thermalblock', ['--fenics', 2, 2, 3, 5]),
@@ -190,6 +194,7 @@ DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + SUCCESSIVE_CONSTRAINTS_ARGS
     + DATA_DRIVEN_ARGS
+    + ADAPTIVE_MODEL_HIERARCHY_ARGS
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS
