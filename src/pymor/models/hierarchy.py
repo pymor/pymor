@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from pymor.models.interface import Model
@@ -22,40 +21,10 @@ class DDRBModelHierarchy(Model):
         self.dd_models = []
         self._rb_model = self.rb_reductor.reduce()
 
-        self.used_model = []
-        self.estimated_errors = []
-
         self.solution_space = fom.solution_space
         self.dim_output = fom.dim_output
 
         super().__init__(products=fom.products, visualizer=fom.visualizer)
-
-    def print_summary(self):
-        print('Number of successful calls:')
-        print(f"\tFOM: {self.used_model.count('FOM')}\t"
-              f"(ratio: {self.used_model.count('FOM')/len(self.used_model)*100:.2f}%)")
-        print(f"\tRB: {self.used_model.count('RB')}\t"
-              f"(ratio: {self.used_model.count('RB')/len(self.used_model)*100:.2f}%)")
-        print(f"\tML: {self.used_model.count('ML')}\t"
-              f"(ratio: {self.used_model.count('ML')/len(self.used_model)*100:.2f}%)")
-
-    def plot_summary(self):
-        def get_indices(element, lst):
-            return [i for i in range(len(lst)) if lst[i] == element]
-
-        axs = plt.subplot()
-        axs.set_xlabel('parameter index')
-        axs.set_ylabel('error estimate')
-        axs.plot(get_indices('ML', self.used_model),
-                 np.array(self.estimated_errors)[get_indices('ML', self.used_model)],
-                 '*', label='ML')
-        axs.plot(get_indices('RB', self.used_model),
-                 np.array(self.estimated_errors)[get_indices('RB', self.used_model)],
-                 '.', label='RB')
-        axs.legend()
-        axs.semilogy()
-        axs.set_title('Estimated errors')
-        plt.show()
 
     def _solve_reduced(self, data, mu, update=True):
         """Solve the hierarchy and return the reduced solution.
@@ -83,9 +52,6 @@ class DDRBModelHierarchy(Model):
             data['_reduced_solution'] = dd_solution
             data['_used_model'] = 'ML'
             data['_estimated_error'] = dd_estimated_error
-            if update:
-                self.used_model.append('ML')
-                self.estimated_errors.append(dd_estimated_error[0])
             return
 
         # Compute RB solution and estimate error
@@ -106,8 +72,6 @@ class DDRBModelHierarchy(Model):
                     self.dd_models[i] = red.reduce()
                     sum_dims += red.dim_solution_space
 
-                self.used_model.append('RB')
-                self.estimated_errors.append(rb_estimated_error[0])
             return
 
         if not update:
@@ -142,9 +106,6 @@ class DDRBModelHierarchy(Model):
         self.dd_reductors.append(DataDrivenReductor([mu], projected_fom_solution[old_rb_size:],
                                                     **self.dd_reductor_parameters))
         self.dd_models.append(self.dd_reductors[-1].reduce())
-
-        self.used_model.append('FOM')
-        self.estimated_errors.append(0.)
 
     def _compute(self, quantities, data, mu):
         update = bool(quantities & {'solution', 'output'})
