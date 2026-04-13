@@ -42,7 +42,6 @@ ci_preflight_image: ## build CI image used in preflight stage
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
 CI_EXTRAS= \
-	--extra tests \
 	--extra ann \
 	--extra slycot \
 	--extra ipyparallel \
@@ -57,8 +56,8 @@ CI_EXTRAS= \
 
 ci_current_requirements:
 	uv pip compile  \
+        --group ci
 		$(CI_EXTRAS) \
-		--extra docs-additional \
 		--python-version 3.13 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
@@ -69,6 +68,7 @@ ci_current_requirements:
 
 ci_oldest_requirements:
 	uv pip compile  \
+        --group tests
 		$(CI_EXTRAS) \
 		--python-version 3.10 \
 		--python-platform x86_64-manylinux_2_31 \
@@ -80,8 +80,7 @@ ci_oldest_requirements:
 
 ci_fenics_requirements:
 	uv pip compile  \
-		--extra docs_additional \
-		--extra tests \
+		--group ci \
 		--extra ann \
 		--extra ipyparallel \
 		--extra scikit-learn \
@@ -93,10 +92,9 @@ ci_fenics_requirements:
 		-o requirements-ci-fenics.txt \
 		./pyproject.toml ./requirements-ci-fenics-pins.in
 
-ci_fenicsx_requirements:
+ci_fenicsx_requirements: # tests docs-additional
 	uv pip compile  \
-		--extra docs_additional \
-		--extra tests \
+		--group ci \
 		--extra ann \
 		--extra ipyparallel \
 		--extra mpi \
@@ -109,7 +107,6 @@ ci_fenicsx_requirements:
 		./pyproject.toml
 
 CONDA_EXTRAS = \
-	--extras tests \
 	--extras ci-conda \
 	--extras slycot \
 	--extras ipyparallel \
