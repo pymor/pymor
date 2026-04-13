@@ -5,12 +5,13 @@
 import numpy as np
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
+from pymor.algorithms.ml.base_regressor import BaseRegressor
 from pymor.algorithms.ml.vkoga.kernels import GaussianKernel
-from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
+from pymor.core.exceptions import ExtensionError
 
 
-class VKOGARegressor(BasicObject):
+class VKOGARegressor(BaseRegressor):
     """Scikit-learn-style regressor using the :class:`VKOGASurrogate`.
 
     The regressor uses the :func:`~pymor.algorithms.greedy.weak_greedy` in its `fit`-method
@@ -28,6 +29,7 @@ class VKOGARegressor(BasicObject):
         interface and in particular a `__call__`-method for (vectorized) evaluation of the kernel
         and a `diag`-method for computing the diagonal of the kernel matrix are required.
         For convenience, a Gaussian kernel is provided in :mod:`pymor.algorithms.ml.vkoga.kernels`.
+        If `kernel=None` is passed, a Gaussian kernel will be initialized by default.
     criterion
         Selection criterion for the greedy algorithm. Possible values are `'fp'`, `'f'` and `'p'`.
     max_centers
@@ -38,10 +40,13 @@ class VKOGARegressor(BasicObject):
         Regularization parameter for the kernel interpolation.
     """
 
+    _params = ('kernel', 'criterion', 'max_centers', 'tol', 'reg')
+    _nested_object = 'kernel'
+
     @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
-    def __init__(self, kernel=GaussianKernel(), criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
+    def __init__(self, kernel=None, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
         self.__auto_init(locals())
-        self._surrogate = None
+        self.kernel = GaussianKernel() if kernel is None else kernel
 
     def fit(self, X, Y):
         """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
@@ -64,7 +69,7 @@ class VKOGARegressor(BasicObject):
         surrogate = VKOGASurrogate(kernel=self.kernel, X_train=X, F_train=Y, criterion=self.criterion, reg=self.reg)
 
         # use X as training set in the weak greedy algorithm
-        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=self.max_centers)
+        result = weak_greedy(surrogate, np.arange(len(X)), atol=self.tol, max_extensions=min(len(X), self.max_centers))
 
         self._surrogate = surrogate
         # store the results of the weak greedy algorithm for inspection/plotting
@@ -84,7 +89,7 @@ class VKOGARegressor(BasicObject):
         -------
         Prediction obtained by the :class:`VKOGASurrogate`.
         """
-        if self._surrogate is None:
+        if not hasattr(self, '_surrogate'):
             raise RuntimeError('Call fit() before predict().')
         return self._surrogate.predict(X)
 
@@ -287,6 +292,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
             idx_in_X = int(matches[0])
         else:
             idx_in_X = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
+
+        if self._centers_idx is not None and idx_in_X in self._centers_idx:
+            raise ExtensionError('Center already selected.')
 
         # update the residual
         if self._V is None and self._z is None:

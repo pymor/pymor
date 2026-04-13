@@ -11,15 +11,15 @@ from numbers import Number
 import torch
 import torch.optim as optim
 
+from pymor.algorithms.ml.base_regressor import BaseRegressor
 from pymor.algorithms.ml.nn.neural_networks import FullyConnectedNN
 from pymor.algorithms.ml.nn.train import multiple_restarts_training
-from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import NeuralNetworkTrainingError
 from pymor.tools.random import get_rng, get_seed_seq
 
 
-class NeuralNetworkRegressor(BasicObject):
+class NeuralNetworkRegressor(BaseRegressor):
     """Scikit-learn-style regressor using neural networks from PyTorch.
 
     Parameters
@@ -43,8 +43,11 @@ class NeuralNetworkRegressor(BasicObject):
         additional training parameters provided here.
     """
 
+    _params = ('neural_network', 'validation_ratio', 'tol')
+    _nested_object = 'neural_network'
+
     @defaults('neural_network', 'validation_ratio', 'tol')
-    def __init__(self, neural_network=FullyConnectedNN([30, 30, 30]), validation_ratio=0.1, tol=None, **kwargs):
+    def __init__(self, neural_network=None, validation_ratio=0.1, tol=None, **kwargs):
         self.training_parameters = {'optimizer': optim.LBFGS, 'epochs': 1000, 'batch_size': 20, 'learning_rate': 1.,
                                     'loss_function': None, 'restarts': 10, 'lr_scheduler_config':
                                     {'scheduler': optim.lr_scheduler.StepLR, 'interval': 'epoch',
@@ -57,6 +60,13 @@ class NeuralNetworkRegressor(BasicObject):
         assert 0 < validation_ratio < 1
 
         self.__auto_init(locals())
+        self.neural_network = FullyConnectedNN([30, 30, 30]) if neural_network is None else neural_network
+
+    def _get_extra_params(self):
+        return dict(self.training_parameters)
+
+    def _set_extra_param(self, key, value):
+        self.training_parameters[key] = value
 
     def fit(self, X, Y, **kwargs):
         """Fit neural network using PyTorch optimization algorithms.
