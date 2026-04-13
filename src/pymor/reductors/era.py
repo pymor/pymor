@@ -271,7 +271,7 @@ class RandomizedERAReductor(ERAReductor):
     with many in- or outputs need to be performed beforehand, i.e. by setting `num_left` and
     `num_right` in the constructor.
 
-    The basic randomized ERA algorithm is based on :cite:`MKSC21`. Several computational
+    The basic randomized ERA algorithm is based on :cite:`MSKC21`. Several computational
     improvements, i.e., a memory-efficient Cholesky QR algorithm :cite:`BPS25` and a fast
     leave-one-out error estimator :cite:`ET24`, are implemented on top of that. Further, a heuristic
     error estimator is implemented which enables an adaptive refinement of the ROM that reuses
