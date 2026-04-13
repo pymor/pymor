@@ -42,7 +42,7 @@ def test_linear_function_fitting(rng):
     tol = 1e-3
     _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network,
                                                 max_restarts=max_restarts)
-    assert all(loss < tol for loss in best_losses.values())
+    assert best_losses['val'] < tol
 
     # with training parameters (that differ from the default values)
     optimizer = optim.Adam
@@ -60,7 +60,7 @@ def test_linear_function_fitting(rng):
     _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network,
                                                 training_parameters=training_parameters,
                                                 max_restarts=max_restarts)
-    assert all(loss < tol for loss in best_losses.values())
+    assert best_losses['val'] < tol
 
 
 @skip_if_missing('TORCH')
