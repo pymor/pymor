@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import inspect
+
 import numpy as np
 
 from pymor.algorithms.ml.vkoga import VKOGARegressor
@@ -45,8 +47,12 @@ class DataDrivenReductor(BasicObject):
     regressor
         Regressor with `fit` and `predict` methods similar to scikit-learn
         regressors that is trained in the `reduce`-method.
-        If `None` (which is also the default),
-        a :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` is used.
+        Defaults to :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
+        Alternatively, one can pass a class which will be instantiated using
+        the attributes in `regressor_parameters`.
+    regressor_parameters
+        Dictionary with parameters for regressor instantiation. This will be used
+        only when a class instead of a regressor object is passed as `regressor`.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     T
@@ -70,18 +76,30 @@ class DataDrivenReductor(BasicObject):
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
         before passing them to the regressor.
+    input_scaler_fitted
+        If `True`, the `input_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`. This enables the incremental
+        `extend` path for regressors that support it. Useful when the scaler
+        has been pre-fitted based on domain knowledge (e.g., the parameter space
+        bounds).
+    output_scaler_fitted
+        If `True`, the `output_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`.
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 regressor=None, target_quantity='solution',
+                 regressor=VKOGARegressor, regressor_parameters=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
-                 input_scaler=None, output_scaler=None):
+                 input_scaler=None, output_scaler=None,
+                 input_scaler_fitted=False, output_scaler_fitted=False):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
 
-        if self.regressor is None:
-            self.regressor = VKOGARegressor()
+        if inspect.isclass(self.regressor):
+            if self.regressor_parameters is None:
+                self.regressor_parameters = {}
+            self.regressor = self.regressor(**regressor_parameters)
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
@@ -100,6 +118,8 @@ class DataDrivenReductor(BasicObject):
 
         self.dim_solution_space = None
 
+        self._n_trained = 0
+
         # compute training data
         # i.e. pairs of parameters (potentially including time) and reduced coefficients
         with self.logger.block('Computing training data ...'):
@@ -111,8 +131,33 @@ class DataDrivenReductor(BasicObject):
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
+    def _scale_data(self, data):
+        """Apply input and output scalers to training data."""
+        X = np.array([x[0] for x in data])
+        Y = np.array([x[1] for x in data])
+        if self.input_scaler is not None:
+            if not self.input_scaler_fitted:
+                self.input_scaler = self.input_scaler.fit(X)
+                self.input_scaler_fitted = True
+            X = self.input_scaler.transform(X)
+        if self.output_scaler is not None:
+            if not self.output_scaler_fitted:
+                self.output_scaler = self.output_scaler.fit(Y)
+                self.output_scaler_fitted = True
+            Y = self.output_scaler.transform(Y)
+        return X, Y
+
     def reduce(self, **kwargs):
         """Reduce by training a machine learning surrogate.
+
+        If the regressor supports incremental extension via an `extend` method
+        and has already been fitted, only the new training data (added via
+        :meth:`extend_training_data`) is passed to `extend`. Otherwise, the
+        regressor is fully retrained on all training data.
+
+        Incremental extension requires that all scalers are either pre-fitted
+        (via the `input_scaler_fitted` / `output_scaler_fitted` flags) or not
+        used, since unfitted scalers need to be refitted on the full dataset.
 
         Parameters
         ----------
@@ -124,24 +169,26 @@ class DataDrivenReductor(BasicObject):
         -------
         The data-driven reduced model.
         """
-        # run the actual training of the regressor
-        with self.logger.block('Training of machine learning method ...'):
-            # fit input and output scaler if required
-            if self.input_scaler is not None:
-                X = [x[0] for x in self.training_data]
-                self.input_scaler = self.input_scaler.fit(X)
-                X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
-            else:
-                X = [x[0] for x in self.training_data]
-            if self.output_scaler is not None:
-                Y = [x[1] for x in self.training_data]
-                self.output_scaler = self.output_scaler.fit(Y)
-                Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
-            else:
-                Y = [x[1] for x in self.training_data]
-            # fit regressor to training data
-            self.regressor = self.regressor.fit(X, Y, **kwargs)
+        new_data = self.training_data[self._n_trained:]
 
+        scalers_ready = ((self.input_scaler is None or self.input_scaler_fitted)
+                         and (self.output_scaler is None or self.output_scaler_fitted))
+
+        use_extend = (self._n_trained > 0
+                      and len(new_data) > 0
+                      and hasattr(self.regressor, 'extend')
+                      and scalers_ready)
+
+        if use_extend:
+            with self.logger.block('Extending machine learning method ...'):
+                X_new, Y_new = self._scale_data(new_data)
+                self.regressor.extend(np.array(X_new), np.array(Y_new))
+        else:
+            with self.logger.block('Training of machine learning method ...'):
+                X, Y = self._scale_data(self.training_data)
+                self.regressor = self.regressor.fit(X, Y, **kwargs)
+
+        self._n_trained = len(self.training_data)
         return self._build_rom()
 
     def _compute_data(self, parameters, snapshots):
