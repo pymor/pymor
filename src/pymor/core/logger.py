@@ -172,9 +172,25 @@ class ColoredFormatter(logging.Formatter):
         return f'{timestamp} {indent}{levelname}{path}: {msg}'
 
 
+from logging import Handler
+
+import rich
+from rich.text import Text
+
+
+class RichAwareHandler(Handler):
+    def __init__(self):
+        super().__init__()
+
+    def emit(self, record):
+        msg = self.format(record)
+        rich.print(Text.from_ansi(msg))
+
+
 @defaults('filename')
 def default_handler(filename=None):
-    streamhandler = logging.StreamHandler()
+    streamhandler = RichAwareHandler()
+    # streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
     handlers = [streamhandler]
