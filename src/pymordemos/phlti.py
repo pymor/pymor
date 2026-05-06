@@ -46,6 +46,7 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
     bt = BTReductor(fom).reduce
     prbt = PRBTReductor(fom).reduce
     irka = partial(IRKAReductor(fom).reduce, conv_crit='h2')
+    phirka_energy_stable = partial(PHIRKAReductor(fom).reduce, pg_projection='energy_stable')
     phirka = PHIRKAReductor(fom).reduce
     spectral_factor = SpectralFactorReductor(fom)
     def spectral_factor_reduce(r):
@@ -57,6 +58,7 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
         'PRBT': prbt,
         'IRKA': irka,
         'pH-IRKA': phirka,
+        'pH-IRKA_energy_stable': phirka_energy_stable,
         'spectral_factor': spectral_factor_reduce,
     }
     markers = {
@@ -64,6 +66,7 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
         'PRBT': 'x',
         'IRKA': 'o',
         'pH-IRKA': 's',
+        'pH-IRKA_energy_stable': 'p',
         'spectral_factor': 'v',
     }
     timings = {}
