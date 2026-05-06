@@ -25,7 +25,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         super().__init__(fom, mu=mu)
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
-               projection='orth', conv_crit='sigma',
+               projection='orth', pg_projection='ph_preserving', conv_crit='sigma',
                compute_errors=False):
         r"""Reduce using pH-IRKA.
 
@@ -62,6 +62,8 @@ class PHIRKAReductor(GenericIRKAReductor):
               respect to the Euclidean inner product.
             - `'QTEorth'`: projection matrix `V` is orthogonalized with
               respect to the `fom.Q.H @ fom.E` product.
+        pg_projection
+            See :class:`~pymor.reductors.ph.basic.PHLTIPGReductor`.
         conv_crit
             Convergence criterion:
 
@@ -95,7 +97,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         if conv_crit == 'sigma':
             self._conv_data[0] = sigma
         for it in range(maxit):
-            self._set_V_reductor(sigma, b, projection)
+            self._set_V_reductor(sigma, b, projection, pg_projection)
             rom = self._pg_reductor.reduce()
             sigma, b, c = self._rom_to_sigma_b_c(rom, False)
             self._store_sigma_b_c(sigma, b, c)
@@ -117,11 +119,11 @@ class PHIRKAReductor(GenericIRKAReductor):
             else self.fom
         )
 
-    def _set_V_reductor(self, sigma, b, projection):
+    def _set_V_reductor(self, sigma, b, projection, pg_projection):
         fom = self._assemble_fom()
         self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b.T), sigma, orth=False,
                                             shifted_system_solver=fom.shifted_system_solver)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
-        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
+        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth', pg_projection)
         self.W = self._pg_reductor.bases['W']
