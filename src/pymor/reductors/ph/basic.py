@@ -23,13 +23,13 @@ class PHLTIPGReductor(ProjectionBasedReductor):
     pg_projection
         Choice of test space:
 
-            - ``'ph_preserving'`` (default): :math:`W = Q V`. Yields a reduced
-            |PHLTIModel| with all pH structural properties preserved.
-            - ``'energy_stable'``: :math:`W = (J - R)^{-T} E V`.
-            The reduced system is not port-Hamiltonian, but the quadratic Hamiltonian is
-            consistently inherited as :math:\tilde{H}(\tilde{x}) = H(V\tilde{x}), so the
-            reduced state retains an energy interpretation.
-            Requires :math:`J - R` to be invertible.
+        - `'ph_preserving'` (default): :math:`W = Q V`. Yields a reduced |PHLTIModel|
+          with all pH structural properties preserved.
+        - `'energy_stable'`: :math:`W = (J - R)^{-T} E V`.
+          The reduced system is not pH, but the quadratic Hamiltonian is
+          consistently inherited as :math:`\tilde{H}(\tilde{x}) = H(V \tilde{x})`, so the
+          reduced state retains an energy interpretation.
+          Requires :math:`J - R` to be invertible.
     """
 
     _PG_PROJECTIONS = ('ph_preserving', 'energy_stable')
@@ -67,7 +67,8 @@ class PHLTIPGReductor(ProjectionBasedReductor):
                                    'N': fom.N}
         else:
             projected_operators = {'E': project(fom.E, W, V),
-                                   'A': None if self.QTE_orthonormal else project(fom.E.H @ fom.Q, V, V),
+                                   'A': IdentityOperator(fom.Q.source) if self.QTE_orthonormal
+                                                                       else project(fom.E.H @ fom.Q, V, V),
                                    'B': project(fom.G - fom.P, W, None),
                                    'C': project((fom.G + fom.P).H @ fom.Q, None, V),
                                    'D': fom.S - fom.N}
@@ -78,15 +79,23 @@ class PHLTIPGReductor(ProjectionBasedReductor):
             raise ValueError
         rom = self._last_rom
         dim = dims['V']
-        J = project_to_subbasis(rom.J, dim, dim)
-        projected_operators = {'E': None if self.QTE_orthonormal else project_to_subbasis(rom.E, dim, dim),
-                               'J': J,
-                               'R': project_to_subbasis(rom.R, dim, dim),
-                               'Q': IdentityOperator(J.source),
-                               'G': project_to_subbasis(rom.G, dim, None),
-                               'P': project_to_subbasis(rom.P, dim, None),
-                               'S': rom.S,
-                               'N': rom.N}
+
+        if self.pg_projection == 'ph_preserving':
+            J = project_to_subbasis(rom.J, dim, dim)
+            projected_operators = {'E': None if self.QTE_orthonormal else project_to_subbasis(rom.E, dim, dim),
+                                   'J': J,
+                                   'R': project_to_subbasis(rom.R, dim, dim),
+                                   'Q': IdentityOperator(J.source),
+                                   'G': project_to_subbasis(rom.G, dim, None),
+                                   'P': project_to_subbasis(rom.P, dim, None),
+                                   'S': rom.S,
+                                   'N': rom.N}
+        else:
+            projected_operators = {'E': project_to_subbasis(rom.E, dim, dim),
+                                   'A': project_to_subbasis(rom.A, dim, dim),
+                                   'B': project_to_subbasis(rom.B, dim, None),
+                                   'C': project_to_subbasis(rom.C, None, dim),
+                                   'D': rom.D}
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
