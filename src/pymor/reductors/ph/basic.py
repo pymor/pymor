@@ -9,7 +9,7 @@ from pymor.reductors.basic import ProjectionBasedReductor
 
 
 class PHLTIPGReductor(ProjectionBasedReductor):
-    """Petrov-Galerkin projection of an |PHLTIModel|.
+    r"""Petrov-Galerkin projection of an |PHLTIModel|.
 
     Parameters
     ----------
@@ -26,19 +26,20 @@ class PHLTIPGReductor(ProjectionBasedReductor):
             - ``'ph_preserving'`` (default): :math:`W = Q V`. Yields a reduced
             |PHLTIModel| with all pH structural properties preserved.
             - ``'energy_stable'``: :math:`W = (J - R)^{-T} E V`.
-            Yields a reduced system that is no longer of pH structure, 
-            but preserves the Hamiltonian part of the structure and thus the energy. 
+            The reduced system is not port-Hamiltonian, but the quadratic Hamiltonian is
+            consistently inherited as :math:\tilde{H}(\tilde{x}) = H(V\tilde{x}), so the
+            reduced state retains an energy interpretation.
             Requires :math:`J - R` to be invertible.
     """
 
     _PG_PROJECTIONS = ('ph_preserving', 'energy_stable')
 
-    def __init__(self, fom, V, QTE_orthonormal=False, pg_projection="ph_preserving"):
+    def __init__(self, fom, V, QTE_orthonormal=False, pg_projection='ph_preserving'):
         assert isinstance(fom, PHLTIModel)
         if pg_projection not in self._PG_PROJECTIONS:
-            raise ValueError(f"Unknown projection {pg_projection!r}. " 
-                             f"Expected one of {self._PG_PROJECTIONS}.")
-        
+            raise ValueError(f'Unknown projection {pg_projection!r}. '
+                             f'Expected one of {self._PG_PROJECTIONS}.')
+
         if pg_projection == 'ph_preserving':
             W = fom.Q.apply(V)
         else:
@@ -54,7 +55,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         W = self.bases['W']
         V = self.bases['V']
 
-        if self.pg_projection is "ph_preserving":
+        if self.pg_projection == 'ph_preserving':
             J = project(fom.J, W, W)
             projected_operators = {'E': None if self.QTE_orthonormal else project(fom.E, W, V),
                                    'J': J,
@@ -64,9 +65,9 @@ class PHLTIPGReductor(ProjectionBasedReductor):
                                    'P': project(fom.P, W, None),
                                    'S': fom.S,
                                    'N': fom.N}
-        else: 
-            projected_operators = {'E': project(fom.E, W, V), 
-                                   'A': None if self.QTE_orthonormal else project(fom.E.H @ fom.Q, V, V), 
+        else:
+            projected_operators = {'E': project(fom.E, W, V),
+                                   'A': None if self.QTE_orthonormal else project(fom.E.H @ fom.Q, V, V),
                                    'B': project(fom.G - fom.P, W, None),
                                    'C': project((fom.G + fom.P).H @ fom.Q, None, V),
                                    'D': fom.S - fom.N}
@@ -89,9 +90,9 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
-        if self.pg_projection is "ph_preserving":
+        if self.pg_projection == 'ph_preserving':
             return PHLTIModel(error_estimator=error_estimator, **projected_operators)
-        else: 
+        else:
             return LTIModel(error_estimator=error_estimator, **projected_operators)
 
     def extend_basis(self, **kwargs):
