@@ -437,3 +437,61 @@ def stokes_2Dexample(mesh_resolution=4, rhs=None):
     fom = SaddlePointModel(A=A, B=B, f=f, u_product=u_product, p_product=p_product, solver=ScipySpSolveSolver())
 
     return fom
+
+
+def two_dimensional_parametric_diffusion(diameter=1/50):
+    r"""Return a simple elliptic parameter-dependent model.
+
+    Discretizes the following two-dimensional diffusion problem with
+    parametrized diffusion, right hand side and Dirichlet boundary condition:
+
+    .. math::
+        -\nabla\cdot\big(\sigma(x, \mu)\nabla u(x, \mu)\big) = f(x, \mu),\quad x=(x_1,x_2)\in\Omega,
+
+    on the domain :math:`\Omega:= (0, 1)^2 \subset \mathbb{R}^2` with data
+    functions :math:`f((x_1, x_2), \mu) = 10 \cdot \mu + 0.1`,
+    :math:``\sigma((x_1, x_2), \mu) = (1 - x_1) \cdot \mu + x_1`, and
+    Dirichlet boundary conditions
+
+    .. math::
+        u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
+
+    The outputs of the model are given as the l2-product of the solution with
+    the right hand side respectively Dirichlet boundary data.
+
+    Parameters
+    ----------
+    diameter
+        Grid element diameter.
+
+    Returns
+    -------
+    Diffusion problem as a |StationaryModel|.
+    """
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
+    from pymor.parameters.functionals import ProjectionParameterFunctional
+    rhs = LincombFunction(
+            [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.1])
+    dirichlet_data = LincombFunction(
+            [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.5])
+    diffusion = LincombFunction(
+            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
+            [ProjectionParameterFunctional('mu'), 1])
+
+    from pymor.analyticalproblems.domaindescriptions import RectDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    problem = StationaryProblem(
+        domain=RectDomain(),
+        rhs=rhs,
+        diffusion=diffusion,
+        dirichlet_data=dirichlet_data,
+        outputs=[('l2', rhs), ('l2_boundary', dirichlet_data)],
+        name='2DProblem'
+    )
+
+    from pymor.discretizers.builtin.cg import discretize_stationary_cg
+    fom, _ = discretize_stationary_cg(problem, diameter=diameter)
+
+    return fom
