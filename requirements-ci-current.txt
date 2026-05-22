@@ -398,14 +398,12 @@ pyopengl==3.1.10
     # via pymor (./pyproject.toml)
 pyparsing==3.2.5
     # via matplotlib
-pyside6==6.9.3
+pyqt6==6.9.1
     # via pymor (./pyproject.toml)
-pyside6-addons==6.9.3
-    # via pyside6
-pyside6-essentials==6.9.3
-    # via
-    #   pyside6
-    #   pyside6-addons
+pyqt6-qt6==6.9.2
+    # via pyqt6
+pyqt6-sip==13.11.1
+    # via pyqt6
 pytest==9.0.2
     # via
     #   pymor (./pyproject.toml)
@@ -490,11 +488,6 @@ setuptools==80.9.0
     # via
     #   jupyterlab
     #   torch
-shiboken6==6.9.3
-    # via
-    #   pyside6
-    #   pyside6-addons
-    #   pyside6-essentials
 six==1.17.0
     # via
     #   python-dateutil

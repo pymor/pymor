@@ -6,8 +6,8 @@
 #
 # Install this environment as "YOURENV" with:
 #     conda-lock install -n YOURENV conda-lock.yml
-# This lock contains optional dependency categories ci-conda, gui, ipyparallel, jupyter, slycot, tests, vtk. Include them in the installed environment with:
-#     conda-lock install -e ci-conda -e gui -e ipyparallel -e jupyter -e slycot -e tests -e vtk -n YOURENV conda-lock.yml
+# This lock contains optional dependency categories gui, ipyparallel, jupyter, slycot, tests, vtk. Include them in the installed environment with:
+#     conda-lock install -e gui -e ipyparallel -e jupyter -e slycot -e tests -e vtk -n YOURENV conda-lock.yml
 # To update a single package to the latest version compatible with the version constraints in the source:
 #     conda-lock lock  --lockfile conda-lock.yml --update PACKAGE
 # To re-solve the entire environment, e.g. after changing a version constraint in the source file:
@@ -15,9 +15,9 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: 8cf8e32f5824d6c8d28fd9db69c4a9c89ac8c3b2793019762717677576918b68
-    osx-64: 14e4ce5d940df5fb123455ad007ecb5b2283be360483225d263ae052e1b3536c
-    win-64: 11d3ce4c18ce1104dd6731bdb523cbb81a8e6a2be2f7c9672c1efc236550cbc8
+    linux-64: e4533f3b6837f96e90e757e00ad6e4ed9a71f4a4dd9474636ba679e63e9f89de
+    osx-64: 3615bb7816639281ffb4de5f328a7b08842b3aacfccba20d537d8e143d9eea63
+    win-64: c08fb5818466cda84ba189515b381b3712ee9f22dd649c55d760d9443d4fc51b
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -7237,51 +7237,6 @@ package:
     sha256: 82da0f854831f783f9d3f1219c4255956e8167a474f3f526151128f02453871c
   category: main
   optional: false
-- name: libclang13
-  version: 22.1.6
-  manager: conda
-  platform: linux-64
-  dependencies:
-    __glibc: '>=2.17,<3.0.a0'
-    libgcc: '>=14'
-    libllvm22: '>=22.1.6,<22.2.0a0'
-    libstdcxx: '>=14'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libclang13-22.1.6-default_h746c552_1.conda
-  hash:
-    md5: bf306e7b1c8c2c204b28138a08666bbd
-    sha256: 4f91ada190f6e78efd9179fd995c9c7fe2f4bb00aef977a164b1cba8d49973bb
-  category: gui
-  optional: true
-- name: libclang13
-  version: 22.1.6
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=11.0'
-    libcxx: '>=22.1.6'
-    libllvm22: '>=22.1.6,<22.2.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libclang13-22.1.6-default_h2429e1b_1.conda
-  hash:
-    md5: d6a9712d926247e2759cb60f9375ceba
-    sha256: 08c80e3ab908d4310c4dcc3274d48ffee7036d6a02787f52d9d1cf07d977b96f
-  category: gui
-  optional: true
-- name: libclang13
-  version: 22.1.6
-  manager: conda
-  platform: win-64
-  dependencies:
-    libzlib: '>=1.3.2,<2.0a0'
-    ucrt: '>=10.0.20348.0'
-    vc: '>=14.3,<15'
-    vc14_runtime: '>=14.44.35208'
-    zstd: '>=1.5.7,<1.6.0a0'
-  url: https://conda.anaconda.org/conda-forge/win-64/libclang13-22.1.6-default_ha2db4b5_1.conda
-  hash:
-    md5: 8b667c37df841bbc9652ed3938541d14
-    sha256: fcfdef2a69e6971419c77387ea95773f99ebb70b62283c74f553e206ff8b6532
-  category: gui
-  optional: true
 - name: libcups
   version: 2.3.3
   manager: conda
@@ -8188,41 +8143,6 @@ package:
     sha256: cd20e15b893ef82612fa46db41ad677351feb0c42cf3c27172777a35bb99b421
   category: main
   optional: false
-- name: libllvm22
-  version: 22.1.6
-  manager: conda
-  platform: linux-64
-  dependencies:
-    __glibc: '>=2.17,<3.0.a0'
-    libgcc: '>=14'
-    libstdcxx: '>=14'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    libzlib: '>=1.3.2,<2.0a0'
-    zstd: '>=1.5.7,<1.6.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libllvm22-22.1.6-hf7376ad_0.conda
-  hash:
-    md5: 605a337de427d14e51adb39f8a07b282
-    sha256: c883814c109f6f1d3b159d6366a5d39dd1e160ce1cf48b27b6d7c4ee8d804232
-  category: gui
-  optional: true
-- name: libllvm22
-  version: 22.1.6
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=11.0'
-    libcxx: '>=19'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    libzlib: '>=1.3.2,<2.0a0'
-    zstd: '>=1.5.7,<1.6.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libllvm22-22.1.6-hab754da_0.conda
-  hash:
-    md5: 1019a1a8c4f01134187332ff81d3184b
-    sha256: b2a76e1c5a2b1d033e4dc554c7c7b0221ce9dad11f25800cbbac87d7e50f2925
-  category: gui
-  optional: true
 - name: liblzma
   version: 5.8.3
   manager: conda
@@ -8478,6 +8398,19 @@ package:
   hash:
     md5: 7df50d44d4a14d6c31a2c54f2cd92157
     sha256: 215086c108d80349e96051ad14131b751d17af3ed2cb5a34edd62fa89bfe8ead
+  category: gui
+  optional: true
+- name: libopengl-devel
+  version: 1.7.0
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+    libopengl: 1.7.0
+  url: https://conda.anaconda.org/conda-forge/linux-64/libopengl-devel-1.7.0-ha4b6fd6_2.conda
+  hash:
+    md5: 75b039b1e51525f4572f828be8441970
+    sha256: b347798eba61ce8d7a65372cf0cf6066c328e5717ab69ae251c6822e6f664f23
   category: gui
   optional: true
 - name: libpciaccess
@@ -9082,23 +9015,6 @@ package:
   hash:
     md5: 33f30d4878d1f047da82a669c33b307d
     sha256: 24248928e63b5de45012c8ad3fd6b350ae1fe2fc355613bb89ee5f0a35835bea
-  category: gui
-  optional: true
-- name: libxml2
-  version: 2.15.3
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=11.0'
-    icu: '>=78.3,<79.0a0'
-    libiconv: '>=1.18,<2.0a0'
-    liblzma: '>=5.8.3,<6.0a0'
-    libxml2-16: 2.15.3
-    libzlib: '>=1.3.2,<2.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.15.3-h953d39d_0.conda
-  hash:
-    md5: 33f30d4878d1f047da82a669c33b307d
-    sha256: 24248928e63b5de45012c8ad3fd6b350ae1fe2fc355613bb89ee5f0a35835bea
   category: vtk
   optional: true
 - name: libxml2
@@ -9168,22 +9084,6 @@ package:
   hash:
     md5: c74ae93cd7876e3a9c4b5569d5e29e34
     sha256: 437f003e299d77403db42d17e532d686236f357ac5c3d6bf466558c697902597
-  category: gui
-  optional: true
-- name: libxml2-16
-  version: 2.15.3
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=11.0'
-    icu: '>=78.3,<79.0a0'
-    libiconv: '>=1.18,<2.0a0'
-    liblzma: '>=5.8.3,<6.0a0'
-    libzlib: '>=1.3.2,<2.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libxml2-16-2.15.3-h7a90416_0.conda
-  hash:
-    md5: c74ae93cd7876e3a9c4b5569d5e29e34
-    sha256: 437f003e299d77403db42d17e532d686236f357ac5c3d6bf466558c697902597
   category: vtk
   optional: true
 - name: libxml2-16
@@ -9217,21 +9117,6 @@ package:
   hash:
     md5: 87e6096ec6d542d1c1f8b33245fe8300
     sha256: 0694760a3e62bdc659d90a14ae9c6e132b525a7900e59785b18a08bb52a5d7e5
-  category: gui
-  optional: true
-- name: libxslt
-  version: 1.1.43
-  manager: conda
-  platform: linux-64
-  dependencies:
-    __glibc: '>=2.17,<3.0.a0'
-    libgcc: '>=14'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libxslt-1.1.43-h711ed8c_1.conda
-  hash:
-    md5: 87e6096ec6d542d1c1f8b33245fe8300
-    sha256: 0694760a3e62bdc659d90a14ae9c6e132b525a7900e59785b18a08bb52a5d7e5
   category: vtk
   optional: true
 - name: libxslt
@@ -9246,37 +9131,7 @@ package:
   hash:
     md5: 367b8029352f3899fb76cc20f4d144b9
     sha256: 00d6b5e92fc1c5d86e095b9b6840f793d9fc4c9b4a7753fa0f8197ab11d5eb90
-  category: gui
-  optional: true
-- name: libxslt
-  version: 1.1.43
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=10.13'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libxslt-1.1.43-h486b42e_1.conda
-  hash:
-    md5: 367b8029352f3899fb76cc20f4d144b9
-    sha256: 00d6b5e92fc1c5d86e095b9b6840f793d9fc4c9b4a7753fa0f8197ab11d5eb90
   category: vtk
-  optional: true
-- name: libxslt
-  version: 1.1.43
-  manager: conda
-  platform: win-64
-  dependencies:
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    ucrt: '>=10.0.20348.0'
-    vc: '>=14.3,<15'
-    vc14_runtime: '>=14.44.35208'
-  url: https://conda.anaconda.org/conda-forge/win-64/libxslt-1.1.43-h0fbe4c1_1.conda
-  hash:
-    md5: 46034d9d983edc21e84c0b36f1b4ba61
-    sha256: 13da38939c2c20e7112d683ab6c9f304bfaf06230a2c6a7cf00359da1a003ec7
-  category: gui
   optional: true
 - name: libxslt
   version: 1.1.43
@@ -11467,6 +11322,42 @@ package:
     sha256: e14aafa63efa0528ca99ba568eaf506eb55a0371d12e6250aaaa61718d2eb62e
   category: tests
   optional: true
+- name: ply
+  version: '3.11'
+  manager: conda
+  platform: linux-64
+  dependencies:
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/ply-3.11-pyhd8ed1ab_3.conda
+  hash:
+    md5: fd5062942bfa1b0bd5e0d2a4397b099e
+    sha256: bae453e5cecf19cab23c2e8929c6e30f4866d996a8058be16c797ed4b935461f
+  category: gui
+  optional: true
+- name: ply
+  version: '3.11'
+  manager: conda
+  platform: osx-64
+  dependencies:
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/ply-3.11-pyhd8ed1ab_3.conda
+  hash:
+    md5: fd5062942bfa1b0bd5e0d2a4397b099e
+    sha256: bae453e5cecf19cab23c2e8929c6e30f4866d996a8058be16c797ed4b935461f
+  category: gui
+  optional: true
+- name: ply
+  version: '3.11'
+  manager: conda
+  platform: win-64
+  dependencies:
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/ply-3.11-pyhd8ed1ab_3.conda
+  hash:
+    md5: fd5062942bfa1b0bd5e0d2a4397b099e
+    sha256: bae453e5cecf19cab23c2e8929c6e30f4866d996a8058be16c797ed4b935461f
+  category: gui
+  optional: true
 - name: prometheus_client
   version: 0.25.0
   manager: conda
@@ -12118,40 +12009,44 @@ package:
   category: jupyter
   optional: true
 - name: pyopengl
-  version: 3.1.6
+  version: 3.1.10
   manager: conda
   platform: linux-64
   dependencies:
-    python: '>=3.9'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
+    __linux: ''
+    libopengl-devel: ''
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyha804496_2.conda
   hash:
-    md5: e5f029b9da151034a6ba72f592599dd6
-    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
-  category: ci-conda
+    md5: cce156023226a62044a8112bebf3d5e1
+    sha256: 0775255f81e2c6b49948b3656796823758e64938a15543302857d99da0e3d737
+  category: gui
   optional: true
 - name: pyopengl
-  version: 3.1.6
+  version: 3.1.10
   manager: conda
   platform: osx-64
   dependencies:
-    python: '>=3.9'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
+    __osx: ''
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyh534df25_2.conda
   hash:
-    md5: e5f029b9da151034a6ba72f592599dd6
-    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
-  category: ci-conda
+    md5: dae7cd715f93d0e2f12af26dd3777328
+    sha256: 0d6496145c2a88eac74650dfe363729af5bfc47f50bcb8820b957037237cfdab
+  category: gui
   optional: true
 - name: pyopengl
-  version: 3.1.6
+  version: 3.1.10
   manager: conda
   platform: win-64
   dependencies:
-    python: '>=3.9'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
+    __win: ''
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyh7428d3b_2.conda
   hash:
-    md5: e5f029b9da151034a6ba72f592599dd6
-    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
-  category: ci-conda
+    md5: 63a67d671e4a241ea2cd29a2dc62c22e
+    sha256: 4e2bd274c9c8d4d934b9e4d791a52cd9885ad5d6718687fef098d1e1d4d1505c
+  category: gui
   optional: true
 - name: pyparsing
   version: 3.3.2
@@ -12189,71 +12084,131 @@ package:
     sha256: 417fba4783e528ee732afa82999300859b065dc59927344b4859c64aae7182de
   category: main
   optional: false
-- name: pyside6
-  version: 6.11.1
+- name: pyqt6
+  version: 6.11.0
   manager: conda
   platform: linux-64
   dependencies:
     __glibc: '>=2.17,<3.0.a0'
-    libclang13: '>=22.1.5'
     libegl: '>=1.7.0,<2.0a0'
     libgcc: '>=14'
     libgl: '>=1.7.0,<2.0a0'
     libopengl: '>=1.7.0,<2.0a0'
     libstdcxx: '>=14'
-    libvulkan-loader: '>=1.4.341.0,<2.0a0'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    libxslt: '>=1.1.43,<2.0a0'
-    python: ''
+    pyqt6-sip: 13.10.0
+    python: '>=3.13,<3.14.0a0'
     python_abi: 3.13.*
-    qt6-main: '>=6.11.1,<6.12.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.1-py313hcd51b16_1.conda
+    qt6-main: '>=6.11.0,<6.12.0a0'
+    sip: '>=6.15.3,<6.16.0a0'
+    xcb-util: '>=0.4.1,<0.5.0a0'
+    xcb-util-image: '>=0.4.0,<0.5.0a0'
+    xcb-util-keysyms: '>=0.4.1,<0.5.0a0'
+    xcb-util-renderutil: '>=0.3.10,<0.4.0a0'
+    xcb-util-wm: '>=0.4.2,<0.5.0a0'
+    xorg-libice: '>=1.1.2,<2.0a0'
+    xorg-libsm: '>=1.2.6,<2.0a0'
+    xorg-libx11: '>=1.8.13,<2.0a0'
+    xorg-libxcomposite: '>=0.4.7,<1.0a0'
+    xorg-libxdamage: '>=1.1.6,<2.0a0'
+    xorg-libxext: '>=1.3.7,<2.0a0'
+    xorg-libxxf86vm: '>=1.1.7,<2.0a0'
+  url: https://conda.anaconda.org/conda-forge/linux-64/pyqt6-6.11.0-py313h7033f15_0.conda
   hash:
-    md5: d8b1a954824e877ebc21935bdbceedd4
-    sha256: 4b1351a42b90b6ad13a74f2663fd0580bb7ae8136bc59c3a300f2855b946513f
+    md5: 6737660f950b8b0f1a16ca57c25190ea
+    sha256: fc240b402e33821fee18214c95ed688572b09b8955012ecd38ba86f88142ca22
   category: gui
   optional: true
-- name: pyside6
-  version: 6.11.1
+- name: pyqt6
+  version: 6.11.0
   manager: conda
   platform: osx-64
   dependencies:
     __osx: '>=11.0'
-    libclang13: '>=19.1.7'
     libcxx: '>=19'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    libxslt: '>=1.1.43,<2.0a0'
-    python: ''
+    pyqt6-sip: 13.10.0
+    python: '>=3.13,<3.14.0a0'
     python_abi: 3.13.*
-    qt6-main: '>=6.11.1,<6.12.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/pyside6-6.11.1-py313ha920778_1.conda
+    qt6-main: '>=6.11.0,<6.12.0a0'
+    sip: '>=6.15.3,<6.16.0a0'
+  url: https://conda.anaconda.org/conda-forge/osx-64/pyqt6-6.11.0-py313hbc4457e_0.conda
   hash:
-    md5: 6c0e9289a4db0427f131e05b8a23f1fd
-    sha256: 95fa125779932fdaa91a4440a05b7cab39edce21b55d1d1bea5dbc4e89525c51
+    md5: 3c1dd8b0fa25b1a936fa5847e3a09217
+    sha256: 72f137361eb41d932af0b3e7ed742f8c673b857bd36a1194f3d4dff05addb5db
   category: gui
   optional: true
-- name: pyside6
-  version: 6.11.1
+- name: pyqt6
+  version: 6.11.0
   manager: conda
   platform: win-64
   dependencies:
-    libclang13: '>=22.1.5'
-    libvulkan-loader: '>=1.4.341.0,<2.0a0'
-    libxml2: ''
-    libxml2-16: '>=2.14.6'
-    libxslt: '>=1.1.43,<2.0a0'
-    python: ''
+    pyqt6-sip: 13.10.0
+    python: '>=3.13,<3.14.0a0'
     python_abi: 3.13.*
-    qt6-main: '>=6.11.1,<6.12.0a0'
+    qt6-main: '>=6.11.0,<6.12.0a0'
+    sip: '>=6.15.3,<6.16.0a0'
     ucrt: '>=10.0.20348.0'
     vc: '>=14.3,<15'
     vc14_runtime: '>=14.44.35208'
-  url: https://conda.anaconda.org/conda-forge/win-64/pyside6-6.11.1-py313h0c3c3c1_1.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/pyqt6-6.11.0-py313hfe59770_0.conda
   hash:
-    md5: 5da85f0f616457820671aec1048838eb
-    sha256: a0f9b8195d26631696ca22d6a22352217ded2fbf6f1b84c291fe359fa48cf86e
+    md5: dc34aaae453d7fe4ce749ecdf313bb5f
+    sha256: bf9981f2e8469d97d865682730dec680a10e0293047d8ff67ec3e79452a377ac
+  category: gui
+  optional: true
+- name: pyqt6-sip
+  version: 13.10.0
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+    libgcc: '>=14'
+    libstdcxx: '>=14'
+    packaging: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    sip: ''
+    toml: ''
+  url: https://conda.anaconda.org/conda-forge/linux-64/pyqt6-sip-13.10.0-py313h7033f15_0.conda
+  hash:
+    md5: 2679c198ad42bf062a12795a5c47d979
+    sha256: 9742b54f4bc51450c3ff51c4de6bb206a4f7405e755dd57f873d60988c45083a
+  category: gui
+  optional: true
+- name: pyqt6-sip
+  version: 13.10.0
+  manager: conda
+  platform: osx-64
+  dependencies:
+    __osx: '>=11.0'
+    libcxx: '>=19'
+    packaging: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    sip: ''
+    toml: ''
+  url: https://conda.anaconda.org/conda-forge/osx-64/pyqt6-sip-13.10.0-py313hbc4457e_0.conda
+  hash:
+    md5: 07b6d4480563112b00310eb05d0d57ef
+    sha256: d08a9752ed6d671eb48c33eb951f43a0d8c7225543aed9fb20ad06412a040ae8
+  category: gui
+  optional: true
+- name: pyqt6-sip
+  version: 13.10.0
+  manager: conda
+  platform: win-64
+  dependencies:
+    packaging: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    sip: ''
+    toml: ''
+    ucrt: '>=10.0.20348.0'
+    vc: '>=14.3,<15'
+    vc14_runtime: '>=14.44.35208'
+  url: https://conda.anaconda.org/conda-forge/win-64/pyqt6-sip-13.10.0-py313hfe59770_0.conda
+  hash:
+    md5: 8c219185e10ab7193133add11687804a
+    sha256: 25b83499484ccbba67e6cb3b4c2b7ec5579580259828251f71ccbd5e9208db97
   category: gui
   optional: true
 - name: pysocks
@@ -13960,6 +13915,18 @@ package:
   hash:
     md5: 8e194e7b992f99a5015edbd4ebd38efd
     sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
+  category: gui
+  optional: true
+- name: setuptools
+  version: 82.0.1
+  manager: conda
+  platform: linux-64
+  dependencies:
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/setuptools-82.0.1-pyh332efcf_0.conda
+  hash:
+    md5: 8e194e7b992f99a5015edbd4ebd38efd
+    sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
   category: jupyter
   optional: true
 - name: setuptools
@@ -13984,6 +13951,18 @@ package:
   hash:
     md5: 8e194e7b992f99a5015edbd4ebd38efd
     sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
+  category: gui
+  optional: true
+- name: setuptools
+  version: 82.0.1
+  manager: conda
+  platform: osx-64
+  dependencies:
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/setuptools-82.0.1-pyh332efcf_0.conda
+  hash:
+    md5: 8e194e7b992f99a5015edbd4ebd38efd
+    sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
   category: jupyter
   optional: true
 - name: setuptools
@@ -14008,6 +13987,18 @@ package:
   hash:
     md5: 8e194e7b992f99a5015edbd4ebd38efd
     sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
+  category: gui
+  optional: true
+- name: setuptools
+  version: 82.0.1
+  manager: conda
+  platform: win-64
+  dependencies:
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/setuptools-82.0.1-pyh332efcf_0.conda
+  hash:
+    md5: 8e194e7b992f99a5015edbd4ebd38efd
+    sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
   category: jupyter
   optional: true
 - name: setuptools
@@ -14021,6 +14012,65 @@ package:
     md5: 8e194e7b992f99a5015edbd4ebd38efd
     sha256: 82088a6e4daa33329a30bc26dc19a98c7c1d3f05c0f73ce9845d4eab4924e9e1
   category: tests
+  optional: true
+- name: sip
+  version: 6.15.3
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+    libgcc: '>=14'
+    libstdcxx: '>=14'
+    packaging: ''
+    ply: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    setuptools: ''
+    tomli: ''
+  url: https://conda.anaconda.org/conda-forge/linux-64/sip-6.15.3-py313h7033f15_0.conda
+  hash:
+    md5: 945222a4ff7b653c74a3d75ca3884ba5
+    sha256: 613a2a9e198895055e7df5ebd145bdb39d80758c24c3a5834d87993b2ff6c14d
+  category: gui
+  optional: true
+- name: sip
+  version: 6.15.3
+  manager: conda
+  platform: osx-64
+  dependencies:
+    __osx: '>=11.0'
+    libcxx: '>=19'
+    packaging: ''
+    ply: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    setuptools: ''
+    tomli: ''
+  url: https://conda.anaconda.org/conda-forge/osx-64/sip-6.15.3-py313hbc4457e_0.conda
+  hash:
+    md5: 2ec4bc3d9ca4b7d51987bde072663629
+    sha256: 415db8911e231063c7232f020591b2eb33443431c590e6473800befd76e6802e
+  category: gui
+  optional: true
+- name: sip
+  version: 6.15.3
+  manager: conda
+  platform: win-64
+  dependencies:
+    packaging: ''
+    ply: ''
+    python: '>=3.13,<3.14.0a0'
+    python_abi: 3.13.*
+    setuptools: ''
+    tomli: ''
+    ucrt: '>=10.0.20348.0'
+    vc: '>=14.3,<15'
+    vc14_runtime: '>=14.44.35208'
+  url: https://conda.anaconda.org/conda-forge/win-64/sip-6.15.3-py313hfe59770_0.conda
+  hash:
+    md5: c39de4827c4d45a70f1cab4871ce86b4
+    sha256: 3d35cf713b9ae32839b41142edb79f46707af95fce0cf32494cb7399fdf18aef
+  category: gui
   optional: true
 - name: six
   version: 1.17.0
@@ -14579,6 +14629,42 @@ package:
     sha256: 0e79810fae28f3b69fe7391b0d43f5474d6bd91d451d5f2bde02f55ae481d5e3
   category: main
   optional: false
+- name: toml
+  version: 0.10.2
+  manager: conda
+  platform: linux-64
+  dependencies:
+    python: ''
+  url: https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhcf101f3_3.conda
+  hash:
+    md5: d0fc809fa4c4d85e959ce4ab6e1de800
+    sha256: fd30e43699cb22ab32ff3134d3acf12d6010b5bbaa63293c37076b50009b91f8
+  category: gui
+  optional: true
+- name: toml
+  version: 0.10.2
+  manager: conda
+  platform: osx-64
+  dependencies:
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhcf101f3_3.conda
+  hash:
+    md5: d0fc809fa4c4d85e959ce4ab6e1de800
+    sha256: fd30e43699cb22ab32ff3134d3acf12d6010b5bbaa63293c37076b50009b91f8
+  category: gui
+  optional: true
+- name: toml
+  version: 0.10.2
+  manager: conda
+  platform: win-64
+  dependencies:
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhcf101f3_3.conda
+  hash:
+    md5: d0fc809fa4c4d85e959ce4ab6e1de800
+    sha256: fd30e43699cb22ab32ff3134d3acf12d6010b5bbaa63293c37076b50009b91f8
+  category: gui
+  optional: true
 - name: tomli
   version: 2.4.1
   manager: conda

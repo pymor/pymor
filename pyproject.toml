@@ -98,7 +98,7 @@ mpi = [
 # ## Builtin discretizations
 # GUI support for builtin discretizations
 gui = [
-  "pyside6>=6.4.3",
+  "PyQt6",
   "pyopengl",
 ]
 # jupyter integration
