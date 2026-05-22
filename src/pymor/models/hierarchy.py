@@ -25,6 +25,14 @@ class DDRBModelHierarchy(Model):
     large, the full-order model is called and its solution is used to extend the
     reduced basis of the reduced basis model.
 
+    For the data-driven part in the hierarchy, we make use of multiple
+    data-driven models. Whenever the reduced basis is extended, we add a new
+    data-driven surrogate for the additional reduced basis coefficients.
+    The training data is split accordingly and passed to the respective
+    surrogates before (re-)training the data-driven models. For prediction,
+    all data-driven surrogates are evaluated for the given parameter and the
+    outputs are combined.
+
     The implementation is based on the strategies described in :cite:`HKOSW23`.
 
     Parameters
@@ -71,6 +79,8 @@ class DDRBModelHierarchy(Model):
 
         Training data is always accumulated in the reductor. When `retrain_interval`
         new samples have been added, the regressor is retrained from scratch.
+        All data-driven reductors are handed the respective part of the training data
+        and they are retrained if required.
 
         Parameters
         ----------
@@ -105,6 +115,7 @@ class DDRBModelHierarchy(Model):
             If `True`, bases and training data are extended as needed and surrogates are trained.
             If `False`, only the error estimation is performed without modifying the models.
         """
+        # check if function was already called and avoid recomputations
         if 'estimated_error' in data:
             return
 
