@@ -167,7 +167,7 @@ class DDRBModelHierarchy(Model):
         # extend reduced basis of RB reductor and reduce again
         old_rb_size = self._rb_model.order
         extension_data = fom_solution
-        if self.compression is not None:  # Perform additional compression if desired
+        if self.compression is not None:  # perform additional compression if desired
             extension_data = self.compression(fom_solution)
         self.rb_reductor.extend_basis(extension_data)
         self._rb_model = self.rb_reductor.reduce()

@@ -193,24 +193,8 @@ def main(
 def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
-        f = LincombFunction(
-            [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-            [ProjectionParameterFunctional('mu'), 0.1])
-        g = LincombFunction(
-            [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-            [ProjectionParameterFunctional('mu'), 0.5])
-
-        problem = StationaryProblem(
-            domain=RectDomain(),
-            rhs=f,
-            diffusion=LincombFunction(
-                [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-                [ProjectionParameterFunctional('mu'), 1]),
-            dirichlet_data=g,
-            name='2DProblem'
-        )
-
-        fom, _ = discretize_stationary_cg(problem, diameter=1. / int(grid_intervals))
+        from pymor.models.examples import two_dimensional_parametric_diffusion
+        fom = two_dimensional_parametric_diffusion(grid_intervals=grid_intervals)
         parameter_space = fom.parameters.space((0.1, 1))
     else:
         stationary_part = text_problem(text='p')

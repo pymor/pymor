@@ -7,6 +7,7 @@ import numpy as np
 from pymor.algorithms.image import estimate_image
 from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject
+from pymor.core.exceptions import ImageCollectionError
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ConstantParameterFunctional, ParameterFunctional
@@ -53,13 +54,16 @@ class CoerciveRBReductor(StationaryRBReductor):
         residual = self.residual_reductor.reduce()
 
         # output estimate
+        projected_output_adjoint = None
         if self.fom.output_functional.linear:
-            output_adjoint = self.fom.output_functional.H
-            output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
-                                                        product=self.products['RB'], riesz_representatives=True)
-            projected_output_adjoint = project(output_adjoint, output_adjoint_riesz_range, None)
-        else:
-            projected_output_adjoint = None
+            try:
+                output_adjoint = self.fom.output_functional.H
+                output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
+                                                            product=self.products['RB'], riesz_representatives=True)
+                projected_output_adjoint = project(output_adjoint, output_adjoint_riesz_range, None)
+            except ImageCollectionError:
+                self.logger.warning('Cannot estimate image of output functional')
+                projected_output_adjoint = None
 
         return CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                    self.coercivity_estimator, projected_output_adjoint)
