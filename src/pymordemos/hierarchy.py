@@ -17,6 +17,7 @@ from pymor.models.hierarchy import DDRBModelHierarchy
 
 app = App(help_on_error=True)
 
+
 @app.default
 def main(
     problem_number: Literal[0, 1],
@@ -127,8 +128,8 @@ def main(
         data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
         timings_red.append(time.perf_counter() - tic)
         U_red.append(data['solution'])
-        used_models.append(data['_used_model'])
-        estimated_errors.append(np.max(data['_estimated_error']))
+        used_models.append(data['used_model'])
+        estimated_errors.append(np.max(data['estimated_error']))
 
     timings_fom = np.array(timings_fom)
     timings_red = np.array(timings_red)
@@ -140,16 +141,16 @@ def main(
     print(f'Mean errors: {np.mean(relative_errors)}')
 
     n = len(used_models)
-    for model in ('FOM', 'RB', 'ML'):
+    for model in ('FOM', 'RB', 'DD'):
         count = used_models.count(model)
         print(f'\t{model}: {count}\t(ratio: {count/n*100:.2f}%)')
 
     if vis:
-        model_colors = {'FOM': 'C0', 'RB': 'C1', 'ML': 'C2'}
+        model_colors = {'FOM': 'C0', 'RB': 'C1', 'DD': 'C2'}
         fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
         # Model usage counts
-        models = ('FOM', 'RB', 'ML')
+        models = ('FOM', 'RB', 'DD')
         counts = [used_models.count(m) for m in models]
         axes[0].bar(models, counts, color=[model_colors[m] for m in models])
         axes[0].set_ylabel('count')
@@ -174,7 +175,7 @@ def main(
         axes[1].set_title('Runtimes')
 
         # Estimated errors
-        for model, marker in (('ML', '*'), ('RB', '.')):
+        for model, marker in (('DD', '*'), ('RB', '.')):
             idx = [i for i, m in enumerate(used_models) if m == model]
             if idx:
                 axes[2].plot(idx, estimated_errors[idx], marker,
