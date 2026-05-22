@@ -59,7 +59,7 @@ ci_current_requirements:
 	uv pip compile  \
 		$(CI_EXTRAS) \
 		--extra docs-additional \
-		--python-version 3.13 \
+		--python-version 3.14 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
