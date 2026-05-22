@@ -74,6 +74,7 @@ DATA_DRIVEN_ARGS = (
 
 ADAPTIVE_MODEL_HIERARCHY_ARGS = (
     ('hierarchy', [0, 'vkoga', 20, 50]),
+    ('hierarchy', [0, 'gpr', 20, 50]),
     ('hierarchy', [1, 'vkoga', 20, 50, '--time-steps=10']),
 )
 
