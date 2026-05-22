@@ -8,6 +8,7 @@ config.require('TORCH')
 
 from numbers import Number
 
+import numpy as np
 import torch
 import torch.optim as optim
 
@@ -135,4 +136,6 @@ class NeuralNetworkRegressor(BasicObject):
         -------
         Prediction obtained by the neural network.
         """
-        return self.neural_network(torch.DoubleTensor(X)).detach().numpy()
+        self.neural_network.eval()
+        with torch.no_grad():
+            return self.neural_network(torch.from_numpy(np.asarray(X, dtype=np.float64))).numpy()
