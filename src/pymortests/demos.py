@@ -183,6 +183,11 @@ VKOGA_2D_INPUT_ARGS = (
     ('vkoga_2d_input', ['--greedy-criterion=p']),
 )
 
+NEURAL_NETWORK_ARGS = (
+    ('neural_network', []),
+    ('neural_network', ['--grid-search-parameter-optimization']),
+)
+
 STOKES_REDUCTOR_ARGS = (
     ('stokes', []),
 )
@@ -207,6 +212,7 @@ DEMO_ARGS = (
     + SYMPLECTIC_WAVE_ARGS
     + VKOGA_ARGS
     + VKOGA_2D_INPUT_ARGS
+    + NEURAL_NETWORK_ARGS
     + STOKES_REDUCTOR_ARGS
 )
 
