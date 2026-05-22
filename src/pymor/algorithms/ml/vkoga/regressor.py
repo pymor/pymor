@@ -96,7 +96,7 @@ class VKOGARegressor(BasicObject):
         # run greedy on the new points to decide if they should become centers
         new_indices = np.arange(self._surrogate.N - len(X), self._surrogate.N)
         n_existing = len(self._surrogate._centers) if self._surrogate._centers is not None else 0
-        remaining_centers = max(self.max_centers - n_existing, 0)
+        remaining_centers = self.max_centers - n_existing
         if remaining_centers > 0:
             weak_greedy(self._surrogate, new_indices, atol=self.tol, max_extensions=remaining_centers)
 
@@ -158,7 +158,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if F_new.ndim == 1:
             F_new = F_new.reshape((-1, 1))
 
-        n_new = len(X_new)
+        n_new = X_new.shape[0]
         assert X_new.shape[1] == self.d
         assert F_new.shape[1] == self.m
 
@@ -176,10 +176,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
             for j in range(n_bases):
                 center_idx = self._centers_idx[j]
                 K_new_center = self.kernel(X_new, self.X_train[center_idx:center_idx+1]).ravel()
-                if j == 0:
-                    V_new[:, j] = K_new_center / self._V[center_idx, 0]
-                else:
-                    V_new[:, j] = (K_new_center - V_new[:, :j] @ self._V[center_idx, :j]) / self._V[center_idx, j]
+                V_new[:, j] = (K_new_center - V_new[:, :j] @ self._V[center_idx, :j]) / self._V[center_idx, j]
                 new_power2 -= V_new[:, j] ** 2
             self._V = np.vstack([self._V, V_new])
 
@@ -190,6 +187,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
             # no centers yet, residual is just the raw target values
             if hasattr(self, 'res'):
                 self.res = np.vstack([self.res, F_new])
+            else:
+                self.res = F_new
 
         self._power2 = np.concatenate([self._power2, np.maximum(new_power2, 0)])
 
