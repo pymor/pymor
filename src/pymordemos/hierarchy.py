@@ -194,7 +194,7 @@ def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
         from pymor.models.examples import two_dimensional_parametric_diffusion
-        fom = two_dimensional_parametric_diffusion(grid_intervals=grid_intervals)
+        fom = two_dimensional_parametric_diffusion(diameter=1./grid_intervals)
         parameter_space = fom.parameters.space((0.1, 1))
     else:
         stationary_part = text_problem(text='p')
