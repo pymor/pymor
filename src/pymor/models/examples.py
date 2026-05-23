@@ -446,14 +446,16 @@ def two_dimensional_parametric_diffusion(diameter=1/50):
     parametrized diffusion, right hand side and Dirichlet boundary condition:
 
     .. math::
+
         -\nabla\cdot\big(\sigma(x, \mu)\nabla u(x, \mu)\big) = f(x, \mu),\quad x=(x_1,x_2)\in\Omega,
 
     on the domain :math:`\Omega:= (0, 1)^2 \subset \mathbb{R}^2` with data
     functions :math:`f((x_1, x_2), \mu) = 10 \cdot \mu + 0.1`,
-    :math:``\sigma((x_1, x_2), \mu) = (1 - x_1) \cdot \mu + x_1`, and
+    :math:`\sigma((x_1, x_2), \mu) = (1 - x_1) \cdot \mu + x_1`, and
     Dirichlet boundary conditions
 
     .. math::
+
         u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 
     The outputs of the model are given as the l2-product of the solution with
