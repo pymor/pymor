@@ -8,6 +8,7 @@ config.require('TORCH')
 
 from numbers import Number
 
+import numpy as np
 import torch
 import torch.optim as optim
 
