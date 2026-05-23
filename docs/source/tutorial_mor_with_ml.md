@@ -721,7 +721,7 @@ for model in models:
         timing_data.append(timings_red[idx])
         labels.append(model)
         colors.append(model_colors[model])
-bplot = axes[1].boxplot(timing_data, labels=labels, patch_artist=True)
+bplot = axes[1].boxplot(timing_data, tick_labels=labels, patch_artist=True)
 for patch, color in zip(bplot['boxes'], colors, strict=True):
     patch.set_facecolor(color)
     patch.set_alpha(0.7)
@@ -744,7 +744,7 @@ axes[2].set_title('Estimated errors')
 fig.tight_layout()
 ```
 
-We observe that the data-driven surrogate is the fastest model and used most
+We observe that the data-driven surrogate is the fastest model and is used most
 often. The reduced basis model is also much faster than the full-order model
 and used quite frequently. The full-order model is only used a few times and
 was never required after building a suitable reduced space. It is important
