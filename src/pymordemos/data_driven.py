@@ -54,7 +54,7 @@ def main(
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
-    fom = two_dimensional_parametric_diffusion(grid_intervals=grid_intervals)
+    fom = two_dimensional_parametric_diffusion(diameter=1./grid_intervals)
     parameter_space = fom.parameters.space((0.1, 1))
 
     training_parameters = parameter_space.sample_randomly(training_samples)
