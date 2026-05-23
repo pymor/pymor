@@ -468,7 +468,8 @@ def two_dimensional_parametric_diffusion(diameter=1/50):
 
     Returns
     -------
-    Diffusion problem as a |StationaryModel|.
+    fom
+        Diffusion problem as a |StationaryModel|.
     """
     from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
     from pymor.parameters.functionals import ProjectionParameterFunctional
