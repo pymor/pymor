@@ -353,6 +353,8 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.3
     # via stack-data
+py-cpuinfo==9.0.0
+    # via pymor (./pyproject.toml)
 pybind11==3.0.1
     # via -r ./requirements-ci-oldest-pins.in
 pybind11-global==3.0.1
