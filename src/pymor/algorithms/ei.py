@@ -13,6 +13,8 @@ the empirical interpolation of the |Operators| of a given model with
 a single function call.
 """
 
+from itertools import count
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -23,6 +25,7 @@ from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
+from pymor.tools.progress import track
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -116,7 +119,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     initial_max_err = max_err = errs[max_err_ind]
 
     # main loop
-    while True:
+    for _ in track(count(), 'ei_greedy', min(max_interpolation_dofs, len(U)) if max_interpolation_dofs else len(U)):
         if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
             logger.info(f'Final maximum interpolation error with '
@@ -235,7 +238,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
 
-    for i in range(len(collateral_basis)):
+    for i in track(range(len(collateral_basis)), 'deim'):
         logger.info(f'Choosing interpolation point for basis vector {i}.')
 
         if len(interpolation_dofs) > 0:
@@ -401,10 +404,11 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
                 logger.info(f'Using pool of {len(pool)} workers for parallel evaluation')
                 evaluations = rom.manage(pool.push(fom.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                         fom=fom, operators=operators, evaluations=evaluations)
+                         fom=fom, operators=operators, evaluations=evaluations,
+                         task_label='eval operator')
             else:
                 evaluations = operators[0].range.empty()
-                for mu in parameter_sample:
+                for mu in track(parameter_sample, 'eval operator'):
                     U = fom.solve(mu)
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
@@ -534,7 +538,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         initial_max_err = max_err = errs[max_err_ind]
 
         # main loop
-        while True:
+        for _ in track(count(), 'ei_greedy', max_interpolation_dofs):
 
             if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
                 logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
