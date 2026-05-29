@@ -721,7 +721,7 @@ for model in models:
         timing_data.append(timings_red[idx])
         labels.append(model)
         colors.append(model_colors[model])
-bplot = axes[1].boxplot(timing_data, tick_labels=labels, patch_artist=True)
+bplot = axes[1].boxplot(timing_data, labels=labels, patch_artist=True)
 for patch, color in zip(bplot['boxes'], colors, strict=True):
     patch.set_facecolor(color)
     patch.set_alpha(0.7)
