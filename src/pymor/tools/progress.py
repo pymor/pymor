@@ -13,9 +13,37 @@ from rich.text import Text
 class ProgressDisplay:
 
     def add_task(self, label=None, total=None):
+        """Add new progress bar for given task.
+
+        Parameters
+        ----------
+        label
+            If not `None`, the label to use for the progress bar for this task.
+        total
+            If not `None`, the total units of work to be performed by this task.
+
+        Returns
+        -------
+        task
+            The :cls:`Task` object representing the progress bar.
+        """
         return Task(self, 0)
 
     def track(self, iterable, label=None, total=None):
+        """Track iteration over an iterable.
+
+        Consecutively yields the items of the iterable and updates the
+        corresponding progress bar.
+
+        Parameters
+        ----------
+        iterable
+            The iterable to track.
+        label
+            If not `None`, the label for the corresponding progress bar.
+        total
+            If not `None`, the the length of the iterable.
+        """
         if total is None:
             try:
                 total = len(iterable)
@@ -34,6 +62,15 @@ class ProgressDisplay:
 
 
 class Task:
+    """A task corresponding to a progress bar.
+
+    Created by a :cls:`ProgressDisplay`.
+
+    Can be used as a context manager. In that case, the task is
+    automatically :meth:`finished <Task.finish>` when the context
+    is left.
+    """
+
     def __init__(self, progress_display, id):
         self.progress_display, self.id = progress_display, id
         self.finished = False
@@ -48,9 +85,20 @@ class Task:
         self.finish()
 
     def update(self, value, total=None):
+        """Update progress of the task.
+
+        Parameters
+        ----------
+        value
+            The units of work that have been finished.
+        total
+            If not `None` a (new) value for the total number of unit of
+            work to be performed.
+        """
         self.progress_display._update_task(self.id, value, total=total)
 
     def finish(self):
+        """Mark task as finished."""
         if not self.finished:
             self.progress_display._task_finished(self.id)
             self.finished = True
@@ -132,4 +180,5 @@ progress_display = RichProgressDisplay()
 
 
 def get_progress_display():
+    """Returns the currently active :cls:`ProgressDisplay`."""
     return progress_display

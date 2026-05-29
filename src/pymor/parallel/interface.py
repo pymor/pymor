@@ -177,6 +177,10 @@ class WorkerPool(BasicObject):
             The sequences of positional arguments for `function`.
         kwargs
             The keyword arguments for `function`.
+        task_label
+            If not `None`, a progress bar with this label will be created
+            in the active :cls:`~pymor.tools.progress.ProgressDisplay` to
+            track the progress of the operator.
 
         Returns
         -------
