@@ -189,7 +189,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     norms, error_estimates, errors, conditions, custom_values = \
         list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, error_estimator=error_estimator,
                            error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes,
-                           task_title='compute errors'),
+                           task_label='compute errors'),
                  strict=True))
     print()
 

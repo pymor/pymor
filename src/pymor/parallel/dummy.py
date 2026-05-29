@@ -40,13 +40,13 @@ class DummyPool(WorkerPool):
         kwargs = self._map_kwargs(kwargs)
         return function(*args, **kwargs)
 
-    def map(self, function, *args, task_title=None, **kwargs):
+    def map(self, function, *args, task_label=None, **kwargs):
         kwargs = self._map_kwargs(kwargs)
-        if task_title:
+        if task_label:
             from pymor.tools.progress import get_progress_display
             result = [function(*a, **kwargs)
                       for a in get_progress_display().track(
-                          zip(*args, strict=True), title=task_title, total=len(args[0]))]
+                          zip(*args, strict=True), label=task_label, total=len(args[0]))]
         else:
             result = [function(*a, **kwargs) for a in zip(*args, strict=True)]
         return result

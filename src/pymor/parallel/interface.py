@@ -156,7 +156,7 @@ class WorkerPool(BasicObject):
         pass
 
     @abstractmethod
-    def map(self, function, *args, task_title=None, **kwargs):
+    def map(self, function, *args, task_label=None, **kwargs):
         """Parallel version of the builtin :func:`map` function.
 
         Each positional argument (after `function`) must be a sequence

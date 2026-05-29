@@ -12,16 +12,16 @@ from rich.text import Text
 
 class ProgressDisplay:
 
-    def add_task(self, title=None, total=None):
+    def add_task(self, label=None, total=None):
         return Task(self, 0)
 
-    def track(self, iterable, title=None, total=None):
+    def track(self, iterable, label=None, total=None):
         if total is None:
             try:
                 total = len(iterable)
             except TypeError:
                 pass
-        with self.add_task(title=title, total=total) as task:
+        with self.add_task(label=label, total=total) as task:
             for i, v in enumerate(iterable):
                 yield v
                 task.update(i+1)
@@ -67,20 +67,20 @@ class RichProgressDisplay(ProgressDisplay):
         self.tasks = []
         self.finished_tasks = {}
         self.last_update_max_tasks = perf_counter()
-        self.longest_title = 0
+        self.longest_label = 0
         self.live = Live(get_renderable=self._get_rederable, transient=True)
         self.started = False
 
-    def add_task(self, title=None, total=None):
+    def add_task(self, label=None, total=None):
         for task_id in self.finished_tasks:
             self.progress.remove_task(task_id)
             self.tasks.remove(task_id)
         self.finished_tasks.clear()
-        if title is not None:
-            self.longest_title = max(self.longest_title, len(title))
+        if label is not None:
+            self.longest_label = max(self.longest_label, len(label))
         for task_id, task in zip(self.progress.task_ids, self.progress.tasks, strict=True):
-            self.progress.update(task_id, description=f'{task.description:{self.longest_title}}')
-        task_id = self.progress.add_task(f'{title:{self.longest_title}}', total=total)
+            self.progress.update(task_id, description=f'{task.description:{self.longest_label}}')
+        task_id = self.progress.add_task(f'{label:{self.longest_label}}', total=total)
         self.tasks.append(task_id)
         self.max_tasks = max(self.max_tasks, len(self.tasks))
         if not self.started:
