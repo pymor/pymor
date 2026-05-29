@@ -58,6 +58,9 @@ class Task:
 
 class RichProgressDisplay(ProgressDisplay):
 
+    TASK_LINGER_TIME = 2
+    TASK_PANE_UPDATE_TIME = 2
+
     def __init__(self):
         self.max_tasks = 0
         self.progress = Progress(auto_refresh=False)
@@ -91,13 +94,13 @@ class RichProgressDisplay(ProgressDisplay):
         tic = perf_counter()
         to_remove = []
         for tid, t_finished in self.finished_tasks.items():
-            if tic - t_finished > 2:
+            if tic - t_finished > self.TASK_LINGER_TIME:
                 to_remove.append(tid)
         for tid in to_remove:
             self.progress.remove_task(tid)
             self.tasks.remove(tid)
             del self.finished_tasks[tid]
-        if tic - self.last_update_max_tasks > 2:
+        if tic - self.last_update_max_tasks > self.TASK_PANE_UPDATE_TIME:
             self.max_tasks = len(self.tasks)
             self.last_update_max_tasks = tic
         if self.max_tasks > len(self.tasks):
