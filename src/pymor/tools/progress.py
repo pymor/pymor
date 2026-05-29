@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from abc import ABC, abstractmethod
 from time import perf_counter
 
 from rich.console import Group
@@ -10,8 +11,10 @@ from rich.progress import Progress
 from rich.text import Text
 
 
-class ProgressDisplay:
+class ProgressDisplay(ABC):
+    """Displays multiple progress bars."""
 
+    @abstractmethod
     def add_task(self, label=None, total=None):
         """Add new progress bar for given task.
 
@@ -27,7 +30,7 @@ class ProgressDisplay:
         task
             The :cls:`Task` object representing the progress bar.
         """
-        return Task(self, 0)
+        pass
 
     def track(self, iterable, label=None, total=None):
         """Track iteration over an iterable.
@@ -54,9 +57,11 @@ class ProgressDisplay:
                 yield v
                 task.update(i+1)
 
+    @abstractmethod
     def _update_task(self, task_id, value, total=None):
         pass
 
+    @abstractmethod
     def _task_finished(self, task_id):
         pass
 
@@ -102,6 +107,18 @@ class Task:
         if not self.finished:
             self.progress_display._task_finished(self.id)
             self.finished = True
+
+
+class DummyProgressDisplay(ProgressDisplay):
+
+    def add_task(self, label=None, total=None):
+        return Task(self, 0)
+
+    def _update_task(self, task_id, value, total=None):
+        pass
+
+    def _task_finished(self, task_id):
+        pass
 
 
 class RichProgressDisplay(ProgressDisplay):
