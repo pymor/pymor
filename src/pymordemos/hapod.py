@@ -12,6 +12,7 @@ from pymor.algorithms.hapod import dist_vectorarray_hapod, inc_vectorarray_hapod
 from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, discretize_instationary_fv
+from pymor.tools.mpi import parallel
 from pymor.tools.table import format_table
 
 app = App(help_on_error=True)
@@ -56,6 +57,11 @@ def main(
         Number of threads to use for parallelization.
     """
     assert procs == 0 or threads == 0
+
+    if parallel and (procs > 0):
+        from pymor.core.logger import getLogger
+        getLogger('main').warning('MPI parallel run detected. Disable multiprocessing as it interferes with MPI.')
+        procs = 0
 
     executor = ProcessPoolExecutor(procs) if procs > 0 else \
         ThreadPoolExecutor(threads) if threads > 0 else \
