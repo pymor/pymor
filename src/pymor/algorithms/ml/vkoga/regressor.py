@@ -372,6 +372,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if self._centers_idx is not None and idx_in_X in self._centers_idx:
             raise ExtensionError('Center already selected.')
 
+        if self._power2[idx_in_X] <= 0 or np.isclose(self._power2[idx_in_X], 0):
+            raise ExtensionError('Power function value is zero for selected center.')
+
         # update the residual
         if self._V is None and self._z is None:
             self.res = self.F_train
