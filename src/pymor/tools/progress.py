@@ -200,3 +200,39 @@ progress_display = RichProgressDisplay() if int(os.environ.get('PYMOR_PROGRESS',
 def get_progress_display():
     """Returns the currently active :cls:`ProgressDisplay`."""
     return progress_display
+
+
+def add_task(label=None, total=None):
+    """Add new progress bar for given task to active :cls:`ProgressDisplay`.
+
+    Parameters
+    ----------
+    label
+        If not `None`, the label to use for the progress bar for this task.
+    total
+        If not `None`, the total units of work to be performed by this task.
+
+    Returns
+    -------
+    task
+        The :cls:`Task` object representing the progress bar.
+    """
+    return get_progress_display().add_task(label=label, total=total)
+
+
+def track(iterable, label=None, total=None):
+    """Track iteration over an iterable in the active :cls:`ProgressDisplay`.
+
+    Consecutively yields the items of the iterable and updates the
+    corresponding progress bar.
+
+    Parameters
+    ----------
+    iterable
+        The iterable to track.
+    label
+        If not `None`, the label for the corresponding progress bar.
+    total
+        If not `None`, the the length of the iterable.
+    """
+    return get_progress_display().track(iterable, label=label, total=total)

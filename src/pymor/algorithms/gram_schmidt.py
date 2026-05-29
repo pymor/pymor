@@ -7,7 +7,7 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
-from pymor.tools.progress import get_progress_display
+from pymor.tools.progress import track
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
@@ -61,7 +61,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
     # main loop
     R = np.eye(len(A))
     remove = []  # indices of to be removed vectors
-    for i in get_progress_display().track(range(offset, len(A)), 'Gram-Schmidt'):
+    for i in track(range(offset, len(A)), 'Gram-Schmidt'):
         # first calculate norm
         initial_norm = A[i].norm(product)[0]
 

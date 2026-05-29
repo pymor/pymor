@@ -12,7 +12,7 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
-from pymor.tools.progress import get_progress_display
+from pymor.tools.progress import track
 
 
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
@@ -96,7 +96,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     max_errs = []
     max_err_mus = []
 
-    for extensions in get_progress_display().track(count(), 'Greedy', max_extensions):
+    for extensions in track(count(), 'Greedy', max_extensions):
         with logger.block('Estimating errors ...'):
             max_err, max_err_mu = surrogate.evaluate(training_set)
             max_errs.append(max_err)
