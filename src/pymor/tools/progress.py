@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import os
 from abc import ABC, abstractmethod
 from time import perf_counter
 
@@ -193,7 +194,7 @@ class RichProgressDisplay(ProgressDisplay):
                 pass
 
 
-progress_display = RichProgressDisplay()
+progress_display = RichProgressDisplay() if int(os.environ.get('PYMOR_PROGRESS', 0)) == 1 else DummyProgressDisplay()
 
 
 def get_progress_display():
