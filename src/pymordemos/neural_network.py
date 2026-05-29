@@ -40,8 +40,7 @@ def main(
         Number of points used for plotting of the approximation result.
     """
     m = 2
-    if not config.HAVE_TORCH:
-        raise TorchMissingError
+    config.require('TORCH')
 
     # training data
     assert training_points_sampling in ('uniform', 'random')

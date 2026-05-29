@@ -54,8 +54,8 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
         Number of points used for plotting of the approximation result.
     """
     m = 2
-    if (kernel in ('Matern', 'RationalQuadratic') or grid_search_parameter_optimization) and not config.HAVE_SKLEARN:
-        raise SklearnMissingError
+    if kernel in ('Matern', 'RationalQuadratic') or grid_search_parameter_optimization:
+        config.require('SKLEARN')
 
     # define kernel
     if kernel == 'Gaussian':
