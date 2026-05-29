@@ -10,7 +10,6 @@ from cyclopts import App
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.core.config import config
-from pymor.core.exceptions import SklearnMissingError
 from pymor.tools.random import new_rng
 
 app = App(help_on_error=True)
