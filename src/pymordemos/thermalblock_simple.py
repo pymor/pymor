@@ -370,6 +370,8 @@ def discretize_ngsolve():
             diffusion = CoefficientFunction(c)
             a = BilinearForm(V, symmetric=False)
             a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=(np.where(np.array(c) == 1)[0] + 1).tolist())
+            a += SymbolicBFI(1e-15 * grad(u) * grad(v))  # ensure that all matrices have same sparsity pattern
+                                                         # required since NGS 6.2.26.04
             a.Assemble()
             mats.append(a.mat)
 

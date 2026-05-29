@@ -4,6 +4,7 @@
 from pathlib import Path
 
 from pymor.core.config import config
+from pymor.core.exceptions import LinAlgError
 
 config.require('NGSOLVE')
 
@@ -168,7 +169,10 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         matrix = operators[0].matrix.CreateMatrix()
         matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
         for op, c in zip(operators[1:], coefficients[1:], strict=True):
-            matrix.AsVector().data += float(c) * op.matrix.AsVector()
+            try:
+                matrix.AsVector().data += float(c) * op.matrix.AsVector()
+            except Exception as e:
+                raise LinAlgError(f'Linear combination failed with error "{e}". Different sparsity pattern?') from e
         return NGSolveMatrixOperator(matrix, self.range, self.source, name=name)
 
     def as_vector(self, copy=True):

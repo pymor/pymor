@@ -180,12 +180,18 @@ VKOGA_ARGS = (
     ('vkoga', ['--greedy-criterion=p']),
     ('vkoga', ['--kernel=Matern']),
     ('vkoga', ['--kernel=RationalQuadratic']),
+    ('vkoga', ['--grid-search-parameter-optimization']),
 )
 
 VKOGA_2D_INPUT_ARGS = (
     ('vkoga_2d_input', ['--greedy-criterion=fp']),
     ('vkoga_2d_input', ['--greedy-criterion=f']),
     ('vkoga_2d_input', ['--greedy-criterion=p']),
+)
+
+NEURAL_NETWORK_ARGS = (
+    ('neural_network', []),
+    ('neural_network', ['--grid-search-parameter-optimization']),
 )
 
 STOKES_REDUCTOR_ARGS = (
@@ -213,6 +219,7 @@ DEMO_ARGS = (
     + SYMPLECTIC_WAVE_ARGS
     + VKOGA_ARGS
     + VKOGA_2D_INPUT_ARGS
+    + NEURAL_NETWORK_ARGS
     + STOKES_REDUCTOR_ARGS
 )
 
@@ -228,6 +235,7 @@ def _skip_if_no_solver(param):
             (lambda s: 'fenics' in s, ('FENICS', 'FENICSX')),
             (lambda s: 'ngsolve' in s, 'NGSOLVE'),
             (lambda s: 'fcnn' in s, 'TORCH'),
+            (lambda s: 'neural_network' in s, 'TORCH'),
             (lambda s: 'data_driven_instationary' in s, 'FENICS'),
             (lambda s: 'data_driven_fenics' in s, 'FENICS'),
             (lambda s: 'parabolic_mor' in s and 'fenics' in s, 'FENICS'),
