@@ -29,7 +29,7 @@ class ProgressDisplay(ABC):
         Returns
         -------
         task
-            The :cls:`Task` object representing the progress bar.
+            The :class:`Task` object representing the progress bar.
         """
         pass
 
@@ -70,7 +70,7 @@ class ProgressDisplay(ABC):
 class Task:
     """A task corresponding to a progress bar.
 
-    Created by a :cls:`ProgressDisplay`.
+    Created by a :class:`ProgressDisplay`.
 
     Can be used as a context manager. In that case, the task is
     automatically :meth:`finished <Task.finish>` when the context
@@ -198,12 +198,12 @@ progress_display = RichProgressDisplay() if int(os.environ.get('PYMOR_PROGRESS',
 
 
 def get_progress_display():
-    """Returns the currently active :cls:`ProgressDisplay`."""
+    """Returns the currently active :class:`ProgressDisplay`."""
     return progress_display
 
 
 def add_task(label=None, total=None):
-    """Add new progress bar for given task to active :cls:`ProgressDisplay`.
+    """Add new progress bar for given task to active :class:`ProgressDisplay`.
 
     Parameters
     ----------
@@ -215,13 +215,13 @@ def add_task(label=None, total=None):
     Returns
     -------
     task
-        The :cls:`Task` object representing the progress bar.
+        The :class:`Task` object representing the progress bar.
     """
     return get_progress_display().add_task(label=label, total=total)
 
 
 def track(iterable, label=None, total=None):
-    """Track iteration over an iterable in the active :cls:`ProgressDisplay`.
+    """Track iteration over an iterable in the active :class:`ProgressDisplay`.
 
     Consecutively yields the items of the iterable and updates the
     corresponding progress bar.
