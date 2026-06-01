@@ -175,7 +175,7 @@ class RandomizedRangeFinder(BasicObject):
                 QZ = Q.inner(self.Omega)
                 error = spla.norm(
                     (self.Omega+Q.lincomb(T*np.diag(T.T@QZ)-QZ)
-                     ).to_numpy()) / np.sqrt(len(self.Omega))
+                     ).norm()) / np.sqrt(len(self.Omega))
             self.last_estimated_error = error
             self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
