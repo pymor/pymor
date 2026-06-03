@@ -73,7 +73,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         points = [domain_description.points.tolist()]
         points.extend([h.tolist() for h in domain_description.holes])
 
-        return points, domain_description.boundary_types
+        return points, domain_description.boundary_description
 
     def discretize_RectDomain():
         points = [[domain_description.domain[0].tolist(),
