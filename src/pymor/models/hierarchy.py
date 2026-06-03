@@ -9,6 +9,60 @@ from pymor.reductors.basic import ProjectionBasedReductor
 from pymor.reductors.data_driven import DataDrivenReductor
 
 
+class ModelHierarchy(Model):
+
+    def __init__(self, models, reductors, tol):
+        assert len(models) == len(reductors) + 1
+        self.__auto_init(locals())
+
+    def _compute(self, quantities, data, mu):
+        models, reductors, tol = self.models, self.reductors, self.tol
+
+        errors_to_compute = set()
+        if 'solution' in quantities:
+            errors_to_compute.add('solution_error_estimate')
+        if 'output' in quantities:
+            errors_to_compute.add('output_error_estimate')
+
+        # find solution/output that is good enough
+        model_data = []
+        for i_m, m in enumerate(models):
+            d = m.compute(**quantities, mu=mu)
+            model_data.append(d)
+            if ((d.get('solution_error_estimate', -1) <= tol)
+                    and (d.get('output_error_estimate', -1) <= tol)):
+                break
+
+        # update data
+        i_m_sufficient = i_m
+        data.update(d)
+        if 'solution' in quantities:
+            # might need to reconstruct solution
+            s = d['solution']
+            for r in reductors[i_m_sufficient:]:
+                s = r.reconstruct(s)  # could be a nop
+            data['solution'] = s
+
+        if i_m_sufficient == 0:
+            return
+
+        # adapt models
+        m_new, adapt_data = reductors[i_m_sufficient-1].adapt(
+            mu, tol, fom_solution=d.get('solution'), fom_output=d.get('output')
+        )
+        if models[i_m_sufficient-1] == m_new:
+            return
+        models[i_m_sufficient-1] = m_new
+
+        for i in range(i_m_sufficient-1, -1, -1):
+            m_new, adapt_data = reductors[i].adapt(
+                mu, tol, new_fom=m_new, fom_solution=adapt_data.get('solution'), fom_output=adapt_data.get('output')
+            )
+            if models[i] == m_new:
+                return
+            models[i] = m_new
+
+
 class DDRBModelHierarchy(Model):
     """Adaptive model hierarchy combining data-driven and reduced basis models.
 
