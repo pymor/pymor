@@ -31,7 +31,7 @@ def test_polygonal_chain_boundary_function():
             [2]
     }
 
-    domain = PolygonalDomain(points=chain, boundary_types=_determine_boundary_type)
+    domain = PolygonalDomain(points=chain, boundary_description=_determine_boundary_type)
 
     print(domain.boundary_types)
 
