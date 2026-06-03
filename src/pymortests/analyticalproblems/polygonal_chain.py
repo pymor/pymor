@@ -35,7 +35,8 @@ def test_polygonal_chain_boundary_function():
 
     print(domain.boundary_types)
 
-    assert domain.boundary_types == reference_boundary_types
+    assert domain.boundary_description == reference_boundary_types
+    assert domain.boundary_types == frozenset(reference_boundary_types.keys())
 
 
 if __name__ == '__main__':
