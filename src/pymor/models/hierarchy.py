@@ -4,9 +4,11 @@
 
 import numpy as np
 
+from pymor.core.base import BasicObject
 from pymor.models.interface import Model
 from pymor.reductors.basic import ProjectionBasedReductor
 from pymor.reductors.data_driven import DataDrivenReductor
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class ModelHierarchy(Model):
@@ -56,11 +58,97 @@ class ModelHierarchy(Model):
 
         for i in range(i_m_sufficient-1, -1, -1):
             m_new, adapt_data = reductors[i].adapt(
-                mu, tol, new_fom=m_new, fom_solution=adapt_data.get('solution'), fom_output=adapt_data.get('output')
+                mu, tol, fom=m_new, fom_solution=adapt_data.get('solution'), fom_output=adapt_data.get('output')
             )
             if models[i] == m_new:
                 return
             models[i] = m_new
+
+
+class AdaptiveRBReductor(BasicObject):
+
+    def __init__(self, fom, reductor, compression=None):
+        self.__auto_init(locals())
+
+    def reduce(self):
+        return self.redutor.reduce()
+
+    def adapt(self, mu, tol, fom=None, fom_solution=None, fom_output=None):
+        if fom:
+            raise NotImplementedError
+
+        if fom_solution is None:
+            fom_solution = self.fom.solve(mu)
+
+        # TODO: why support this? ProjectionBasedReductor can already perform POD
+        extension_data = fom_solution if self.compression is None else self.compression(fom_solution)
+        self.reductor.extend_basis(extension_data)
+
+        new_rom = self.reductor.reduce()
+
+        projected_fom_solution = self.reductor.bases['RB'].inner(
+            fom_solution, product=self.rb_reductor.products.get('RB')
+        )
+
+        return new_rom, {'solution': projected_fom_solution, 'output': fom_output}
+
+
+class AdaptiveDDReductor(BasicObject):
+
+    def __init__(self, fom, dd_reductor_parameters, retrain_interval=1):
+        self.__auto_init(locals())
+        self.dd_reductors = []
+        self.dd_models = []
+        self._pending_retrains = []
+
+    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
+        if new_fom is not None:
+            pass
+
+        if fom_solution is None:
+            fom_solution = (new_fom or self.fom).solve(mu)
+
+        reduced_coefficients = fom_solution.to_numpy()
+
+        sum_dims = 0
+        for i, red in enumerate(self.dd_reductors):
+            coeffs = reduced_coefficients[sum_dims:sum_dims+red.dim_solution_space]
+            red.extend_training_data([mu], coeffs.T)
+            self._pending_retrains[i] += 1
+            if self._pending_retrains[i] >= self.retrain_interval:
+                self.dd_models[i] = red.reduce()
+                self._pending_retrains[i] = 0
+            sum_dims += red.dim_solution_space
+
+        if new_fom is not None:
+            self.fom = new_fom
+            old_rb_size = sum(red.dim_solution_space for red in self.dd_reductors)
+            # add new data-driven reductor and model to account for new basis components
+            T = getattr(new_fom, 'T', None)
+            self.dd_reductors.append(DataDrivenReductor([mu], reduced_coefficients[old_rb_size:].T,
+                                                        T=T, **self.dd_reductor_parameters))
+            self.dd_models.append(self.dd_reductors[-1].reduce())
+            self._pending_retrains.append(0)
+
+        new_rom = MultiModel(self.dd_models, self.fom.output_function)
+
+        return new_rom, {'solution': fom_solution, 'output': fom_output}
+
+
+class MultiModel(Model):
+
+    def __init__(self, models, output_functional=None, error_estimator=None):
+        assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
+        self.__auto_init(locals())
+        self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
+
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
+            data['solution'] = self.solution_space.make_array(solution_np)
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
 
 
 class DDRBModelHierarchy(Model):
