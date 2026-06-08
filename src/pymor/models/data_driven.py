@@ -102,7 +102,7 @@ class DataDrivenModel(Model):
 
 
 class DataDrivenInstationaryModel(DataDrivenModel):
-    """Class for models of stationary problems that use regressors for prediction.
+    """Class for models of instationary problems that use regressors for prediction.
 
     This class implements a |Model| that uses an regressor for solution
     or output approximation.
