@@ -371,13 +371,13 @@ class CircularSectorDomain(PolygonalDomain):
         if arc == radii:
             boundary_description = {arc: list(range(1, len(points)+1))}
         else:
-            boundary_description  = {arc: list(range(2, len(points)))}
-            boundary_description .update({radii: [1, len(points)]})
+            boundary_description = {arc: list(range(2, len(points)))}
+            boundary_description.update({radii: [1, len(points)]})
 
         if None in boundary_description :
-            del boundary_description [None]
+            del boundary_description[None]
 
-        super().__init__(points, boundary_description )
+        super().__init__(points, boundary_description)
         self.__auto_init(locals())
 
 
@@ -406,7 +406,7 @@ class DiscDomain(PolygonalDomain):
 
         points = [[radius*np.cos(t), radius*np.sin(t)] for t in
                   np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
-        boundary_description  = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
+        boundary_description = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
 
-        super().__init__(points, boundary_description )
+        super().__init__(points, boundary_description)
         self.__auto_init(locals())
