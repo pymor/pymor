@@ -73,7 +73,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
         kwargs = self._map_kwargs(kwargs)
         return self._apply_only(function, worker, *args, **kwargs)
 
-    def map(self, function, *args, **kwargs):
+    def map(self, function, *args, task_label=None, **kwargs):
         kwargs = self._map_kwargs(kwargs)
         chunks = self._split_into_chunks(len(self), *args)
         return self._map(function, chunks, **kwargs)

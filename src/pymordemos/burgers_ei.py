@@ -16,6 +16,7 @@ from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
+from pymor.tools.progress import track
 
 app = App(help_on_error=True)
 
@@ -193,14 +194,12 @@ def main(
     mus = problem.parameter_space.sample_randomly(test)
 
     def error_analysis(N, M):
-        print(f'N = {N}, M = {M}: ', end='')
+        print(f'N = {N}, M = {M}')
         rom = reductor.reduce(N)
         rom = rom.with_(operator=rom.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
-        for mu in mus:
-            print('.', end='')
-            sys.stdout.flush()
+        for mu in track(mus, 'error_analysis'):
             u = rom.solve(mu)
             URB = reductor.reconstruct(u)
             U = fom.solve(mu)
@@ -209,7 +208,6 @@ def main(
             if l2_err > l2_err_max:
                 l2_err_max = l2_err
                 mumax = mu
-        print()
         return l2_err_max, mumax
     error_analysis = np.frompyfunc(error_analysis, 2, 2)
 

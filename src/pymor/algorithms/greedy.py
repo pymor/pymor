@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import time
+from itertools import count
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
+from pymor.tools.progress import track
 
 
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
@@ -91,11 +93,10 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     if pool:
         training_set = pool.scatter_list(training_set)
 
-    extensions = 0
     max_errs = []
     max_err_mus = []
 
-    while True:
+    for extensions in track(count(), 'Greedy', max_extensions):
         with logger.block('Estimating errors ...'):
             max_err, max_err_mu = surrogate.evaluate(training_set)
             max_errs.append(max_err)
