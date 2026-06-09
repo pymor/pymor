@@ -369,15 +369,15 @@ class CircularSectorDomain(PolygonalDomain):
                        np.linspace(start=0, stop=angle, num=num_points, endpoint=True)])
 
         if arc == radii:
-            boundary_types = {arc: list(range(1, len(points)+1))}
+            boundary_description = {arc: list(range(1, len(points)+1))}
         else:
-            boundary_types = {arc: list(range(2, len(points)))}
-            boundary_types.update({radii: [1, len(points)]})
+            boundary_description  = {arc: list(range(2, len(points)))}
+            boundary_description .update({radii: [1, len(points)]})
 
-        if None in boundary_types:
-            del boundary_types[None]
+        if None in boundary_description :
+            del boundary_description [None]
 
-        super().__init__(points, boundary_types)
+        super().__init__(points, boundary_description )
         self.__auto_init(locals())
 
 
@@ -406,7 +406,7 @@ class DiscDomain(PolygonalDomain):
 
         points = [[radius*np.cos(t), radius*np.sin(t)] for t in
                   np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
-        boundary_types = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
+        boundary_description  = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
 
-        super().__init__(points, boundary_types)
+        super().__init__(points, boundary_description )
         self.__auto_init(locals())
