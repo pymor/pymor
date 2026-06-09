@@ -77,6 +77,33 @@ class VKOGARegressor(BaseRegressor):
 
         return self
 
+    def extend(self, X, Y):
+        """Incrementally extend the VKOGA surrogate with new training data.
+
+        New data points are added to the surrogate's training set. A greedy
+        step is then performed to decide whether any of the new points should
+        be selected as centers.
+
+        Parameters
+        ----------
+        X
+            New training inputs.
+        Y
+            New training targets.
+        """
+        if self._surrogate is None:
+            raise RuntimeError('Call fit() before extend().')
+        X = np.asarray(X)
+        Y = np.asarray(Y)
+        self._surrogate.extend_training_data(X, Y)
+
+        # run greedy on the new points to decide if they should become centers
+        new_indices = np.arange(self._surrogate.N - len(X), self._surrogate.N)
+        n_existing = len(self._surrogate._centers) if self._surrogate._centers is not None else 0
+        remaining_centers = self.max_centers - n_existing
+        if remaining_centers > 0:
+            weak_greedy(self._surrogate, new_indices, atol=self.tol, max_extensions=remaining_centers)
+
     def predict(self, X):
         """Predict the target for the input `X`.
 
@@ -119,6 +146,55 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._C = None
         # power2 = trace(k(x,x)) for each training point
         self._power2 = self.kernel.diag(self.X_train) + self.reg
+
+    def extend_training_data(self, X_new, F_new):
+        """Add new training points and update all internal quantities.
+
+        Parameters
+        ----------
+        X_new
+            New training inputs.
+        F_new
+            New training targets.
+        """
+        X_new = np.atleast_2d(X_new)
+        F_new = np.asarray(F_new)
+        if F_new.ndim == 1:
+            F_new = F_new.reshape((-1, 1))
+
+        n_new = X_new.shape[0]
+        assert X_new.shape[1] == self.d
+        assert F_new.shape[1] == self.m
+
+        # extend training data arrays
+        self.X_train = np.vstack([self.X_train, X_new])
+        self.F_train = np.vstack([self.F_train, F_new])
+        self.N += n_new
+
+        # extend power function evaluations for new points
+        new_power2 = self.kernel.diag(X_new) + self.reg
+
+        if self._V is not None:
+            n_bases = self._V.shape[1]
+            V_new = np.zeros((n_new, n_bases))
+            for j in range(n_bases):
+                center_idx = self._centers_idx[j]
+                K_new_center = self.kernel(X_new, self.X_train[center_idx:center_idx+1]).ravel()
+                V_new[:, j] = (K_new_center - V_new[:, :j] @ self._V[center_idx, :j]) / self._V[center_idx, j]
+                new_power2 -= V_new[:, j] ** 2
+            self._V = np.vstack([self._V, V_new])
+
+            # residual must match the state of old points: F - V[:, :-1] @ z[:-1]
+            new_res = F_new - V_new[:, :-1] @ self._z[:-1]
+            self.res = np.vstack([self.res, new_res])
+        else:
+            # no centers yet, residual is just the raw target values
+            if hasattr(self, 'res'):
+                self.res = np.vstack([self.res, F_new])
+            else:
+                self.res = F_new
+
+        self._power2 = np.concatenate([self._power2, np.maximum(new_power2, 0)])
 
     def predict(self, X):
         X = np.asarray(X)
@@ -295,6 +371,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         if self._centers_idx is not None and idx_in_X in self._centers_idx:
             raise ExtensionError('Center already selected.')
+
+        if self._power2[idx_in_X] <= 0 or np.isclose(self._power2[idx_in_X], 0):
+            raise ExtensionError('Power function value is zero for selected center.')
 
         # update the residual
         if self._V is None and self._z is None:
