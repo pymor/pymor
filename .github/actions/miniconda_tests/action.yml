@@ -1,27 +1,28 @@
 ---
 name: Run tests in miniconda environment
+description: Run tests in miniconda environment
 inputs:
   python:
     required: true
-    type: string
+    description: Python version
   prefix:
     required: true
-    type: string
+    description: drop me I'm unused
   os:
     required: true
-    type: string
+    description: Key used for caching
   environment_file:
     required: true
-    type: string
+    description: Passed on to mamba-org/setup-micromamba
   coverage_file:
     required: true
-    type: string
+    description: Coverage results are stored in {coverage_file}.xml
   results_file:
     required: true
-    type: string
+    description: Pytest results are stored in {results_file}
   hypothesis_profile:
     required: false
-    type: string
+    description: Hypothesis profile to be used in pytest invocation
     default: dev
 runs:
   using: composite
