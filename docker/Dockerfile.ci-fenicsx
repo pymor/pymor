@@ -1,4 +1,4 @@
-FROM docker.io/condaforge/miniforge3:25.9.1-0
+FROM docker.io/condaforge/miniforge3:26.1.0-0
 
 ENV DOCKER_PYMOR=1 \
     OPENBLAS_NUM_THREADS=1 \
