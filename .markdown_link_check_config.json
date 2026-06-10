@@ -1,0 +1,16 @@
+{
+  "__comment__": "https://github.com/tcort/markdown-link-check#config-file-format",
+  "ignorePatterns": [
+    {
+      "__comment__": "Only check offline links, rest is checked in CI.",
+      "pattern": "^https://"
+    },
+    {
+      "__comment__": "Only check offline links, rest is checked in CI.",
+      "pattern": "^http://"
+    },
+    {
+      "pattern": "^mailto:"
+    }
+  ]
+}
