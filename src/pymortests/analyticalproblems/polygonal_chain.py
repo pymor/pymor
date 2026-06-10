@@ -31,11 +31,12 @@ def test_polygonal_chain_boundary_function():
             [2]
     }
 
-    domain = PolygonalDomain(points=chain, boundary_types=_determine_boundary_type)
+    domain = PolygonalDomain(points=chain, boundary_description=_determine_boundary_type)
 
     print(domain.boundary_types)
 
-    assert domain.boundary_types == reference_boundary_types
+    assert domain.boundary_description == reference_boundary_types
+    assert domain.boundary_types == frozenset(reference_boundary_types.keys())
 
 
 if __name__ == '__main__':
