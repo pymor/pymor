@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import run
 
+from pymor.algorithms.ei import deim
 from pymor.algorithms.pod import pod
 from pymor.models.nonlinear_ph import NonlinearPHModel
 from pymor.operators.interface import Operator
@@ -69,10 +70,11 @@ def main(
 
     print('Computing the collateral POD basis ...')
     collateral_basis, _ = pod(nonlinear_snapshots, modes=deim_order, product=fom.Q, rtol=0)
+    interpolation_dofs, U, _ = deim(collateral_basis, pod=False)
 
     reductors = {
         'Petrov--Galerkin': PGNonlinearPHReductor(fom, V=state_basis, QTE_orthonormal=True),
-        'pH-DEIM': PHdeimReductor(fom, V=state_basis, G=collateral_basis, QTE_orthonormal=True),
+        'pH-DEIM': PHdeimReductor(fom, V=state_basis, U=U, Z=interpolation_dofs, QTE_orthonormal=True),
     }
 
     results = {}
