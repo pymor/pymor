@@ -291,7 +291,7 @@ class RandomizedSVD(BasicObject):
 
 
 @defaults('oversampling', 'power_iterations')
-def randomized_svd(A, n, source_product=None, range_product=None, power_iterations=0, oversampling=20):
+def randomized_svd(A, n, *, range_product=None, source_product=None, power_iterations=0, oversampling=20):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
     Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
