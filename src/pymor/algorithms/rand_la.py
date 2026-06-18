@@ -258,7 +258,7 @@ class RandomizedSVD(BasicObject):
         self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
                                                   power_iterations=power_iterations, **(rrf_args or {}))
 
-    def compute_svd(self, n, oversampling=20):
+    def compute_svd(self, n, oversampling=20, rrf_tol=None):
         A, range_product, source_product = self.A, self.range_product, self.source_product
         assert 0 <= n <= max(A.source.dim, A.range.dim)
         assert 0 <= oversampling
@@ -276,7 +276,7 @@ class RandomizedSVD(BasicObject):
             return A.source.empty(), np.array([]), A.range.empty()
 
         with self.logger.block('Approximating basis for the operator range ...'):
-            Q = self.range_finder.find_range(basis_size=n+oversampling)
+            Q = self.range_finder.find_range(basis_size=n+oversampling, tol=rrf_tol)
 
         with self.logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
             B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
