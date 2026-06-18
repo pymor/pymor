@@ -251,6 +251,45 @@ class RandomizedRangeFinder(BasicObject):
             return Q[-1].copy()
 
 
+class RandomizedSVD(BasicObject):
+
+    def __init__(self, A, range_product=None, source_product=None, power_iterations=0, rrf_args=None):
+        self.__auto_init(locals())
+        self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
+                                                  power_iterations=power_iterations, **(rrf_args or {}))
+
+    def compute_svd(self, n, oversampling=20):
+        A, range_product, source_product = self.A, self.range_product, self.source_product
+        assert 0 <= n <= max(A.source.dim, A.range.dim)
+        assert 0 <= oversampling
+        if oversampling > max(A.source.dim, A.range.dim) - n:
+            self.logger.warning('Oversampling parameter is too large!')
+            oversampling = max(A.source.dim, A.range.dim) - n
+            self.logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
+
+        if range_product is None:
+            range_product = IdentityOperator(A.range)
+        if source_product is None:
+            source_product = IdentityOperator(A.source)
+
+        if A.source.dim == 0 or A.range.dim == 0:
+            return A.source.empty(), np.array([]), A.range.empty()
+
+        with self.logger.block('Approximating basis for the operator range ...'):
+            Q = self.range_finder.find_range(basis_size=n+oversampling)
+
+        with self.logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
+            B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
+            V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
+
+        with self.logger.block('Backprojecting the left'
+                          f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
+                          f'singular vector{"s" if n > 1 else ""} ...'):
+            U = Q.lincomb(Uh_b[:n].T)
+
+        return U, s, V
+
+
 @defaults('oversampling', 'power_iterations')
 def randomized_svd(A, n, source_product=None, range_product=None, power_iterations=0, oversampling=20):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
@@ -304,44 +343,9 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
     V
         |VectorArray| containing the approximated right singular vectors.
     """
-    logger = getLogger('pymor.algorithms.rand_la.randomized_svd')
-
-    RRF = RandomizedRangeFinder(A, power_iterations=power_iterations, range_product=range_product,
-                                source_product=source_product)
-
-    assert 0 <= n <= max(A.source.dim, A.range.dim)
-    assert 0 <= oversampling
-    if oversampling > max(A.source.dim, A.range.dim) - n:
-        logger.warning('Oversampling parameter is too large!')
-        oversampling = max(A.source.dim, A.range.dim) - n
-        logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
-
-    if range_product is None:
-        range_product = IdentityOperator(A.range)
-    if source_product is None:
-        source_product = IdentityOperator(A.source)
-
-    assert isinstance(range_product, Operator)
-    assert range_product.source == range_product.range == A.range
-    assert isinstance(source_product, Operator)
-    assert source_product.source == source_product.range == A.source
-
-    if A.source.dim == 0 or A.range.dim == 0:
-        return A.source.empty(), np.array([]), A.range.empty()
-
-    with logger.block('Approximating basis for the operator range ...'):
-        Q = RRF.find_range(basis_size=n+oversampling)
-
-    with logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
-        B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
-        V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
-
-    with logger.block('Backprojecting the left'
-                      f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
-                      f'singular vector{"s" if n > 1 else ""} ...'):
-        U = Q.lincomb(Uh_b[:n].T)
-
-    return U, s, V
+    svd_alg = RandomizedSVD(A, range_product=range_product, source_product=source_product,
+                            power_iterations=power_iterations)
+    return svd_alg.compute_svd(n, oversampling=oversampling)
 
 
 @defaults('n', 'oversampling', 'power_iterations')
