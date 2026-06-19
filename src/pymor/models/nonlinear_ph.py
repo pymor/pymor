@@ -7,122 +7,8 @@ import numpy as np
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.models.interface import Model
 from pymor.operators.constructions import IdentityOperator, LinearInputOperator, VectorOperator, ZeroOperator
-from pymor.operators.interface import Operator
 from pymor.solvers.newton import NewtonSolver
 from pymor.vectorarrays.interface import VectorArray
-
-
-class NonlinearPHOperator(Operator):
-    r"""Nonlinear operator defining the state equation of a port-Hamiltonian system.
-
-    This operator represents the nonlinear mapping
-
-    .. math::
-        \mathcal{A}(x, \mu) = -\bigl(J(\mu) - R(\mu)\bigr) \bigl(Q(\mu)x + dh(x, \mu)\bigr).
-
-    It is used to write the nonlinear port-Hamiltonian state equation
-
-    .. math::
-        E(\mu)\dot{x}(t, \mu) + \mathcal{A}(x(t, \mu), \mu) = \bigl(G(\mu) - P(\mu)\bigr)u(t).
-
-    The co-energy vector is given by
-
-    .. math::
-        z(x, \mu) = Q(\mu)x + dh(x, \mu).
-
-    If there is a scalar-valued nonlinear function :math:`h` such that
-
-    .. math::
-        dh(x, \mu) = \nabla_x h(x, \mu),
-
-    and :math:`Q` is symmetric, then
-
-    .. math::
-        z(x, \mu) = \nabla_x \left(\frac{1}{2}x^TQ(\mu)x + h(x, \mu) \right).
-
-    The Jacobian of :math:`\mathcal{A}` at a state :math:`x` is
-
-    .. math::
-        D\mathcal{A}(x, \mu) = -\bigl(J(\mu) - R(\mu)\bigr) \left(Q(\mu) + Ddh(x, \mu) \right).
-
-
-    Parameters
-    ----------
-    J
-        The |Operator| J.
-    R
-        The |Operator| R.
-    Q
-        The |Operator| Q.
-    dh
-        The nonlinear |Operator| defining the nonlinear contribution
-        to the co-energy vector. It must have the same source and
-        range as J and provide a
-        :meth:`~pymor.operators.interface.Operator.jacobian`
-        implementation when Newton-type solvers are used.
-
-    Attributes
-    ----------
-    J
-        The |Operator| J.
-    R
-        The |Operator| R.
-    Q
-        The |Operator| Q.
-    dh
-        The nonlinear |Operator| ``dh``.
-    JmR
-        The linear |Operator| :math:`J-R`.
-    source
-        The state |VectorSpace|.
-    range
-        The state |VectorSpace|.
-    """
-
-    linear = False
-
-    def __init__(self, J, R, Q, dh):
-        assert J.linear
-        assert J.source == J.range
-
-        assert R.linear
-        assert R.source == J.source
-        assert R.range == J.source
-
-        assert Q.linear
-        assert Q.source == J.source
-        assert Q.range == J.source
-
-        assert dh.source == J.source
-        assert dh.range == J.source
-
-        self.J = J
-        self.R = R
-        self.Q = Q
-        self.dh = dh
-
-        self.JmR = J - R
-        self.source = J.source
-        self.range = J.range
-
-    def _grad_H(self, U, mu=None):
-        return self.Q.apply(U, mu=mu) + self.dh.apply(U, mu=mu)
-
-    def apply(self, U, mu=None):
-        assert U in self.source
-        grad_H = self._grad_H(U, mu=mu)
-        return (-1) * self.JmR.apply(grad_H, mu=mu)
-
-    def jacobian(self, U, mu=None):
-        assert U in self.source
-        assert len(U) == 1
-
-        if isinstance(self.dh, ZeroOperator):
-            dh_jac = ZeroOperator(self.source, self.source)
-        else:
-            dh_jac = self.dh.jacobian(U, mu=mu)
-
-        return (-1) * self.JmR @ (self.Q + dh_jac)
 
 
 class NonlinearPHModel(Model):
@@ -351,7 +237,9 @@ class NonlinearPHModel(Model):
         self.dim_input = G.source.dim
         self.dim_output = G.source.dim
 
-        self.ph_operator = NonlinearPHOperator(J, R, Q, dh)
+        # R-J instead of J-R as the ph_operator is applied on the LHS later
+        self.ph_operator = (R - J) @ (Q + dh)
+        #self.ph_operator = NonlinearPHOperator(J, R, Q, dh)
         self.rhs = LinearInputOperator(G - P)
         self.output_operator = G + P
         self.feedthrough = LinearInputOperator(S - N)
