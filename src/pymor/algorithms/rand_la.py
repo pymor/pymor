@@ -9,7 +9,7 @@ from scipy.special import erfinv
 from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.svd_va import qr_svd
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -253,7 +253,10 @@ class RandomizedRangeFinder(BasicObject):
 
 class RandomizedSVD(BasicObject):
 
-    def __init__(self, A, range_product=None, source_product=None, power_iterations=0, rrf_args=None):
+    @defaults('low_rank_svd_method')
+    def __init__(self, A, range_product=None, source_product=None, power_iterations=0,
+                 low_rank_svd_method='qr_svd', rrf_args=None):
+        assert low_rank_svd_method in SVD_VA_METHODS
         self.__auto_init(locals())
         self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
                                                   power_iterations=power_iterations, **(rrf_args or {}))
@@ -280,7 +283,8 @@ class RandomizedSVD(BasicObject):
 
         with self.logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
             B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
-            V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
+            svd = SVD_VA_METHODS[self.low_rank_svd_method]
+            V, s, Uh_b = svd(B, product=source_product, modes=n, rtol=0)
 
         with self.logger.block('Backprojecting the left'
                           f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
