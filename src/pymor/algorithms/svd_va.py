@@ -11,6 +11,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
 
@@ -216,7 +217,7 @@ def scipy_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
         |NumPy array| of right singular vectors.
     """
     assert isinstance(A, VectorArray)
-    if product is not None:
+    if product is not None and not isinstance(product, IdentityOperator):
         raise NotImplementedError
 
     if A.dim == 0 or len(A) == 0:
