@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
@@ -14,7 +14,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
 def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
-        method='method_of_snapshots', orth_tol=1e-10,
+        method='qr_svd', orth_tol=1e-10,
         return_reduced_coefficients=False):
     """Proper orthogonal decomposition of `A`.
 
@@ -50,8 +50,7 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
 
         where `s_n` denotes the n-th singular value.
     method
-        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
-        (`'method_of_snapshots'` or `'qr_svd'`).
+        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use.
     orth_tol
         POD modes are reorthogonalized if the orthogonality error is
         above this value.
@@ -71,11 +70,11 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert method in ('method_of_snapshots', 'qr_svd')
+    assert method in SVD_VA_METHODS
 
     logger = getLogger('pymor.algorithms.pod.pod')
 
-    svd_va = method_of_snapshots if method == 'method_of_snapshots' else qr_svd
+    svd_va = SVD_VA_METHODS[method]
     with logger.block('Computing SVD ...'):
         POD, SVALS, COEFFS = svd_va(A, product=product, modes=modes, rtol=rtol, atol=atol, l2_err=l2_err)
 

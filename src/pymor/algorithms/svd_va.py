@@ -234,6 +234,13 @@ def scipy_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     return U, s, Vh
 
 
+SVD_VA_METHODS = {
+    'method_of_snapshots': method_of_snapshots,
+    'qr_svd': qr_svd,
+    'scipy_svd': scipy_svd
+}
+
+
 def _select_modes(s, modes, rtol, atol, l2_err):
     tol = max(rtol * s[0], atol)
     above_tol = np.where(s >= tol)[0]

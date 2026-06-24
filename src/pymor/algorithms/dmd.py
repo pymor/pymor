@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import LowRankOperator
@@ -38,8 +38,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     order
         Sort DMD eigenvalues either by `'magnitude'` or `'phase'`.
     svd_method
-        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
-        (`'method_of_snapshots'` or `'qr_svd'`).
+        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use.
     return_A_approx
         If `True`, the approximation of the operator `A` with `AX=Y` is returned as
         a :class:`~pymor.operators.constructions.LowRankOperator`.
@@ -65,7 +64,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     assert Y is None or len(X) == len(Y)
     assert type in ('exact', 'standard')
     assert order in ('magnitude', 'phase')
-    assert svd_method in ('qr_svd', 'method_of_snapshots')
+    assert svd_method in SVD_VA_METHODS
 
     logger = getLogger('pymor.algorithms.dmd.dmd')
 
@@ -73,7 +72,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
         Y = X[1:]
         X = X[:-1]
 
-    svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
+    svd = SVD_VA_METHODS[svd_method]
 
     logger.info('SVD of X ...')
     U, s, Vh = svd(X, modes=modes, atol=atol, rtol=rtol)
