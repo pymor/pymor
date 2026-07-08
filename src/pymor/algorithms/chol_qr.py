@@ -138,25 +138,31 @@ def _compute_gramian_and_offset_matrix(params):
 def _compute_shift(params: _CholQRParameters, X: np.ndarray):
     m = params.A.dim
     n = len(X)
-    product_norm = params.product_norm
 
     shift = 11*params.eps
     if params.product is None:
         shift *= m*n+n*(n+1)
-        XX = X
     else:
-        if product_norm is None:
+        if params.product_norm is None:
             from pymor.algorithms.eigs import eigs
-            product_norm = np.sqrt(np.abs(eigs(params.product, k=1)[0][0]))
-        shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
-        XX = params.A[params.offset:].gramian()
-    try:
-        shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
-    except spsla.ArpackNoConvergence as e:
-        params.logger.warning(f'ARPACK failed with: {e}')
-        params.logger.info('Proceeding with dense solver.')
-        shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
-    shift = max(shift, params.eps)  # ensure that shift is non-zero
+            params.product_norm = np.sqrt(np.abs(eigs(params.product, k=1)[0][0]))
+        shift *= (2*m*np.sqrt(m*n)+n*(n+1))*params.product_norm
+
+    # eigsh outputs warnings, if n <= 2; it also throws an exception,
+    # if X is a zero matrix (or is close to) or contains subnormal numbers
+    use_eigh = n <= 2 or X.max() - X.min() < params.eps or np.any((X != 0) & (np.abs(X) < np.finfo(params.dtype).tiny))
+    if not use_eigh:
+        try:
+            ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
+        except spsla.ArpackNoConvergence as e:
+            params.logger.warning(f'ARPACK failed with: {e}')
+            params.logger.info('Proceeding with dense solver.')
+            use_eigh = True
+
+    if use_eigh:
+        ew = spla.eigh(X, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+
+    shift = max(shift*ew, params.eps) # ensure that shift is non-zero
     return shift
 
 
