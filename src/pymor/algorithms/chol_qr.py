@@ -8,6 +8,7 @@ import scipy.sparse.linalg as spsla
 
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
 
@@ -78,22 +79,49 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     R
         The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
-    assert 0 <= offset <= len(A)
-    assert 0 < maxiter
-    assert orth_tol is None or 0 < orth_tol
+    params = _CholQRParameters(**locals())
+    return _solve_chol_qr(params)
 
-    if copy:
-        A = A.copy()
+
+class _CholQRParameters:
+    r"""Helper class for managing the parameters and options."""
+
+    def __init__(self, A, product, return_R, maxiter, offset, orth_tol,
+                 recompute_shift, check_finite, copy, product_norm):
+        assert isinstance(A, VectorArray)
+        assert 0 <= offset <= len(A)
+        assert A.dim >= len(A)
+        assert 0 < maxiter
+        assert orth_tol is None or 0 < orth_tol
+
+        # set input parameters
+        self.A = A.copy() if copy else A
+        self.product = product
+        self.return_R = return_R
+        self.maxiter = maxiter
+        self.offset = offset
+        self.orth_tol = orth_tol
+        self.recompute_shift = recompute_shift
+        self.check_finite = check_finite
+        self.product_norm = product_norm
+
+        self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
+
+
+def _solve_chol_qr(params: _CholQRParameters):
+    # unpack often used arguments
+    A = params.A
+    offset = params.offset
 
     if offset == len(A):
         return A, np.eye(len(A))
 
-    logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
-
-    if maxiter == 1:
-        logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
+    if params.maxiter == 1:
+        params.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
 
     def _compute_gramian_and_offset_matrix():
+        product = params.product
+
         if isinstance(A, ListVectorArray):
             # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
             B = A[offset:].inner(A[:offset], product=product)
@@ -113,8 +141,10 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     m, n = A.dim, len(A[offset:])
     shift = None
     def _compute_shift():
-        nonlocal product_norm
-        shift = 11*np.finfo(dtype).eps
+        product = params.product
+        product_norm = params.product_norm
+
+        shift = 11*np.finfo(params.dtype).eps
         if product is None:
             shift *= m*n+n*(n+1)
             XX = X
@@ -127,31 +157,31 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         try:
             shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
         except spsla.ArpackNoConvergence as e:
-            logger.warning(f'ARPACK failed with: {e}')
-            logger.info('Proceeding with dense solver.')
+            params.logger.warning(f'ARPACK failed with: {e}')
+            params.logger.info('Proceeding with dense solver.')
             shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
         shift = max(shift, np.finfo(dtype).eps)  # ensure that shift is non-zero
         return shift
 
     iter = 1
-    while iter <= maxiter:
-        with logger.block(f'Iteration {iter}'):
+    while iter <= params.maxiter:
+        with params.logger.block(f'Iteration {iter}'):
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
             X -= B@B.T
             it = 0
             while True:
                 try:
-                    Rx = spla.cholesky(X, overwrite_a=False, check_finite=check_finite)
+                    Rx = spla.cholesky(X, overwrite_a=False, check_finite=params.check_finite)
                     break
                 except spla.LinAlgError:
                     it += 1
                     if it > 100:
                         assert False
-                    if not shift or recompute_shift and it == 1:
+                    if not shift or params.recompute_shift and it == 1:
                         shift = _compute_shift()
-                    logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-                    logger.info(f'Applying shift: {shift}')
+                    params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+                    params.logger.info(f'Applying shift: {shift}')
                     X[np.diag_indices_from(X)] += shift
 
             # orthogonalize
@@ -169,18 +199,18 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
                 trmm(1, Rx, Ri, overwrite_b=True)
 
             # computation not needed in the last iteration
-            if iter < maxiter:
+            if iter < params.maxiter:
                 B, X = _compute_gramian_and_offset_matrix()
-            elif orth_tol is not None:
-                X = A[offset:].gramian(product=product)
+            elif params.orth_tol is not None:
+                X = A[offset:].gramian(product=params.product)
 
             # check orthonormality (for an iterative algorithm)
-            if orth_tol is not None:
-                res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=check_finite)
-                logger.info(f'Residual = {res}')
-                if res <= orth_tol*np.sqrt(len(A)):
+            if params.orth_tol is not None:
+                res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=params.check_finite)
+                params.logger.info(f'Residual = {res}')
+                if res <= params.orth_tol*np.sqrt(len(A)):
                     break
-                elif iter == maxiter:
+                elif iter == params.maxiter:
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
 
@@ -191,4 +221,4 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
-    return (A, R) if return_R else A
+    return (A, R) if params.return_R else A
