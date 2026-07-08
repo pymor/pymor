@@ -105,6 +105,8 @@ class _CholQRParameters:
         self.check_finite = check_finite
         self.product_norm = product_norm
 
+        self.dtype = None
+        self.eps = None
         self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
 
@@ -123,6 +125,31 @@ def _compute_gramian_and_offset_matrix(params):
     return B, X
 
 
+def _compute_shift(params: _CholQRParameters, X: np.ndarray):
+    m = params.A.dim
+    n = len(X)
+    product_norm = params.product_norm
+
+    shift = 11*params.eps
+    if params.product is None:
+        shift *= m*n+n*(n+1)
+        XX = X
+    else:
+        if product_norm is None:
+            from pymor.algorithms.eigs import eigs
+            product_norm = np.sqrt(np.abs(eigs(params.product, k=1)[0][0]))
+        shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
+        XX = params.A[params.offset:].gramian()
+    try:
+        shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
+    except spsla.ArpackNoConvergence as e:
+        params.logger.warning(f'ARPACK failed with: {e}')
+        params.logger.info('Proceeding with dense solver.')
+        shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+    shift = max(shift, params.eps)  # ensure that shift is non-zero
+    return shift
+
+
 def _solve_chol_qr(params: _CholQRParameters):
     # unpack often used arguments
     A = params.A
@@ -136,35 +163,13 @@ def _solve_chol_qr(params: _CholQRParameters):
 
     B, X = _compute_gramian_and_offset_matrix(params)
 
-    dtype = np.promote_types(X.dtype, np.float32)
+    params.dtype = dtype = np.promote_types(X.dtype, np.float32)
+    params.eps = np.finfo(dtype).eps
     B = B.astype(dtype=dtype, copy=False)
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
 
     # compute shift
-    m, n = A.dim, len(A[offset:])
     shift = None
-    def _compute_shift():
-        product = params.product
-        product_norm = params.product_norm
-
-        shift = 11*np.finfo(params.dtype).eps
-        if product is None:
-            shift *= m*n+n*(n+1)
-            XX = X
-        else:
-            if product_norm is None:
-                from pymor.algorithms.eigs import eigs
-                product_norm = np.sqrt(np.abs(eigs(product, k=1)[0][0]))
-            shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
-            XX = A[offset:].gramian()
-        try:
-            shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
-        except spsla.ArpackNoConvergence as e:
-            params.logger.warning(f'ARPACK failed with: {e}')
-            params.logger.info('Proceeding with dense solver.')
-            shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
-        shift = max(shift, np.finfo(dtype).eps)  # ensure that shift is non-zero
-        return shift
 
     iter = 1
     while iter <= params.maxiter:
@@ -182,7 +187,7 @@ def _solve_chol_qr(params: _CholQRParameters):
                     if it > 100:
                         assert False
                     if not shift or params.recompute_shift and it == 1:
-                        shift = _compute_shift()
+                        shift = _compute_shift(params, X)
                     params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
                     params.logger.info(f'Applying shift: {shift}')
                     X[np.diag_indices_from(X)] += shift
