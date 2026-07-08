@@ -195,8 +195,8 @@ def _solve_chol_qr(params: _CholQRParameters):
                 Bi = B.T
                 Ri = Rx
             else:
-                Bi += B.T @ Rx
-                trmm(1, Rx, Ri, overwrite_b=True)
+                Bi += B.T @ Ri
+                Ri = trmm(1, Rx, Ri, overwrite_b=True)
 
             # computation not needed in the last iteration
             if iter < params.maxiter:
