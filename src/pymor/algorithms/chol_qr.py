@@ -117,11 +117,19 @@ def _compute_gramian_and_offset_matrix(params):
 
     if isinstance(A, ListVectorArray):
         # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
-        B = A[offset:].inner(A[:offset], product=product)
+        B = A[:offset].inner(A[offset:], product=product)
         X = A[offset:].gramian(product)
     else:
-        B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-    B = B.conj()
+        B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
+
+    if params.dtype is None:
+        params.dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
+        params.eps = np.finfo(params.dtype).eps
+
+    dtype = params.dtype
+    B = B.astype(dtype=dtype, copy=False)
+    X = X.astype(dtype=dtype, copy=False)
+
     return B, X
 
 
@@ -163,10 +171,7 @@ def _solve_chol_qr(params: _CholQRParameters):
 
     B, X = _compute_gramian_and_offset_matrix(params)
 
-    params.dtype = dtype = np.promote_types(X.dtype, np.float32)
-    params.eps = np.finfo(dtype).eps
-    B = B.astype(dtype=dtype, copy=False)
-    trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
+    trmm, trtri = spla.get_blas_funcs('trmm', dtype=params.dtype), spla.get_lapack_funcs('trtri', dtype=params.dtype)
 
     # compute shift
     shift = None
@@ -176,7 +181,7 @@ def _solve_chol_qr(params: _CholQRParameters):
         with params.logger.block(f'Iteration {iter}'):
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
-            X -= B@B.T
+            X -= B.conj().T@B
             it = 0
             while True:
                 try:
@@ -194,16 +199,16 @@ def _solve_chol_qr(params: _CholQRParameters):
 
             # orthogonalize
             Rinv = trtri(Rx)[0]
-            A_todo = A[:offset].lincomb(-B.T@Rinv) + A[offset:].lincomb(Rinv)
+            A_todo = A[:offset].lincomb(-B@Rinv) + A[offset:].lincomb(Rinv)
             del A[offset:]
             A.append(A_todo)
 
             # update blocks of R
             if iter == 1:
-                Bi = B.T
+                Bi = B
                 Ri = Rx
             else:
-                Bi += B.T @ Ri
+                Bi += B @ Ri
                 Ri = trmm(1, Rx, Ri, overwrite_b=True)
 
             # computation not needed in the last iteration
@@ -225,7 +230,7 @@ def _solve_chol_qr(params: _CholQRParameters):
             iter += 1
 
     # construct R from blocks
-    R = np.eye(len(A), dtype=dtype)
+    R = np.eye(len(A), dtype=params.dtype)
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
