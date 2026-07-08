@@ -11,6 +11,7 @@ from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
+_INNER_ITERS = 10
 
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     recompute_shift=False, check_finite=True, copy=True, product_norm=None):
@@ -101,10 +102,11 @@ class _CholQRParameters:
         self.maxiter = maxiter
         self.offset = offset
         self.orth_tol = orth_tol
-        self.recompute_shift = recompute_shift
         self.check_finite = check_finite
         self.product_norm = product_norm
 
+        self.chol_kernel = _recomputed_shifted_chol_kernel if recompute_shift else _basic_shifted_chol_kernel
+        self.shift = None # used by `_basic_shifted_chol_kernel``
         self.dtype = None
         self.eps = None
         self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
@@ -158,6 +160,41 @@ def _compute_shift(params: _CholQRParameters, X: np.ndarray):
     return shift
 
 
+def _basic_shifted_chol_kernel(params, X):
+    """Kernel computes `R` and shift according to Algorithm 4.1 in :cite:`FKNYY20`."""
+    global _INNER_ITERS
+    for _ in range(_INNER_ITERS):
+        try:
+            R = spla.cholesky(X, overwrite_a=False, check_finite=params.check_finite)
+            return R
+        except spla.LinAlgError:
+            params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+
+            if not params.shift:
+                params.shift = _compute_shift(params, X)
+            params.logger.info(f'Applying shift: {params.shift}')
+            X[np.diag_indices_from(X)] += params.shift
+    raise AccuracyError('Failed to compute a Cholesky factorization of X.')
+
+
+def _recomputed_shifted_chol_kernel(params, X):
+    """Kernel computes `R` and shift according to :cite:`BPS26`."""
+    global _INNER_ITERS
+    shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
+    for i in range(_INNER_ITERS):
+        try:
+            R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=params.check_finite)
+            return R
+        except spla.LinAlgError:
+            params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+
+            # for really ill-conditioned matrices increasing the shift exponentially,
+            # by multiplying it by 10 in each iteration
+            shift = _compute_shift(params, X) if i == 0 else shift*10
+            params.logger.info(f'Applying shift: {shift}')
+    raise AccuracyError('Failed to compute a Cholesky factorization of X.')
+
+
 def _solve_chol_qr(params: _CholQRParameters):
     # unpack often used arguments
     A = params.A
@@ -173,28 +210,10 @@ def _solve_chol_qr(params: _CholQRParameters):
 
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=params.dtype), spla.get_lapack_funcs('trtri', dtype=params.dtype)
 
-    # compute shift
-    shift = None
-
     for iter in range(1,params.maxiter+1):
         with params.logger.block(f'Iteration {iter}'):
-            # This will compute the Cholesky factor of the lower right block
-            # and keep applying shifts if it breaks down.
             X -= B.conj().T@B
-            it = 0
-            while True:
-                try:
-                    Rx = spla.cholesky(X, overwrite_a=False, check_finite=params.check_finite)
-                    break
-                except spla.LinAlgError:
-                    it += 1
-                    if it > 100:
-                        assert False
-                    if not shift or params.recompute_shift and it == 1:
-                        shift = _compute_shift(params, X)
-                    params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-                    params.logger.info(f'Applying shift: {shift}')
-                    X[np.diag_indices_from(X)] += shift
+            Rx = params.chol_kernel(params, X)
 
             # orthogonalize
             Rinv = trtri(Rx)[0]
