@@ -176,8 +176,7 @@ def _solve_chol_qr(params: _CholQRParameters):
     # compute shift
     shift = None
 
-    iter = 1
-    while iter <= params.maxiter:
+    for iter in range(1,params.maxiter+1):
         with params.logger.block(f'Iteration {iter}'):
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
@@ -226,8 +225,6 @@ def _solve_chol_qr(params: _CholQRParameters):
                 elif iter == params.maxiter:
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
-
-            iter += 1
 
     # construct R from blocks
     R = np.eye(len(A), dtype=params.dtype)
