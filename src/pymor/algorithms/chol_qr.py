@@ -245,9 +245,12 @@ def _solve_chol_qr(params: _CholQRParameters):
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
 
+    if not params.return_R:
+        return A
+
     # construct R from blocks
     R = np.eye(len(A), dtype=params.dtype)
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
-    return (A, R) if params.return_R else A
+    return (A, R)
