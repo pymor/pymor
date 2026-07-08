@@ -108,6 +108,21 @@ class _CholQRParameters:
         self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
 
+def _compute_gramian_and_offset_matrix(params):
+    A = params.A
+    offset = params.offset
+    product = params.product
+
+    if isinstance(A, ListVectorArray):
+        # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
+        B = A[offset:].inner(A[:offset], product=product)
+        X = A[offset:].gramian(product)
+    else:
+        B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
+    B = B.conj()
+    return B, X
+
+
 def _solve_chol_qr(params: _CholQRParameters):
     # unpack often used arguments
     A = params.A
@@ -119,19 +134,7 @@ def _solve_chol_qr(params: _CholQRParameters):
     if params.maxiter == 1:
         params.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
 
-    def _compute_gramian_and_offset_matrix():
-        product = params.product
-
-        if isinstance(A, ListVectorArray):
-            # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
-            B = A[offset:].inner(A[:offset], product=product)
-            X = A[offset:].gramian(product)
-        else:
-            B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-        B = B.conj()
-        return B, X
-
-    B, X = _compute_gramian_and_offset_matrix()
+    B, X = _compute_gramian_and_offset_matrix(params)
 
     dtype = np.promote_types(X.dtype, np.float32)
     B = B.astype(dtype=dtype, copy=False)
@@ -200,7 +203,7 @@ def _solve_chol_qr(params: _CholQRParameters):
 
             # computation not needed in the last iteration
             if iter < params.maxiter:
-                B, X = _compute_gramian_and_offset_matrix()
+                B, X = _compute_gramian_and_offset_matrix(params)
             elif params.orth_tol is not None:
                 X = A[offset:].gramian(product=params.product)
 
