@@ -15,6 +15,7 @@ from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
+from pymor.solvers.matrix.interface import LyapunovSolverLRCF, MatrixSolvers
 
 
 def fom_properties(fom, w, stable_lti=True):
@@ -173,8 +174,13 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     rom = reductor.reduce(r, **reduce_kwargs)
     err = fom - rom
     if isinstance(err, LTIModel):
-        solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']}
-        err = err.with_(solver_options=solver_options)
+        matrix_solvers = MatrixSolvers(
+            lyapunov_lrcf=LyapunovSolverLRCF(
+                backend='lradi',
+                options=lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']
+            )
+        )
+        err = err.with_(matrix_solvers=matrix_solvers)
 
     # Errors
     from pymor.models.transfer_function import TransferFunction
@@ -313,8 +319,13 @@ def main(
     fom.visualize(fom.solve())
 
     # LTI system
-    solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']}
-    lti = fom.to_lti().with_(solver_options=solver_options, T=1, time_stepper=ImplicitEulerTimeStepper(100))
+    from pymor.solvers.matrix.interface import LyapunovSolverLRCF, MatrixSolvers
+    matrix_solvers = MatrixSolvers(
+        lyapunov_lrcf=LyapunovSolverLRCF(backend='lradi',
+                                         options=lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi'])
+    )
+
+    lti = fom.to_lti().with_(matrix_solvers=matrix_solvers, T=1, time_stepper=ImplicitEulerTimeStepper(100))
 
     # System properties
     w = (1e-1, 1e3)
