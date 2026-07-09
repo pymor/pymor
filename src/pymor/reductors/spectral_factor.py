@@ -5,12 +5,13 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
+from pymor.solvers.matrix.equations import LyapunovEquation
+from pymor.solvers.matrix.utils import _chol
 
 
 class SpectralFactorReductor(BasicObject):
@@ -136,7 +137,13 @@ class SpectralFactorReductor(BasicObject):
 
         Ar, Br, Lr, Mr, Er = spectral_factor_rom.to_abcde_matrices()
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
-        Xr = solve_cont_lyap_dense(A=Ar, E=Er, B=Lr, trans=True)
+
+        A = spectral_factor_rom.A
+        E = spectral_factor_rom.E
+        L = spectral_factor_rom.C.as_source_array()
+
+        Xr = LyapunovEquation(A=A, E=E, B=L, trans=True, cont_time=True).solve()
+
         Cr = Br.T @ Xr + Mr.T @ Lr if Er is None else Br.T @ Xr @ Er + Mr.T @ Lr
 
         return LTIModel.from_matrices(Ar, Br, Cr, Dr, Er)

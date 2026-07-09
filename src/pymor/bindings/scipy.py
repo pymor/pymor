@@ -19,13 +19,18 @@ from scipy.linalg import (
 from scipy.linalg.lapack import get_lapack_funcs
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
-from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
-from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.solvers.interface import Solver
+from pymor.solvers.matrix.utils import (
+    _chol,
+    _solve_lyap_dense_check_args,
+    _solve_lyap_lrcf_check_args,
+    _solve_ricc_check_args,
+    _solve_ricc_dense_check_args,
+)
 from pymor.tools.weakrefcache import WeakRefCache
 
 if config.HAVE_UMFPACK:
@@ -603,7 +608,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
 def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute the solution of a Riccati equation.
 
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a general
+    See :func:`pymor.       .solve_pos_ricc_dense` for a general
     description.
 
     This function uses :func:`scipy.linalg.solve_continuous_are`, which

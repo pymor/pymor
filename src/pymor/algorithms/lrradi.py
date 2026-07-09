@@ -6,11 +6,11 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
+from pymor.solvers.matrix.utils import _solve_ricc_check_args
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 

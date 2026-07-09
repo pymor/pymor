@@ -7,11 +7,11 @@ import scipy.linalg as spla
 
 from pymor.algorithms.eigs import _arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
 from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
+from pymor.solvers.matrix.utils import _solve_lyap_lrcf_check_args
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
