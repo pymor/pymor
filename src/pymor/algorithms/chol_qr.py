@@ -6,6 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse.linalg as spsla
 
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
@@ -13,6 +14,7 @@ from pymor.vectorarrays.list import ListVectorArray
 
 _INNER_ITERS = 10
 
+@defaults('maxiter', 'orth_tol', 'recompute_shift', 'rtol', 'check_finite')
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     recompute_shift=False, rtol=1e-13, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
