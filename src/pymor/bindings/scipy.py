@@ -608,7 +608,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
 def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute the solution of a Riccati equation.
 
-    See :func:`pymor.       .solve_pos_ricc_dense` for a general
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a general
     description.
 
     This function uses :func:`scipy.linalg.solve_continuous_are`, which

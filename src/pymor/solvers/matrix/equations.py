@@ -113,8 +113,7 @@ class RiccatiEquation(ImmutableObject):
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The matrix R as a 2D |NumPy array| or `None`.  Not an |Operator|: it is
-        :math:`m \times m` or :math:`p \times p`, dense, and passed straight to LAPACK.
+        The matrix R as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
