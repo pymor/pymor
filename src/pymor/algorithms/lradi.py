@@ -71,13 +71,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-
-    for a general description.
+    """Compute an approximate low-rank solution of a |LyapunovEquation|.
 
     This function uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 

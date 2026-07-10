@@ -22,6 +22,23 @@ class LyapunovSolver(ImmutableObject):
         self.__auto_init(locals())
 
     def solve(self, equation):
+        r"""Solves a |LyapunovEquation|.
+
+        A solver backend, if not provided, is chosen based in the following order:
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`).
+
+        Parameters
+        ----------
+        equation
+            The |LyapunovEquation| to solve.
+
+        Returns
+        -------
+        X
+            |LyapunovEquation| solution as a |NumPy array|.
+        """
         assert isinstance(equation, LyapunovEquation)
         backend = self.backend or _dense_backend()
         _warn_dense_fallback(self, equation, backend)
@@ -32,6 +49,9 @@ class LyapunovSolver(ImmutableObject):
 
 class LyapunovSolverLRCF(ImmutableObject):
     """Compute a low-rank Cholesky factor of a |LyapunovEquation|.
+
+    Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T` approximates the solution
+    :math:`X` of a (generalized) continuous-time algebraic |LyapunovEquation|.
 
     Parameters
     ----------
@@ -58,6 +78,32 @@ class LyapunovSolverLRCF(ImmutableObject):
         return 'lradi'
 
     def solve(self, equation):
+        r"""Solves a |LyapunovEquation|.
+
+        A solver backend is chosen based on availability in the following order:
+
+        - for sparse, time-continous problems (minimum size specified by
+          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
+
+          1. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`),
+
+        - for dense problems (smaller than
+          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`) or time-discrete problems
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
+
+        Parameters
+        ----------
+        equation
+            The |LypaunovEquation| to solve.
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the Lyapunov equation solution,
+            |VectorArray| from `A.source`.
+        """
         assert isinstance(equation, LyapunovEquation)
         backend = self.backend or self._auto_backend(equation)
         if backend == 'lradi':
@@ -86,6 +132,23 @@ class RiccatiSolver(ImmutableObject):
         self.__auto_init(locals())
 
     def solve(self, equation):
+        r"""Solves a |RiccatiEquation|.
+
+        A solver backend, if not provided, is chosen based in the following order:
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_dense`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_dense`).
+
+        Parameters
+        ----------
+        equation
+            The |RiccatiEquation| to solve.
+
+        Returns
+        -------
+        X
+            |RiccatiEquation| solution as a |NumPy array|.
+        """
         assert isinstance(equation, RiccatiEquation)
         backend = self.backend or _dense_backend()
         _warn_dense_fallback(self, equation, backend)
@@ -117,6 +180,32 @@ class RiccatiSolverLRCF(ImmutableObject):
         return 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
 
     def solve(self, equation):
+        r"""Solves a |RiccatiEquation|.
+
+        A solver backend, if not provided, is chosen based in the following order:
+
+        - for sparse problems (minimum size specified by
+          :func:`~pymor.matrix.solvers.utils.mat_eqn_sparse_min_size`)
+
+          1. `lrradi` (see :func:`pymor.algorithms.lrradi.solve_ricc_lrcf`),
+
+        - for dense problems (smaller than
+          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_lrcf`).
+
+        Parameters
+        ----------
+        equation
+            The |RiccatiEquation| to solve.
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the |RiccatiEquation| solution,
+            |VectorArray| from `A.source`.
+        """
         assert isinstance(equation, RiccatiEquation)
         backend = self.backend or self._auto_backend(equation)
         if backend == 'lrradi':
@@ -143,6 +232,23 @@ class PositiveRiccatiSolver(ImmutableObject):
         self.__auto_init(locals())
 
     def solve(self, equation):
+        r"""Solves a |PositiveRiccatiEquation|.
+
+        A solver backend, if not provided, is chosen based in the following order:
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_dense`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_dense`).
+
+        Parameters
+        ----------
+        equation
+            The |PositiveRiccatiEquation| to solve.
+
+        Returns
+        -------
+        X
+            |PositiveRiccatiEquation| solution as a |NumPy array|.
+        """
         assert isinstance(equation, PositiveRiccatiEquation)
         backend = self.backend or _dense_backend()
         _warn_dense_fallback(self, equation, backend)
@@ -165,6 +271,26 @@ class PositiveRiccatiSolverLRCF(ImmutableObject):
         self.__auto_init(locals())
 
     def solve(self, equation):
+        r"""Solves a |PositiveRiccatiEquation|.
+
+        A solver backend, if not provided, is chosen based in the following order:
+
+          1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
+          2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`).
+
+        Currently, only dense solvers are provided.
+
+        Parameters
+        ----------
+        equation
+            The |PositiveRiccatiEquation| to solve.
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the |PositiveRiccatiEquation| solution,
+            |VectorArray| from `A.source`.
+        """
         assert isinstance(equation, PositiveRiccatiEquation)
         backend = self.backend or _dense_backend()
         _warn_dense_fallback(self, equation, backend)

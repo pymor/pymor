@@ -358,14 +358,7 @@ def lyap_lrcf_solver_options():
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
-
-    for a general description.
+    """Compute an approximate low-rank solution of a |LyapunovEquation|.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov` or
     `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
@@ -418,14 +411,7 @@ def lyap_dense_solver_options():
 
 
 def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute the solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
-
-    for a general description.
+    """Compute the solution of a |LyapunovEquation|.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov` or
     `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
@@ -485,10 +471,7 @@ def ricc_lrcf_solver_options():
 
 
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a general
-    description.
+    """Compute an approximate low-rank solution of a |RiccatiEquation|.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
@@ -552,10 +535,7 @@ def ricc_dense_solver_options():
 
 
 def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a general
-    description.
+    """Compute the solution of a |RiccatiEquation|.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
@@ -606,10 +586,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
 
 
 def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a general
-    description.
+    """Compute the solution of a |RiccatiEquation|.
 
     This function uses :func:`scipy.linalg.solve_continuous_are`, which
     is a dense solver.
@@ -651,10 +628,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
 
 
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a positive Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
-    general description.
+    """Compute an approximate low-rank solution of a |PositiveRiccatiEquation|.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
