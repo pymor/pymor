@@ -56,10 +56,7 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
 
 
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
-    general description.
+    """Compute an approximate low-rank solution of a |RiccatiEquation|.
 
     This function is an implementation of Algorithm 2 in :cite:`BBKS18`.
 
