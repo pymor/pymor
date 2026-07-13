@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
 import pytest
 from hypothesis import assume
 from hypothesis.errors import UnsatisfiedAssumption
