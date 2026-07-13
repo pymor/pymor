@@ -49,6 +49,21 @@ def evaluate_qr_empty(qr_method, qr_kwargs: dict={}):
     assert len(Q2) == 0
 
 
+def evaluate_qr_full_offset(qr_method, qr_kwargs: dict={}):
+    """Test a `qr_method` for a full offset, i.e., no new vectors.
+
+    QR implementations have logic in place to catch this case.
+    Ensure that the logic is correct.
+    """
+    n = 5
+    E = np.eye(n)
+    V = NumpyVectorSpace(n).from_numpy(E)
+    Q, R = qr_method(V, return_R=True, copy=True, offset=n, **qr_kwargs)
+    assert np.all(almost_equal(V, Q, rtol=0, atol=0))
+    assert isinstance(R, np.ndarray)
+    assert np.allclose(R, E)
+
+
 def evaluate_qr(qr_method, A: VectorArray, product: Operator, return_R: bool, copy: bool, qr_kwargs: dict={}):
     r"""Tests a `qr_method` for given parameters.
 
