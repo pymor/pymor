@@ -12,8 +12,12 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import log_levels
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.algorithms.qr_test_util import evaluate_qr, generate_hilbert_va
+from pymortests.algorithms.qr_test_util import evaluate_qr, evaluate_qr_empty, generate_hilbert_va
 from pymortests.base import runmodule
+
+
+def test_chol_qr_empty():
+    evaluate_qr_empty(gram_schmidt)
 
 
 @pytest.mark.parametrize('va_space', [NumpyVectorSpace, NumpyListVectorSpace])
