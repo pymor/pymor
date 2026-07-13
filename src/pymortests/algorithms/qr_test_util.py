@@ -8,6 +8,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.core.config import is_scipy_mkl
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 # use lower tolerance for MKL
 if is_scipy_mkl():
@@ -25,6 +26,27 @@ def generate_hilbert_va(vector_space_type: VectorSpace, n: int) -> VectorArray:
     but are never rank-deficient in exact arithmetic
     """
     return vector_space_type(n).from_numpy(hilbert(n))
+
+
+def evaluate_qr_empty(qr_method, qr_kwargs: dict={}):
+    """Test a `qr_method` for an empty VectorArray.
+
+    QR implementations have logic in place to catch this case.
+    Ensure that the logic is correct.
+    """
+    n = 5
+    V = NumpyVectorSpace(n).empty(0)
+    Q, R = qr_method(V, return_R=True, copy=True, **qr_kwargs)
+    assert isinstance(Q, VectorArray)
+    assert len(Q) == 0
+    assert V.space == Q.space
+    assert isinstance(R, np.ndarray)
+    assert R.shape == (0,0)
+
+    Q2 = qr_method(V, return_R=False, copy=False, **qr_kwargs)
+    assert isinstance(Q2, VectorArray)
+    assert Q2 == V
+    assert len(Q2) == 0
 
 
 def evaluate_qr(qr_method, A: VectorArray, product: Operator, return_R: bool, copy: bool, qr_kwargs: dict={}):
