@@ -2,6 +2,7 @@ from warnings import warn
 
 import numpy as np
 import pytest
+from hypothesis import assume
 from scipy.linalg import hilbert
 
 from pymor.algorithms.basic import almost_equal
@@ -122,3 +123,57 @@ def evaluate_qr(qr_method, A: VectorArray, product: Operator, return_R: bool, co
         np.set_printoptions(precision=precision)
 
         pytest.xfail('QR method not deterministic.')
+
+
+def evaluate_qr_offset(qr_method, A: VectorArray, num_blocks: int, qr_kwargs: dict={}):
+    r"""Performs QR-Update using `qr_method` onto `num_blocks` many blocks of matrix `A`.
+
+    Test ensures that the offset is working as intended,
+    and that it does not affect the accuracy.
+    """
+    assume(len(A) > 0 and A.dim > 0)
+
+    n = len(A)
+    if num_blocks <= 0:
+        num_blocks = n
+
+    if num_blocks > n:
+        return # skip
+
+    # create copy of input matrix and work with it
+    CPY = A.copy()
+    Q = CPY.space.empty()
+    off_R = off_Q = 0
+
+    block_size = int(np.ceil(n/num_blocks))
+    R = np.zeros([n,n])
+
+    i = 0
+    while len(CPY) > 0:
+        i += 1
+        min_num = min(len(CPY), block_size)
+        # the way CholQR with offset is implemented in pyMOR,
+        # it deletes and appends vectors in each iteration
+        # therefore, we cannot start with all vectors but have to append them for each call
+        off_Q = len(Q)
+        Q.append(CPY[:min_num])
+        del CPY[:min_num]
+
+        _, R_ = qr_method(Q, offset=off_Q, return_R=True, copy=False, **qr_kwargs)
+        R = R.astype(np.promote_types(R.dtype, R_.dtype), copy=False)
+
+        h, w = R_[:,off_Q:].shape
+        R[:h, off_R:off_R+w] = R_[:,off_Q:]
+        off_R += w
+
+    # vectors might be removed and R therefore not upper-triangular, but upper-trapezoidal
+    R = R[:len(Q),:]
+
+    # check if solution has low errors
+    # check loss of orthogonality
+    assert np.allclose(Q.inner(Q), np.eye(len(Q)), **TOL), 'Too high Loss of Orthogonality'
+    # check reconstruction error
+    assert np.all(almost_equal(A, Q.lincomb(R), **TOL)), 'Too high Reconstruction error'
+    # check Cholesky error
+    assert np.allclose(A.inner(A), (R.conj().T) @ R, **TOL),\
+        'Too high Cholesky error ($A^H A - R^H R$)'
