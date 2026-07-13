@@ -4,85 +4,37 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, settings
+from hypothesis import settings
 
 import pymortests.strategies as pyst
-from pymor.algorithms.basic import almost_equal, contains_zero_vector
+from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import log_levels
+from pymor.vectorarrays.list import NumpyListVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymortests.algorithms.qr_test_util import evaluate_qr, generate_hilbert_va
 from pymortests.base import runmodule
 
 
-@pyst.given_vector_arrays()
-def test_gram_schmidt(vector_array):
-    U = vector_array
-    # TODO: assumption here masks a potential issue with the algorithm
-    #      where it fails in del instead of a proper error
-    assume(len(U) > 1 or not contains_zero_vector(U))
-
-    V = U.copy()
-    onb = gram_schmidt(U, copy=True)
-    assert np.all(almost_equal(U, V))
-    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
-    # TODO: maybe raise tolerances again
-    assert np.all(almost_equal(U, onb.lincomb(onb.inner(U)), atol=1e-13, rtol=1e-13))
-
-    onb2 = gram_schmidt(U, copy=False)
-    assert np.all(almost_equal(onb, onb2))
-    assert np.all(almost_equal(onb, U))
+@pytest.mark.parametrize('va_space', [NumpyVectorSpace, NumpyListVectorSpace])
+@pytest.mark.parametrize('n', [5])
+@pytest.mark.parametrize('return_R', [False, True])
+@pytest.mark.parametrize('copy', [False, True])
+def test_gram_schmidt_parameters(va_space, n, return_R, copy):
+    A = generate_hilbert_va(va_space, n)
+    evaluate_qr(gram_schmidt, A, None, return_R, copy)
 
 
 @pyst.given_vector_arrays()
 @settings(deadline=None)
-def test_gram_schmidt_with_R(vector_array):
-    U = vector_array
-    # TODO: assumption here masks a potential issue with the algorithm
-    #      where it fails in del instead of a proper error
-    assume(len(U) > 1 or not contains_zero_vector(U))
-
-    V = U.copy()
-    onb, R = gram_schmidt(U, return_R=True, copy=True)
-    assert np.all(almost_equal(U, V))
-    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
-    lc = onb.lincomb(onb.inner(U))
-    rtol = atol = 1e-13
-    assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
-    assert np.all(almost_equal(V, onb.lincomb(R), rtol=rtol, atol=atol))
-
-    onb2, R2 = gram_schmidt(U, return_R=True, copy=False)
-    assert np.all(almost_equal(onb, onb2))
-    assert np.all(R == R2)
-    assert np.all(almost_equal(onb, U))
+def test_gram_schmidt(vector_array):
+    A = vector_array
+    evaluate_qr(gram_schmidt, A, None, True, True)
 
 
 def test_gram_schmidt_with_product(operator_with_arrays_and_products):
-    _, _, U, _, p, _ = operator_with_arrays_and_products
-
-    V = U.copy()
-    onb = gram_schmidt(U, product=p, copy=True)
-    assert np.all(almost_equal(U, V))
-    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
-    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U)), rtol=1e-13))
-
-    onb2 = gram_schmidt(U, product=p, copy=False)
-    assert np.all(almost_equal(onb, onb2))
-    assert np.all(almost_equal(onb, U))
-
-
-def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
-    _, _, U, _, p, _ = operator_with_arrays_and_products
-
-    V = U.copy()
-    onb, R = gram_schmidt(U, product=p, return_R=True, copy=True)
-    assert np.all(almost_equal(U, V))
-    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
-    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U)), rtol=1e-13))
-    assert np.all(almost_equal(U, onb.lincomb(R)))
-
-    onb2, R2 = gram_schmidt(U, product=p, return_R=True, copy=False)
-    assert np.all(almost_equal(onb, onb2))
-    assert np.all(R == R2)
-    assert np.all(almost_equal(onb, U))
+    _, _, A, _, product, _ = operator_with_arrays_and_products
+    evaluate_qr(gram_schmidt, A, product, True, True)
 
 
 @settings(deadline=None)
