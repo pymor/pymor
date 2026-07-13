@@ -181,9 +181,9 @@ common = """
 .. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
 
-.. |LyapunovEquation| replace:: class:`~pymor.solvers.matrix.equations.LyapunovEquation`
-.. |RiccatiEquation| replace:: class:`~pymor.solvers.matrix.equations.RiccatiEquation`
-.. |PositiveRiccatiEquation| replace:: class:`~pymor.solvers.matrix.equations.PositiveRiccatiEquation`
+.. |LyapunovEquation| replace:: :class:`~pymor.solvers.matrix.equations.LyapunovEquation`
+.. |RiccatiEquation| replace:: :class:`~pymor.solvers.matrix.equations.RiccatiEquation`
+.. |PositiveRiccatiEquation| replace:: :class:`~pymor.solvers.matrix.equations.PositiveRiccatiEquation`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 """  # noqa: E501

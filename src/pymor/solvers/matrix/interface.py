@@ -58,9 +58,9 @@ class LyapunovSolverLRCF(ImmutableObject):
     backend
         `'lradi'`, `'slycot'` or `'scipy'`, or `None` to choose automatically:
         `lradi` for large continuous-time problems, a dense backend otherwise.
-        `lradi` cannot solve discrete-time equations.
+        `'lradi'` cannot solve discrete-time equations.
     options
-        Solver options forwarded to `lradi` (`tol`, `maxiter`, `shifts`,
+        Solver options forwarded to `'lradi'` (`tol`, `maxiter`, `shifts`,
         `shifted_system_solver`, `shift_options`), or `None`.  The dense backends
         expose no tunable options, so `options` must be `None` for those.
     """
@@ -96,7 +96,7 @@ class LyapunovSolverLRCF(ImmutableObject):
         Parameters
         ----------
         equation
-            The |LypaunovEquation| to solve.
+            The |LyapunovEquation| to solve.
 
         Returns
         -------
@@ -185,7 +185,7 @@ class RiccatiSolverLRCF(ImmutableObject):
         A solver backend, if not provided, is chosen based in the following order:
 
         - for sparse problems (minimum size specified by
-          :func:`~pymor.matrix.solvers.utils.mat_eqn_sparse_min_size`)
+          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
 
           1. `lrradi` (see :func:`pymor.algorithms.lrradi.solve_ricc_lrcf`),
 
