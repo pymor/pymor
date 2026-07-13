@@ -16,6 +16,7 @@ from pymortests.algorithms.qr_test_util import (
     evaluate_qr,
     evaluate_qr_empty,
     evaluate_qr_full_offset,
+    evaluate_qr_offset,
     generate_hilbert_va,
 )
 from pymortests.base import runmodule
@@ -48,6 +49,14 @@ def test_gram_schmidt(vector_array):
 def test_gram_schmidt_with_product(operator_with_arrays_and_products):
     _, _, A, _, product, _ = operator_with_arrays_and_products
     evaluate_qr(gram_schmidt, A, product, True, True)
+
+
+# into how many blocks the matrix should be split; 0 for n blocks/ single vectors
+@pytest.mark.parametrize('num_blocks', [1, 2, 7, 0])
+@pyst.given_vector_arrays()
+def test_gram_schmidt_with_offset(vector_array, num_blocks):
+    A = vector_array
+    evaluate_qr_offset(gram_schmidt, A, num_blocks, {})
 
 
 @settings(deadline=None)
