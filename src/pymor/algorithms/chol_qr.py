@@ -207,7 +207,7 @@ def _solve_chol_qr(params: _CholQRParameters):
     offset = params.offset
 
     if offset == len(A):
-        return A, np.eye(len(A))
+        return (A, np.eye(len(A))) if params.return_R else A
 
     if params.maxiter == 1:
         params.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
