@@ -969,9 +969,7 @@ class LTIModel(Model):
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         Z = A.source.zeros()
 
-        DDH = None
-        if D is not None:
-            DDH = to_matrix(self.D + self.D.H, 'dense', mu)
+        DDH = to_matrix(D + D.H, 'dense') if str(typ).startswith('pr') else None
 
         cont_time = self.sampling_time == 0
 
