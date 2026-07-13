@@ -154,16 +154,8 @@ fom = msd_example(50, 2)
 S = fom.S.matrix.copy()
 S += np.eye(S.shape[0]) * 1e-12
 
-fom = fom.with_(S=fom.S.with_(matrix=S),
-                solver_options={'ricc_pos_lrcf': 'slycot'})
+fom = fom.with_(S=fom.S.with_(matrix=S))
 ```
-
-The `ricc_pos_lrcf` solver option refers to the solver used for the underlying
-Riccati equation relevant for {class}`~pymor.reductors.bt.PRBTReductor` and
-{class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`. Possible choices are
-`scipy` or `slycot` (if installed). Currently, we recommend `slycot`, since `scipy`
-gets into trouble if the associated Hamiltonian pencil has eigenvalues close to the
-imaginary axis.
 
 ### pH-IRKA
 
@@ -196,7 +188,6 @@ from pymor.reductors.bt import PRBTReductor
 
 reductor = PRBTReductor(fom)
 rom2 = reductor.reduce(10)
-rom2 = rom2.with_(solver_options={'ricc_pos_lrcf': 'slycot'})
 rom2 = PHLTIModel.from_passive_LTIModel(rom2)
 print(f'rom2 is of type {type(rom2).__qualname__}.')
 ```
@@ -224,7 +215,6 @@ reductor = SpectralFactorReductor(fom)
 rom3 = reductor.reduce(
     lambda spectral_factor, mu : IRKAReductor(spectral_factor, mu).reduce(10)
 )
-rom3 = rom3.with_(solver_options={'ricc_pos_lrcf': 'slycot'})
 rom3 = PHLTIModel.from_passive_LTIModel(rom3)
 print(f'rom3 is of type {type(rom3).__qualname__}.')
 ```
