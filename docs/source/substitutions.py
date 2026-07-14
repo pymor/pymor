@@ -53,6 +53,7 @@ common = """
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
 .. |StationaryProblems| replace:: :class:`StationaryProblems <pymor.analyticalproblems.elliptic.StationaryProblem>`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
+.. |StokesProblem| replace:: :class:`~pymor.analyticalproblems.stokes.StokesProblem`
 
 .. |RectDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.RectDomain`
 .. |PolygonalDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.PolygonalDomain`
