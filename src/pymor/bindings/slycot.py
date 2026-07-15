@@ -48,14 +48,14 @@ class SlycotLyapunovSolver(LyapunovSolver):
         B
             The matrix B as a 2D |NumPy array|.
         trans
-            Whether the first matrix in the Lyapunov equation is transposed.
+            Whether the first matrix in the |LyapunovEquation| is transposed.
         cont_time
-            Whether the continuous- or discrete-time Lyapunov equation is solved.
+            Whether the continuous- or discrete-time |LyapunovEquation| is solved.
 
         Returns
         -------
         X
-            Lyapunov equation solution as a |NumPy array|.
+            |LyapunovEquation| solution as a |NumPy array|.
         """
         n = A.shape[0]
         C = -B.dot(B.T) if not trans else -B.T.dot(B)
@@ -118,21 +118,20 @@ class SlycotRiccatiSolver(RiccatiSolver):
         E
             The matrix E as a 2D |NumPy array| or `None`.
         B
-            The matrix B as a 2D |NumPy array|, :math:`n \times m`.
+            The matrix B as a 2D |NumPy array|.
         C
-            The matrix C as a 2D |NumPy array|, :math:`p \times n`.
+            The matrix C as a 2D |NumPy array|.
         R
             The matrix R as a 2D |NumPy array| or `None`.
         S
-            The matrix S as a 2D |NumPy array| or `None`, :math:`p \times n` if `trans`
-            is `False` and :math:`n \times m` if `trans` is `True`.
+            The matrix S as a 2D |NumPy array| or `None`.
         trans
-            Whether the first matrix in the Riccati equation is transposed.
+            Whether the first matrix in the |RiccatiEquation| is transposed.
 
         Returns
         -------
         X
-            Riccati equation solution as a |NumPy array|.
+            |RiccatiEquation| solution as a |NumPy array|.
         """
         dico = 'C'
         n = A.shape[0]
@@ -227,14 +226,14 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
         return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
 
     def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        """Solve the materialized positive Riccati equation.
+        """Solve the materialized |PositiveRiccatiEquation|.
 
         Parameters as in :meth:`SlycotRiccatiSolver._solve_impl`.
 
         Returns
         -------
         X
-            Positive Riccati equation solution as a |NumPy array|.
+            |PositiveRiccatiEquation| solution as a |NumPy array|.
         """
         if R is None:
             R = np.eye(C.shape[0] if not trans else B.shape[1])

@@ -351,6 +351,18 @@ def matrix_astype_nocopy(matrix, dtype):
 
 
 class ScipyLyapunovSolver(LyapunovSolver):
+    """Compute the solution of a |LyapunovEquation|.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers
+    for Lyapunov equations with E=I.
+
+    This solver has no tunable parameters.
+
+    .. note::
+        If E is not `None`, the problem will be reduced to a standard algebraic
+        Lyapunov equation by inverting E.
+    """
 
     def _solve(self, equation):
         A, E, B = equation._dense_args()
@@ -358,17 +370,7 @@ class ScipyLyapunovSolver(LyapunovSolver):
 
 
     def _solve_impl(self, A, E, B, trans=False, cont_time=True):
-        """Compute the solution of a |LyapunovEquation|.
-
-        This function uses `scipy.linalg.solve_continuous_lyapunov` or
-        `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers
-        for Lyapunov equations with E=I.
-
-        This solver has no tunable parameters.
-
-        .. note::
-            If E is not `None`, the problem will be reduced to a standard algebraic
-            Lyapunov equation by inverting E.
+        """Solves the materialized |LyapunovEquation|.
 
         Parameters
         ----------
@@ -395,11 +397,10 @@ class ScipyLyapunovSolver(LyapunovSolver):
             A = A.T
             B = B.T
         if cont_time:
-            X = solve_continuous_lyapunov(A, -B @ B.T)
+            return solve_continuous_lyapunov(A, -B @ B.T)
         else:
-            X = solve_discrete_lyapunov(A, B @ B.T)
+            return solve_discrete_lyapunov(A, B @ B.T)
 
-        return X
 
 class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
     r"""Compute a low-rank Cholesky factor of a |LyapunovEquation| using SciPy.
@@ -429,7 +430,7 @@ class ScipyRiccatiSolver(RiccatiSolver):
         return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
 
     def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        r"""Solve the materialized Riccati equation.
+        """Solves the materialized |RiccatiEquation|.
 
         Parameters
         ----------
@@ -446,12 +447,12 @@ class ScipyRiccatiSolver(RiccatiSolver):
         S
             The matrix S as a 2D |NumPy array| or `None`.
         trans
-            Whether the first matrix in the Riccati equation is transposed.
+            Whether the first matrix in the |RiccatiEquation| is transposed.
 
         Returns
         -------
         X
-            Riccati equation solution as a |NumPy array|.
+            |RiccatiEquation| solution as a |NumPy array|.
         """
         if R is None:
             R = np.eye(C.shape[0] if not trans else B.shape[1])
@@ -484,8 +485,7 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
 
     The positive Riccati equation differs from the |RiccatiEquation| only in the sign
     of the quadratic term, so it is solved by :class:`ScipyRiccatiSolver` with :math:`R`
-    negated.  When :math:`R` is `None` it is materialized as the identity first --
-    passing `None` on would let the ordinary Riccati solver default to :math:`+I`.
+    negated.
 
     This solver has no tunable parameters.
     """
@@ -512,12 +512,12 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
         S
             The matrix S as a 2D |NumPy array| or `None`.
         trans
-            Whether the first matrix in the Riccati equation is transposed.
+            Whether the first matrix in the |PositiveRiccatiEquation| is transposed.
 
         Returns
         -------
         X
-            Positive Riccati equation solution as a |NumPy array|.
+            |PositiveRiccatiEquation| solution as a |NumPy array|.
         """
         if R is None:
             R = np.eye(C.shape[0] if not trans else B.shape[1])
