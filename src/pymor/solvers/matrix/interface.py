@@ -7,12 +7,7 @@ from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEqua
 
 
 class LyapunovSolver(ImmutableObject):
-    r"""Interface for solvers computing the dense solution of a |LyapunovEquation|.
-
-    Concrete solvers implement :meth:`_solve`.  When no solver is passed to
-    :meth:`~pymor.solvers.matrix.equations.LyapunovEquation.solve`,
-    :class:`~pymor.solvers.matrix.default.DefaultLyapunovSolver` is used.
-    """
+    r"""Interface for solvers computing the dense solution of a |LyapunovEquation|."""
 
     def solve(self, equation):
         """Solve a |LyapunovEquation|.
