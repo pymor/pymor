@@ -39,8 +39,8 @@ from pymor.operators.constructions import (
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
 from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
+from pymor.solvers.matrix.default import MatrixEquationSolvers
 from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
-from pymor.solvers.matrix.interface import MatrixSolvers
 from pymor.solvers.matrix.utils import _chol
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
@@ -215,8 +215,8 @@ class LTIModel(Model):
         else:
             presets = {}
 
-        matrix_solvers = matrix_solvers or MatrixSolvers()
-        assert isinstance(matrix_solvers, MatrixSolvers)
+        matrix_solvers = matrix_solvers or MatrixEquationSolvers()
+        assert isinstance(matrix_solvers, MatrixEquationSolvers)
 
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -2101,7 +2101,7 @@ class SecondOrderModel(Model):
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
 
-        assert matrix_solvers is None or isinstance(matrix_solvers, MatrixSolvers)
+        assert matrix_solvers is None or isinstance(matrix_solvers, MatrixEquationSolvers)
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())

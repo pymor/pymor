@@ -7,6 +7,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
+from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 
 
@@ -167,3 +168,26 @@ def _check_riccati_args(A, E, B, C, R, S, trans):
             assert len(C) == len(S)
         else:
             assert len(B) == len(S)
+
+
+def _parse_options(options, default_options, default_solver, default_least_squares_solver, least_squares):
+    if options is None:
+        options = default_options[default_least_squares_solver] if least_squares else default_options[default_solver]
+    elif isinstance(options, str):
+        options = default_options[options]
+    else:
+        assert 'type' in options
+        assert options['type'] in default_options
+        assert options.keys() <= default_options[options['type']].keys()
+        user_options = options
+        options = default_options[user_options['type']]
+        options.update(user_options)
+
+    if least_squares != ('least_squares' in options['type']):
+        logger = getLogger('foo')
+        if least_squares:
+            logger.warning('Non-least squares solver selected for least squares problem.')
+        else:
+            logger.warning('Least squares solver selected for non-least squares problem.')
+
+    return options

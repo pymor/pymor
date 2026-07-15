@@ -64,15 +64,17 @@ class LyapunovEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
+        from pymor.solvers.matrix.default import DefaultLyapunovSolver
         from pymor.solvers.matrix.interface import LyapunovSolver
-        solver = LyapunovSolver() if solver is None else solver
+        solver = DefaultLyapunovSolver() if solver is None else solver
         assert isinstance(solver, LyapunovSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        from pymor.solvers.matrix.default import DefaultLyapunovSolverLRCF
         from pymor.solvers.matrix.interface import LyapunovSolverLRCF
-        solver = LyapunovSolverLRCF() if solver is None else solver
+        solver = DefaultLyapunovSolverLRCF() if solver is None else solver
         assert isinstance(solver, LyapunovSolverLRCF)
         return solver.solve(self)
 
@@ -133,15 +135,17 @@ class RiccatiEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
+        from pymor.solvers.matrix.default import DefaultRiccatiSolver
         from pymor.solvers.matrix.interface import RiccatiSolver
-        solver = RiccatiSolver() if solver is None else solver
+        solver = DefaultRiccatiSolver() if solver is None else solver
         assert isinstance(solver, RiccatiSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        from pymor.solvers.matrix.default import DefaultRiccatiSolverLRCF
         from pymor.solvers.matrix.interface import RiccatiSolverLRCF
-        solver = RiccatiSolverLRCF() if solver is None else solver
+        solver = DefaultRiccatiSolverLRCF() if solver is None else solver
         assert isinstance(solver, RiccatiSolverLRCF)
         return solver.solve(self)
 
@@ -199,15 +203,17 @@ class PositiveRiccatiEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
+        from pymor.solvers.matrix.default import DefaultPositiveRiccatiSolver
         from pymor.solvers.matrix.interface import PositiveRiccatiSolver
-        solver = PositiveRiccatiSolver() if solver is None else solver
+        solver = DefaultPositiveRiccatiSolver() if solver is None else solver
         assert isinstance(solver, PositiveRiccatiSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        from pymor.solvers.matrix.default import DefaultPositiveRiccatiSolverLRCF
         from pymor.solvers.matrix.interface import PositiveRiccatiSolverLRCF
-        solver = PositiveRiccatiSolverLRCF() if solver is None else solver
+        solver = DefaultPositiveRiccatiSolverLRCF() if solver is None else solver
         assert isinstance(solver, PositiveRiccatiSolverLRCF)
         return solver.solve(self)
 

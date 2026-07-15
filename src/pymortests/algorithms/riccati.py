@@ -9,14 +9,21 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
+from pymor.algorithms.lrradi import LrradiRiccatiSolverLRCF
+from pymor.bindings.scipy import (
+    ScipyPositiveRiccatiSolver,
+    ScipyPositiveRiccatiSolverLRCF,
+    ScipyRiccatiSolver,
+    ScipyRiccatiSolverLRCF,
+)
+from pymor.bindings.slycot import (
+    SlycotPositiveRiccatiSolver,
+    SlycotPositiveRiccatiSolverLRCF,
+    SlycotRiccatiSolver,
+    SlycotRiccatiSolverLRCF,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix.equations import PositiveRiccatiEquation, RiccatiEquation
-from pymor.solvers.matrix.interface import (
-    PositiveRiccatiSolver,
-    PositiveRiccatiSolverLRCF,
-    RiccatiSolver,
-    RiccatiSolverLRCF,
-)
 from pymor.solvers.matrix.utils import _chol
 from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
 
@@ -128,7 +135,15 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     equation = RiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
-    X = equation.solve(RiccatiSolver(backend=backend))
+
+    if backend == 'slycot':
+        solver = SlycotRiccatiSolver()
+    elif backend == 'scipy':
+        solver = ScipyRiccatiSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
 
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
 
@@ -192,7 +207,15 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     equation = PositiveRiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
-    X = equation.solve(PositiveRiccatiSolver(backend=backend))
+
+    if backend == 'slycot':
+        solver = SlycotPositiveRiccatiSolver()
+    elif backend == 'scipy':
+        solver = ScipyPositiveRiccatiSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
 
     if not with_R:
         R = np.eye(p if not trans else m)
@@ -256,7 +279,17 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     equation = RiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
-    Zva = equation.solve_lrcf(RiccatiSolverLRCF(backend=backend))
+
+    if backend == 'lrradi':
+        solver =  LrradiRiccatiSolverLRCF()
+    elif backend == 'slycot':
+        solver = SlycotRiccatiSolverLRCF()
+    elif backend == 'scipy':
+        solver = ScipyRiccatiSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
 
     assert len(Zva) <= n
 
@@ -322,7 +355,15 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     equation = PositiveRiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
-    Zva = equation.solve_lrcf(PositiveRiccatiSolverLRCF(backend=backend))
+
+    if backend == 'slycot':
+        solver = SlycotPositiveRiccatiSolverLRCF()
+    elif backend == 'scipy':
+        solver = ScipyPositiveRiccatiSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
 
     assert len(Zva) <= n
 
