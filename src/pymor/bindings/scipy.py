@@ -22,14 +22,17 @@ from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, s
 from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.core.logger import getLogger
 from pymor.solvers.interface import Solver
+from pymor.solvers.matrix.interface import (
+    LyapunovSolver,
+    LyapunovSolverLRCF,
+    PositiveRiccatiSolver,
+    PositiveRiccatiSolverLRCF,
+    RiccatiSolver,
+    RiccatiSolverLRCF,
+)
 from pymor.solvers.matrix.utils import (
     _chol,
-    _solve_lyap_dense_check_args,
-    _solve_lyap_lrcf_check_args,
-    _solve_ricc_check_args,
-    _solve_ricc_dense_check_args,
 )
 from pymor.tools.weakrefcache import WeakRefCache
 
@@ -347,103 +350,44 @@ def matrix_astype_nocopy(matrix, dtype):
         return matrix.astype(dtype)
 
 
-def lyap_lrcf_solver_options():
-    """Return available Lyapunov solvers with default options for the SciPy backend.
+class ScipyLyapunovSolver(LyapunovSolver):
 
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
+    def _solve(self, equation):
+        A, E, B = equation._dense_args()
+        return self._solve_impl(A, E, B, trans=equation.trans, cont_time=equation.cont_time)
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a |LyapunovEquation|.
+    def _solve_impl(self, A, E, B, trans=False, cont_time=True):
+        """Compute the solution of a |LyapunovEquation|.
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
-    Therefore, we assume A and E can be converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
+        This function uses `scipy.linalg.solve_continuous_lyapunov` or
+        `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers
+        for Lyapunov equations with E=I.
 
-    .. note::
-        If E is not `None`, the problem will be reduced to a standard algebraic
-        Lyapunov equation by inverting E.
+        This solver has no tunable parameters.
 
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    trans
-        Whether the first |Operator| in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
+        .. note::
+            If E is not `None`, the problem will be reduced to a standard algebraic
+            Lyapunov equation by inverting E.
 
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
-    """
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
+        Parameters
+        ----------
+        A
+            The matrix A as a 2D |NumPy array|.
+        E
+            The matrix E as a 2D |NumPy array| or `None`.
+        B
+            The matrix B as a 2D |NumPy array|.
+        trans
+            Whether the first operator in the Lyapunov equation is transposed.
+        cont_time
+            Whether the continuous- or discrete-time Lyapunov equation is solved.
 
-    from pymor.algorithms.to_matrix import to_matrix
-    X = solve_lyap_dense(to_matrix(A, format='dense'),
-                         to_matrix(E, format='dense') if E else None,
-                         B.to_numpy() if not trans else B.to_numpy().T,
-                         trans=trans, cont_time=cont_time, options=options)
-    return A.source.from_numpy(_chol(X))
-
-
-def lyap_dense_solver_options():
-    """Return available dense Lyapunov solvers with default options for the SciPy backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
-
-
-def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute the solution of a |LyapunovEquation|.
-
-    This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
-
-    .. note::
-        If E is not `None`, the problem will be reduced to a standard algebraic
-        Lyapunov equation by inverting E.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    trans
-        Whether the first operator in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Lyapunov equation solution as a |NumPy array|.
-    """
-    _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
-
-    if options['type'] == 'scipy':
+        Returns
+        -------
+        X
+            Lyapunov equation solution as a |NumPy array|.
+        """
         if E is not None:
             A = solve(E, A) if not trans else solve(E.T, A.T).T
             B = solve(E, B) if not trans else solve(E.T, B.T).T
@@ -454,244 +398,141 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             X = solve_continuous_lyapunov(A, -B @ B.T)
         else:
             X = solve_discrete_lyapunov(A, B @ B.T)
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
-    return X
+        return X
 
+class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |LyapunovEquation| using SciPy.
 
-def ricc_lrcf_solver_options():
-    """Return available Riccati solvers with default options for the SciPy backend.
+    Computes the dense solution :math:`X` with :class:`ScipyLyapunovSolver` and
+    factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`, i.e. that
+    the system is asymptotically stable.
 
-    Returns
-    -------
-    A dict of available solvers with default solver options.
+    This solver has no tunable parameters.
     """
-    return {'scipy': {'type': 'scipy'}}
+
+    def _solve(self, equation):
+        X = ScipyLyapunovSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a |RiccatiEquation|.
+class ScipyRiccatiSolver(RiccatiSolver):
+    """Compute the dense solution of a |RiccatiEquation| using SciPy.
 
-    This function uses `scipy.linalg.solve_continuous_are`, which
-    is a dense solver.
-    Therefore, we assume all |Operators| and |VectorArrays| can be
-    converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    Uses `scipy.linalg.solve_continuous_are`, which is a dense solver.
 
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
+    This solver has no tunable parameters.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
-    A_source = A.source
-    from pymor.algorithms.to_matrix import to_matrix
-    A = to_matrix(A, format='dense')
-    E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy()
-    C = C.to_numpy().T
-    if S is not None:
-        S = S.to_numpy().T if not trans else S.to_numpy()
-    X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
+    def _solve(self, equation):
+        A, E, B, C, R, S = equation._dense_args()
+        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
 
-    return A_source.from_numpy(_chol(X))
+    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
+        r"""Solve the materialized Riccati equation.
 
+        Parameters
+        ----------
+        A
+            The matrix A as a 2D |NumPy array|.
+        E
+            The matrix E as a 2D |NumPy array| or `None`.
+        B
+            The matrix B as a 2D |NumPy array|.
+        C
+            The matrix C as a 2D |NumPy array|.
+        R
+            The matrix R as a 2D |NumPy array| or `None`.
+        S
+            The matrix S as a 2D |NumPy array| or `None`.
+        trans
+            Whether the first matrix in the Riccati equation is transposed.
 
-def ricc_dense_solver_options():
-    """Return available Riccati solvers with default options for the SciPy backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
-
-
-def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a |RiccatiEquation|.
-
-    This function uses `scipy.linalg.solve_continuous_are`, which
-    is a dense solver.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    C
-        The matrix C as a 2D |NumPy array|.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The matrix S as a 2D |NumPy array| or `None`.
-    trans
-        Whether the first operator in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Riccati equation solution as a |NumPy array|.
-    """
-    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(C.shape[0] if not trans else B.shape[1])
-    if not trans:
-        if E is not None:
-            E = E.T
-        if S is not None:
-            S = S.T
-        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, e=E, s=S)
-    else:
-        X = solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
-
-    return X
-
-
-def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a |RiccatiEquation|.
-
-    This function uses :func:`scipy.linalg.solve_continuous_are`, which
-    is a dense solver.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    C
-        The matrix C as a 2D |NumPy array|.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The matrix S as a 2D |NumPy array| or `None`.
-    trans
-        Whether the first operator in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Riccati equation solution as a |NumPy array|.
-    """
-    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(np.shape(C)[0] if not trans else np.shape(B)[1])
-    return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
-
-
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a |PositiveRiccatiEquation|.
-
-    This function uses `scipy.linalg.solve_continuous_are`, which
-    is a dense solver.
-    Therefore, we assume all |Operators| and |VectorArrays| can be
-    converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the positive Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the positive Riccati equation
-        solution, |VectorArray| from `A.source`.
-    """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
-        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
-
-
-def _parse_options(options, default_options, default_solver, default_least_squares_solver, least_squares):
-    if options is None:
-        options = default_options[default_least_squares_solver] if least_squares else default_options[default_solver]
-    elif isinstance(options, str):
-        options = default_options[options]
-    else:
-        assert 'type' in options
-        assert options['type'] in default_options
-        assert options.keys() <= default_options[options['type']].keys()
-        user_options = options
-        options = default_options[user_options['type']]
-        options.update(user_options)
-
-    if least_squares != ('least_squares' in options['type']):
-        logger = getLogger('foo')
-        if least_squares:
-            logger.warning('Non-least squares solver selected for least squares problem.')
+        Returns
+        -------
+        X
+            Riccati equation solution as a |NumPy array|.
+        """
+        if R is None:
+            R = np.eye(C.shape[0] if not trans else B.shape[1])
+        if not trans:
+            if E is not None:
+                E = E.T
+            if S is not None:
+                S = S.T
+            return solve_continuous_are(A.T, C.T, B.dot(B.T), R, e=E, s=S)
         else:
-            logger.warning('Least squares solver selected for non-least squares problem.')
+            return solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
 
-    return options
+
+class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |RiccatiEquation| using SciPy.
+
+    Computes the dense solution :math:`X` with :class:`ScipyRiccatiSolver` and
+    factorizes it.
+
+    This solver has no tunable parameters.
+    """
+
+    def _solve(self, equation):
+        X = ScipyRiccatiSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))
+
+
+class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
+    """Compute the dense solution of a |PositiveRiccatiEquation| using SciPy.
+
+    The positive Riccati equation differs from the |RiccatiEquation| only in the sign
+    of the quadratic term, so it is solved by :class:`ScipyRiccatiSolver` with :math:`R`
+    negated.  When :math:`R` is `None` it is materialized as the identity first --
+    passing `None` on would let the ordinary Riccati solver default to :math:`+I`.
+
+    This solver has no tunable parameters.
+    """
+
+    def _solve(self, equation):
+        A, E, B, C, R, S = equation._dense_args()
+        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
+
+    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
+        """Solve the materialized positive Riccati equation.
+
+        Parameters
+        ----------
+        A
+            The matrix A as a 2D |NumPy array|.
+        E
+            The matrix E as a 2D |NumPy array| or `None`.
+        B
+            The matrix B as a 2D |NumPy array|.
+        C
+            The matrix C as a 2D |NumPy array|.
+        R
+            The matrix R as a 2D |NumPy array| or `None`.
+        S
+            The matrix S as a 2D |NumPy array| or `None`.
+        trans
+            Whether the first matrix in the Riccati equation is transposed.
+
+        Returns
+        -------
+        X
+            Positive Riccati equation solution as a |NumPy array|.
+        """
+        if R is None:
+            R = np.eye(C.shape[0] if not trans else B.shape[1])
+        return ScipyRiccatiSolver()._solve_impl(A, E, B, C, -R, S, trans=trans)
+
+
+class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |PositiveRiccatiEquation| using SciPy.
+
+    Computes the dense solution :math:`X` with :class:`ScipyPositiveRiccatiSolver` and
+    factorizes it.
+
+    This solver has no tunable parameters.
+    """
+
+    def _solve(self, equation):
+        X = ScipyPositiveRiccatiSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))

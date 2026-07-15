@@ -7,11 +7,11 @@ import scipy.linalg as spla
 
 from pymor.algorithms.eigs import _arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
-from pymor.solvers.matrix.utils import _solve_lyap_lrcf_check_args
+from pymor.solvers.matrix.interface import LyapunovSolverLRCF
+from pymor.solvers.matrix.utils import _parse_options
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -70,100 +70,110 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'tol': wachspress_tol}}}}
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a |LyapunovEquation|.
+class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
 
-    This function uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
+    def __init__(self, options=None):
+        self.options = options or lyap_lrcf_solver_options()['lradi']
+        super().__init__()
 
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    trans
-        Whether the first |Operator| in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-        Only the continuous-time case is implemented.
-    options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
+    def _solve(self, equation):
+        return self._solve_impl(equation.A, equation.E, equation.B, equation.trans, equation.cont_time, self.options)
 
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
-    """
-    if not cont_time:
-        raise NotImplementedError
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
-    logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
-    shift_options = options['shift_options'][options['shifts']]
-    if shift_options['type'] == 'projection_shifts':
-        init_shifts = projection_shifts_init
-        iteration_shifts = projection_shifts
-    elif shift_options['type'] == 'wachspress_shifts':
-        init_shifts = wachspress_shifts_init
-        iteration_shifts = cycle_shifts
-    else:
-        raise ValueError('Unknown low-rank ADI shift strategy.')
+    def _solve_impl(self, A, E, B, trans=False, cont_time=True, options=None):
+        """Compute an approximate low-rank solution of a |LyapunovEquation|.
 
-    solver = options['shifted_system_solver']
+        This function uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
-    if E is None:
-        E = IdentityOperator(A.source)
+        Parameters
+        ----------
+        A
+            The non-parametric |Operator| A.
+        E
+            The non-parametric |Operator| E or `None`.
+        B
+            The operator B as a |VectorArray| from `A.source`.
+        trans
+            Whether the first |Operator| in the Lyapunov equation is transposed.
+        cont_time
+            Whether the continuous- or discrete-time Lyapunov equation is solved.
+            Only the continuous-time case is implemented.
+        options
+            The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
-    Z = A.source.empty()
-    W = B.copy()
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the Lyapunov equation solution,
+            |VectorArray| from `A.source`.
+        """
+        if not cont_time:
+            raise NotImplementedError
+        options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
+        logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
-    j = 0
-    j_shift = 0
-    shifts = init_shifts(A, E, W, shift_options)
-    res = np.linalg.norm(W.gramian(), ord=2)
-    init_res = res
-    Btol = res * options['tol']
-
-    while res > Btol and j < options['maxiter']:
-        if shifts[j_shift].imag == 0:
-            AaE = A + shifts[j_shift].real * E
-            if not trans:
-                V = AaE.apply_inverse(W, solver=solver)
-                W -= E.apply(V) * (2 * shifts[j_shift].real)
-            else:
-                V = AaE.apply_inverse_adjoint(W, solver=solver)
-                W -= E.apply_adjoint(V) * (2 * shifts[j_shift].real)
-            Z.append(V * np.sqrt(-2 * shifts[j_shift].real))
-            j += 1
+        shift_options = options['shift_options'][options['shifts']]
+        if shift_options['type'] == 'projection_shifts':
+            init_shifts = projection_shifts_init
+            iteration_shifts = projection_shifts
+        elif shift_options['type'] == 'wachspress_shifts':
+            init_shifts = wachspress_shifts_init
+            iteration_shifts = cycle_shifts
         else:
-            AaE = A + shifts[j_shift] * E
-            gs = -4 * shifts[j_shift].real
-            d = shifts[j_shift].real / shifts[j_shift].imag
-            if not trans:
-                V = AaE.apply_inverse(W, solver=solver)
-                W += E.apply(V.real + V.imag * d) * gs
-            else:
-                V = AaE.apply_inverse_adjoint(W, solver=solver).conj()
-                W += E.apply_adjoint(V.real + V.imag * d) * gs
-            g = np.sqrt(gs)
-            Z.append((V.real + V.imag * d) * g)
-            Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
-            j += 2
-        j_shift += 1
+            raise ValueError('Unknown low-rank ADI shift strategy.')
+
+        solver = options['shifted_system_solver']
+
+        if E is None:
+            E = IdentityOperator(A.source)
+
+        Z = A.source.empty()
+        W = B.copy()
+
+        j = 0
+        j_shift = 0
+        shifts = init_shifts(A, E, W, shift_options)
         res = np.linalg.norm(W.gramian(), ord=2)
-        logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
-        if j_shift >= shifts.size:
-            shifts = iteration_shifts(A, E, V, Z, shifts, shift_options)
-            j_shift = 0
+        init_res = res
+        Btol = res * options['tol']
 
-    if res > Btol:
-        logger.warning(f'Prescribed relative residual tolerance was not achieved '
-                       f'({res/init_res:e} > {options["tol"]:e}) after {options["maxiter"]} ADI steps.')
+        while res > Btol and j < options['maxiter']:
+            if shifts[j_shift].imag == 0:
+                AaE = A + shifts[j_shift].real * E
+                if not trans:
+                    V = AaE.apply_inverse(W, solver=solver)
+                    W -= E.apply(V) * (2 * shifts[j_shift].real)
+                else:
+                    V = AaE.apply_inverse_adjoint(W, solver=solver)
+                    W -= E.apply_adjoint(V) * (2 * shifts[j_shift].real)
+                Z.append(V * np.sqrt(-2 * shifts[j_shift].real))
+                j += 1
+            else:
+                AaE = A + shifts[j_shift] * E
+                gs = -4 * shifts[j_shift].real
+                d = shifts[j_shift].real / shifts[j_shift].imag
+                if not trans:
+                    V = AaE.apply_inverse(W, solver=solver)
+                    W += E.apply(V.real + V.imag * d) * gs
+                else:
+                    V = AaE.apply_inverse_adjoint(W, solver=solver).conj()
+                    W += E.apply_adjoint(V.real + V.imag * d) * gs
+                g = np.sqrt(gs)
+                Z.append((V.real + V.imag * d) * g)
+                Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
+                j += 2
+            j_shift += 1
+            res = np.linalg.norm(W.gramian(), ord=2)
+            logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+            if j_shift >= shifts.size:
+                shifts = iteration_shifts(A, E, V, Z, shifts, shift_options)
+                j_shift = 0
 
-    return Z
+        if res > Btol:
+            logger.warning(f'Prescribed relative residual tolerance was not achieved '
+                            f'({res/init_res:e} > {options["tol"]:e}) after {options["maxiter"]} ADI steps.')
+
+        return Z
 
 
 def projection_shifts_init(A, E, B, shift_options):

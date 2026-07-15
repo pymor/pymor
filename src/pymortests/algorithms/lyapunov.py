@@ -9,10 +9,12 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
+from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
+from pymor.bindings.scipy import ScipyLyapunovSolver, ScipyLyapunovSolverLRCF
+from pymor.bindings.slycot import SlycotLyapunovSolver, SlycotLyapunovSolverLRCF
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix.equations import LyapunovEquation
-from pymor.solvers.matrix.interface import LyapunovSolver, LyapunovSolverLRCF
 
 pytestmark = pytest.mark.builtin
 
@@ -149,7 +151,17 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
-    Zva = equation.solve_lrcf(LyapunovSolverLRCF(backend=backend))
+
+    if backend == 'lradi':
+        solver =  LradiLyapunovSolverLRCF()
+    elif backend == 'slycot':
+        solver = SlycotLyapunovSolverLRCF()
+    elif backend == 'scipy':
+        solver = ScipyLyapunovSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver)
 
     assert len(Zva) <= n
 
@@ -195,7 +207,14 @@ def test_disc_lrcf(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
-    Zva = equation.solve_lrcf(LyapunovSolverLRCF(backend=backend))
+    if backend == 'slycot':
+        solver = SlycotLyapunovSolverLRCF()
+    elif backend == 'scipy':
+        solver = ScipyLyapunovSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
 
     assert len(Zva) <= n
 
@@ -239,7 +258,14 @@ def test_cont_dense(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
-    X = equation.solve(LyapunovSolver(backend=backend))
+    if backend == 'slycot':
+        solver = SlycotLyapunovSolver()
+    elif backend == 'scipy':
+        solver = ScipyLyapunovSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
 
     assert type(X) is np.ndarray
 
@@ -279,7 +305,15 @@ def test_disc_dense(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
-    X = equation.solve(LyapunovSolver(backend=backend))
+
+    if backend == 'slycot':
+        solver = SlycotLyapunovSolver()
+    elif backend == 'scipy':
+        solver = ScipyLyapunovSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
 
     assert type(X) is np.ndarray
 

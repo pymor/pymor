@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import App
 
-from pymor.algorithms.lradi import lyap_lrcf_solver_options
+from pymor.algorithms.lradi import LradiLyapunovSolverLRCF, lyap_lrcf_solver_options
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
@@ -15,7 +15,7 @@ from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
-from pymor.solvers.matrix.interface import LyapunovSolverLRCF, MatrixSolvers
+from pymor.solvers.matrix.default import MatrixEquationSolvers
 
 
 def fom_properties(fom, w, stable_lti=True):
@@ -174,9 +174,8 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     rom = reductor.reduce(r, **reduce_kwargs)
     err = fom - rom
     if isinstance(err, LTIModel):
-        matrix_solvers = MatrixSolvers(
-            lyapunov_lrcf=LyapunovSolverLRCF(
-                backend='lradi',
+        matrix_solvers = MatrixEquationSolvers(
+            lyapunov_lrcf=LradiLyapunovSolverLRCF(
                 options=lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']
             )
         )
@@ -319,10 +318,10 @@ def main(
     fom.visualize(fom.solve())
 
     # LTI system
-    from pymor.solvers.matrix.interface import LyapunovSolverLRCF, MatrixSolvers
-    matrix_solvers = MatrixSolvers(
-        lyapunov_lrcf=LyapunovSolverLRCF(backend='lradi',
-                                         options=lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi'])
+    matrix_solvers = MatrixEquationSolvers(
+        lyapunov_lrcf=LradiLyapunovSolverLRCF(
+            options=lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']
+        )
     )
 
     lti = fom.to_lti().with_(matrix_solvers=matrix_solvers, T=1, time_stepper=ImplicitEulerTimeStepper(100))
