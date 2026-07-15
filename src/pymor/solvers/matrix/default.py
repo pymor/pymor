@@ -79,7 +79,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
-            solver = LradiLyapunovSolverLRCF
+            solver = LradiLyapunovSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
             if config.HAVE_SLYCOT:
