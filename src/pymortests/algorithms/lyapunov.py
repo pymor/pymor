@@ -9,9 +9,6 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
-from pymor.bindings.scipy import ScipyLyapunovSolver, ScipyLyapunovSolverLRCF
-from pymor.bindings.slycot import SlycotLyapunovSolver, SlycotLyapunovSolverLRCF
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix.equations import LyapunovEquation
@@ -153,10 +150,13 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
 
     if backend == 'lradi':
+        from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
         solver =  LradiLyapunovSolverLRCF()
     elif backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
         solver = SlycotLyapunovSolverLRCF()
     elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
         solver = ScipyLyapunovSolverLRCF()
     else:
         raise ValueError
@@ -207,9 +207,12 @@ def test_disc_lrcf(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
+
     if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
         solver = SlycotLyapunovSolverLRCF()
     elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
         solver = ScipyLyapunovSolverLRCF()
     else:
         raise ValueError
@@ -258,9 +261,12 @@ def test_cont_dense(n, m, with_E, trans, backend, rng):
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
+
     if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolver
         solver = SlycotLyapunovSolver()
     elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolver
         solver = ScipyLyapunovSolver()
     else:
         raise ValueError
@@ -307,8 +313,10 @@ def test_disc_dense(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
 
     if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolver
         solver = SlycotLyapunovSolver()
     elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolver
         solver = ScipyLyapunovSolver()
     else:
         raise ValueError
