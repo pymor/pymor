@@ -42,21 +42,7 @@ def _chol(A):
     return L
 
 
-def _solve_lyap_lrcf_check_args(A, E, B, trans):
-    assert isinstance(A, Operator)
-    assert A.linear
-    assert not A.parametric
-    assert A.source == A.range
-    if E is not None:
-        assert isinstance(E, Operator)
-        assert E.linear
-        assert not E.parametric
-        assert E.source == E.range
-        assert E.source == A.source
-    assert B in A.source
-
-
-def _solve_lyap_dense_check_args(A, E, B, trans):
+def _check_lyapunov_dense_args(A, E, B, trans):
     assert isinstance(A, np.ndarray)
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
@@ -66,39 +52,11 @@ def _solve_lyap_dense_check_args(A, E, B, trans):
         assert E.shape[0] == E.shape[1]
         assert E.shape[0] == A.shape[0]
     assert isinstance(B, np.ndarray)
-    assert B.ndim == 2 #TODO: this was a bug in the old pymor
+    assert B.ndim == 2
     assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
 
 
-def _solve_ricc_check_args(A, E, B, C, R, S, trans):
-    assert isinstance(A, Operator)
-    assert A.linear
-    assert not A.parametric
-    assert A.source == A.range
-    if E is not None:
-        assert isinstance(E, Operator)
-        assert E.linear
-        assert not E.parametric
-        assert E.source == E.range == A.source
-    assert B in A.source
-    assert C in A.source
-    if R is not None:
-        assert isinstance(R, np.ndarray)
-        assert R.ndim == 2
-        assert R.shape[0] == R.shape[1]
-        if not trans:
-            assert R.shape[0] == len(C)
-        else:
-            assert R.shape[0] == len(B)
-    if S is not None:
-        assert S in A.source
-        if not trans:
-            assert len(C) == len(S)
-        else:
-            assert len(B) == len(S)
-
-
-def _solve_ricc_dense_check_args(A, E, B, C, R, S, trans):
+def _check_riccati_dense_args(A, E, B, C, R, S, trans):
     assert isinstance(A, np.ndarray)
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]

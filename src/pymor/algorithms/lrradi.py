@@ -10,7 +10,7 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.solvers.matrix.interface import RiccatiSolverLRCF
-from pymor.solvers.matrix.utils import _parse_options, _solve_ricc_check_args
+from pymor.solvers.matrix.utils import _parse_options
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -103,7 +103,6 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
             Low-rank Cholesky factor of the Riccati equation solution,
             |VectorArray| from `A.source`.
         """
-        _solve_ricc_check_args(A, E, B, C, R, S, trans)
         if S is not None:
             raise NotImplementedError
         options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
