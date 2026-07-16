@@ -51,8 +51,8 @@ classes mainly focus on continuous-time, non-parametric systems.
 
 Since matrix equation solvers are important tools in many system-theoretic
 methods, support for Lyapunov, Riccati and Sylvester equations has been added in
-:mod:`pymor.algorithms.lyapunov`, :mod:`pymor.algorithms.riccati` and
-:mod:`pymor.algorithms.sylvester`. A generic low-rank ADI (Alternating Direction
+`pymor.algorithms.lyapunov`, `pymor.algorithms.riccati` and
+`pymor.algorithms.sylvester`. A generic low-rank ADI (Alternating Direction
 Implicit) solver for Lyapunov equations is implemented in
 :mod:`pymor.algorithms.lradi`. Furthermore, bindings to low-rank and dense
 solvers for Lyapunov and Riccati equations from |SciPy|,
