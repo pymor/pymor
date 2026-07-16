@@ -3,7 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.base import ImmutableObject
-from pymor.solvers.matrix.utils import _check_lyapunov_args, _check_riccati_args
+from pymor.solvers.matrix.utils import (
+    _check_lyapunov_args,
+    _check_lyapunov_dense_args,
+    _check_riccati_args,
+    _check_riccati_dense_args,
+)
 
 
 class LyapunovEquation(ImmutableObject):
@@ -227,6 +232,9 @@ def _dense_lyapunov_args(equation):
     A = to_matrix(equation.A, format='dense')
     E = to_matrix(equation.E, format='dense') if equation.E is not None else None
     B = equation.B.to_numpy()
+
+    _check_lyapunov_dense_args(A, E, B.T if equation.trans else B, equation.trans)
+
     return A, E, (B.T if equation.trans else B)
 
 
@@ -240,5 +248,7 @@ def _dense_riccati_args(equation):
     S = equation.S.to_numpy() if equation.S is not None else None
     if S is not None and not equation.trans:
         S = S.T
+
+    _check_riccati_dense_args(A, E, B, C, equation.R, S, trans=equation.trans)
 
     return A, E, B, C, equation.R, S
