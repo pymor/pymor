@@ -14,7 +14,7 @@ from pymor.algorithms.lyapunov import (
     solve_cont_lyap_dense,
     solve_cont_lyap_lrcf,
     solve_disc_lyap_dense,
-    solve_disc_lyap_lrcf,
+    solve_disc_lyap_lr,
 )
 from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_lrcf
 from pymor.algorithms.simplify import contract, expand
@@ -977,7 +977,7 @@ class LTIModel(Model):
         options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
         options_ricc_pos_dense = self.solver_options.get('ricc_pos_dense') if self.solver_options else None
         options_ricc_pos_lrcf = self.solver_options.get('ricc_pos_lrcf') if self.solver_options else None
-        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lr
         solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
 
         if typ == 'c_lrcf':
@@ -1298,7 +1298,7 @@ class LTIModel(Model):
         else:
             BmKD = B
 
-        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lr
         if self.dim_input <= self.dim_output:
             cf = solve_lyap_lrcf(A - KC, E, BmKD.as_range_array(mu=mu),
                                  trans=False, options=options_lrcf)

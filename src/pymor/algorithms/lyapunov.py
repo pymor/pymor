@@ -124,7 +124,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
 
 @defaults('default_dense_solver_backend')
-def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
+def solve_disc_lyap_lr(A, E, B, trans=False, options=None,
                          default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
     """Compute an approximate low-rank solution of a discrete-time Lyapunov equation.
 
