@@ -28,11 +28,11 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
     Parameters
     ----------
     lrradi_tol
-        See :func:`solve_ricc_lrcf`.
+        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
     lrradi_maxiter
-        See :func:`solve_ricc_lrcf`.
+        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
     lrradi_shifts
-        See :func:`solve_ricc_lrcf`.
+        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
     shifted_system_solver
         The |Solver| for the shifted systems.
     hamiltonian_shifts_init_maxiter
@@ -56,6 +56,16 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
 
 
 class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
+    """Compute an approximate low-rank solution of a |RiccatiEquation|.
+
+    This is an implementation of Algorithm 2 in :cite:`BBKS18`.
+
+    Parameters
+    ----------
+    options
+        The solver options to use (see :func:`ricc_lrcf_solver_options`).
+    """
+
     def __init__(self, options=None):
         self.options = options or ricc_lrcf_solver_options()['lrradi']
         super().__init__()
@@ -65,9 +75,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
                                 equation.R, equation.S, equation.trans, self.options)
 
     def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False, options=None):
-        """Compute an approximate low-rank solution of a |RiccatiEquation|.
-
-        This function is an implementation of Algorithm 2 in :cite:`BBKS18`.
+        """Solve the |RiccatiEquation|.
 
         Parameters
         ----------
@@ -87,7 +95,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
             Whether the first |Operator| in the Riccati equation is
             transposed.
         options
-            The solver options to use. (see :func:`ricc_lrcf_solver_options`)
+            The solver options to use (see :func:`ricc_lrcf_solver_options`).
 
         Returns
         -------

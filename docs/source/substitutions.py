@@ -184,6 +184,12 @@ common = """
 .. |LyapunovEquation| replace:: :class:`~pymor.solvers.matrix.equations.LyapunovEquation`
 .. |RiccatiEquation| replace:: :class:`~pymor.solvers.matrix.equations.RiccatiEquation`
 .. |PositiveRiccatiEquation| replace:: :class:`~pymor.solvers.matrix.equations.PositiveRiccatiEquation`
+.. |LyapunovSolver| replace:: :class:`~pymor.solvers.matrix.interface.LyapunovSolver`
+.. |LyapunovSolverLRCF| replace:: :class:`~pymor.solvers.matrix.interface.LyapunovSolverLRCF`
+.. |RiccatiSolver| replace:: :class:`~pymor.solvers.matrix.interface.RiccatiSolver`
+.. |RiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix.interface.RiccatiSolverLRCF`
+.. |PositiveRiccatiSolver| replace:: :class:`~pymor.solvers.matrix.interface.PositiveRiccatiSolver`
+.. |PositiveRiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix.interface.PositiveRiccatiSolverLRCF`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 """  # noqa: E501

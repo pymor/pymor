@@ -2,24 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
-from pymor.algorithms.lrradi import LrradiRiccatiSolverLRCF
-from pymor.bindings.scipy import (
-    ScipyLyapunovSolver,
-    ScipyLyapunovSolverLRCF,
-    ScipyPositiveRiccatiSolver,
-    ScipyPositiveRiccatiSolverLRCF,
-    ScipyRiccatiSolver,
-    ScipyRiccatiSolverLRCF,
-)
-from pymor.bindings.slycot import (
-    SlycotLyapunovSolver,
-    SlycotLyapunovSolverLRCF,
-    SlycotPositiveRiccatiSolver,
-    SlycotPositiveRiccatiSolverLRCF,
-    SlycotRiccatiSolver,
-    SlycotRiccatiSolverLRCF,
-)
+
 from pymor.core.base import ImmutableObject
 from pymor.core.config import config
 from pymor.solvers.matrix.interface import (
@@ -44,8 +27,10 @@ class DefaultLyapunovSolver(LyapunovSolver):
 
     def _solve(self, equation):
         if config.HAVE_SLYCOT:
+            from pymor.bindings.slycot import SlycotLyapunovSolver
             solver = SlycotLyapunovSolver()
         else:
+            from pymor.bindings.scipy import ScipyLyapunovSolver
             solver = ScipyLyapunovSolver()
         return solver.solve(equation)
 
@@ -79,12 +64,15 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
+            from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
             solver = LradiLyapunovSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
             if config.HAVE_SLYCOT:
+                from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
                 solver = SlycotLyapunovSolverLRCF()
             else:
+                from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
                 solver = ScipyLyapunovSolverLRCF()
 
         return solver.solve(equation)
@@ -100,8 +88,10 @@ class DefaultRiccatiSolver(RiccatiSolver):
 
     def _solve(self, equation):
         if config.HAVE_SLYCOT:
+            from pymor.bindings.slycot import SlycotRiccatiSolver
             solver = SlycotRiccatiSolver()
         else:
+            from pymor.bindings.scipy import ScipyRiccatiSolver
             solver = ScipyRiccatiSolver()
         return solver.solve(equation)
 
@@ -129,12 +119,15 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     def _solve(self, equation):
         backend = self._auto_backend(equation)
         if backend == 'lrradi':
+            from pymor.algorithms.lrradi import LrradiRiccatiSolverLRCF
             solver = LrradiRiccatiSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
             if config.HAVE_SLYCOT:
+                from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
                 solver = SlycotRiccatiSolverLRCF()
             else:
+                from pymor.bindings.scipy import ScipyRiccatiSolverLRCF
                 solver = ScipyRiccatiSolverLRCF()
 
         return solver.solve(equation)
@@ -151,8 +144,10 @@ class DefaultPositiveRiccatiSolver(PositiveRiccatiSolver):
 
     def _solve(self, equation):
         if config.HAVE_SLYCOT:
+            from pymor.bindings.slycot import SlycotPositiveRiccatiSolver
             solver = SlycotPositiveRiccatiSolver()
         else:
+            from pymor.bindings.scipy import ScipyPositiveRiccatiSolver
             solver = ScipyPositiveRiccatiSolver()
 
         return solver.solve(equation)
@@ -171,8 +166,10 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 
     def _solve(self, equation):
         if config.HAVE_SLYCOT:
+            from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
             solver = SlycotPositiveRiccatiSolverLRCF()
         else:
+            from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
             solver = ScipyPositiveRiccatiSolverLRCF()
 
         return solver.solve(equation)
@@ -184,18 +181,18 @@ class MatrixEquationSolvers(ImmutableObject):
     Parameters
     ----------
     lyapunov
-        A :class:`LyapunovSolver` or `None`, then :class:`DefaultLyapunovSolver` is used.
+        A |LyapunovSolver| or `None`, then :class:`DefaultLyapunovSolver` is used.
     lyapunov_lr
-        A :class:`LyapunovSolverLRCF` or `None`, then :class:`DefaultLyapunovSolverLRCF` is used.
+        A |LyapunovSolverLRCF| or `None`, then :class:`DefaultLyapunovSolverLRCF` is used.
     riccati
-        A :class:`RiccatiSolver` or `None`, then :class:`DefaultRiccatiSolver` is used.
+        A |RiccatiSolver| or `None`, then :class:`DefaultRiccatiSolver` is used.
     riccati_lrcf
-        A :class:`RiccatiSolverLRCF` or `None`, then :class:`DefaultRiccatiSolverLRCF` is used.
+        A |RiccatiSolverLRCF| or `None`, then :class:`DefaultRiccatiSolverLRCF` is used.
     positive_riccati
-        A :class:`PositiveRiccatiSolver` or `None`, then :class:`DefaultPositiveRiccatiSolver`
+        A |PositiveRiccatiSolver| or `None`, then :class:`DefaultPositiveRiccatiSolver`
         is used.
     positive_riccati_lrcf
-        A :class:`PositiveRiccatiSolverLRCF` or `None`, then
+        A |PositiveRiccatiSolverLRCF| or `None`, then
         :class:`DefaultPositiveRiccatiSolverLRCF` is used.
     """
 

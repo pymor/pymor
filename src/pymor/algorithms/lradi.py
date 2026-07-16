@@ -33,11 +33,11 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
     Parameters
     ----------
     lradi_tol
-        See :func:`solve_lyap_lrcf`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
     lradi_maxiter
-        See :func:`solve_lyap_lrcf`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
     lradi_shifts
-        See :func:`solve_lyap_lrcf`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_subspace_columns
@@ -71,6 +71,15 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
 
 
 class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
+    """Compute a low-rank Cholesky factor of a |LyapunovEquation| using ADI iteration.
+
+    Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
+
+    Parameters
+    ----------
+    options
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
+    """
 
     def __init__(self, options=None):
         self.options = options or lyap_lrcf_solver_options()['lradi']
@@ -79,11 +88,8 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
     def _solve(self, equation):
         return self._solve_impl(equation.A, equation.E, equation.B, equation.trans, equation.cont_time, self.options)
 
-
     def _solve_impl(self, A, E, B, trans=False, cont_time=True, options=None):
-        """Compute an approximate low-rank solution of a |LyapunovEquation|.
-
-        This function uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
+        """Solve the |LyapunovEquation|.
 
         Parameters
         ----------
