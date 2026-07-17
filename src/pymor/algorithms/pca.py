@@ -25,7 +25,8 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     coefficients of `A` w.r.t. the left singular vectors and singular
     values, are returned. To approximately reconstruct the original `A`,
     add the mean back, e.g.:
-        ``reconstructed = principal_components.lincomb(coeffs) + mean``
+
+        reconstructed = principal_components.lincomb(coeffs) + mean
 
     Parameters
     ----------
