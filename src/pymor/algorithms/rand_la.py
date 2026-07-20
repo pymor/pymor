@@ -381,15 +381,17 @@ class RandomizedSVD(BasicObject):
         return U, s, V
 
 
-@defaults('oversampling', 'power_iterations')
-def randomized_svd(A, n, *, range_product=None, source_product=None, power_iterations=0, oversampling=20):
+def randomized_svd(A, n=None, *, rtol=None, atol=None, l2_err=None, rrf_tol=None,
+                   range_product=None, source_product=None, power_iterations=None, oversampling=None,
+                   low_rank_svd_method=None, rrf_args=None):
     r"""Randomized SVD of an |Operator|.
 
     This is a just a wrapper for :class:`RandomizedSVD`.
     """
     svd_alg = RandomizedSVD(A, range_product=range_product, source_product=source_product,
-                            power_iterations=power_iterations)
-    return svd_alg.compute_svd(n, oversampling=oversampling)
+                            power_iterations=power_iterations, low_rank_svd_method=low_rank_svd_method,
+                            rrf_args=rrf_args)
+    return svd_alg.compute_svd(n, rtol=rtol, atol=atol, l2_err=l2_err, oversampling=oversampling, rrf_tol=rrf_tol)
 
 
 @defaults('n', 'oversampling', 'power_iterations')
