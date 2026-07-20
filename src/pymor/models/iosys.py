@@ -1644,6 +1644,24 @@ class PHLTIModel(LTIModel):
         The |Operator| E or `None` (then E is assumed to be identity).
     Q
         The |Operator| Q or `None` (then Q is assumed to be identity).
+    sampling_time
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
+    T
+        The final time T.
+    initial_data
+        The initial data `x_0`. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for given |parameter values|. If `None`, it is
+        assumed to be zero.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     shifted_system_solver
@@ -1682,7 +1700,8 @@ class PHLTIModel(LTIModel):
     cache_region = 'memory'
 
     def __init__(self, J, R, G, P=None, S=None, N=None, E=None, Q=None,
-                 solver_options=None, shifted_system_solver=None,
+                 sampling_time=0, T=None, initial_data=None, time_stepper=None,
+                 num_values=None, solver_options=None, shifted_system_solver=None,
                  error_estimator=None, visualizer=None, name=None):
         assert J.linear
         assert J.source == J.range
@@ -1723,7 +1742,9 @@ class PHLTIModel(LTIModel):
                          B=G - P,
                          C=(G + P).H if isinstance(Q, IdentityOperator) else (G + P).H @ Q,
                          D=S - N, E=E,
-                         solver_options=solver_options, shifted_system_solver=shifted_system_solver,
+                         sampling_time=sampling_time, T=T, initial_data=initial_data, time_stepper=time_stepper,
+                         num_values=num_values, solver_options=solver_options,
+                         shifted_system_solver=shifted_system_solver,
                          error_estimator=error_estimator, visualizer=visualizer,
                          name=name)
         self.__auto_init(locals())
@@ -1780,7 +1801,9 @@ class PHLTIModel(LTIModel):
         S = 0.5 * (D + D.T)
         N = 0.5 * (D - D.T)
 
-        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, solver_options=model.solver_options,
+        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=model.sampling_time,
+                                        T=model.T, initial_data=model.initial_data, time_stepper=model.time_stepper,
+                                        num_values=model.num_values, solver_options=model.solver_options,
                                         error_estimator=model.error_estimator, visualizer=model.visualizer,
                                         name=model.name)
 
@@ -1802,6 +1825,7 @@ class PHLTIModel(LTIModel):
 
     @classmethod
     def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
+                      sampling_time=0, T=None, initial_data=None, time_stepper=None, num_values=None,
                       solver_options=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
                       name=None):
         """Create |PHLTIModel| from matrices.
@@ -1824,6 +1848,24 @@ class PHLTIModel(LTIModel):
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         Q
             The |NumPy array| or |SciPy spmatrix| Q or `None` (then Q is assumed to be identity).
+        sampling_time
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
+        T
+            The final time T.
+        initial_data
+            The initial data `x_0`. Either a |VectorArray| of length 1 or
+            (for the |Parameter|-dependent case) a vector-like |Operator|
+            (i.e. a linear |Operator| with `source.dim == 1`) which
+            applied to `NumpyVectorArray(np.array([1]))` will yield the
+            initial data for given |parameter values|. If `None`, it is
+            assumed to be zero.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         shifted_system_solver
@@ -1868,7 +1910,8 @@ class PHLTIModel(LTIModel):
         if Q is not None:
             Q = NumpyMatrixOperator(Q)
 
-        return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q,
+        return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=sampling_time, T=T,
+                   initial_data=initial_data, time_stepper=time_stepper, num_values=num_values,
                    solver_options=solver_options, shifted_system_solver=shifted_system_solver,
                    error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
