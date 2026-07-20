@@ -299,7 +299,7 @@ class RandomizedSVD(BasicObject):
         One-dimensional |NumPy array| of the approximated singular values.
     V
         |VectorArray| containing the approximated right singular vectors.
-        Available methods are defined in `pymor.algortihms.svd_va.SVD_VA_METHODS`.
+        Available methods are defined in `pymor.algorithms.svd_va.SVD_VA_METHODS`.
     rrf_args
         Dict of additional arguments that are passed to :class:`RandomizedRangeFinder`.
     """
@@ -323,13 +323,13 @@ class RandomizedSVD(BasicObject):
             The number of eigenvalues and eigenvectors which are to be computed.
         rtol
             Relative truncation error tolerance for the low-rank SVD.
-            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
         atol
             Absolute truncation error tolerance for the low-rank SVD.
-            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
         l2_err
             :math:`\ell^2` error bound for the low-rank SVD:
-            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
         power_iterations
             The number of power iterations to increase the relative weight of the larger singular
             values.
