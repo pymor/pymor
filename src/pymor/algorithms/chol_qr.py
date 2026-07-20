@@ -216,7 +216,8 @@ def _solve_chol_qr(params: _CholQRParameters):
 
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=params.dtype), spla.get_lapack_funcs('trtri', dtype=params.dtype)
 
-    for iter in range(1,params.maxiter+1):
+    iter = 1
+    while iter <= params.maxiter:
         with params.logger.block(f'Iteration {iter}'):
             X -= B.conj().T@B
             Rx = params.chol_kernel(params, X)
@@ -250,6 +251,8 @@ def _solve_chol_qr(params: _CholQRParameters):
                 elif iter == params.maxiter:
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
+
+            iter += 1
 
     if not params.return_R:
         return A
