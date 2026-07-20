@@ -311,6 +311,7 @@ class RandomizedSVD(BasicObject):
         self.__auto_init(locals())
         self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
                                                   power_iterations=power_iterations, **(rrf_args or {}))
+        self.B = A.source.empty()
 
     @defaults('rtol', 'atol', 'l2_err', 'oversampling')
     def compute_svd(self, n=None, rtol=4e-8, atol=0., l2_err=0., oversampling=20, rrf_tol=None):
@@ -369,7 +370,10 @@ class RandomizedSVD(BasicObject):
             Q = self.range_finder.find_range(basis_size=(n+oversampling if n is not None else None), tol=rrf_tol)
 
         with self.logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
-            B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
+            if len(self.B) < len(Q):
+                self.B.append(source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q[len(self.B):]))),
+                              remove_from_other=True)
+            B = self.B[:len(Q)]
             svd = SVD_VA_METHODS[self.low_rank_svd_method]
             V, s, Uh_b = svd(B, product=source_product, modes=n, rtol=rtol, atol=atol, l2_err=l2_err)
 
