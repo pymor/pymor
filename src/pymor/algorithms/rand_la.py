@@ -252,6 +252,57 @@ class RandomizedRangeFinder(BasicObject):
 
 
 class RandomizedSVD(BasicObject):
+    r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
+
+    Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
+    returns the randomized generalized singular value decomposition of `A` according :cite:`SHB21`:
+
+    .. math::
+
+        A = U \Sigma V^{-1},
+
+    where the inner product on the range :math:`\mathbb{R}^m` is given by
+
+    .. math::
+
+        (x, y)_R = x^TRy
+
+    and the inner product on the source :math:`\mathbb{R}^n` is given by
+
+    .. math::
+
+        (x, y)_S = x^TSy.
+
+    Note that :math:`U` is :math:`R`-orthogonal, i.e. :math:`U^TRU=I`
+    and :math:`V` is :math:`S`-orthogonal, i.e. :math:`V^TSV=I`.
+    In particular, `V^{-1}=V^TS`.
+
+    Parameters
+    ----------
+    A
+        The |Operator| for which the randomized SVD is to be computed.
+    source_product
+        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
+    range_product
+        Range product |Operator| :math:`R` w.r.t. which the randomized SVD is computed.
+    power_iterations
+        The number of power iterations to increase the relative weight of the larger singular
+        values.
+    low_rank_svd_method
+        SVD algorithm to use on the computed low-rank approximation of :math:`A`.
+
+    Returns
+    -------
+    U
+        |VectorArray| containing the approximated left singular vectors.
+    s
+        One-dimensional |NumPy array| of the approximated singular values.
+    V
+        |VectorArray| containing the approximated right singular vectors.
+        Available methods are defined in `pymor.algortihms.svd_va.SVD_VA_METHODS`.
+    rrf_args
+        Dict of additional arguments that are passed to :class:`RandomizedRangeFinder`.
+    """
 
     @defaults('low_rank_svd_method')
     def __init__(self, A, range_product=None, source_product=None, power_iterations=0,
@@ -263,6 +314,40 @@ class RandomizedSVD(BasicObject):
 
     @defaults('rtol', 'atol', 'l2_err', 'oversampling')
     def compute_svd(self, n=None, rtol=4e-8, atol=0., l2_err=0., oversampling=20, rrf_tol=None):
+        r"""Compute the SVD.
+
+        Parameters
+        ----------
+        n
+            The number of eigenvalues and eigenvectors which are to be computed.
+        rtol
+            Relative truncation error tolerance for the low-rank SVD.
+            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+        atol
+            Absolute truncation error tolerance for the low-rank SVD.
+            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+        l2_err
+            :math:`\ell^2` error bound for the low-rank SVD:
+            See :func:`~pymor.algortihms.svd_va.method_of_snapshots` for a detailed description.
+        power_iterations
+            The number of power iterations to increase the relative weight of the larger singular
+            values.
+        oversampling
+            The number of samples that are drawn in addition to the desired basis size in the
+            randomized range approximation process. Only used when `n` is specified.
+        rrf_tol
+            Error tolerance for computing a low-rank approximation of :math:`A` using
+            :class:`RandomizedRangeFinder`.
+
+        Returns
+        -------
+        U
+            |VectorArray| containing the approximated left singular vectors.
+        s
+            One-dimensional |NumPy array| of the approximated singular values.
+        V
+            |VectorArray| containing the approximated right singular vectors.
+        """
         A, range_product, source_product = self.A, self.range_product, self.source_product
         assert n is None or (0 <= n <= max(A.source.dim, A.range.dim))
         assert 0 <= oversampling
@@ -298,56 +383,9 @@ class RandomizedSVD(BasicObject):
 
 @defaults('oversampling', 'power_iterations')
 def randomized_svd(A, n, *, range_product=None, source_product=None, power_iterations=0, oversampling=20):
-    r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
+    r"""Randomized SVD of an |Operator|.
 
-    Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
-    returns the randomized generalized singular value decomposition of `A` according :cite:`SHB21`:
-
-    .. math::
-
-        A = U \Sigma V^{-1},
-
-    where the inner product on the range :math:`\mathbb{R}^m` is given by
-
-    .. math::
-
-        (x, y)_R = x^TRy
-
-    and the inner product on the source :math:`\mathbb{R}^n` is given by
-
-    .. math::
-
-        (x, y)_S = x^TSy.
-
-    Note that :math:`U` is :math:`R`-orthogonal, i.e. :math:`U^TRU=I`
-    and :math:`V` is :math:`S`-orthogonal, i.e. :math:`V^TSV=I`.
-    In particular, `V^{-1}=V^TS`.
-
-    Parameters
-    ----------
-    A
-        The |Operator| for which the randomized SVD is to be computed.
-    n
-        The number of eigenvalues and eigenvectors which are to be computed.
-    source_product
-        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
-    range_product
-        Range product |Operator| :math:`R` w.r.t. which the randomized SVD is computed.
-    power_iterations
-        The number of power iterations to increase the relative weight of the larger singular
-        values.
-    oversampling
-        The number of samples that are drawn in addition to the desired basis size in the
-        randomized range approximation process.
-
-    Returns
-    -------
-    U
-        |VectorArray| containing the approximated left singular vectors.
-    s
-        One-dimensional |NumPy array| of the approximated singular values.
-    V
-        |VectorArray| containing the approximated right singular vectors.
+    This is a just a wrapper for :class:`RandomizedSVD`.
     """
     svd_alg = RandomizedSVD(A, range_product=range_product, source_product=source_product,
                             power_iterations=power_iterations)
