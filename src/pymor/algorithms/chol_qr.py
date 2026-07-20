@@ -101,7 +101,8 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
 
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=X.dtype), spla.get_lapack_funcs('trtri', dtype=X.dtype)
 
-    for iter in range(1, maxiter+1):
+    iter = 1
+    while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
             X -= B.conj().T@B
             Rx = chol_kernel.apply(X)
@@ -135,6 +136,8 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
                 elif iter == maxiter:
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
+
+            iter += 1
 
     if not return_R:
         return A
