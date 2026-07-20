@@ -6,12 +6,12 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse.linalg as spsla
 
+from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
-_INNER_ITERS = 10
 
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     recompute_shift=False, check_finite=True, copy=True, product_norm=None):
@@ -80,147 +80,32 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     R
         The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
-    params = _CholQRParameters(**locals())
-    return _solve_chol_qr(params)
+    assert isinstance(A, VectorArray)
+    assert 0 <= offset <= len(A)
+    assert A.dim >= len(A)
+    assert 0 < maxiter
+    assert orth_tol is None or 0 < orth_tol
+    logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
-
-class _CholQRParameters:
-    r"""Helper class for managing the parameters and options."""
-
-    def __init__(self, A, product, return_R, maxiter, offset, orth_tol,
-                 recompute_shift, check_finite, copy, product_norm):
-        assert isinstance(A, VectorArray)
-        assert 0 <= offset <= len(A)
-        assert A.dim >= len(A)
-        assert 0 < maxiter
-        assert orth_tol is None or 0 < orth_tol
-
-        # set input parameters
-        self.A = A.copy() if copy else A
-        self.product = product
-        self.return_R = return_R
-        self.maxiter = maxiter
-        self.offset = offset
-        self.orth_tol = orth_tol
-        self.check_finite = check_finite
-        self.product_norm = product_norm
-
-        self.chol_kernel = _recomputed_shifted_chol_kernel if recompute_shift else _basic_shifted_chol_kernel
-        self.shift = None # used by `_basic_shifted_chol_kernel``
-        self.dtype = None
-        self.eps = None
-        self.logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
-
-
-def _compute_gramian_and_offset_matrix(params):
-    A = params.A
-    offset = params.offset
-    product = params.product
-
-    if isinstance(A, ListVectorArray):
-        # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
-        B = A[:offset].inner(A[offset:], product=product)
-        X = A[offset:].gramian(product)
-    else:
-        B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
-
-    if params.dtype is None:
-        params.dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
-        params.eps = np.finfo(params.dtype).eps
-
-    dtype = params.dtype
-    B = B.astype(dtype=dtype, copy=False)
-    X = X.astype(dtype=dtype, copy=False)
-
-    return B, X
-
-
-def _compute_shift(params: _CholQRParameters, X: np.ndarray):
-    m = params.A.dim
-    n = len(X)
-
-    shift = 11*params.eps
-    if params.product is None:
-        shift *= m*n+n*(n+1)
-    else:
-        if params.product_norm is None:
-            from pymor.algorithms.eigs import eigs
-            params.product_norm = np.sqrt(np.abs(eigs(params.product, k=1)[0][0]))
-        shift *= (2*m*np.sqrt(m*n)+n*(n+1))*params.product_norm
-
-    # eigsh outputs warnings, if n <= 2; it also throws an exception,
-    # if X is a zero matrix (or is close to) or contains subnormal numbers
-    use_eigh = n <= 2 or X.max() - X.min() < params.eps or np.any((X != 0) & (np.abs(X) < np.finfo(params.dtype).tiny))
-    if not use_eigh:
-        try:
-            ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
-        except spsla.ArpackNoConvergence as e:
-            params.logger.warning(f'ARPACK failed with: {e}')
-            params.logger.info('Proceeding with dense solver.')
-            use_eigh = True
-
-    if use_eigh:
-        ew = spla.eigh(X, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
-
-    shift = max(shift*ew, params.eps) # ensure that shift is non-zero
-    return shift
-
-
-def _basic_shifted_chol_kernel(params, X):
-    """Kernel computes `R` and shift according to Algorithm 4.1 in :cite:`FKNYY20`."""
-    global _INNER_ITERS
-    for _ in range(_INNER_ITERS):
-        try:
-            R = spla.cholesky(X, overwrite_a=False, check_finite=params.check_finite)
-            return R
-        except spla.LinAlgError:
-            params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-
-            if not params.shift:
-                params.shift = _compute_shift(params, X)
-            params.logger.info(f'Applying shift: {params.shift}')
-            X[np.diag_indices_from(X)] += params.shift
-    raise AccuracyError('Failed to compute a Cholesky factorization of X.')
-
-
-def _recomputed_shifted_chol_kernel(params, X):
-    """Kernel computes `R` and shift according to :cite:`BPS26`."""
-    global _INNER_ITERS
-    shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
-    for i in range(_INNER_ITERS):
-        try:
-            R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=params.check_finite)
-            return R
-        except spla.LinAlgError:
-            params.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-
-            # for really ill-conditioned matrices increasing the shift exponentially,
-            # by multiplying it by 10 in each iteration
-            shift = _compute_shift(params, X) if i == 0 else shift*10
-            params.logger.info(f'Applying shift: {shift}')
-    raise AccuracyError('Failed to compute a Cholesky factorization of X.')
-
-
-def _solve_chol_qr(params: _CholQRParameters):
-    # unpack often used arguments
-    A = params.A
-    offset = params.offset
+    chol_kernel = (RecomputedShiftedCholQRKernel if recompute_shift else BasicShiftedCholQRKernel)(
+        A.dim, product=product, product_norm=product_norm, check_finite=check_finite
+    )
 
     if offset == len(A):
-        return (A, np.eye(len(A))) if params.return_R else A
+        return (A, np.eye(len(A))) if return_R else A
 
-    if params.maxiter == 1:
-        params.logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
+    if maxiter == 1:
+        logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
 
-    B, X = _compute_gramian_and_offset_matrix(params)
+    B, X = _compute_gramian_and_offset_matrix(A, offset, product)
 
-    trmm, trtri = spla.get_blas_funcs('trmm', dtype=params.dtype), spla.get_lapack_funcs('trtri', dtype=params.dtype)
+    trmm, trtri = spla.get_blas_funcs('trmm', dtype=X.dtype), spla.get_lapack_funcs('trtri', dtype=X.dtype)
 
     iter = 1
-    while iter <= params.maxiter:
-        with params.logger.block(f'Iteration {iter}'):
+    while iter <= maxiter:
+        with logger.block(f'Iteration {iter}'):
             X -= B.conj().T@B
-            Rx = params.chol_kernel(params, X)
+            Rx = chol_kernel.apply(X)
 
             # orthogonalize
             Rinv = trtri(Rx)[0]
@@ -237,29 +122,126 @@ def _solve_chol_qr(params: _CholQRParameters):
                 Ri = trmm(1, Rx, Ri, overwrite_b=True)
 
             # computation not needed in the last iteration
-            if iter < params.maxiter:
-                B, X = _compute_gramian_and_offset_matrix(params)
-            elif params.orth_tol is not None:
-                X = A[offset:].gramian(product=params.product)
+            if iter < maxiter:
+                B, X = _compute_gramian_and_offset_matrix(A, offset, product)
+            elif orth_tol is not None:
+                X = A[offset:].gramian(product=product)
 
             # check orthonormality (for an iterative algorithm)
-            if params.orth_tol is not None:
-                res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=params.check_finite)
-                params.logger.info(f'Residual = {res}')
-                if res <= params.orth_tol*np.sqrt(len(A)):
+            if orth_tol is not None:
+                res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=check_finite)
+                logger.info(f'Residual = {res}')
+                if res <= orth_tol*np.sqrt(len(A)):
                     break
-                elif iter == params.maxiter:
+                elif iter == maxiter:
                     raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter or enabling recompute_shift.')
 
             iter += 1
 
-    if not params.return_R:
+    if not return_R:
         return A
 
     # construct R from blocks
-    R = np.eye(len(A), dtype=params.dtype)
+    R = np.eye(len(A), dtype=X.dtype)
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
     return (A, R)
+
+
+def _compute_gramian_and_offset_matrix(A, offset, product):
+    if isinstance(A, ListVectorArray):
+        # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
+        B = A[:offset].inner(A[offset:], product=product)
+        X = A[offset:].gramian(product)
+    else:
+        B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
+
+    dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
+    B = B.astype(dtype=dtype, copy=False)
+    X = X.astype(dtype=dtype, copy=False)
+
+    return B, X
+
+
+class ShiftedCholQRKernel(BasicObject):
+
+    def __init__(self, dim, product=None, product_norm=None, check_finite=True):
+        self.__auto_init(locals())
+
+    @abstractmethod
+    def apply(self, X): ...
+
+    def _compute_shift(self, X):
+        m = self.dim
+        n = len(X)
+        dtype = X.dtype
+        eps = np.finfo(dtype).eps
+
+        shift = 11*eps
+        if self.product is None:
+            shift *= m*n+n*(n+1)
+        else:
+            if self.product_norm is None:
+                from pymor.algorithms.eigs import eigs
+                self.product_norm = np.sqrt(np.abs(eigs(self.product, k=1)[0][0]))
+            shift *= (2*m*np.sqrt(m*n)+n*(n+1))*self.product_norm
+
+        # eigsh outputs warnings, if n <= 2; it also throws an exception,
+        # if X is a zero matrix (or is close to) or contains subnormal numbers
+        use_eigh = n <= 2 or X.max() - X.min() < eps or np.any((X != 0) & (np.abs(X) < np.finfo(dtype).tiny))
+        if not use_eigh:
+            try:
+                ew = spsla.eigsh(X, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
+            except spsla.ArpackNoConvergence as e:
+                self.logger.warning(f'ARPACK failed with: {e}')
+                self.logger.info('Proceeding with dense solver.')
+                use_eigh = True
+
+        if use_eigh:
+            ew = spla.eigh(X, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+
+        shift = max(shift*ew, eps) # ensure that shift is non-zero
+        return shift
+
+
+class BasicShiftedCholQRKernel(ShiftedCholQRKernel):
+    """Kernel computes `R` and shift according to Algorithm 4.1 in :cite:`FKNYY20`."""
+
+    INNER_ITERS = 10
+
+    def apply(self, X):
+        for _ in range(self.INNER_ITERS):
+            try:
+                R = spla.cholesky(X, overwrite_a=False, check_finite=self.check_finite)
+                return R
+            except spla.LinAlgError:
+                self.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+
+                if not self.shift:
+                    self.shift = self._compute_shift(X)
+                self.logger.info(f'Applying shift: {self.shift}')
+                X[np.diag_indices_from(X)] += self.shift
+        raise AccuracyError('Failed to compute a Cholesky factorization of X.')
+
+
+class RecomputedShiftedCholQRKernel(ShiftedCholQRKernel):
+    """Kernel computes `R` and shift according to :cite:`BPS26`."""
+
+    INNER_ITERS = 10
+
+    def apply(self, X):
+        shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
+        for i in range(self.INNER_ITERS):
+            try:
+                R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=self.check_finite)
+                return R
+            except spla.LinAlgError:
+                self.logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+
+                # for really ill-conditioned matrices increasing the shift exponentially,
+                # by multiplying it by 10 in each iteration
+                shift = self._compute_shift(X) if i == 0 else shift*10
+                self.logger.info(f'Applying shift: {shift}')
+        raise AccuracyError('Failed to compute a Cholesky factorization of X.')
