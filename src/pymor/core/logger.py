@@ -17,6 +17,9 @@ from contextlib import contextmanager
 from functools import lru_cache
 from types import MethodType
 
+import rich
+from rich.text import Text
+
 from pymor.core.defaults import defaults
 from pymor.tools import mpi
 
@@ -172,9 +175,16 @@ class ColoredFormatter(logging.Formatter):
         return f'{timestamp} {indent}{levelname}{path}: {msg}'
 
 
+class RichAwareHandler(logging.Handler):
+
+    def emit(self, record):
+        msg = self.format(record)
+        rich.print(Text.from_ansi(msg))
+
+
 @defaults('filename')
 def default_handler(filename=None):
-    streamhandler = logging.StreamHandler()
+    streamhandler = RichAwareHandler() if int(os.environ.get('PYMOR_PROGRESS', 0)) == 1 else logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
     handlers = [streamhandler]
