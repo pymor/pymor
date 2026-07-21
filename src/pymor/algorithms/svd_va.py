@@ -178,8 +178,8 @@ def scipy_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     and the inner product on R^(`len(A)`) is the Euclidean inner
     product.
 
-    This functions uses :func:`scipy_linalg.svd` by converting the input
-    |VectorArray| `A` to a |NumPy arry| by calling
+    This functions uses :func:`scipy.linalg.svd` by converting the input
+    |VectorArray| `A` to a |NumPy array| by calling
     :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
