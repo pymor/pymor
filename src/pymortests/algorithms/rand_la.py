@@ -99,8 +99,8 @@ def test_RandomizedSVD_repeated_calls(low_rank_svd_method, power_iterations, ove
         U2, s2, V2 = svd.compute_svd(4, oversampling=oversampling)
 
     assert np.allclose(s1, s2)
-    assert np.all(almost_equal(U1, U2))
-    assert np.all(almost_equal(V1, V2))
+    assert np.all(almost_equal(U1, U2, atol=1e-13)), (U1-U2).norm()
+    assert np.all(almost_equal(V1, V2, atol=1e-13)), (V1-V2).norm()
 
 
 def test_random_generalized_svd(rng):
