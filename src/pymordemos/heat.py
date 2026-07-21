@@ -174,12 +174,12 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     rom = reductor.reduce(r, **reduce_kwargs)
     err = fom - rom
     if isinstance(err, LTIModel):
-        matrix_solvers = MatrixEquationSolvers(
+        matrix_equation_solvers = MatrixEquationSolvers(
             lyapunov_lrcf=LradiLyapunovSolverLRCF(
                 options=lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']
             )
         )
-        err = err.with_(matrix_solvers=matrix_solvers)
+        err = err.with_(matrix_equation_solvers=matrix_equation_solvers)
 
     # Errors
     from pymor.models.transfer_function import TransferFunction
@@ -318,13 +318,14 @@ def main(
     fom.visualize(fom.solve())
 
     # LTI system
-    matrix_solvers = MatrixEquationSolvers(
+    matrix_equation_solvers = MatrixEquationSolvers(
         lyapunov_lrcf=LradiLyapunovSolverLRCF(
             options=lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']
         )
     )
 
-    lti = fom.to_lti().with_(matrix_solvers=matrix_solvers, T=1, time_stepper=ImplicitEulerTimeStepper(100))
+    ts = ImplicitEulerTimeStepper(100)
+    lti = fom.to_lti().with_(matrix_equation_solvers=matrix_equation_solvers, T=1, time_stepper=ts)
 
     # System properties
     w = (1e-1, 1e3)

@@ -10,49 +10,8 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.solvers.matrix.interface import RiccatiSolverLRCF
-from pymor.solvers.matrix.utils import _parse_options
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
-
-
-@defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',
-          'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
-def ricc_lrcf_solver_options(lrradi_tol=1e-10,
-                             lrradi_maxiter=500,
-                             lrradi_shifts='hamiltonian_shifts',
-                             shifted_system_solver=None,
-                             hamiltonian_shifts_init_maxiter=20,
-                             hamiltonian_shifts_subspace_columns=6):
-    """Returns available Riccati equation solvers with default solver options.
-
-    Parameters
-    ----------
-    lrradi_tol
-        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
-    lrradi_maxiter
-        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
-    lrradi_shifts
-        See :meth:`~LrradiRiccatiSolverLRCF._solve_impl`.
-    shifted_system_solver
-        The |Solver| for the shifted systems.
-    hamiltonian_shifts_init_maxiter
-        See :func:`hamiltonian_shifts_init`.
-    hamiltonian_shifts_subspace_columns
-        See :func:`hamiltonian_shifts`.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'lrradi': {'type': 'lrradi',
-                       'tol': lrradi_tol,
-                       'maxiter': lrradi_maxiter,
-                       'shifts': lrradi_shifts,
-                       'shifted_system_solver': shifted_system_solver,
-                       'shift_options':
-                       {'hamiltonian_shifts': {'type': 'hamiltonian_shifts',
-                                               'init_maxiter': hamiltonian_shifts_init_maxiter,
-                                               'subspace_columns': hamiltonian_shifts_subspace_columns}}}}
 
 
 class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
@@ -62,50 +21,46 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
 
     Parameters
     ----------
-    options
-        The solver options to use (see :func:`ricc_lrcf_solver_options`).
+    lrradi_tol
+        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+    lrradi_maxiter
+        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+    lrradi_shifts
+        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
+    hamiltonian_shifts_init_maxiter
+        See :func:`hamiltonian_shifts_init`.
+    hamiltonian_shifts_subspace_columns
+        See :func:`hamiltonian_shifts`.
     """
 
-    def __init__(self, options=None):
-        self.options = options or ricc_lrcf_solver_options()['lrradi']
+    @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',
+              'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
+    def __init__(self, lrradi_tol=1e-10, lrradi_maxiter=500, lrradi_shifts='hamiltonian_shifts',
+                 shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
+                 hamiltonian_shifts_subspace_columns=6):
+
+        options = {'tol': lrradi_tol,
+                   'maxiter': lrradi_maxiter,
+                   'shifts': lrradi_shifts,
+                   'shifted_system_solver': shifted_system_solver,
+                   'shift_options':
+                   {'hamiltonian_shifts': {'type': 'hamiltonian_shifts',
+                                           'init_maxiter': hamiltonian_shifts_init_maxiter,
+                                           'subspace_columns': hamiltonian_shifts_subspace_columns}}}
+
+        self.options = options
+        self.__auto_init(locals())
         super().__init__()
 
     def _solve(self, equation):
-        return self._solve_impl(equation.A, equation.E, equation.B, equation.C,
-                                equation.R, equation.S, equation.trans, self.options)
+        A, E, B, C, R, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S
+        trans = equation.trans
 
-    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False, options=None):
-        """Solve the |RiccatiEquation|.
-
-        Parameters
-        ----------
-        A
-            The |Operator| A.
-        E
-            The |Operator| E or `None`.
-        B
-            The operator B as a |VectorArray| from `A.source`.
-        C
-            The operator C as a |VectorArray| from `A.source`.
-        R
-            The matrix R as a 2D |NumPy array| or `None`.
-        S
-            The operator S as a |VectorArray| from `A.source` or `None`.
-        trans
-            Whether the first |Operator| in the Riccati equation is
-            transposed.
-        options
-            The solver options to use (see :func:`ricc_lrcf_solver_options`).
-
-        Returns
-        -------
-        Z
-            Low-rank Cholesky factor of the Riccati equation solution,
-            |VectorArray| from `A.source`.
-        """
         if S is not None:
             raise NotImplementedError
-        options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
+        options = self.options
         logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
         shift_options = options['shift_options'][options['shifts']]

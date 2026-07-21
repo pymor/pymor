@@ -366,30 +366,9 @@ class ScipyLyapunovSolver(LyapunovSolver):
 
     def _solve(self, equation):
         A, E, B = equation._dense_args()
-        return self._solve_impl(A, E, B, trans=equation.trans, cont_time=equation.cont_time)
+        trans = equation.trans
+        cont_time = equation.cont_time
 
-
-    def _solve_impl(self, A, E, B, trans=False, cont_time=True):
-        """Solves the materialized |LyapunovEquation|.
-
-        Parameters
-        ----------
-        A
-            The matrix A as a 2D |NumPy array|.
-        E
-            The matrix E as a 2D |NumPy array| or `None`.
-        B
-            The matrix B as a 2D |NumPy array|.
-        trans
-            Whether the first operator in the Lyapunov equation is transposed.
-        cont_time
-            Whether the continuous- or discrete-time Lyapunov equation is solved.
-
-        Returns
-        -------
-        X
-            Lyapunov equation solution as a |NumPy array|.
-        """
         if E is not None:
             A = solve(E, A) if not trans else solve(E.T, A.T).T
             B = solve(E, B) if not trans else solve(E.T, B.T).T
@@ -413,7 +392,7 @@ class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyLyapunovSolver().solve(equation)
+        X = ScipyLyapunovSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -427,33 +406,8 @@ class ScipyRiccatiSolver(RiccatiSolver):
 
     def _solve(self, equation):
         A, E, B, C, R, S = equation._dense_args()
-        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
+        trans = equation.trans
 
-    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        """Solves the materialized |RiccatiEquation|.
-
-        Parameters
-        ----------
-        A
-            The matrix A as a 2D |NumPy array|.
-        E
-            The matrix E as a 2D |NumPy array| or `None`.
-        B
-            The matrix B as a 2D |NumPy array|.
-        C
-            The matrix C as a 2D |NumPy array|.
-        R
-            The matrix R as a 2D |NumPy array| or `None`.
-        S
-            The matrix S as a 2D |NumPy array| or `None`.
-        trans
-            Whether the first matrix in the |RiccatiEquation| is transposed.
-
-        Returns
-        -------
-        X
-            |RiccatiEquation| solution as a |NumPy array|.
-        """
         if R is None:
             R = np.eye(C.shape[0] if not trans else B.shape[1])
         if not trans:
@@ -476,7 +430,7 @@ class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyRiccatiSolver().solve(equation)
+        X = ScipyRiccatiSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -491,37 +445,12 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation._dense_args()
-        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
-
-    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        """Solve the materialized positive Riccati equation.
-
-        Parameters
-        ----------
-        A
-            The matrix A as a 2D |NumPy array|.
-        E
-            The matrix E as a 2D |NumPy array| or `None`.
-        B
-            The matrix B as a 2D |NumPy array|.
-        C
-            The matrix C as a 2D |NumPy array|.
-        R
-            The matrix R as a 2D |NumPy array| or `None`.
-        S
-            The matrix S as a 2D |NumPy array| or `None`.
-        trans
-            Whether the first matrix in the |PositiveRiccatiEquation| is transposed.
-
-        Returns
-        -------
-        X
-            |PositiveRiccatiEquation| solution as a |NumPy array|.
-        """
+        R = equation.R
         if R is None:
-            R = np.eye(C.shape[0] if not trans else B.shape[1])
-        return ScipyRiccatiSolver()._solve_impl(A, E, B, C, -R, S, trans=trans)
+            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
+
+        temp_equation = equation.with_(R=-R if R is not None else None)
+        return ScipyRiccatiSolver()._solve(temp_equation)
 
 
 class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
@@ -534,5 +463,5 @@ class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyPositiveRiccatiSolver().solve(equation)
+        X = ScipyPositiveRiccatiSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))

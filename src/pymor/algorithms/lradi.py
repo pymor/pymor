@@ -11,33 +11,23 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.solvers.matrix.interface import LyapunovSolverLRCF
-from pymor.solvers.matrix.utils import _parse_options
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'shifted_system_solver',
-          'projection_shifts_init_maxiter', 'projection_shifts_subspace_columns',
-          'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
-def lyap_lrcf_solver_options(lradi_tol=1e-10,
-                             lradi_maxiter=500,
-                             lradi_shifts='projection_shifts',
-                             shifted_system_solver=None,
-                             projection_shifts_init_maxiter=20,
-                             projection_shifts_subspace_columns=6,
-                             wachspress_large_ritz_num=50,
-                             wachspress_small_ritz_num=25,
-                             wachspress_tol=1e-10):
-    """Return available Lyapunov solvers with default options.
+class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
+    """Compute a low-rank Cholesky factor of a |LyapunovEquation| using ADI iteration.
+
+    Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
     Parameters
     ----------
     lradi_tol
-        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve`.
     lradi_maxiter
-        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve`.
     lradi_shifts
-        See :meth:`~LradiLyapunovSolverLRCF._solve_impl`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve`.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_subspace_columns
@@ -50,72 +40,41 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`wachspress_shifts_init`.
     shifted_system_solver
         The |Solver| for the shifted systems.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'lradi': {'type': 'lradi',
-                      'tol': lradi_tol,
-                      'maxiter': lradi_maxiter,
-                      'shifts': lradi_shifts,
-                      'shifted_system_solver': shifted_system_solver,
-                      'shift_options':
-                      {'projection_shifts': {'type': 'projection_shifts',
-                                             'init_maxiter': projection_shifts_init_maxiter,
-                                             'subspace_columns': projection_shifts_subspace_columns},
-                       'wachspress_shifts': {'type': 'wachspress_shifts',
-                                             'large_ritz_num': wachspress_large_ritz_num,
-                                             'small_ritz_num': wachspress_small_ritz_num,
-                                             'tol': wachspress_tol}}}}
-
-
-class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
-    """Compute a low-rank Cholesky factor of a |LyapunovEquation| using ADI iteration.
-
-    Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
-
-    Parameters
-    ----------
-    options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
     """
 
-    def __init__(self, options=None):
-        self.options = options or lyap_lrcf_solver_options()['lradi']
+    @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'shifted_system_solver',
+          'projection_shifts_init_maxiter', 'projection_shifts_subspace_columns',
+          'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
+    def __init__(self, lradi_tol=1e-10, lradi_maxiter=500, lradi_shifts='projection_shifts',
+                 shifted_system_solver=None, projection_shifts_init_maxiter=20, projection_shifts_subspace_columns=6,
+                 wachspress_large_ritz_num=50, wachspress_small_ritz_num=25, wachspress_tol=1e-10):
+
+        options = {'tol': lradi_tol,
+                   'maxiter': lradi_maxiter,
+                   'shifts': lradi_shifts,
+                   'shifted_system_solver': shifted_system_solver,
+                   'shift_options':
+                   {'projection_shifts': {'type': 'projection_shifts',
+                                          'init_maxiter': projection_shifts_init_maxiter,
+                                          'subspace_columns': projection_shifts_subspace_columns},
+                   'wachspress_shifts': {'type': 'wachspress_shifts',
+                                         'large_ritz_num': wachspress_large_ritz_num,
+                                         'small_ritz_num': wachspress_small_ritz_num,
+                                         'tol': wachspress_tol}}}
+
+        self.options = options
+        self.__auto_init(locals())
         super().__init__()
 
     def _solve(self, equation):
-        return self._solve_impl(equation.A, equation.E, equation.B, equation.trans, equation.cont_time, self.options)
+        A, E, B, = equation.A , equation.E, equation.B
+        trans = equation.trans
+        cont_time = equation.cont_time
 
-    def _solve_impl(self, A, E, B, trans=False, cont_time=True, options=None):
-        """Solve the |LyapunovEquation|.
-
-        Parameters
-        ----------
-        A
-            The non-parametric |Operator| A.
-        E
-            The non-parametric |Operator| E or `None`.
-        B
-            The operator B as a |VectorArray| from `A.source`.
-        trans
-            Whether the first |Operator| in the Lyapunov equation is transposed.
-        cont_time
-            Whether the continuous- or discrete-time Lyapunov equation is solved.
-            Only the continuous-time case is implemented.
-        options
-            The solver options to use (see :func:`lyap_lrcf_solver_options`).
-
-        Returns
-        -------
-        Z
-            Low-rank Cholesky factor of the Lyapunov equation solution,
-            |VectorArray| from `A.source`.
-        """
         if not cont_time:
             raise NotImplementedError
-        options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
+
+        options = self.options
         logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
         shift_options = options['shift_options'][options['shifts']]

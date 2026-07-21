@@ -109,8 +109,9 @@ class LTIModel(Model):
         attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
         `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
-    matrix_solvers
-        #TODO
+    matrix_equation_solvers
+        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+        default matrix equation solvers are used.
     shifted_system_solver
         The |Solver| for the shifted systems arising in transfer function evaluation.
     ast_pole_data
@@ -160,7 +161,7 @@ class LTIModel(Model):
 
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
                  T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
-                 matrix_solvers=None, shifted_system_solver=None, ast_pole_data=None,
+                 matrix_equation_solvers=None, shifted_system_solver=None, ast_pole_data=None,
                  error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
@@ -215,8 +216,8 @@ class LTIModel(Model):
         else:
             presets = {}
 
-        matrix_solvers = matrix_solvers or MatrixEquationSolvers()
-        assert isinstance(matrix_solvers, MatrixEquationSolvers)
+        matrix_equation_solvers = matrix_equation_solvers or MatrixEquationSolvers()
+        assert isinstance(matrix_equation_solvers, MatrixEquationSolvers)
 
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -262,7 +263,7 @@ class LTIModel(Model):
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
                       T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
-                      matrix_solvers=None, shifted_system_solver=None, error_estimator=None,
+                      matrix_equation_solvers=None, shifted_system_solver=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
 
@@ -295,8 +296,9 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -335,7 +337,7 @@ class LTIModel(Model):
 
         return cls(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
-                   matrix_solvers=matrix_solvers, shifted_system_solver=shifted_system_solver,
+                   matrix_equation_solvers=matrix_equation_solvers, shifted_system_solver=shifted_system_solver,
                    error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_matrices(self, format=None, mu=None):
@@ -402,7 +404,8 @@ class LTIModel(Model):
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
                    T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
-                   matrix_solvers=None, shifted_system_solver=None, error_estimator=None, visualizer=None, name=None):
+                   matrix_equation_solvers=None, shifted_system_solver=None, error_estimator=None,
+                   visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -434,8 +437,9 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -466,9 +470,9 @@ class LTIModel(Model):
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
                                  time_stepper=time_stepper, num_values=num_values, presets=presets,
-                                 matrix_solvers=matrix_solvers, shifted_system_solver=shifted_system_solver,
-                                 error_estimator=error_estimator, visualizer=visualizer,
-                                 name=name)
+                                 matrix_equation_solvers=matrix_equation_solvers,
+                                 shifted_system_solver=shifted_system_solver, error_estimator=error_estimator,
+                                 visualizer=visualizer, name=name)
 
     def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None, mu=None):
         """Write operators to files as matrices.
@@ -504,7 +508,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                      matrix_solvers=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
+                      matrix_equation_solvers=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
                       name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
@@ -530,8 +534,9 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -573,9 +578,9 @@ class LTIModel(Model):
 
         return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
                                  num_values=num_values, presets=presets,
-                                 matrix_solvers=matrix_solvers, shifted_system_solver=shifted_system_solver,
-                                 error_estimator=error_estimator, visualizer=visualizer,
-                                 name=name)
+                                 matrix_equation_solvers=matrix_equation_solvers,
+                                 shifted_system_solver=shifted_system_solver, error_estimator=error_estimator,
+                                 visualizer=visualizer, name=name)
 
     def to_mat_file(self, file_name, mu=None):
         """Save operators as matrices to .mat file.
@@ -598,8 +603,8 @@ class LTIModel(Model):
 
     @classmethod
     def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                         matrix_solvers=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
-                         name=None):
+                         matrix_equation_solvers=None, shifted_system_solver=None, error_estimator=None,
+                         visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -620,8 +625,9 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -653,9 +659,9 @@ class LTIModel(Model):
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
                                  num_values=num_values, presets=presets,
-                                 matrix_solvers=matrix_solvers, shifted_system_solver=shifted_system_solver,
-                                 error_estimator=error_estimator, visualizer=visualizer,
-                                 name=name)
+                                 matrix_equation_solvers=matrix_equation_solvers,
+                                 shifted_system_solver=shifted_system_solver, error_estimator=error_estimator,
+                                 visualizer=visualizer, name=name)
 
     def to_abcde_files(self, files_basename, mu=None):
         """Save operators as matrices to .[ABCDE] files in Matrix Market format.
@@ -765,7 +771,7 @@ class LTIModel(Model):
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
                         T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
-                        matrix_solvers=self.matrix_solvers)
+                        matrix_equation_solvers=self.matrix_equation_solvers)
 
     def __sub__(self, other):
         """Subtract an |LTIModel|."""
@@ -807,7 +813,7 @@ class LTIModel(Model):
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
                         T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
-                        matrix_solvers=self.matrix_solvers)
+                        matrix_equation_solvers=self.matrix_equation_solvers)
 
     def impulse_resp(self, mu=None, return_solution=False):
         """Compute impulse response from all inputs.
@@ -965,7 +971,7 @@ class LTIModel(Model):
         A = self.A.assemble(mu)
         B = self.B.as_range_array(mu=mu)
         C = self.C.as_source_array(mu=mu)
-        D = self.D #TODO: cant D also be parametric? why is it not assembled here
+        D = self.D
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         Z = A.source.zeros()
 
@@ -973,60 +979,52 @@ class LTIModel(Model):
 
         cont_time = self.sampling_time == 0
 
-        if typ == 'c_lrcf':
-            return LyapunovEquation(A, E, B, trans=False, cont_time=cont_time).solve_lrcf(
-                solver=self.matrix_solvers.lyapunov_lrcf
-            )
-        elif typ == 'c_dense':
-            return LyapunovEquation(A, E, B, trans=False, cont_time=cont_time).solve(
-                solver=self.matrix_solvers.lyapunov
-            )
-        elif typ == 'o_lrcf':
-            return LyapunovEquation(A, E, C, trans=True, cont_time=cont_time).solve_lrcf(
-                solver=self.matrix_solvers.lyapunov_lrcf
-            )
-        elif typ == 'o_dense':
-            return LyapunovEquation(A, E, C, trans=True, cont_time=cont_time).solve(
-                solvers=self.matrix_solvers.lyapunov
-            )
+        if typ == 'c_lrcf' or typ=='c_dense':
+            solver = self.matrix_equation_solvers.lyapunov_lrcf if typ == 'c_lrcf' \
+                else self.matrix_equation_solvers.lyapunov
+            return solver.solve(LyapunovEquation(A, E, B, trans=False, cont_time=cont_time))
+        elif typ == 'o_lrcf' or typ=='o_dense':
+            solver = self.matrix_equation_solvers.lyapunov_lrcf if typ == 'o_lrcf' \
+                else self.matrix_equation_solvers.lyapunov
+            return solver.solve(LyapunovEquation(A, E, C, trans=True, cont_time=cont_time))
         elif typ == 'bs_c_lrcf':
             ast_spectrum = self.get_ast_spectrum(mu=mu)
             K = bernoulli_stabilize(A, E, B, ast_spectrum, trans=True)
             BK = LowRankOperator(B, np.eye(len(K)), K)
-            return LyapunovEquation(A - BK, E, B, trans=False).solve_lrcf(solver=self.matrix_solvers.lyapunov_lrcf)
+            return LyapunovEquation(A - BK, E, B, trans=False).solve_lrcf(
+                solver=self.matrix_equation_solvers.lyapunov_lrcf
+            )
         elif typ == 'bs_o_lrcf':
             K = bernoulli_stabilize(A, E, C, self.get_ast_spectrum(mu=mu), trans=False)
             KC = LowRankOperator(K, np.eye(len(K)), C)
-            return LyapunovEquation(A - KC, E, C, trans=True).solve_lrcf(solver=self.matrix_solvers.lyapunov_lrcf)
+            return LyapunovEquation(A - KC, E, C, trans=True).solve_lrcf(
+                solver=self.matrix_equation_solvers.lyapunov_lrcf
+            )
         elif typ == 'lqg_c_lrcf':
-            return RiccatiEquation(A, E, B, C, trans=False).solve_lrcf(solver=self.matrix_solvers.riccati_lrcf)
+            return RiccatiEquation(A, E, B, C, trans=False).solve_lrcf(
+                solver=self.matrix_equation_solvers.riccati_lrcf
+            )
         elif typ == 'lqg_o_lrcf':
-            return RiccatiEquation(A, E, B, C, trans=True).solve_lrcf(solver=self.matrix_solvers.riccati_lrcf)
-        elif typ == 'pr_c_lrcf':
-            return PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B, trans=False).solve_lrcf(
-                solver=self.matrix_solvers.positive_riccati_lrcf
+            return RiccatiEquation(A, E, B, C, trans=True).solve_lrcf(
+                solver=self.matrix_equation_solvers.riccati_lrcf
             )
-        elif typ == 'pr_c_dense':
-            return PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B.H, trans=False).solve(
-                solvers=self.matrix_solvers.positive_riccati
-            )
-        elif typ == 'pr_o_lrcf':
-            return PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True).solve_lrcf(
-                solver=self.matrix_solvers.positive_riccati_lrcf
-            )
-        elif typ == 'pr_o_dense':
-            return PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True).solve(
-                solver=self.matrix_solvers.positive_riccati
-            )
+        elif typ == 'pr_c_lrcf' or typ == 'pr_c_dense':
+            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_c_lrcf' \
+                else self.matrix_equation_solvers.positive_riccati
+            return solver.solve(PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B, trans=False))
+        elif typ == 'pr_o_lrcf' or typ == 'pr_o_dense':
+            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_c_lrcf' \
+                else self.matrix_equation_solvers.positive_riccati
+            return solver.solve(PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True))
         elif typ[0] == 'br_c_lrcf':
             R = typ[1] ** 2 * np.eye(self.dim_output) if typ[1] != 1 else None
             return PositiveRiccatiEquation(A, E, B, C, R=R, trans=False).solve_lrcf(
-                solver=self.matrix_solvers.positive_riccati_lrcf
+                solver=self.matrix_equation_solvers.positive_riccati_lrcf
             )
         elif typ[0] == 'br_o_lrcf':
             R = typ[1] ** 2 * np.eye(self.dim_input) if typ[1] != 1 else None
             return PositiveRiccatiEquation(A, E, B, C, R=R, trans=True).solve_lrcf(
-                solver=self.matrix_solvers.positive_riccati_lrcf
+                solver=self.matrix_equation_solvers.positive_riccati_lrcf
             )
 
     def gramian(self, typ, mu=None):
@@ -1076,7 +1074,6 @@ class LTIModel(Model):
                         'pr_c_lrcf', 'pr_o_lrcf', 'pr_c_dense', 'pr_o_dense')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
-        #TODO: i feel like pr should be excluded here as well?
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
                 and self.sampling_time > 0):
             raise NotImplementedError
@@ -1290,11 +1287,15 @@ class LTIModel(Model):
         cont_time = self.sampling_time == 0
         if self.dim_input <= self.dim_output:
             cf = LyapunovEquation(A - KC, E, BmKD.as_range_array(mu=mu),
-                                  trans=False, cont_time=cont_time).solve_lrcf(solver=self.matrix_solvers.lyapunov_lrcf)
+                                  trans=False, cont_time=cont_time).solve_lrcf(
+                                      solver=self.matrix_equation_solvers.lyapunov_lrcf
+                                    )
             return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
         else:
             of = LyapunovEquation(A - KC, E, C.as_source_array(mu=mu),
-                                  trans=True, cont_time=cont_time).solve_lrcf(solver=self.matrix_solvers.lyapunov_lrcf)
+                                  trans=True, cont_time=cont_time).solve_lrcf(
+                                      solver=self.matrix_equation_solvers.lyapunov_lrcf
+                                    )
             return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
 
 
@@ -2030,8 +2031,9 @@ class SecondOrderModel(Model):
     sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
-    matrix_solvers
-        The solver options to use to solve the Lyapunov equations.
+    matrix_equation_solvers
+        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+        default matrix equation solvers are used.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2073,7 +2075,7 @@ class SecondOrderModel(Model):
     cache_region = 'memory'
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
-                 matrix_solvers=None, error_estimator=None, visualizer=None, name=None):
+                 matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
 
         assert M.linear
         assert M.source == M.range
@@ -2101,7 +2103,7 @@ class SecondOrderModel(Model):
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
 
-        assert matrix_solvers is None or isinstance(matrix_solvers, MatrixEquationSolvers)
+        assert matrix_equation_solvers is None or isinstance(matrix_equation_solvers, MatrixEquationSolvers)
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -2134,7 +2136,7 @@ class SecondOrderModel(Model):
                                       if isinstance(self.M, IdentityOperator) else
                                       BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                                    sampling_time=self.sampling_time,
-                                   matrix_solvers=self.matrix_solvers,
+                                   matrix_equation_solvers=self.matrix_equation_solvers,
                                    error_estimator=self.error_estimator,
                                    visualizer=self.visualizer,
                                    name=self.name + '_first_order')
@@ -2160,7 +2162,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
-                      matrix_solvers=None, error_estimator=None, visualizer=None, name=None):
+                      matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -2182,8 +2184,9 @@ class SecondOrderModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         error_estimator
             An error estimator for the problem. This can be any object with an
             `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2220,7 +2223,8 @@ class SecondOrderModel(Model):
             D = NumpyMatrixOperator(D)
 
         return cls(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
-                   matrix_solvers=matrix_solvers, error_estimator=error_estimator, visualizer=visualizer, name=name)
+                   matrix_equation_solvers=matrix_equation_solvers, error_estimator=error_estimator,
+                   visualizer=visualizer, name=name)
 
     def to_matrices(self, mu=None):
         """Return operators as matrices.
@@ -2258,7 +2262,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, sampling_time=0,
-                   matrix_solvers=None, error_estimator=None, visualizer=None, name=None):
+                   matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -2280,8 +2284,9 @@ class SecondOrderModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
-        matrix_solvers
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         error_estimator
             An error estimator for the problem. This can be any object with an
             `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2309,7 +2314,8 @@ class SecondOrderModel(Model):
         Cv = load_matrix(Cv_file) if Cv_file is not None else None
         D = load_matrix(D_file) if D_file is not None else None
 
-        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time, matrix_solvers=matrix_solvers,
+        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
+                                 matrix_equation_solvers=matrix_equation_solvers,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, mu=None):
