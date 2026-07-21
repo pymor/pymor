@@ -2,13 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.core.base import ImmutableObject
-from pymor.solvers.matrix.utils import (
-    _check_lyapunov_args,
-    _check_lyapunov_dense_args,
-    _check_riccati_args,
-    _check_riccati_dense_args,
-)
+from pymor.operators.interface import Operator
 
 
 class LyapunovEquation(ImmutableObject):
@@ -59,7 +56,17 @@ class LyapunovEquation(ImmutableObject):
     """
 
     def __init__(self, A, E, B, trans=False, cont_time=True, name=None):
-        _check_lyapunov_args(A, E, B, trans)
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range
+            assert E.source == A.source
+        assert B in A.source
         self.__auto_init(locals())
 
     @property
@@ -84,7 +91,14 @@ class LyapunovEquation(ImmutableObject):
         return solver.solve(self)
 
     def _dense_args(self):
-        return _dense_lyapunov_args(self)
+        from pymor.algorithms.to_matrix import to_matrix
+        A = to_matrix(self.A, format='dense')
+        E = to_matrix(self.E, format='dense') if self.E is not None else None
+        B = self.B.to_numpy()
+
+        _check_lyapunov_dense_args(A, E, B.T if self.trans else B, self.trans)
+
+        return A, E, (B.T if self.trans else B)
 
 
 class RiccatiEquation(ImmutableObject):
@@ -130,7 +144,31 @@ class RiccatiEquation(ImmutableObject):
     """
 
     def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
-        _check_riccati_args(A, E, B, C, R, S, trans)
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range == A.source
+        assert B in A.source
+        assert C in A.source
+        if R is not None:
+            assert isinstance(R, np.ndarray)
+            assert R.ndim == 2
+            assert R.shape[0] == R.shape[1]
+            if not trans:
+                assert R.shape[0] == len(C)
+            else:
+                assert R.shape[0] == len(B)
+        if S is not None:
+            assert S in A.source
+            if not trans:
+                assert len(C) == len(S)
+            else:
+                assert len(B) == len(S)
         self.__auto_init(locals())
 
     @property
@@ -155,7 +193,18 @@ class RiccatiEquation(ImmutableObject):
         return solver.solve(self)
 
     def _dense_args(self):
-        return _dense_riccati_args(self)
+        from pymor.algorithms.to_matrix import to_matrix
+        A = to_matrix(self.A, format='dense')
+        E = to_matrix(self.E, format='dense') if self.E is not None else None
+        B = self.B.to_numpy()
+        C = self.C.to_numpy().T
+        S = self.S.to_numpy() if self.S is not None else None
+        if S is not None and not self.trans:
+            S = S.T
+
+        _check_riccati_dense_args(A, E, B, C, self.R, S, trans=self.trans)
+
+        return A, E, B, C, self.R, S
 
 
 class PositiveRiccatiEquation(ImmutableObject):
@@ -198,7 +247,31 @@ class PositiveRiccatiEquation(ImmutableObject):
     """
 
     def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
-        _check_riccati_args(A, E, B, C, R, S, trans)
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range == A.source
+        assert B in A.source
+        assert C in A.source
+        if R is not None:
+            assert isinstance(R, np.ndarray)
+            assert R.ndim == 2
+            assert R.shape[0] == R.shape[1]
+            if not trans:
+                assert R.shape[0] == len(C)
+            else:
+                assert R.shape[0] == len(B)
+        if S is not None:
+            assert S in A.source
+            if not trans:
+                assert len(C) == len(S)
+            else:
+                assert len(B) == len(S)
         self.__auto_init(locals())
 
     @property
@@ -223,32 +296,60 @@ class PositiveRiccatiEquation(ImmutableObject):
         return solver.solve(self)
 
     def _dense_args(self):
-        return _dense_riccati_args(self)
+        from pymor.algorithms.to_matrix import to_matrix
+        A = to_matrix(self.A, format='dense')
+        E = to_matrix(self.E, format='dense') if self.E is not None else None
+        B = self.B.to_numpy()
+        C = self.C.to_numpy().T
+        S = self.S.to_numpy() if self.S is not None else None
+        if S is not None and not self.trans:
+            S = S.T
+
+        _check_riccati_dense_args(A, E, B, C, self.R, S, trans=self.trans)
+
+        return A, E, B, C, self.R, S
 
 
-def _dense_lyapunov_args(equation):
-    """Materialize a |LyapunovEquation| for the dense backends."""
-    from pymor.algorithms.to_matrix import to_matrix
-    A = to_matrix(equation.A, format='dense')
-    E = to_matrix(equation.E, format='dense') if equation.E is not None else None
-    B = equation.B.to_numpy()
+def _check_lyapunov_dense_args(A, E, B, trans):
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+    if E is not None:
+        assert isinstance(E, np.ndarray)
+        assert E.ndim == 2
+        assert E.shape[0] == E.shape[1]
+        assert E.shape[0] == A.shape[0]
+    assert isinstance(B, np.ndarray)
+    assert B.ndim == 2
+    assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
 
-    _check_lyapunov_dense_args(A, E, B.T if equation.trans else B, equation.trans)
 
-    return A, E, (B.T if equation.trans else B)
-
-
-def _dense_riccati_args(equation):
-    """Materialize a |RiccatiEquation| / |PositiveRiccatiEquation| for the dense backends."""
-    from pymor.algorithms.to_matrix import to_matrix
-    A = to_matrix(equation.A, format='dense')
-    E = to_matrix(equation.E, format='dense') if equation.E is not None else None
-    B = equation.B.to_numpy()
-    C = equation.C.to_numpy().T
-    S = equation.S.to_numpy() if equation.S is not None else None
-    if S is not None and not equation.trans:
-        S = S.T
-
-    _check_riccati_dense_args(A, E, B, C, equation.R, S, trans=equation.trans)
-
-    return A, E, B, C, equation.R, S
+def _check_riccati_dense_args(A, E, B, C, R, S, trans):
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+    if E is not None:
+        assert isinstance(E, np.ndarray)
+        assert E.ndim == 2
+        assert E.shape[0] == E.shape[1]
+        assert E.shape[0] == A.shape[0]
+    assert isinstance(B, np.ndarray)
+    assert isinstance(C, np.ndarray)
+    assert B.shape[0] == A.shape[0]
+    assert C.shape[1] == A.shape[0]
+    if R is not None:
+        assert isinstance(R, np.ndarray)
+        assert R.ndim == 2
+        assert R.shape[0] == R.shape[1]
+        if not trans:
+            assert R.shape[0] == C.shape[0]
+        else:
+            assert R.shape[0] == B.shape[1]
+    if S is not None:
+        assert isinstance(S, np.ndarray)
+        if not trans:
+            assert S.shape[1] == A.shape[0]
+            assert S.shape[0] == C.shape[0]
+        else:
+            assert S.shape[0] == A.shape[0]
+            assert S.shape[1] == B.shape[1]

@@ -34,29 +34,9 @@ class SlycotLyapunovSolver(LyapunovSolver):
 
     def _solve(self, equation):
         A, E, B = equation._dense_args()
-        return self._solve_impl(A, E, B, trans=equation.trans, cont_time=equation.cont_time)
+        trans = equation.trans
+        cont_time = equation.cont_time
 
-    def _solve_impl(self, A, E, B, trans=False, cont_time=True):
-        r"""Solve the materialized Lyapunov equation.
-
-        Parameters
-        ----------
-        A
-            The matrix A as a 2D |NumPy array|.
-        E
-            The matrix E as a 2D |NumPy array| or `None`.
-        B
-            The matrix B as a 2D |NumPy array|.
-        trans
-            Whether the first matrix in the |LyapunovEquation| is transposed.
-        cont_time
-            Whether the continuous- or discrete-time |LyapunovEquation| is solved.
-
-        Returns
-        -------
-        X
-            |LyapunovEquation| solution as a |NumPy array|.
-        """
         n = A.shape[0]
         C = -B.dot(B.T) if not trans else -B.T.dot(B)
         trana = 'T' if not trans else 'N'
@@ -89,7 +69,7 @@ class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotLyapunovSolver().solve(equation)
+        X = SlycotLyapunovSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -106,33 +86,8 @@ class SlycotRiccatiSolver(RiccatiSolver):
 
     def _solve(self, equation):
         A, E, B, C, R, S = equation._dense_args()
-        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
+        trans = equation.trans
 
-    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        r"""Solve the materialized Riccati equation.
-
-        Parameters
-        ----------
-        A
-            The matrix A as a 2D |NumPy array|.
-        E
-            The matrix E as a 2D |NumPy array| or `None`.
-        B
-            The matrix B as a 2D |NumPy array|.
-        C
-            The matrix C as a 2D |NumPy array|.
-        R
-            The matrix R as a 2D |NumPy array| or `None`.
-        S
-            The matrix S as a 2D |NumPy array| or `None`.
-        trans
-            Whether the first matrix in the |RiccatiEquation| is transposed.
-
-        Returns
-        -------
-        X
-            |RiccatiEquation| solution as a |NumPy array|.
-        """
         dico = 'C'
         n = A.shape[0]
         if E is not None:
@@ -206,7 +161,7 @@ class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotRiccatiSolver().solve(equation)
+        X = SlycotRiccatiSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -222,22 +177,11 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation._dense_args()
-        return self._solve_impl(A, E, B, C, R, S, trans=equation.trans)
-
-    def _solve_impl(self, A, E, B, C, R=None, S=None, trans=False):
-        """Solve the materialized |PositiveRiccatiEquation|.
-
-        Parameters as in :meth:`SlycotRiccatiSolver._solve_impl`.
-
-        Returns
-        -------
-        X
-            |PositiveRiccatiEquation| solution as a |NumPy array|.
-        """
+        R = equation.R
         if R is None:
-            R = np.eye(C.shape[0] if not trans else B.shape[1])
-        return SlycotRiccatiSolver()._solve_impl(A, E, B, C, -R, S, trans=trans)
+            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
+        temp_equation = equation.with_(R=-R)
+        return SlycotRiccatiSolver()._solve(temp_equation)
 
 
 class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
@@ -250,7 +194,7 @@ class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotPositiveRiccatiSolver().solve(equation)
+        X = SlycotPositiveRiccatiSolver()._solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 

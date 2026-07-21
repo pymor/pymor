@@ -26,7 +26,7 @@ class DefaultLyapunovSolver(LyapunovSolver):
     """
 
     def _solve(self, equation):
-        if config.HAVE_SLYCOT:
+        if _dense_backend() == 'slycot':
             from pymor.bindings.slycot import SlycotLyapunovSolver
             solver = SlycotLyapunovSolver()
         else:
@@ -52,7 +52,8 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
     """
 
-    def _auto_backend(self, equation):
+    @staticmethod
+    def _auto_backend(equation):
         if not equation.cont_time:
             return _dense_backend()
         if equation.dim < mat_eqn_sparse_min_size():
@@ -68,7 +69,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
             solver = LradiLyapunovSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
-            if config.HAVE_SLYCOT:
+            if _dense_backend() == 'slycot':
                 from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
                 solver = SlycotLyapunovSolverLRCF()
             else:
@@ -87,7 +88,7 @@ class DefaultRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        if config.HAVE_SLYCOT:
+        if _dense_backend() == 'slycot':
             from pymor.bindings.slycot import SlycotRiccatiSolver
             solver = SlycotRiccatiSolver()
         else:
@@ -113,7 +114,8 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
     """
 
-    def _auto_backend(self, equation):
+    @staticmethod
+    def _auto_backend(equation):
         return 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
 
     def _solve(self, equation):
@@ -123,7 +125,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
             solver = LrradiRiccatiSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
-            if config.HAVE_SLYCOT:
+            if _dense_backend() == 'slycot':
                 from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
                 solver = SlycotRiccatiSolverLRCF()
             else:
@@ -143,7 +145,7 @@ class DefaultPositiveRiccatiSolver(PositiveRiccatiSolver):
     """
 
     def _solve(self, equation):
-        if config.HAVE_SLYCOT:
+        if _dense_backend() == 'slycot':
             from pymor.bindings.slycot import SlycotPositiveRiccatiSolver
             solver = SlycotPositiveRiccatiSolver()
         else:
@@ -165,7 +167,7 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        if config.HAVE_SLYCOT:
+        if _dense_backend() == 'slycot':
             from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
             solver = SlycotPositiveRiccatiSolverLRCF()
         else:
@@ -176,7 +178,7 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 
 
 class MatrixEquationSolvers(ImmutableObject):
-    """Bundle of the six matrix-equation solvers used by an |LTIModel|.
+    """This class configures matrix equation solvers for all supported types of matrix equations.
 
     Parameters
     ----------
