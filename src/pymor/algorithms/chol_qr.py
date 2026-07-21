@@ -166,6 +166,7 @@ def _compute_gramian_and_offset_matrix(A, offset, product):
 
 
 class ShiftedCholQRKernel(BasicObject):
+    """Abstract base class for shifted_chol_qr kernels."""
 
     def __init__(self, dim, product=None, product_norm=None, check_finite=True):
         self.__auto_init(locals())
