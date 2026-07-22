@@ -3,6 +3,22 @@
 # See https://pre-commit.com/hooks.html for more hooks
 exclude: .ci/gitlab/ci.yml
 repos:
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.2
+    hooks:
+      - id: check-github-actions
+      - id: check-github-workflows
+      - id: check-dependabot
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.14.2
+    hooks:
+      - id: markdown-link-check
+        args:
+          - --quiet
+          - --config=.markdown_link_check_config.json
+        stages:
+          - pre-commit
+        exclude: ^LICENSE\.md$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
