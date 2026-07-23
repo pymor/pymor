@@ -256,6 +256,10 @@ class BasicShiftedCholQRKernel(ShiftedCholQRKernel):
 
     INNER_ITERS = 10
 
+    def __init__(self, dim, product=None, product_norm=None, check_finite=True):
+        super().__init__(dim, product, product_norm, check_finite)
+        self.shift = None
+
     def apply(self, X):
         for _ in range(self.INNER_ITERS):
             try:
@@ -277,7 +281,7 @@ class RecomputedShiftedCholQRKernel(ShiftedCholQRKernel):
     INNER_ITERS = 10
 
     def apply(self, X):
-        shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
+        shift = 0 # recomputes shift in every CholQR iteration
         for i in range(self.INNER_ITERS):
             try:
                 R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=self.check_finite)
