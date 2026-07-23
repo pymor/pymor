@@ -281,30 +281,20 @@ class RandomizedSVD(BasicObject):
     ----------
     A
         The |Operator| for which the randomized SVD is to be computed.
-    source_product
-        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     range_product
         Range product |Operator| :math:`R` w.r.t. which the randomized SVD is computed.
+    source_product
+        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     power_iterations
         The number of power iterations to increase the relative weight of the larger singular
         values.
     low_rank_svd_method
         SVD algorithm to use on the computed low-rank approximation of :math:`A`.
-
-    Returns
-    -------
-    U
-        |VectorArray| containing the approximated left singular vectors.
-    s
-        One-dimensional |NumPy array| of the approximated singular values.
-    V
-        |VectorArray| containing the approximated right singular vectors.
-        Available methods are defined in `pymor.algorithms.svd_va.SVD_VA_METHODS`.
     rrf_args
         Dict of additional arguments that are passed to :class:`RandomizedRangeFinder`.
     """
 
-    @defaults('low_rank_svd_method')
+    @defaults('power_iterations', 'low_rank_svd_method')
     def __init__(self, A, range_product=None, source_product=None, power_iterations=0,
                  low_rank_svd_method='qr_svd', rrf_args=None):
         assert low_rank_svd_method in SVD_VA_METHODS
@@ -320,7 +310,7 @@ class RandomizedSVD(BasicObject):
         Parameters
         ----------
         n
-            The number of eigenvalues and eigenvectors which are to be computed.
+            The number of singular values and signular vectors which are to be computed.
         rtol
             Relative truncation error tolerance for the low-rank SVD.
             See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
@@ -343,11 +333,11 @@ class RandomizedSVD(BasicObject):
         Returns
         -------
         U
-            |VectorArray| containing the approximated left singular vectors.
+            |VectorArray| containing the computed left singular vectors.
         s
-            One-dimensional |NumPy array| of the approximated singular values.
+            One-dimensional |NumPy array| of the computed singular values.
         V
-            |VectorArray| containing the approximated right singular vectors.
+            |VectorArray| containing the computed right singular vectors.
         """
         A, range_product, source_product = self.A, self.range_product, self.source_product
         assert n is None or (0 <= n <= max(A.source.dim, A.range.dim))
