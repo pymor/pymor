@@ -194,6 +194,7 @@ class ShiftedCholQRKernel(BasicObject):
 
         # eigsh outputs warnings, if n <= 2; it also throws an exception,
         # if X is a zero matrix (or is close to) or contains subnormal numbers
+        # see https://github.com/pymor/pymor/pull/2570#issuecomment-5045868061
         use_eigh = n <= 2 or X.max() - X.min() < eps or np.any((X != 0) & (np.abs(X) < np.finfo(dtype).tiny))
         if not use_eigh:
             try:
