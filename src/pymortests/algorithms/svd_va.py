@@ -8,13 +8,14 @@ from hypothesis import HealthCheck, assume, settings
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
-from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
+from pymor.algorithms.svd_va import method_of_snapshots, qr_svd, scipy_svd
 from pymor.core.logger import log_levels
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.strategies import given_vector_arrays
 
-methods = [method_of_snapshots, qr_svd]
+methods = [method_of_snapshots, qr_svd, scipy_svd]
+methods_with_product = [method_of_snapshots, qr_svd]
 
 
 @given_vector_arrays(method=sampled_from(methods))
@@ -40,7 +41,7 @@ def test_method_of_snapshots(vector_array, method):
         assert np.all(almost_equal(A, UsVh, atol=s[0]*4e-8*2))
 
 
-@pytest.mark.parametrize('method', methods)
+@pytest.mark.parametrize('method', methods_with_product)
 def test_method_of_snapshots_with_product(operator_with_arrays_and_products, method):
     _, _, A, _, p, _ = operator_with_arrays_and_products
 

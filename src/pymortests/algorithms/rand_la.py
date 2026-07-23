@@ -6,9 +6,12 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
-from pymor.algorithms.rand_la import RandomizedRangeFinder, randomized_ghep, randomized_svd
+from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.rand_la import RandomizedRangeFinder, RandomizedSVD, randomized_ghep, randomized_svd
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.tools.random import new_rng
 
 pytestmark = pytest.mark.builtin
 
@@ -69,6 +72,35 @@ def test_adaptive_rrf_with_product(rng, qr_method):
     ).find_range(tol=1e-5)
     assert np.iscomplexobj(Q2.to_numpy())
     assert Q2 in op.range
+
+
+@pytest.mark.parametrize('low_rank_svd_method', SVD_VA_METHODS)
+@pytest.mark.parametrize('power_iterations', [0, 1, 2])
+@pytest.mark.parametrize('oversampling', [1, 10])
+@pytest.mark.parametrize('range_product', [True, None])
+@pytest.mark.parametrize('source_product', [True, None])
+def test_RandomizedSVD_repeated_calls(low_rank_svd_method, power_iterations, oversampling,
+                                      range_product, source_product):
+    if source_product and low_rank_svd_method == 'scipy_svd':
+        pytest.skip('scipy_svd does not support products.')
+    A = NumpyMatrixOperator(np.diag(np.linspace(1, 10, 100)))
+    if range_product:
+        range_product = NumpyMatrixOperator(np.diag(np.linspace(2, 1, 100)))
+    if source_product:
+        source_product = NumpyMatrixOperator(np.diag(np.linspace(3, 1, 100)))
+    with new_rng():
+        svd = RandomizedSVD(A, range_product=range_product, source_product=source_product,
+                            low_rank_svd_method=low_rank_svd_method, power_iterations=power_iterations)
+        svd.compute_svd(3)
+        U1, s1, V1 = svd.compute_svd(4, oversampling=oversampling)
+    with new_rng():
+        svd = RandomizedSVD(A, range_product=range_product, source_product=source_product,
+                            low_rank_svd_method=low_rank_svd_method, power_iterations=power_iterations)
+        U2, s2, V2 = svd.compute_svd(4, oversampling=oversampling)
+
+    assert np.allclose(s1, s2)
+    assert np.all(almost_equal(U1, U2, atol=1e-13)), (U1-U2).norm()
+    assert np.all(almost_equal(V1, V2, atol=1e-13)), (V1-V2).norm()
 
 
 def test_random_generalized_svd(rng):

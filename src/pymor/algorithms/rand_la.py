@@ -9,7 +9,7 @@ from scipy.special import erfinv
 from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.svd_va import qr_svd
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -251,8 +251,7 @@ class RandomizedRangeFinder(BasicObject):
             return Q[-1].copy()
 
 
-@defaults('oversampling', 'power_iterations')
-def randomized_svd(A, n, source_product=None, range_product=None, power_iterations=0, oversampling=20):
+class RandomizedSVD(BasicObject):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
     Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
@@ -282,66 +281,111 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
     ----------
     A
         The |Operator| for which the randomized SVD is to be computed.
-    n
-        The number of eigenvalues and eigenvectors which are to be computed.
-    source_product
-        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     range_product
         Range product |Operator| :math:`R` w.r.t. which the randomized SVD is computed.
+    source_product
+        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     power_iterations
         The number of power iterations to increase the relative weight of the larger singular
         values.
-    oversampling
-        The number of samples that are drawn in addition to the desired basis size in the
-        randomized range approximation process.
-
-    Returns
-    -------
-    U
-        |VectorArray| containing the approximated left singular vectors.
-    s
-        One-dimensional |NumPy array| of the approximated singular values.
-    V
-        |VectorArray| containing the approximated right singular vectors.
+    low_rank_svd_method
+        SVD algorithm to use on the computed low-rank approximation of :math:`A`.
+    rrf_args
+        Dict of additional arguments that are passed to :class:`RandomizedRangeFinder`.
     """
-    logger = getLogger('pymor.algorithms.rand_la.randomized_svd')
 
-    RRF = RandomizedRangeFinder(A, power_iterations=power_iterations, range_product=range_product,
-                                source_product=source_product)
+    @defaults('power_iterations', 'low_rank_svd_method')
+    def __init__(self, A, range_product=None, source_product=None, power_iterations=0,
+                 low_rank_svd_method='qr_svd', rrf_args=None):
+        assert low_rank_svd_method in SVD_VA_METHODS
+        self.__auto_init(locals())
+        self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
+                                                  power_iterations=power_iterations, **(rrf_args or {}))
+        self.B = A.source.empty()
 
-    assert 0 <= n <= max(A.source.dim, A.range.dim)
-    assert 0 <= oversampling
-    if oversampling > max(A.source.dim, A.range.dim) - n:
-        logger.warning('Oversampling parameter is too large!')
-        oversampling = max(A.source.dim, A.range.dim) - n
-        logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
+    @defaults('rtol', 'atol', 'l2_err', 'oversampling')
+    def compute_svd(self, n=None, rtol=4e-8, atol=0., l2_err=0., oversampling=20, rrf_tol=None):
+        r"""Compute the SVD.
 
-    if range_product is None:
-        range_product = IdentityOperator(A.range)
-    if source_product is None:
-        source_product = IdentityOperator(A.source)
+        Parameters
+        ----------
+        n
+            The number of singular values and signular vectors which are to be computed.
+        rtol
+            Relative truncation error tolerance for the low-rank SVD.
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
+        atol
+            Absolute truncation error tolerance for the low-rank SVD.
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
+        l2_err
+            :math:`\ell^2` error bound for the low-rank SVD:
+            See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
+        power_iterations
+            The number of power iterations to increase the relative weight of the larger singular
+            values.
+        oversampling
+            The number of samples that are drawn in addition to the desired basis size in the
+            randomized range approximation process. Only used when `n` is specified.
+        rrf_tol
+            Error tolerance for computing a low-rank approximation of :math:`A` using
+            :class:`RandomizedRangeFinder`.
 
-    assert isinstance(range_product, Operator)
-    assert range_product.source == range_product.range == A.range
-    assert isinstance(source_product, Operator)
-    assert source_product.source == source_product.range == A.source
+        Returns
+        -------
+        U
+            |VectorArray| containing the computed left singular vectors.
+        s
+            One-dimensional |NumPy array| of the computed singular values.
+        V
+            |VectorArray| containing the computed right singular vectors.
+        """
+        A, range_product, source_product = self.A, self.range_product, self.source_product
+        assert n is None or (0 <= n <= max(A.source.dim, A.range.dim))
+        assert 0 <= oversampling
+        assert n is not None or rrf_tol is not None
+        if n is not None and oversampling > max(A.source.dim, A.range.dim) - n:
+            self.logger.warning('Oversampling parameter is too large!')
+            oversampling = max(A.source.dim, A.range.dim) - n
+            self.logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
 
-    if A.source.dim == 0 or A.range.dim == 0:
-        return A.source.empty(), np.array([]), A.range.empty()
+        if range_product is None:
+            range_product = IdentityOperator(A.range)
+        if source_product is None:
+            source_product = IdentityOperator(A.source)
 
-    with logger.block('Approximating basis for the operator range ...'):
-        Q = RRF.find_range(basis_size=n+oversampling)
+        if A.source.dim == 0 or A.range.dim == 0:
+            return A.source.empty(), np.array([]), A.range.empty()
 
-    with logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
-        B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
-        V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
+        with self.logger.block('Approximating basis for the operator range ...'):
+            Q = self.range_finder.find_range(basis_size=(n+oversampling if n is not None else None), tol=rrf_tol)
 
-    with logger.block('Backprojecting the left'
-                      f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
-                      f'singular vector{"s" if n > 1 else ""} ...'):
-        U = Q.lincomb(Uh_b[:n].T)
+        with self.logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
+            if len(self.B) < len(Q):
+                self.B.append(source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q[len(self.B):]))),
+                              remove_from_other=True)
+            B = self.B[:len(Q)]
+            svd = SVD_VA_METHODS[self.low_rank_svd_method]
+            V, s, Uh_b = svd(B, product=source_product, modes=n, rtol=rtol, atol=atol, l2_err=l2_err)
 
-    return U, s, V
+        with self.logger.block('Backprojecting the left'
+                          f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
+                          f'singular vector{"s" if len(s) > 1 else ""} ...'):
+            U = Q.lincomb(Uh_b.T)
+
+        return U, s, V
+
+
+def randomized_svd(A, n=None, *, rtol=None, atol=None, l2_err=None, rrf_tol=None,
+                   range_product=None, source_product=None, power_iterations=None, oversampling=None,
+                   low_rank_svd_method=None, rrf_args=None):
+    r"""Randomized SVD of an |Operator|.
+
+    This is a just a wrapper for :class:`RandomizedSVD`.
+    """
+    svd_alg = RandomizedSVD(A, range_product=range_product, source_product=source_product,
+                            power_iterations=power_iterations, low_rank_svd_method=low_rank_svd_method,
+                            rrf_args=rrf_args)
+    return svd_alg.compute_svd(n, rtol=rtol, atol=atol, l2_err=l2_err, oversampling=oversampling, rrf_tol=rrf_tol)
 
 
 @defaults('n', 'oversampling', 'power_iterations')
