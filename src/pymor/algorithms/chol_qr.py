@@ -14,7 +14,7 @@ from pymor.vectorarrays.list import ListVectorArray
 
 
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
-                    recompute_shift=False, check_finite=True, copy=True, product_norm=None):
+                    recompute_shift=False, rtol=1e-13, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations of its
@@ -63,6 +63,12 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         If `True`, the shift is recomputed in iterations in which the Cholesky decomposition fails.
         Even for an ill-conditioned `A` (at least for matrix condition numbers up to 10^20)
         is it able to compute an orthonormal basis at the cost of higher runtimes.
+    rtol
+        If zero, it only removes zero vectors. Otherwise, if greater than zero, it removes too
+        small vectors (relative to the longest vector). Furthermore, if offset is used,
+        it might remove linearly dependent vectors. Decision is based on the diagonal of
+        the initial Gramian. Additionally, if `return_R` is set, a potentially
+        upper-trapezoidal factor `R` is returned. It holds `A \approx Q@R`.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
         performance gain, but may result in problems (crashes, non-termination) if the
@@ -85,6 +91,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     assert A.dim >= len(A)
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
+    assert rtol >= 0
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
     if copy:
@@ -103,6 +110,30 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     B, X = _compute_gramian_and_offset_matrix(A, offset, product)
 
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=X.dtype), spla.get_lapack_funcs('trtri', dtype=X.dtype)
+
+    # diagonal of X contains the pairwise result of inner-products of the vectors A[offset:]
+    diag = np.abs(np.diag(X))
+    M = np.max(diag)
+    if offset > 0:
+        M = max(M, 1) # length of orthonormal vectors is 1
+
+    # find vectors that are to short relative to the longest vector in A
+    # used squared relative tolerance, since diagonal contains squared norms of vectors
+    A_rem = B_rem = None
+    remove = np.where(M*rtol**2 >= diag)[0]
+    if len(remove) > 0:
+        logger.info(f'Removing linearly dependent vector {remove}')
+
+    if len(remove) == len(A[offset:]):
+        del A[offset:]
+        return (A, np.hstack([np.eye(offset), B])) if return_R else A
+    elif len(remove) > 0:
+        B_rem = B[:,remove]
+        B = np.delete(B, remove, axis=1)
+        X = np.delete(np.delete(X, remove, axis=0), remove, axis=1)
+        remove += offset
+        A_rem = A[remove].copy()
+        del A[remove]
 
     iter = 1
     while iter <= maxiter:
@@ -146,9 +177,16 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         return A
 
     # construct R from blocks
-    R = np.eye(len(A), dtype=X.dtype)
-    R[:offset, offset:] = Bi
-    R[offset:, offset:] = Ri
+    R = np.zeros([offset+Ri.shape[0], offset+Ri.shape[1]], dtype=X.dtype)
+    R[:offset,:offset] = np.eye(offset)
+    R[:offset, offset:] = Bi.astype(X.dtype, copy=False)
+    R[offset:, offset:] = Ri.astype(X.dtype, copy=False)
+
+    if B_rem is not None:
+        # compute linear dependence of removed vectors to the orthonormal basis
+        # and insert them back into R
+        T = A[offset:].inner(A_rem, product=product)
+        R = np.insert(R, [r-i for i,r in enumerate(remove)], values=np.vstack([B_rem, T]), axis=1)
 
     return (A, R)
 
