@@ -44,7 +44,7 @@ def main(l: float = 50., r: int = 10):
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.solvers.matrix.lradi.solve_lyap_lrcf': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
     })
     plt.rcParams['axes.grid'] = True

@@ -43,7 +43,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         - for sparse, continous-time problems (minimum size specified by
           :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
 
-          1. `lradi` (see :func:`pymor.algorithms.lradi.LradiLyapunovSolverLRCF`),
+          1. `lradi` (see :func:`pymor.solvers.matrix.lradi.LradiLyapunovSolverLRCF`),
 
         - for dense problems (smaller than
           :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`) or discrete-time problems
@@ -65,7 +65,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
-            from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
+            from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
             solver = LradiLyapunovSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
@@ -105,7 +105,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
         - for sparse problems (minimum size specified by
           :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
 
-          1. `lrradi` (see :class:`pymor.algorithms.lrradi.LrradiRiccatiSolverLRCF`),
+          1. `lrradi` (see :class:`pymor.solvers.matrix.lrradi.LrradiRiccatiSolverLRCF`),
 
         - for dense problems (smaller than
           :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
@@ -121,7 +121,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     def _solve(self, equation):
         backend = self._auto_backend(equation)
         if backend == 'lrradi':
-            from pymor.algorithms.lrradi import LrradiRiccatiSolverLRCF
+            from pymor.solvers.matrix.lrradi import LrradiRiccatiSolverLRCF
             solver = LrradiRiccatiSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)

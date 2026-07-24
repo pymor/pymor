@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import App
 
-from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
@@ -16,6 +15,7 @@ from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
 from pymor.solvers.matrix.default import MatrixEquationSolvers
+from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
 
 
 def fom_properties(fom, w, stable_lti=True):
@@ -307,7 +307,7 @@ def main(
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.solvers.matrix.lradi.solve_lyap_lrcf': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
     })
     plt.rcParams['axes.grid'] = True

@@ -61,7 +61,7 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
         if not cont_time:
             raise NotImplementedError
 
-        logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
+        logger = getLogger('pymor.solvers.matrix.lradi.solve_lyap_lrcf')
 
         if self.lradi_shifts == 'projection_shifts':
             init_shifts = projection_shifts_init

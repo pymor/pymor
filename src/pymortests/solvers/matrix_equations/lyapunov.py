@@ -150,7 +150,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
 
     if backend == 'lradi':
-        from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
+        from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
         solver =  LradiLyapunovSolverLRCF()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
