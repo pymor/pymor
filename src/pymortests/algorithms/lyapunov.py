@@ -13,7 +13,7 @@ from pymor.algorithms.lyapunov import (
     solve_cont_lyap_dense,
     solve_cont_lyap_lrcf,
     solve_disc_lyap_dense,
-    solve_disc_lyap_lrcf,
+    solve_disc_lyap_lr,
 )
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -196,7 +196,7 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
-    Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
+    Zva = solve_disc_lyap_lr(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
 
     Z = Zva.to_numpy()

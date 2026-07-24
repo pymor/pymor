@@ -358,7 +358,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     See
 
     - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lr`
 
     for a general description.
 
