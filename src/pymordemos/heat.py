@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import App
 
-from pymor.algorithms.lradi import LradiLyapunovSolverLRCF, lyap_lrcf_solver_options
+from pymor.algorithms.lradi import LradiLyapunovSolverLRCF
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
@@ -175,9 +175,7 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     err = fom - rom
     if isinstance(err, LTIModel):
         matrix_equation_solvers = MatrixEquationSolvers(
-            lyapunov_lrcf=LradiLyapunovSolverLRCF(
-                options=lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']
-            )
+            lyapunov_lrcf=LradiLyapunovSolverLRCF()
         )
         err = err.with_(matrix_equation_solvers=matrix_equation_solvers)
 
@@ -319,9 +317,7 @@ def main(
 
     # LTI system
     matrix_equation_solvers = MatrixEquationSolvers(
-        lyapunov_lrcf=LradiLyapunovSolverLRCF(
-            options=lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']
-        )
+        lyapunov_lrcf=LradiLyapunovSolverLRCF(lradi_shifts='wachspress_shifts')
     )
 
     ts = ImplicitEulerTimeStepper(100)

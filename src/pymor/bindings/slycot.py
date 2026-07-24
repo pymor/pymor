@@ -181,7 +181,7 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
         if R is None:
             R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
         temp_equation = equation.with_(R=-R)
-        return SlycotRiccatiSolver().solve(temp_equation)
+        return SlycotRiccatiSolver()._solve(temp_equation)
 
 
 class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
@@ -194,7 +194,7 @@ class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotPositiveRiccatiSolver()._solve(equation)
+        X = SlycotPositiveRiccatiSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 

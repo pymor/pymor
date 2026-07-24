@@ -27,7 +27,8 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
     lradi_maxiter
         See :meth:`~LradiLyapunovSolverLRCF._solve`.
     lradi_shifts
-        See :meth:`~LradiLyapunovSolverLRCF._solve`.
+        See :meth:`~LradiLyapunovSolverLRCF._solve`. Either 'projection_shifts'
+        or 'wachspress_shifts'.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_subspace_columns
@@ -49,20 +50,6 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
                  shifted_system_solver=None, projection_shifts_init_maxiter=20, projection_shifts_subspace_columns=6,
                  wachspress_large_ritz_num=50, wachspress_small_ritz_num=25, wachspress_tol=1e-10):
 
-        options = {'tol': lradi_tol,
-                   'maxiter': lradi_maxiter,
-                   'shifts': lradi_shifts,
-                   'shifted_system_solver': shifted_system_solver,
-                   'shift_options':
-                   {'projection_shifts': {'type': 'projection_shifts',
-                                          'init_maxiter': projection_shifts_init_maxiter,
-                                          'subspace_columns': projection_shifts_subspace_columns},
-                   'wachspress_shifts': {'type': 'wachspress_shifts',
-                                         'large_ritz_num': wachspress_large_ritz_num,
-                                         'small_ritz_num': wachspress_small_ritz_num,
-                                         'tol': wachspress_tol}}}
-
-        self.options = options
         self.__auto_init(locals())
         super().__init__()
 
@@ -74,20 +61,23 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
         if not cont_time:
             raise NotImplementedError
 
-        options = self.options
         logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
-        shift_options = options['shift_options'][options['shifts']]
-        if shift_options['type'] == 'projection_shifts':
+        if self.lradi_shifts == 'projection_shifts':
             init_shifts = projection_shifts_init
             iteration_shifts = projection_shifts
-        elif shift_options['type'] == 'wachspress_shifts':
+            shift_options = {'init_maxiter': self.projection_shifts_init_maxiter,
+                             'subspace_columns': self.projection_shifts_subspace_columns}
+        elif self.lradi_shifts == 'wachspress_shifts':
             init_shifts = wachspress_shifts_init
             iteration_shifts = cycle_shifts
+            shift_options = {'large_ritz_num': self.wachspress_large_ritz_num,
+                             'small_ritz_num': self.wachspress_small_ritz_num,
+                             'tol': self.wachspress_tol}
         else:
             raise ValueError('Unknown low-rank ADI shift strategy.')
 
-        solver = options['shifted_system_solver']
+        solver = self.shifted_system_solver
 
         if E is None:
             E = IdentityOperator(A.source)
@@ -100,9 +90,9 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
         shifts = init_shifts(A, E, W, shift_options)
         res = np.linalg.norm(W.gramian(), ord=2)
         init_res = res
-        Btol = res * options['tol']
+        Btol = res * self.lradi_tol
 
-        while res > Btol and j < options['maxiter']:
+        while res > Btol and j < self.lradi_maxiter:
             if shifts[j_shift].imag == 0:
                 AaE = A + shifts[j_shift].real * E
                 if not trans:
@@ -136,7 +126,7 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
 
         if res > Btol:
             logger.warning(f'Prescribed relative residual tolerance was not achieved '
-                            f'({res/init_res:e} > {options["tol"]:e}) after {options["maxiter"]} ADI steps.')
+                            f'({res/init_res:e} > {self.lradi_tol:e}) after {self.lradi_maxiter} ADI steps.')
 
         return Z
 
@@ -158,7 +148,7 @@ def projection_shifts_init(A, E, B, shift_options):
     B
         The |VectorArray| B from the corresponding Lyapunov equation.
     shift_options
-        The shift options to use (see :func:`lyap_lrcf_solver_options`).
+        The shift options to use. A dictionary containing the key 'init_maxiter'.
 
     Returns
     -------
@@ -199,7 +189,7 @@ def projection_shifts(A, E, V, Z, prev_shifts, shift_options):
         A |NumPy array| containing the set of all previously used shift
         parameters.
     shift_options
-        The shift options to use (see :func:`lyap_lrcf_solver_options`).
+        The shift options to use. A dictionary containing the key 'subspace_columns'.
 
     Returns
     -------
@@ -243,7 +233,8 @@ def wachspress_shifts_init(A, E, B, shift_options):
     B
         The |VectorArray| B from the corresponding Lyapunov equation.
     shift_options
-        The shift options to use (see :func:`lyap_lrcf_solver_options`).
+        The shift options to use. A dictionary containing the keys 'large_ritz_num',
+        'small_ritz_num' and 'tol'.
 
     Returns
     -------

@@ -1013,7 +1013,7 @@ class LTIModel(Model):
                 else self.matrix_equation_solvers.positive_riccati
             return solver.solve(PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B, trans=False))
         elif typ == 'pr_o_lrcf' or typ == 'pr_o_dense':
-            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_c_lrcf' \
+            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_o_lrcf' \
                 else self.matrix_equation_solvers.positive_riccati
             return solver.solve(PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True))
         elif typ[0] == 'br_c_lrcf':

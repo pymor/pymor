@@ -41,16 +41,6 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
                  shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
                  hamiltonian_shifts_subspace_columns=6):
 
-        options = {'tol': lrradi_tol,
-                   'maxiter': lrradi_maxiter,
-                   'shifts': lrradi_shifts,
-                   'shifted_system_solver': shifted_system_solver,
-                   'shift_options':
-                   {'hamiltonian_shifts': {'type': 'hamiltonian_shifts',
-                                           'init_maxiter': hamiltonian_shifts_init_maxiter,
-                                           'subspace_columns': hamiltonian_shifts_subspace_columns}}}
-
-        self.options = options
         self.__auto_init(locals())
         super().__init__()
 
@@ -60,17 +50,16 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
 
         if S is not None:
             raise NotImplementedError
-        options = self.options
+
         logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
-        shift_options = options['shift_options'][options['shifts']]
-        if shift_options['type'] == 'hamiltonian_shifts':
+        if self.lrradi_shifts == 'hamiltonian_shifts':
             init_shifts = hamiltonian_shifts_init
             iteration_shifts = hamiltonian_shifts
         else:
             raise ValueError('Unknown lrradi shift strategy.')
 
-        solver = options['shifted_system_solver']
+        solver = self.shifted_system_solver
 
         if E is None:
             E = IdentityOperator(A.source)
@@ -86,7 +75,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         if not trans:
             B, C = C, B
 
-        Z = A.source.empty(reserve=len(C) * options['maxiter'])
+        Z = A.source.empty(reserve=len(C) * self.lrradi_maxiter)
         Y = np.empty((0, 0))
 
         K = A.source.zeros(len(B))
@@ -94,13 +83,13 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
 
         j = 0
         j_shift = 0
-        shifts = init_shifts(A, E, B, C, shift_options)
+        shifts = init_shifts(A, E, B, C, self.hamiltonian_shifts_init_maxiter)
 
         res = np.linalg.norm(RF.gramian(), ord=2)
         init_res = res
-        Ctol = res * options['tol']
+        Ctol = res * self.lrradi_tol
 
-        while res > Ctol and j < options['maxiter']:
+        while res > Ctol and j < self.lrradi_maxiter:
             if not trans:
                 AsE = A + shifts[j_shift] * E
             else:
@@ -167,7 +156,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
             res = np.linalg.norm(RF.gramian(), ord=2)
             logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
-                shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
+                shifts = iteration_shifts(A, E, B, RF, K, Z, self.hamiltonian_shifts_subspace_columns)
                 j_shift = 0
         # transform solution to lrcf
         cf = spla.cholesky(Y)
@@ -175,7 +164,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         return Z_cf
 
 
-def hamiltonian_shifts_init(A, E, B, C, shift_options):
+def hamiltonian_shifts_init(A, E, B, C, init_maxiter):
     """Compute initial shift parameters for low-rank RADI iteration.
 
     Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return the
@@ -194,8 +183,8 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         The |VectorArray| B from the corresponding Riccati equation.
     C
         The |VectorArray| C from the corresponding Riccati equation.
-    shift_options
-        The shift options to use (see :func:`ricc_lrcf_solver_options`).
+    init_maxiter
+        Maximum number of iterations.
 
     Returns
     -------
@@ -203,7 +192,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         A |NumPy array| containing a set of stable shift parameters.
     """
     rng = new_rng(0)
-    for _ in range(shift_options['init_maxiter']):
+    for _ in range(init_maxiter):
         Q = gram_schmidt(C, atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
         QB = Q.inner(B)
@@ -246,7 +235,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank RADI iteration.')
 
 
-def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
+def hamiltonian_shifts(A, E, B, R, K, Z, subspace_columns):
     """Compute further shift parameters for low-rank RADI iteration.
 
     Compute Galerkin projection of Hamiltonian matrix on space spanned by last few columns of
@@ -269,15 +258,15 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
         A |VectorArray| representing the currently computed iterate.
     Z
         A |VectorArray| representing the currently computed solution factor.
-    shift_options
-        The shift options to use (see :func:`ricc_lrcf_solver_options`).
+    subspace_columns
+        Amount of subspace columns.
 
     Returns
     -------
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    l = shift_options['subspace_columns']
+    l = subspace_columns
     # always use multiple of len(R) columns
     l = max(1, l // len(R)) * len(R)
     if len(Z) < l:
