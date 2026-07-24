@@ -1653,8 +1653,9 @@ class PHLTIModel(LTIModel):
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
-    solver_options
-        The solver options to use to solve the Lyapunov equations.
+    matrix_equation_solvers
+        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+        default matrix equation solvers are used.
     shifted_system_solver
         The |Solver| for the shifted systems arising in transfer function evaluation.
     name
@@ -1692,7 +1693,7 @@ class PHLTIModel(LTIModel):
 
     def __init__(self, J, R, G, P=None, S=None, N=None, E=None, Q=None,
                  sampling_time=0, T=None, initial_data=None, time_stepper=None,
-                 num_values=None, solver_options=None, shifted_system_solver=None,
+                 num_values=None, matrix_equation_solvers=None, shifted_system_solver=None,
                  error_estimator=None, visualizer=None, name=None):
         assert J.linear
         assert J.source == J.range
@@ -1734,7 +1735,7 @@ class PHLTIModel(LTIModel):
                          C=(G + P).H if isinstance(Q, IdentityOperator) else (G + P).H @ Q,
                          D=S - N, E=E,
                          sampling_time=sampling_time, T=T, initial_data=initial_data, time_stepper=time_stepper,
-                         num_values=num_values, solver_options=solver_options,
+                         num_values=num_values, matrix_equation_solvers=matrix_equation_solvers,
                          shifted_system_solver=shifted_system_solver,
                          error_estimator=error_estimator, visualizer=visualizer,
                          name=name)
@@ -1794,7 +1795,8 @@ class PHLTIModel(LTIModel):
 
         return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=model.sampling_time,
                                         T=model.T, initial_data=model.initial_data, time_stepper=model.time_stepper,
-                                        num_values=model.num_values, solver_options=model.solver_options,
+                                        num_values=model.num_values,
+                                        matrix_equation_solvers=model.matrix_equation_solvers,
                                         error_estimator=model.error_estimator, visualizer=model.visualizer,
                                         name=model.name)
 
@@ -1817,7 +1819,7 @@ class PHLTIModel(LTIModel):
     @classmethod
     def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
                       sampling_time=0, T=None, initial_data=None, time_stepper=None, num_values=None,
-                      solver_options=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
+                      matrix_equation_solvers=None, shifted_system_solver=None, error_estimator=None, visualizer=None,
                       name=None):
         """Create |PHLTIModel| from matrices.
 
@@ -1857,8 +1859,9 @@ class PHLTIModel(LTIModel):
         num_values
             The number of returned vectors of the solution trajectory. If `None`, each
             intermediate vector that is calculated is returned.
-        solver_options
-            The solver options to use to solve the Lyapunov equations.
+        matrix_equation_solvers
+            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolver` or `None`, in which case
+            default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -1903,7 +1906,7 @@ class PHLTIModel(LTIModel):
 
         return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=sampling_time, T=T,
                    initial_data=initial_data, time_stepper=time_stepper, num_values=num_values,
-                   solver_options=solver_options, shifted_system_solver=shifted_system_solver,
+                   matrix_equation_solvers=matrix_equation_solvers, shifted_system_solver=shifted_system_solver,
                    error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
