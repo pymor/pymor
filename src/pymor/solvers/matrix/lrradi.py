@@ -51,7 +51,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         if S is not None:
             raise NotImplementedError
 
-        logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
+        logger = getLogger('pymor.solvers.matrix.lrradi.solve_ricc_lrcf')
 
         if self.lrradi_shifts == 'hamiltonian_shifts':
             init_shifts = hamiltonian_shifts_init

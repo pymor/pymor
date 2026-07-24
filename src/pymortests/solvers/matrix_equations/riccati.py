@@ -12,7 +12,12 @@ import scipy.sparse as sps
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix.equations import PositiveRiccatiEquation, RiccatiEquation
 from pymor.solvers.matrix.utils import _chol
-from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
+from pymortests.solvers.matrix_equations.lyapunov import (
+    conv_diff_1d_fd,
+    conv_diff_1d_fem,
+    fro_norm,
+    skip_if_missing_solver,
+)
 
 pytestmark = pytest.mark.builtin
 
@@ -272,7 +277,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = RiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
 
     if backend == 'lrradi':
-        from pymor.algorithms.lrradi import LrradiRiccatiSolverLRCF
+        from pymor.solvers.matrix.lrradi import LrradiRiccatiSolverLRCF
         solver =  LrradiRiccatiSolverLRCF()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotRiccatiSolverLRCF

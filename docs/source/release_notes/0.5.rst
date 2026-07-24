@@ -54,7 +54,7 @@ methods, support for Lyapunov, Riccati and Sylvester equations has been added in
 `pymor.algorithms.lyapunov`, `pymor.algorithms.riccati` and
 `pymor.algorithms.sylvester`. A generic low-rank ADI (Alternating Direction
 Implicit) solver for Lyapunov equations is implemented in
-:mod:`pymor.algorithms.lradi`. Furthermore, bindings to low-rank and dense
+:mod:`pymor.solvers.matrix.lradi`. Furthermore, bindings to low-rank and dense
 solvers for Lyapunov and Riccati equations from |SciPy|,
 `Slycot <https://github.com/python-control/Slycot>`_ and
 `Py-M.E.S.S. <https://www.mpi-magdeburg.mpg.de/projects/mess>`_ are provided in
