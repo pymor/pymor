@@ -450,7 +450,7 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
             R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
 
         temp_equation = equation.with_(R=-R if R is not None else None)
-        return ScipyRiccatiSolver().solve(temp_equation)
+        return ScipyRiccatiSolver()._solve(temp_equation)
 
 
 class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
