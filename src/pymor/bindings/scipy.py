@@ -392,7 +392,7 @@ class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyLyapunovSolver()._solve(equation)
+        X = ScipyLyapunovSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -430,7 +430,7 @@ class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyRiccatiSolver()._solve(equation)
+        X = ScipyRiccatiSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -450,7 +450,7 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
             R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
 
         temp_equation = equation.with_(R=-R if R is not None else None)
-        return ScipyRiccatiSolver()._solve(temp_equation)
+        return ScipyRiccatiSolver().solve(temp_equation)
 
 
 class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
@@ -463,5 +463,5 @@ class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = ScipyPositiveRiccatiSolver()._solve(equation)
+        X = ScipyPositiveRiccatiSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
