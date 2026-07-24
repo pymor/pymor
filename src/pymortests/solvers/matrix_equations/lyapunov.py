@@ -9,35 +9,30 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.lyapunov import (
-    solve_cont_lyap_dense,
-    solve_cont_lyap_lrcf,
-    solve_disc_lyap_dense,
-    solve_disc_lyap_lrcf,
-)
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.solvers.matrix.equations import LyapunovEquation
 
 pytestmark = pytest.mark.builtin
 
 n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]
-cont_lyap_lrcf_solver_list = [
+cont_lyap_lrcf_backend_list = [
     'lradi',
 ]
-cont_lyap_dense_solver_list = [
+cont_lyap_dense_backend_list = [
     'scipy',
-    'slycot_bartels-stewart',
+    'slycot',
 ]
-disc_lyap_dense_solver_list = [
+disc_lyap_dense_backend_list = [
     'scipy',
-    'slycot_bartels-stewart',
+    'slycot',
 ]
 
 
-def skip_if_missing_solver(solver):
-    if solver.startswith('slycot') and not config.HAVE_SLYCOT:
+def skip_if_missing_solver(backend):
+    if backend.startswith('slycot') and not config.HAVE_SLYCOT:
         pytest.skip('slycot unavailable')
 
 
@@ -125,10 +120,10 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize(('n', 'solver'), chain(product(n_list_small, cont_lyap_dense_solver_list),
-                                                product(n_list_big, cont_lyap_lrcf_solver_list)))
-def test_cont_lrcf(n, m, with_E, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, cont_lyap_dense_backend_list),
+                                                product(n_list_big, cont_lyap_lrcf_backend_list)))
+def test_cont_lrcf(n, m, with_E, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     mat_old = []
     mat_new = []
@@ -152,7 +147,22 @@ def test_cont_lrcf(n, m, with_E, trans, solver, rng):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
-    Zva = solve_cont_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
+    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
+
+    if backend == 'lradi':
+        from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
+        solver =  LradiLyapunovSolverLRCF()
+    elif backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
+        solver = SlycotLyapunovSolverLRCF()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
+        solver = ScipyLyapunovSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver)
+
     assert len(Zva) <= n
 
     Z = Zva.to_numpy()
@@ -170,9 +180,9 @@ def test_cont_lrcf(n, m, with_E, trans, solver, rng):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
-def test_disc_lrcf(n, m, with_E, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', disc_lyap_dense_backend_list)
+def test_disc_lrcf(n, m, with_E, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     mat_old = []
     mat_new = []
@@ -196,7 +206,19 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B if not trans else B.T)
 
-    Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
+    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
+
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
+        solver = SlycotLyapunovSolverLRCF()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
+        solver = ScipyLyapunovSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
+
     assert len(Zva) <= n
 
     Z = Zva.to_numpy()
@@ -214,9 +236,9 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('solver', cont_lyap_dense_solver_list)
-def test_cont_dense(n, m, with_E, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', cont_lyap_dense_backend_list)
+def test_cont_dense(n, m, with_E, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     A = np.asfortranarray(rng.standard_normal((n, n)))
     E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
@@ -234,7 +256,23 @@ def test_cont_dense(n, m, with_E, trans, solver, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    X = solve_cont_lyap_dense(A, E, B, trans=trans, options=solver)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E) if with_E else None
+    Bva = Aop.source.from_numpy(B if not trans else B.T)
+
+    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
+
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolver
+        solver = SlycotLyapunovSolver()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolver
+        solver = ScipyLyapunovSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
+
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=True) < 1e-10
@@ -248,9 +286,9 @@ def test_cont_dense(n, m, with_E, trans, solver, rng):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
-def test_disc_dense(n, m, with_E, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', disc_lyap_dense_backend_list)
+def test_disc_dense(n, m, with_E, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     A = np.asfortranarray(rng.standard_normal((n, n)))
     E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
@@ -268,7 +306,23 @@ def test_disc_dense(n, m, with_E, trans, solver, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    X = solve_disc_lyap_dense(A, E, B, trans=trans, options=solver)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E) if with_E else None
+    Bva = Aop.source.from_numpy(B if not trans else B.T)
+
+    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
+
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotLyapunovSolver
+        solver = SlycotLyapunovSolver()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyLyapunovSolver
+        solver = ScipyLyapunovSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
+
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=False) < 1e-10

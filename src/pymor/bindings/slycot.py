@@ -11,120 +11,32 @@ import numpy as np
 import scipy.linalg as spla
 import slycot
 
-from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
-from pymor.algorithms.riccati import _solve_ricc_dense_check_args
-from pymor.algorithms.to_matrix import to_matrix
-from pymor.bindings.scipy import _parse_options, _solve_ricc_check_args
 from pymor.core.logger import getLogger
+from pymor.solvers.matrix.interface import (
+    LyapunovSolver,
+    LyapunovSolverLRCF,
+    PositiveRiccatiSolver,
+    PositiveRiccatiSolverLRCF,
+    RiccatiSolver,
+    RiccatiSolverLRCF,
+)
+from pymor.solvers.matrix.utils import _chol
 
 
-def lyap_lrcf_solver_options():
-    """Return available Lyapunov solvers with default options for the slycot backend.
+class SlycotLyapunovSolver(LyapunovSolver):
+    """Compute the dense solution of a |LyapunovEquation| using slycot.
 
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
-
-
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
-
-    for a general description.
-
-    This function uses `slycot.sb03md` (if `E is None`) and `slycot.sg03ad` (if `E is not None`),
-    which are dense solvers based on the Bartels-Stewart algorithm. Therefore, we assume A and E can
-    be converted to |NumPy arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
-    `B.to_numpy` is implemented.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    trans
-        Whether the first |Operator| in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
-    """
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
-
-    if options['type'] == 'slycot_bartels-stewart':
-        X = solve_lyap_dense(to_matrix(A, format='dense'),
-                             to_matrix(E, format='dense') if E else None,
-                             B.to_numpy() if not trans else B.to_numpy().T,
-                             trans=trans, cont_time=cont_time, options=options)
-        Z = _chol(X)
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
-
-    return A.source.from_numpy(Z)
-
-
-def lyap_dense_solver_options():
-    """Return available Lyapunov solvers with default options for the slycot backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
-
-
-def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute the solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
-
-    for a general description.
-
-    This function uses `slycot.sb03md` (if `E is None`) and `slycot.sg03ad` (if `E is not None`),
+    Uses `slycot.sb03md57` (if E is `None`) or `slycot.sg03ad` (if E is not `None`),
     which are based on the Bartels-Stewart algorithm.
 
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    trans
-        Whether the first matrix in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Lyapunov equation solution as a |NumPy array|.
+    This solver has no tunable parameters.
     """
-    _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
 
-    if options['type'] == 'slycot_bartels-stewart':
+    def _solve(self, equation):
+        A, E, B = equation._dense_args()
+        trans = equation.trans
+        cont_time = equation.cont_time
+
         n = A.shape[0]
         C = -B.dot(B.T) if not trans else -B.T.dot(B)
         trana = 'T' if not trans else 'N'
@@ -144,174 +56,146 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
                                                                      Q, Z, C)
             _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
         X /= scale
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
-
-    return X
+        return X
 
 
-def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a Riccati equation.
+class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |LyapunovEquation| using slycot.
 
-    See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a
-    general description.
+    Computes the dense solution :math:`X` with :class:`SlycotLyapunovSolver` and
+    factorizes it.
 
-    This function uses `slycot.sb02md` (if `E is None and S is None`) which is based on
-    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or
-    `slycot.sg02ad` (if `E is not None`) which are both based on
-    the method of deflating subspaces.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    C
-        The matrix C as a 2D |NumPy array|.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The matrix S as a 2D |NumPy array| or `None`.
-    trans
-        Whether the first matrix in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Riccati equation solution as a |NumPy array|.
+    This solver has no tunable parameters.
     """
-    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
 
-    if options['type'] != 'slycot':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+    def _solve(self, equation):
+        X = SlycotLyapunovSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))
 
-    dico = 'C'
-    n = A.shape[0]
-    if E is not None:
-        jobb = 'B'
-        fact = 'C'
-        uplo = 'U'
-        jobl = 'Z' if S is None else 'N'
-        scal = 'N'
-        sort = 'S'
-        acc = 'R'
-        m = C.shape[0] if not trans else B.shape[1]
-        p = B.shape[1] if not trans else C.shape[0]
-        if R is None:
-            R = np.eye(m)
-        if S is None:
-            S = np.empty((n, m))
-        elif not trans:
-            S = S.T
-        if not trans:
-            A = A.T
-            E = E.T
-            B, C = C.T, B.T
-        out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                            n, m, p,
-                            A, E, B, C, R, S)
-        X = out[1]
-        rcond = out[0]
-        _ricc_rcond_check('slycot.sg02ad', rcond)
-    elif S is not None:
-        m = C.shape[0] if not trans else B.shape[1]
-        p = B.shape[1] if not trans else C.shape[0]
-        if R is None:
-            R = np.eye(m)
-        else:
-            R = R.copy()  # fix overwrite issue (#2200)
-        S = S.copy()  # fix overwrite issue (#2200)
-        if trans:
-            C = C.copy()  # fix overwrite issue (#2200)
-            X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
-        else:
-            B = B.copy()  # fix overwrite issue (#2200)
-            X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S.T, fact='C')[:2]
-        _ricc_rcond_check('slycot.sb02od', rcond)
-    else:
-        if trans:
+
+class SlycotRiccatiSolver(RiccatiSolver):
+    """Compute the dense solution of a |RiccatiEquation| using slycot.
+
+    Uses `slycot.sb02md` (if E is `None` and S is `None`), which is based on the Schur
+    vector approach, or `slycot.sb02od` (if E is `None` and S is not `None`) or
+    `slycot.sg02ad` (if E is not `None`), which are both based on the method of
+    deflating subspaces.
+
+    This solver has no tunable parameters.
+    """
+
+    def _solve(self, equation):
+        A, E, B, C, R, S = equation._dense_args()
+        trans = equation.trans
+
+        dico = 'C'
+        n = A.shape[0]
+        if E is not None:
+            jobb = 'B'
+            fact = 'C'
+            uplo = 'U'
+            jobl = 'Z' if S is None else 'N'
+            scal = 'N'
+            sort = 'S'
+            acc = 'R'
+            m = C.shape[0] if not trans else B.shape[1]
+            p = B.shape[1] if not trans else C.shape[0]
             if R is None:
-                G = B @ B.T
-            else:
-                G = B @ spla.solve(R, B.T)
-            Q = C.T @ C
-            X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-        else:
+                R = np.eye(m)
+            if S is None:
+                S = np.empty((n, m))
+            elif not trans:
+                S = S.T
+            if not trans:
+                A = A.T
+                E = E.T
+                B, C = C.T, B.T
+            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                n, m, p,
+                                A, E, B, C, R, S)
+            X = out[1]
+            rcond = out[0]
+            _ricc_rcond_check('slycot.sg02ad', rcond)
+        elif S is not None:
+            m = C.shape[0] if not trans else B.shape[1]
+            p = B.shape[1] if not trans else C.shape[0]
             if R is None:
-                G = C.T @ C
+                R = np.eye(m)
             else:
-                G = C.T @ spla.solve(R, C)
-            Q = B @ B.T
-            X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
-        _ricc_rcond_check('slycot.sb02md', rcond)
+                R = R.copy()  # fix overwrite issue (#2200)
+            S = S.copy()  # fix overwrite issue (#2200)
+            if trans:
+                C = C.copy()  # fix overwrite issue (#2200)
+                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
+            else:
+                B = B.copy()  # fix overwrite issue (#2200)
+                X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S.T, fact='C')[:2]
+            _ricc_rcond_check('slycot.sb02od', rcond)
+        else:
+            if trans:
+                if R is None:
+                    G = B @ B.T
+                else:
+                    G = B @ spla.solve(R, B.T)
+                Q = C.T @ C
+                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+            else:
+                if R is None:
+                    G = C.T @ C
+                else:
+                    G = C.T @ spla.solve(R, C)
+                Q = B @ B.T
+                X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
+            _ricc_rcond_check('slycot.sb02md', rcond)
 
-    return X
+        return X
 
 
-def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute the solution of a Riccati equation.
+class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |RiccatiEquation| using slycot.
 
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a
-    general description.
+    Computes the dense solution :math:`X` with :class:`SlycotRiccatiSolver` and
+    factorizes it.
 
-    This function uses `slycot.sb02md` (if `E is None and S is None`) which is based on
-    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or
-    `slycot.sg02ad` (if `E is not None`) which are both based on
-    the method of deflating subspaces.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    C
-        The matrix C as a 2D |NumPy array|.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The matrix S as a 2D |NumPy array| or `None`.
-    trans
-        Whether the first matrix in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Riccati equation solution as a |NumPy array|.
+    This solver has no tunable parameters.
     """
-    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
 
-    if options['type'] != 'slycot':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(np.shape(C)[0] if not trans else np.shape(B)[1])
-    return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
+    def _solve(self, equation):
+        X = SlycotRiccatiSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))
 
 
-def ricc_dense_solver_options():
-    """Return available Riccati solvers with default options for the slycot backend.
+class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
+    """Compute the dense solution of a |PositiveRiccatiEquation| using slycot.
 
-    Returns
-    -------
-    A dict of available solvers with default solver options.
+    The positive Riccati equation differs from the |RiccatiEquation| only in the sign of
+    the quadratic term, so it is solved by :class:`SlycotRiccatiSolver` with :math:`R`
+    negated.  When :math:`R` is `None` it is materialized as the identity first --
+    passing `None` on would let the ordinary Riccati solver default to :math:`+I`.
+
+    This solver has no tunable parameters.
     """
-    return {'slycot': {'type': 'slycot'}}
+
+    def _solve(self, equation):
+        R = equation.R
+        if R is None:
+            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
+        temp_equation = equation.with_(R=-R)
+        return SlycotRiccatiSolver()._solve(temp_equation)
+
+
+class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
+    r"""Compute a low-rank Cholesky factor of a |PositiveRiccatiEquation| using slycot.
+
+    Computes the dense solution :math:`X` with :class:`SlycotPositiveRiccatiSolver` and
+    factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`.
+
+    This solver has no tunable parameters.
+    """
+
+    def _solve(self, equation):
+        X = SlycotPositiveRiccatiSolver().solve(equation)
+        return equation.A.source.from_numpy(_chol(X))
 
 
 def _solve_check(dtype, solver, sep, ferr):
@@ -321,126 +205,9 @@ def _solve_check(dtype, solver, sep, ferr):
                        f'Result may not be accurate.')
 
 
-def ricc_lrcf_solver_options():
-    """Return available Riccati solvers with default options for the slycot backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'slycot': {'type': 'slycot'}}
-
-
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
-    general description.
-
-    This function uses `slycot.sb02md` (if E is `None`) or
-    `slycot.sg03ad` (if E is not `None`), which are dense solvers.
-    Therefore, we assume all |Operators| and |VectorArrays| can be
-    converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
-    """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
-    if options['type'] != 'slycot':
-        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
-
-    A_source = A.source
-    A = to_matrix(A, format='dense')
-    E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy()
-    C = C.to_numpy().T
-    if S is not None:
-        S = S.to_numpy().T if not trans else S.to_numpy()
-
-    X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
-
-    return A_source.from_numpy(_chol(X))
-
 
 def _ricc_rcond_check(solver, rcond):
     if rcond < np.finfo(np.float64).eps:
         logger = getLogger(solver)
         logger.warning(f'Estimated reciprocal condition number is small (rcond={rcond:e}). '
                        f'Result may not be accurate.')
-
-
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a positive Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
-    general description.
-
-    This function uses `slycot.sb02md` (if E is `None`) or
-    `slycot.sg03ad` (if E is not `None`), which are dense solvers.
-    Therefore, we assume all |Operators| and |VectorArrays| can be
-    converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the positive Riccati
-        equation is transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the positive Riccati equation
-        solution, |VectorArray| from `A.source`.
-    """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
-    if options['type'] != 'slycot':
-        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
