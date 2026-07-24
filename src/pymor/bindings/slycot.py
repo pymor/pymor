@@ -69,7 +69,7 @@ class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotLyapunovSolver()._solve(equation)
+        X = SlycotLyapunovSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -161,7 +161,7 @@ class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
     """
 
     def _solve(self, equation):
-        X = SlycotRiccatiSolver()._solve(equation)
+        X = SlycotRiccatiSolver().solve(equation)
         return equation.A.source.from_numpy(_chol(X))
 
 
@@ -181,7 +181,7 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
         if R is None:
             R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
         temp_equation = equation.with_(R=-R)
-        return SlycotRiccatiSolver()._solve(temp_equation)
+        return SlycotRiccatiSolver().solve(temp_equation)
 
 
 class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
