@@ -11,7 +11,7 @@ import scipy.sparse as sps
 
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.solvers.matrix.equations import LyapunovEquation
+from pymor.solvers.matrix_equations.equations import LyapunovEquation
 
 pytestmark = pytest.mark.builtin
 
@@ -150,7 +150,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
 
     if backend == 'lradi':
-        from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
+        from pymor.solvers.matrix_equations.lradi import LradiLyapunovSolverLRCF
         solver =  LradiLyapunovSolverLRCF()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolverLRCF

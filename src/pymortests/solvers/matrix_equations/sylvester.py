@@ -8,7 +8,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.solvers.matrix.equations import SylvesterEquation
+from pymor.solvers.matrix_equations.equations import SylvesterEquation
 
 pytestmark = pytest.mark.builtin
 

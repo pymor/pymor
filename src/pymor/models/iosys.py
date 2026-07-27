@@ -39,9 +39,9 @@ from pymor.operators.constructions import (
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
 from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
-from pymor.solvers.matrix.default import MatrixEquationSolvers
-from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
-from pymor.solvers.matrix.utils import _chol
+from pymor.solvers.matrix_equations.default import MatrixEquationSolvers
+from pymor.solvers.matrix_equations.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
+from pymor.solvers.matrix_equations.utils import _chol
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -110,8 +110,8 @@ class LTIModel(Model):
         `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     matrix_equation_solvers
-        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-        default matrix equation solvers are used.
+        A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+        in which case default matrix equation solvers are used.
     shifted_system_solver
         The |Solver| for the shifted systems arising in transfer function evaluation.
     ast_pole_data
@@ -297,8 +297,8 @@ class LTIModel(Model):
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -438,8 +438,8 @@ class LTIModel(Model):
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -535,8 +535,8 @@ class LTIModel(Model):
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -626,8 +626,8 @@ class LTIModel(Model):
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -1654,8 +1654,8 @@ class PHLTIModel(LTIModel):
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     matrix_equation_solvers
-        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-        default matrix equation solvers are used.
+        A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+        in which case default matrix equation solvers are used.
     shifted_system_solver
         The |Solver| for the shifted systems arising in transfer function evaluation.
     name
@@ -1860,8 +1860,8 @@ class PHLTIModel(LTIModel):
             The number of returned vectors of the solution trajectory. If `None`, each
             intermediate vector that is calculated is returned.
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         shifted_system_solver
             The |Solver| for the shifted systems arising in transfer function evaluation.
         error_estimator
@@ -2035,8 +2035,8 @@ class SecondOrderModel(Model):
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     matrix_equation_solvers
-        A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-        default matrix equation solvers are used.
+        A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+        in which case default matrix equation solvers are used.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2188,8 +2188,8 @@ class SecondOrderModel(Model):
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         error_estimator
             An error estimator for the problem. This can be any object with an
             `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2288,8 +2288,8 @@ class SecondOrderModel(Model):
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         matrix_equation_solvers
-            A :class:`~pymor.solvers.matrix.default.MatrixEquationSolvers` or `None`, in which case
-            default matrix equation solvers are used.
+            A :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
         error_estimator
             An error estimator for the problem. This can be any object with an
             `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an

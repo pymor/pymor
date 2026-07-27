@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
-from pymor.solvers.matrix.interface import LyapunovSolverLRCF
+from pymor.solvers.matrix_equations.interface import LyapunovSolverLRCF
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -61,7 +61,7 @@ class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
         if not cont_time:
             raise NotImplementedError
 
-        logger = getLogger('pymor.solvers.matrix.lradi.solve_lyap_lrcf')
+        logger = getLogger('pymor.solvers.matrix_equations.lradi.solve_lyap_lrcf')
 
         if self.lradi_shifts == 'projection_shifts':
             init_shifts = projection_shifts_init

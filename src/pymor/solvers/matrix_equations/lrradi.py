@@ -9,7 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
-from pymor.solvers.matrix.interface import RiccatiSolverLRCF
+from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -51,7 +51,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         if S is not None:
             raise NotImplementedError
 
-        logger = getLogger('pymor.solvers.matrix.lrradi.solve_ricc_lrcf')
+        logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lrcf')
 
         if self.lrradi_shifts == 'hamiltonian_shifts':
             init_shifts = hamiltonian_shifts_init

@@ -6,7 +6,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interface import Operator
-from pymor.solvers.matrix.interface import SylvesterSolver
+from pymor.solvers.matrix_equations.interface import SylvesterSolver
 
 
 class SylvesterSchurSolver(SylvesterSolver):

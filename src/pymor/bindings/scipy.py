@@ -23,7 +23,7 @@ from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.solvers.interface import Solver
-from pymor.solvers.matrix.interface import (
+from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
     LyapunovSolverLRCF,
     PositiveRiccatiSolver,
@@ -31,7 +31,7 @@ from pymor.solvers.matrix.interface import (
     RiccatiSolver,
     RiccatiSolverLRCF,
 )
-from pymor.solvers.matrix.utils import (
+from pymor.solvers.matrix_equations.utils import (
     _chol,
 )
 from pymor.tools.weakrefcache import WeakRefCache

@@ -12,7 +12,7 @@ import scipy.linalg as spla
 import slycot
 
 from pymor.core.logger import getLogger
-from pymor.solvers.matrix.interface import (
+from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
     LyapunovSolverLRCF,
     PositiveRiccatiSolver,
@@ -20,7 +20,7 @@ from pymor.solvers.matrix.interface import (
     RiccatiSolver,
     RiccatiSolverLRCF,
 )
-from pymor.solvers.matrix.utils import _chol
+from pymor.solvers.matrix_equations.utils import _chol
 
 
 class SlycotLyapunovSolver(LyapunovSolver):

@@ -77,16 +77,16 @@ class LyapunovEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
-        from pymor.solvers.matrix.default import DefaultLyapunovSolver
-        from pymor.solvers.matrix.interface import LyapunovSolver
+        from pymor.solvers.matrix_equations.default import DefaultLyapunovSolver
+        from pymor.solvers.matrix_equations.interface import LyapunovSolver
         solver = DefaultLyapunovSolver() if solver is None else solver
         assert isinstance(solver, LyapunovSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix.default import DefaultLyapunovSolverLRCF
-        from pymor.solvers.matrix.interface import LyapunovSolverLRCF
+        from pymor.solvers.matrix_equations.default import DefaultLyapunovSolverLRCF
+        from pymor.solvers.matrix_equations.interface import LyapunovSolverLRCF
         solver = DefaultLyapunovSolverLRCF() if solver is None else solver
         assert isinstance(solver, LyapunovSolverLRCF)
         return solver.solve(self)
@@ -179,16 +179,16 @@ class RiccatiEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
-        from pymor.solvers.matrix.default import DefaultRiccatiSolver
-        from pymor.solvers.matrix.interface import RiccatiSolver
+        from pymor.solvers.matrix_equations.default import DefaultRiccatiSolver
+        from pymor.solvers.matrix_equations.interface import RiccatiSolver
         solver = DefaultRiccatiSolver() if solver is None else solver
         assert isinstance(solver, RiccatiSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix.default import DefaultRiccatiSolverLRCF
-        from pymor.solvers.matrix.interface import RiccatiSolverLRCF
+        from pymor.solvers.matrix_equations.default import DefaultRiccatiSolverLRCF
+        from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
         solver = DefaultRiccatiSolverLRCF() if solver is None else solver
         assert isinstance(solver, RiccatiSolverLRCF)
         return solver.solve(self)
@@ -282,16 +282,16 @@ class PositiveRiccatiEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
-        from pymor.solvers.matrix.default import DefaultPositiveRiccatiSolver
-        from pymor.solvers.matrix.interface import PositiveRiccatiSolver
+        from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolver
+        from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolver
         solver = DefaultPositiveRiccatiSolver() if solver is None else solver
         assert isinstance(solver, PositiveRiccatiSolver)
         return solver.solve(self)
 
     def solve_lrcf(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix.default import DefaultPositiveRiccatiSolverLRCF
-        from pymor.solvers.matrix.interface import PositiveRiccatiSolverLRCF
+        from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolverLRCF
+        from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLRCF
         solver = DefaultPositiveRiccatiSolverLRCF() if solver is None else solver
         assert isinstance(solver, PositiveRiccatiSolverLRCF)
         return solver.solve(self)
@@ -373,8 +373,8 @@ class SylvesterEquation(ImmutableObject):
 
     def solve(self, solver=None):
         r"""Compute the solution :math:`V` or :math:`W` or both as |VectorArrays|."""
-        from pymor.solvers.matrix.default import DefaultSylvesterSolver
-        from pymor.solvers.matrix.interface import SylvesterSolver
+        from pymor.solvers.matrix_equations.default import DefaultSylvesterSolver
+        from pymor.solvers.matrix_equations.interface import SylvesterSolver
         solver = DefaultSylvesterSolver() if solver is None else solver
         assert isinstance(solver, SylvesterSolver)
         return solver.solve(self)

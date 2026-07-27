@@ -5,7 +5,7 @@
 
 from pymor.core.base import ImmutableObject
 from pymor.core.config import config
-from pymor.solvers.matrix.interface import (
+from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
     LyapunovSolverLRCF,
     PositiveRiccatiSolver,
@@ -14,7 +14,7 @@ from pymor.solvers.matrix.interface import (
     RiccatiSolverLRCF,
     SylvesterSolver,
 )
-from pymor.solvers.matrix.utils import mat_eqn_sparse_min_size
+from pymor.solvers.matrix_equations.utils import mat_eqn_sparse_min_size
 
 
 class DefaultLyapunovSolver(LyapunovSolver):
@@ -42,12 +42,13 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
     A solver backend is chosen based on availability in the following order:
 
         - for sparse, continous-time problems (minimum size specified by
-          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
+          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-          1. `lradi` (see :func:`pymor.solvers.matrix.lradi.LradiLyapunovSolverLRCF`),
+          1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LradiLyapunovSolverLRCF`),
 
         - for dense problems (smaller than
-          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`) or discrete-time problems
+          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+          or discrete-time problems
 
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotLyapunovSolverLRCF`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
@@ -66,7 +67,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
-            from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
+            from pymor.solvers.matrix_equations.lradi import LradiLyapunovSolverLRCF
             solver = LradiLyapunovSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
@@ -104,12 +105,12 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     A solver backend, if not provided, is chosen based in the following order:
 
         - for sparse problems (minimum size specified by
-          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
+          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-          1. `lrradi` (see :class:`pymor.solvers.matrix.lrradi.LrradiRiccatiSolverLRCF`),
+          1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LrradiRiccatiSolverLRCF`),
 
         - for dense problems (smaller than
-          :func:`~pymor.solvers.matrix.utils.mat_eqn_sparse_min_size`)
+          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLRCF`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
@@ -122,7 +123,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     def _solve(self, equation):
         backend = self._auto_backend(equation)
         if backend == 'lrradi':
-            from pymor.solvers.matrix.lrradi import LrradiRiccatiSolverLRCF
+            from pymor.solvers.matrix_equations.lrradi import LrradiRiccatiSolverLRCF
             solver = LrradiRiccatiSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
@@ -181,12 +182,12 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 class DefaultSylvesterSolver(SylvesterSolver):
     r"""Default |SylvesterSolver|.
 
-    As solver backend the :class:`pymor.solvers.matrix.sylvester.SylvesterSchurSolver`
+    As solver backend the :class:`pymor.solvers.matrix_equations.sylvester.SylvesterSchurSolver`
     is choosen.
     """
 
     def _solve(self, equation):
-        from pymor.solvers.matrix.sylvester import SylvesterSchurSolver
+        from pymor.solvers.matrix_equations.sylvester import SylvesterSchurSolver
         solver = SylvesterSchurSolver()
 
         return solver.solve(equation)

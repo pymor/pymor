@@ -3,7 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.base import ImmutableObject
-from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation, SylvesterEquation
+from pymor.solvers.matrix_equations.equations import (
+    LyapunovEquation,
+    PositiveRiccatiEquation,
+    RiccatiEquation,
+    SylvesterEquation,
+)
 
 
 class LyapunovSolver(ImmutableObject):

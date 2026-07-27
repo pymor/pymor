@@ -10,8 +10,8 @@ from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
-from pymor.solvers.matrix.equations import LyapunovEquation
-from pymor.solvers.matrix.utils import _chol
+from pymor.solvers.matrix_equations.equations import LyapunovEquation
+from pymor.solvers.matrix_equations.utils import _chol
 
 
 class SpectralFactorReductor(BasicObject):

@@ -14,8 +14,8 @@ from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
-from pymor.solvers.matrix.default import MatrixEquationSolvers
-from pymor.solvers.matrix.lradi import LradiLyapunovSolverLRCF
+from pymor.solvers.matrix_equations.default import MatrixEquationSolvers
+from pymor.solvers.matrix_equations.lradi import LradiLyapunovSolverLRCF
 
 
 def fom_properties(fom, w, stable_lti=True):
@@ -307,7 +307,7 @@ def main(
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.solvers.matrix.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.solvers.matrix_equations.lradi.solve_lyap_lrcf': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
     })
     plt.rcParams['axes.grid'] = True

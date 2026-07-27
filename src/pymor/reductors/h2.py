@@ -19,8 +19,8 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
-from pymor.solvers.matrix.equations import RiccatiEquation, SylvesterEquation
-from pymor.solvers.matrix.sylvester import SylvesterSchurSolver
+from pymor.solvers.matrix_equations.equations import RiccatiEquation, SylvesterEquation
+from pymor.solvers.matrix_equations.sylvester import SylvesterSchurSolver
 from pymor.tools.random import new_rng
 
 
