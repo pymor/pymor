@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.base import ImmutableObject
-from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
+from pymor.solvers.matrix.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation, SylvesterEquation
 
 
 class LyapunovSolver(ImmutableObject):
@@ -43,7 +43,7 @@ class LyapunovSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `A.source`.
+            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, LyapunovEquation)
         return self._solve(equation)
@@ -89,7 +89,7 @@ class RiccatiSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `A.source`.
+            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, RiccatiEquation)
         return self._solve(equation)
@@ -135,9 +135,36 @@ class PositiveRiccatiSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `A.source`.
+            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, PositiveRiccatiEquation)
+        return self._solve(equation)
+
+    def _solve(self, equation):
+        raise NotImplementedError
+
+
+class SylvesterSolver(ImmutableObject):
+    r"""Interface for solvers computing a solution of a |SylvesterEquation|."""
+
+    def solve(self, equation):
+        r"""Solve a |SylvesterEquation|.
+
+        Parameters
+        ----------
+        equation
+            The |SylvesterEquation| to solve.
+
+        Returns
+        -------
+        V
+            Returned if `equation.B` and `equation.Br` are given, |VectorArray|
+            from `equation.A.source`.
+        W
+            Returned if `equation.C` and `equation.Cr` are given, |VectorArray|
+            from `equation.A.source`.
+        """
+        assert isinstance(equation, SylvesterEquation)
         return self._solve(equation)
 
     def _solve(self, equation):

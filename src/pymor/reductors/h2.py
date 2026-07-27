@@ -11,7 +11,6 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
-from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
@@ -20,7 +19,8 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
-from pymor.solvers.matrix.equations import RiccatiEquation
+from pymor.solvers.matrix.equations import RiccatiEquation, SylvesterEquation
+from pymor.solvers.matrix.sylvester import SylvesterSchurSolver
 from pymor.tools.random import new_rng
 
 
@@ -539,11 +539,10 @@ class TSIAReductor(GenericIRKAReductor):
             if self.fom.parametric
             else self.fom
         )
-        self.V, self.W = solve_sylv_schur(fom.A, rom.A,
-                                          E=fom.E, Er=rom.E,
-                                          B=fom.B, Br=rom.B,
-                                          C=fom.C, Cr=rom.C,
-                                          shifted_system_solver=fom.shifted_system_solver)
+
+        equation = SylvesterEquation(fom.A, rom.A, E=fom.E, Er=rom.E, B=fom.B, Br=rom.B, C=fom.C, Cr=rom.C)
+        self.V, self.W = equation.solve(solver=SylvesterSchurSolver(shifted_system_solver=fom.shifted_system_solver))
+
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
             gram_schmidt(self.W, atol=0, rtol=0, copy=False)

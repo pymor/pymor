@@ -5,6 +5,7 @@
 import numpy as np
 
 from pymor.core.base import ImmutableObject
+from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
@@ -308,6 +309,81 @@ class PositiveRiccatiEquation(ImmutableObject):
         _check_riccati_dense_args(A, E, B, C, self.R, S, trans=self.trans)
 
         return A, E, B, C, self.R, S
+
+
+class SylvesterEquation(ImmutableObject):
+    r"""A |SylvesterEquation|.
+
+    Defines the |SylvesterEquation|
+
+    .. math::
+        A V E_r^T + E V A_r^T + B B_r^T = 0
+
+    or
+
+    .. math::
+        A^T W E_r + E^T W A_r + C^T C_r = 0
+
+    or both using (in case B, Br, C and Cr are given.
+
+    Parameters
+    ----------
+    A
+        Real |Operator|.
+    Ar
+        Real |Operator|.
+        It is converted into a |NumPy array| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    E
+        Real |Operator| or `None` (then assumed to be the identity).
+    Er
+        Real |Operator| or `None` (then assumed to be the identity).
+        It is converted into a |NumPy array| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    B
+        Real |Operator| or `None`.
+    Br
+        Real |Operator| or `None`.
+        It is assumed that `Br.range.from_numpy` is implemented.
+    C
+        Real |Operator| or `None`.
+    Cr
+        Real |Operator| or `None`.
+        It is assumed that `Cr.source.from_numpy` is implemented.
+    """
+
+    def __init__(self, A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None, shifted_system_solver=None, name=None):
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert A.source == A.range
+        assert isinstance(Ar, Operator)
+        assert Ar.linear
+        assert Ar.source == Ar.range
+
+        assert E is None or isinstance(E, Operator) and E.linear and E.source == E.range == A.source
+        if E is None:
+            E = IdentityOperator(A.source)
+        assert Er is None or isinstance(Er, Operator) and Er.linear and Er.source == Er.range == Ar.source
+        self.__auto_init(locals())
+
+    @property
+    def dim(self):
+        """Dimension of the unknown :math:`V` and :math:`W`."""
+        return self.A.source.dim
+
+    def solve(self, solver=None):
+        r"""Compute the solution :math:`V` or :math:`W` or both as |VectorArrays|."""
+        from pymor.solvers.matrix.default import DefaultSylvesterSolver
+        from pymor.solvers.matrix.interface import SylvesterSolver
+        solver = DefaultSylvesterSolver() if solver is None else solver
+        assert isinstance(solver, SylvesterSolver)
+        return solver.solve(self)
+
+    def solve_lrcf(self, solver=None):
+        raise NotImplementedError
+
+    def _dense_args(self):
+        raise NotImplementedError
 
 
 def _check_lyapunov_dense_args(A, E, B, trans):

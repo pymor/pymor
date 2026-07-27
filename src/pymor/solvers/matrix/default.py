@@ -12,6 +12,7 @@ from pymor.solvers.matrix.interface import (
     PositiveRiccatiSolverLRCF,
     RiccatiSolver,
     RiccatiSolverLRCF,
+    SylvesterSolver,
 )
 from pymor.solvers.matrix.utils import mat_eqn_sparse_min_size
 
@@ -163,7 +164,7 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLRCF`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLRCF`).
 
-        Currently, only dense solvers are supported.
+    Currently, only dense solvers are supported.
     """
 
     def _solve(self, equation):
@@ -173,6 +174,20 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
         else:
             from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
             solver = ScipyPositiveRiccatiSolverLRCF()
+
+        return solver.solve(equation)
+
+
+class DefaultSylvesterSolver(SylvesterSolver):
+    r"""Default |SylvesterSolver|.
+
+    As solver backend the :class:`pymor.solvers.matrix.sylvester.SylvesterSchurSolver`
+    is choosen.
+    """
+
+    def _solve(self, equation):
+        from pymor.solvers.matrix.sylvester import SylvesterSchurSolver
+        solver = SylvesterSchurSolver()
 
         return solver.solve(equation)
 
@@ -196,10 +211,12 @@ class MatrixEquationSolvers(ImmutableObject):
     positive_riccati_lrcf
         A |PositiveRiccatiSolverLRCF| or `None`, then
         :class:`DefaultPositiveRiccatiSolverLRCF` is used.
+    sylvester
+        A |SylvesterSolver| or `None`, then :class:`DefaultSylvesterSolver` is used.
     """
 
     def __init__(self, lyapunov=None, lyapunov_lrcf=None, riccati=None, riccati_lrcf=None,
-                 positive_riccati=None, positive_riccati_lrcf=None):
+                 positive_riccati=None, positive_riccati_lrcf=None, sylvester=None):
 
         lyapunov = lyapunov or DefaultLyapunovSolver()
         lyapunov_lrcf = lyapunov_lrcf or DefaultLyapunovSolverLRCF()
@@ -207,6 +224,7 @@ class MatrixEquationSolvers(ImmutableObject):
         riccati_lrcf = riccati_lrcf or DefaultRiccatiSolverLRCF()
         positive_riccati = positive_riccati or DefaultPositiveRiccatiSolver()
         positive_riccati_lrcf = positive_riccati_lrcf or DefaultPositiveRiccatiSolverLRCF()
+        sylvester = sylvester or DefaultSylvesterSolver()
 
         assert isinstance(lyapunov, LyapunovSolver)
         assert isinstance(lyapunov_lrcf, LyapunovSolverLRCF)
@@ -214,6 +232,7 @@ class MatrixEquationSolvers(ImmutableObject):
         assert isinstance(riccati_lrcf, RiccatiSolverLRCF)
         assert isinstance(positive_riccati, PositiveRiccatiSolver)
         assert isinstance(positive_riccati_lrcf, PositiveRiccatiSolverLRCF)
+        assert isinstance(sylvester, SylvesterSolver)
 
         self.__auto_init(locals())
 
