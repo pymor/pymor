@@ -15,7 +15,7 @@ def mat_eqn_sparse_min_size(value=1000):
     return value
 
 
-def _chol(A):
+def chol(A):
     """Cholesky decomposition.
 
     This implementation uses SVD to compute the Cholesky factor (can be used for singular matrices).

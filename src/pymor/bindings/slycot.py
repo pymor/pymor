@@ -20,7 +20,7 @@ from pymor.solvers.matrix_equations.interface import (
     RiccatiSolver,
     RiccatiSolverLRCF,
 )
-from pymor.solvers.matrix_equations.utils import _chol
+from pymor.solvers.matrix_equations.utils import chol
 
 
 class SlycotLyapunovSolver(LyapunovSolver):
@@ -70,7 +70,7 @@ class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
 
     def _solve(self, equation):
         X = SlycotLyapunovSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))
 
 
 class SlycotRiccatiSolver(RiccatiSolver):
@@ -162,7 +162,7 @@ class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
 
     def _solve(self, equation):
         X = SlycotRiccatiSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))
 
 
 class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
@@ -195,7 +195,7 @@ class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 
     def _solve(self, equation):
         X = SlycotPositiveRiccatiSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))
 
 
 def _solve_check(dtype, solver, sep, ferr):

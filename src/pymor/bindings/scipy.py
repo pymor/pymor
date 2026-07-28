@@ -31,9 +31,7 @@ from pymor.solvers.matrix_equations.interface import (
     RiccatiSolver,
     RiccatiSolverLRCF,
 )
-from pymor.solvers.matrix_equations.utils import (
-    _chol,
-)
+from pymor.solvers.matrix_equations.utils import chol
 from pymor.tools.weakrefcache import WeakRefCache
 
 if config.HAVE_UMFPACK:
@@ -393,7 +391,7 @@ class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
 
     def _solve(self, equation):
         X = ScipyLyapunovSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))
 
 
 class ScipyRiccatiSolver(RiccatiSolver):
@@ -431,7 +429,7 @@ class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
 
     def _solve(self, equation):
         X = ScipyRiccatiSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))
 
 
 class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
@@ -464,4 +462,4 @@ class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 
     def _solve(self, equation):
         X = ScipyPositiveRiccatiSolver().solve(equation)
-        return equation.A.source.from_numpy(_chol(X))
+        return equation.A.source.from_numpy(chol(X))

@@ -11,7 +11,7 @@ from pymor.operators.constructions import ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
 from pymor.solvers.matrix_equations.equations import LyapunovEquation
-from pymor.solvers.matrix_equations.utils import _chol
+from pymor.solvers.matrix_equations.utils import chol
 
 
 class SpectralFactorReductor(BasicObject):
@@ -106,7 +106,7 @@ class SpectralFactorReductor(BasicObject):
 
         # Compute Cholesky-like factorization of W(X)
         A, B, C, D, E = self.fom.to_abcde_matrices()
-        M = _chol(D + D.T).T
+        M = chol(D + D.T).T
         L = spla.solve(M.T, C - B.T @ X if E is None else C - B.T @ X @ E)
 
         if compute_errors:

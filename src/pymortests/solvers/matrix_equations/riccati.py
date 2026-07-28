@@ -11,7 +11,7 @@ import scipy.sparse as sps
 
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix_equations.equations import PositiveRiccatiEquation, RiccatiEquation
-from pymor.solvers.matrix_equations.utils import _chol
+from pymor.solvers.matrix_equations.utils import chol
 from pymortests.solvers.matrix_equations.lyapunov import (
     conv_diff_1d_fd,
     conv_diff_1d_fem,
@@ -139,7 +139,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 
     X = equation.solve(solver=solver)
 
-    assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
+    assert relative_residual(A, E, B, C, R, S, chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -215,7 +215,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 
     if not with_R:
         R = np.eye(p if not trans else m)
-    assert relative_residual(A, E, B, C, -R, S, _chol(X), trans) < 1e-8
+    assert relative_residual(A, E, B, C, -R, S, chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)

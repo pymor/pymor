@@ -41,7 +41,7 @@ from pymor.parameters.base import Mu, Parameters
 from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.solvers.matrix_equations.default import MatrixEquationSolvers
 from pymor.solvers.matrix_equations.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
-from pymor.solvers.matrix_equations.utils import _chol
+from pymor.solvers.matrix_equations.utils import chol
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -960,9 +960,9 @@ class LTIModel(Model):
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['c_dense']))
+            return self.A.source.from_numpy(chol(self.presets['c_dense']))
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['o_dense']))
+            return self.A.source.from_numpy(chol(self.presets['o_dense']))
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
             return self.presets['c_lrcf'].to_numpy() @ self.presets['c_lrcf'].to_numpy().T
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
