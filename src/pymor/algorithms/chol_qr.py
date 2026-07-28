@@ -194,12 +194,15 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
 
 def _compute_gramian_and_offset_matrix(A, offset, product):
     if isinstance(A, ListVectorArray):
-        # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
+        # due to `ListVectorArray.gramian` exploiting symmetry it is slightly faster
+        # for a |ListVectorArray| to compute `B` and `X` separately
         B = A[:offset].inner(A[offset:], product=product)
         X = A[offset:].gramian(product)
     else:
         B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
 
+    # dtypes of X and B might be different if `A` is a |ListVectorArray|
+    # due to the split up computation
     dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
     B = B.astype(dtype=dtype, copy=False)
     X = X.astype(dtype=dtype, copy=False)
