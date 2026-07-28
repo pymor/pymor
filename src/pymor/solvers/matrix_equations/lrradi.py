@@ -54,8 +54,8 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lrcf')
 
         if self.lrradi_shifts == 'hamiltonian_shifts':
-            init_shifts = hamiltonian_shifts_init
-            iteration_shifts = hamiltonian_shifts
+            init_shifts = self.hamiltonian_shifts_init
+            iteration_shifts = self.hamiltonian_shifts
         else:
             raise ValueError('Unknown lrradi shift strategy.')
 
@@ -83,7 +83,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
 
         j = 0
         j_shift = 0
-        shifts = init_shifts(A, E, B, C, self.hamiltonian_shifts_init_maxiter)
+        shifts = init_shifts(A, E, B, C)
 
         res = np.linalg.norm(RF.gramian(), ord=2)
         init_res = res
@@ -156,7 +156,7 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
             res = np.linalg.norm(RF.gramian(), ord=2)
             logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
-                shifts = iteration_shifts(A, E, B, RF, K, Z, self.hamiltonian_shifts_subspace_columns)
+                shifts = iteration_shifts(A, E, B, RF, K, Z)
                 j_shift = 0
         # transform solution to lrcf
         cf = spla.cholesky(Y)
@@ -164,44 +164,121 @@ class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
         return Z_cf
 
 
-def hamiltonian_shifts_init(A, E, B, C, init_maxiter):
-    """Compute initial shift parameters for low-rank RADI iteration.
+    def hamiltonian_shifts_init(self, A, E, B, C):
+        """Compute initial shift parameters for low-rank RADI iteration.
 
-    Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return the
-    eigenvalue of the projected Hamiltonian with the most impact on convergence as the next shift
-    parameter.
+        Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return
+        the eigenvalue of the projected Hamiltonian with the most impact on convergence as the
+        next shift parameter.
 
-    See :cite:`BBKS18`, pp. 318-321.
+        See :cite:`BBKS18`, pp. 318-321.
 
-    Parameters
-    ----------
-    A
-        The |Operator| A from the corresponding Riccati equation.
-    E
-        The |Operator| E from the corresponding Riccati equation.
-    B
-        The |VectorArray| B from the corresponding Riccati equation.
-    C
-        The |VectorArray| C from the corresponding Riccati equation.
-    init_maxiter
-        Maximum number of iterations.
+        Parameters
+        ----------
+        A
+            The |Operator| A from the corresponding Riccati equation.
+        E
+            The |Operator| E from the corresponding Riccati equation.
+        B
+            The |VectorArray| B from the corresponding Riccati equation.
+        C
+            The |VectorArray| C from the corresponding Riccati equation.
 
-    Returns
-    -------
-    shifts
-        A |NumPy array| containing a set of stable shift parameters.
-    """
-    rng = new_rng(0)
-    for _ in range(init_maxiter):
-        Q = gram_schmidt(C, atol=0, rtol=0)
+        Returns
+        -------
+        shifts
+            A |NumPy array| containing a set of stable shift parameters.
+        """
+        rng = new_rng(0)
+        for _ in range(self.hamiltonian_shifts_init_maxiter):
+            Q = gram_schmidt(C, atol=0, rtol=0)
+            Ap = A.apply2(Q, Q)
+            QB = Q.inner(B)
+            Gp = QB.dot(QB.T)
+            QR = Q.inner(C)
+            Rp = QR.dot(QR.T)
+            Hp = np.block([
+                [Ap, Gp],
+                [Rp, -Ap.T]
+            ])
+            Ep = E.apply2(Q, Q)
+            EEp = spla.block_diag(Ep, Ep.T)
+            eigvals, eigvecs = spla.eig(Hp, EEp)
+            eigpairs = zip(eigvals, eigvecs, strict=True)
+            # filter stable eigenvalues
+            eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
+            if len(eigpairs) == 0:
+                # use random subspace instead of span{C} (with same dimensions)
+                with rng:
+                    C = C.random(len(C), distribution='normal')
+                continue
+            # find shift with most impact on convergence
+            maxval = -1
+            maxind = 0
+            for i in range(len(eigpairs)):
+                eig = eigpairs[i][1]
+                y_eig = eig[-len(Q):]
+                x_eig = eig[:len(Q)]
+                Ey = Ep.T.dot(y_eig)
+                xEy = np.abs(np.dot(x_eig, Ey))
+                currval = np.linalg.norm(y_eig)**2 / xEy
+                if currval > maxval:
+                    maxval = currval
+                    maxind = i
+            shift = eigpairs[maxind][0]
+            # remove imaginary part if it is relatively small
+            if np.abs(shift.imag) / np.abs(shift) < 1e-8:
+                shift = shift.real
+            return np.array([shift])
+        raise RuntimeError('Could not generate initial shifts for low-rank RADI iteration.')
+
+
+    def hamiltonian_shifts(self, A, E, B, R, K, Z):
+        """Compute further shift parameters for low-rank RADI iteration.
+
+        Compute Galerkin projection of Hamiltonian matrix on space spanned by last few columns of
+        :math:`Z` and return the eigenvalue of the projected Hamiltonian with the most impact on
+        convergence as the next shift parameter.
+
+        See :cite:`BBKS18`, pp. 318-321.
+
+        Parameters
+        ----------
+        A
+            The |Operator| A from the corresponding Riccati equation.
+        E
+            The |Operator| E from the corresponding Riccati equation.
+        B
+            The |VectorArray| B from the corresponding Riccati equation.
+        R
+            A |VectorArray| representing the currently computed residual factor.
+        K
+            A |VectorArray| representing the currently computed iterate.
+        Z
+            A |VectorArray| representing the currently computed solution factor.
+
+        Returns
+        -------
+        shifts
+            A |NumPy array| containing a set of stable shift parameters.
+        """
+        l = self.hamiltonian_shifts_subspace_columns
+        # always use multiple of len(R) columns
+        l = max(1, l // len(R)) * len(R)
+        if len(Z) < l:
+            l = len(Z)
+
+        Q = gram_schmidt(Z[-l:], atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
+        KBp = Q.inner(K) @ Q.inner(B).T
+        AAp = Ap - KBp
         QB = Q.inner(B)
         Gp = QB.dot(QB.T)
-        QR = Q.inner(C)
+        QR = Q.inner(R)
         Rp = QR.dot(QR.T)
         Hp = np.block([
-            [Ap, Gp],
-            [Rp, -Ap.T]
+            [AAp, Gp],
+            [Rp, -AAp.T]
         ])
         Ep = E.apply2(Q, Q)
         EEp = spla.block_diag(Ep, Ep.T)
@@ -209,11 +286,6 @@ def hamiltonian_shifts_init(A, E, B, C, init_maxiter):
         eigpairs = zip(eigvals, eigvecs, strict=True)
         # filter stable eigenvalues
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
-        if len(eigpairs) == 0:
-            # use random subspace instead of span{C} (with same dimensions)
-            with rng:
-                C = C.random(len(C), distribution='normal')
-            continue
         # find shift with most impact on convergence
         maxval = -1
         maxind = 0
@@ -232,79 +304,3 @@ def hamiltonian_shifts_init(A, E, B, C, init_maxiter):
         if np.abs(shift.imag) / np.abs(shift) < 1e-8:
             shift = shift.real
         return np.array([shift])
-    raise RuntimeError('Could not generate initial shifts for low-rank RADI iteration.')
-
-
-def hamiltonian_shifts(A, E, B, R, K, Z, subspace_columns):
-    """Compute further shift parameters for low-rank RADI iteration.
-
-    Compute Galerkin projection of Hamiltonian matrix on space spanned by last few columns of
-    :math:`Z` and return the eigenvalue of the projected Hamiltonian with the most impact on
-    convergence as the next shift parameter.
-
-    See :cite:`BBKS18`, pp. 318-321.
-
-    Parameters
-    ----------
-    A
-        The |Operator| A from the corresponding Riccati equation.
-    E
-        The |Operator| E from the corresponding Riccati equation.
-    B
-        The |VectorArray| B from the corresponding Riccati equation.
-    R
-        A |VectorArray| representing the currently computed residual factor.
-    K
-        A |VectorArray| representing the currently computed iterate.
-    Z
-        A |VectorArray| representing the currently computed solution factor.
-    subspace_columns
-        Amount of subspace columns.
-
-    Returns
-    -------
-    shifts
-        A |NumPy array| containing a set of stable shift parameters.
-    """
-    l = subspace_columns
-    # always use multiple of len(R) columns
-    l = max(1, l // len(R)) * len(R)
-    if len(Z) < l:
-        l = len(Z)
-
-    Q = gram_schmidt(Z[-l:], atol=0, rtol=0)
-    Ap = A.apply2(Q, Q)
-    KBp = Q.inner(K) @ Q.inner(B).T
-    AAp = Ap - KBp
-    QB = Q.inner(B)
-    Gp = QB.dot(QB.T)
-    QR = Q.inner(R)
-    Rp = QR.dot(QR.T)
-    Hp = np.block([
-        [AAp, Gp],
-        [Rp, -AAp.T]
-    ])
-    Ep = E.apply2(Q, Q)
-    EEp = spla.block_diag(Ep, Ep.T)
-    eigvals, eigvecs = spla.eig(Hp, EEp)
-    eigpairs = zip(eigvals, eigvecs, strict=True)
-    # filter stable eigenvalues
-    eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
-    # find shift with most impact on convergence
-    maxval = -1
-    maxind = 0
-    for i in range(len(eigpairs)):
-        eig = eigpairs[i][1]
-        y_eig = eig[-len(Q):]
-        x_eig = eig[:len(Q)]
-        Ey = Ep.T.dot(y_eig)
-        xEy = np.abs(np.dot(x_eig, Ey))
-        currval = np.linalg.norm(y_eig)**2 / xEy
-        if currval > maxval:
-            maxval = currval
-            maxind = i
-    shift = eigpairs[maxind][0]
-    # remove imaginary part if it is relatively small
-    if np.abs(shift.imag) / np.abs(shift) < 1e-8:
-        shift = shift.real
-    return np.array([shift])
