@@ -15,24 +15,28 @@ from pymor.vectorarrays.constructions import cat_arrays
 
 
 class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
-    """Compute an approximate low-rank solution of a |RiccatiEquation|.
+    r"""Compute an approximate low-rank solution of a |RiccatiEquation|.
 
     This is an implementation of Algorithm 2 in :cite:`BBKS18`.
 
     Parameters
     ----------
     lrradi_tol
-        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+        Convergence tolerance for the RADI iteration.
     lrradi_maxiter
-        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+        Maximum number of RADI steps. A real shift counts as one step, a
+        complex-conjugate shift pair as two.
     lrradi_shifts
-        See :meth:`~LrradiRiccatiSolverLRCF._solve`.
+         Strategy for computing the RADI shift parameters. Currently only
+        ``'hamiltonian_shifts'`` is supported.
     shifted_system_solver
         The |Solver| for the shifted systems.
     hamiltonian_shifts_init_maxiter
-        See :func:`hamiltonian_shifts_init`.
+        Maximum number of attempts to generate stable initial shifts before an error is raised.
+        See :meth:`hamiltonian_shifts_init`.
     hamiltonian_shifts_subspace_columns
-        See :func:`hamiltonian_shifts`.
+        Number of trailing columns of the solution factor :math:`Z` used to span the
+        Galerkin subspace for the subsequent shifts. See :meth:`hamiltonian_shifts`.
     """
 
     @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',

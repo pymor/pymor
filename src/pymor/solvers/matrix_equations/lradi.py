@@ -16,31 +16,40 @@ from pymor.vectorarrays.constructions import cat_arrays
 
 
 class LradiLyapunovSolverLRCF(LyapunovSolverLRCF):
-    """Compute a LR Cholesky factor of the solution of a |LyapunovEquation| using ADI iteration.
+    r"""Compute a LR Cholesky factor of the solution of a |LyapunovEquation| using ADI iteration.
 
     Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
     Parameters
     ----------
     lradi_tol
-        See :meth:`~LradiLyapunovSolverLRCF._solve`.
+        Convergence tolerance for the ADI iteration.
     lradi_maxiter
-        See :meth:`~LradiLyapunovSolverLRCF._solve`.
+        Maximum number of ADI steps. A real shift counts as one step, a
+        complex-conjugate shift pair as two.
     lradi_shifts
-        See :meth:`~LradiLyapunovSolverLRCF._solve`. Either 'projection_shifts'
-        or 'wachspress_shifts'.
-    projection_shifts_init_maxiter
-        See :func:`projection_shifts_init`.
-    projection_shifts_subspace_columns
-        See :func:`projection_shifts`.
-    wachspress_large_ritz_num
-        See :func:`wachspress_shifts_init`.
-    wachspress_small_ritz_num
-        See :func:`wachspress_shifts_init`.
-    wachspress_tol
-        See :func:`wachspress_shifts_init`.
+        Strategy for computing the ADI shift parameters, either
+        ``'projection_shifts'`` or ``'wachspress_shifts'``.
     shifted_system_solver
         The |Solver| for the shifted systems.
+    projection_shifts_init_maxiter
+        Maximum number of attempts to generate stable initial shifts
+        before an error is raised. See :func:`projection_shifts_init`.
+    projection_shifts_subspace_columns
+        Number of trailing iterate blocks of the current low-rank factor
+        used to span the Galerkin subspace for the subsequent shifts.
+        See :func:`projection_shifts`.
+    wachspress_large_ritz_num
+        Number of Arnoldi iterations for approximating the largest-modulus
+        eigenvalues of :math:`E^{-1} A`. See :func:`wachspress_shifts_init`.
+    wachspress_small_ritz_num
+        Number of Arnoldi iterations (applied to :math:`A^{-1} E`) for approximating
+        the smallest-modulus eigenvalues of :math:`E^{-1} A`.
+        See :func:`wachspress_shifts_init`.
+    wachspress_tol
+        Tolerance determining how many Wachspress shifts are generated.
+        See :func:`wachspress_shifts_init`.
+
     """
 
     @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'shifted_system_solver',
