@@ -13,7 +13,7 @@ class SylvesterSchurSolver(SylvesterSolver):
     r"""Computes the solution of a |SylvesterEquation|.
 
     Solves the |SylvesterEquation| by (generalized) Schur decomposition
-    (Algorithms 3 and 4 in :cite:`BKS11`), if the necessary parameters are given.
+    (Algorithms 3 and 4 in :cite:`BKS11`).
 
     Parameters
     ----------
