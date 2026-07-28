@@ -119,12 +119,12 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     if offset > 0:
         M = max(M, 1) # length of orthonormal vectors is 1
 
-    # find vectors that are to short relative to the longest vector in A
+    # find vectors that are to short relative to the longest vector in A[offset:]
     # used squared relative tolerance, since diagonal contains squared norms of vectors
     A_rem = B_rem = None
     remove = np.where(M*rtol**2 >= diag)[0]
     if len(remove) > 0:
-        logger.info(f'Removing linearly dependent vector {remove}')
+        logger.info(f'Removing linearly dependent vectors {remove}')
 
     if len(remove) == len(A[offset:]):
         del A[offset:]
