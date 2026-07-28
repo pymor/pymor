@@ -140,7 +140,6 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     iter = 1
     while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
-            X -= B.conj().T@B
             Rx = chol_kernel.apply(X)
 
             # orthogonalize
@@ -204,6 +203,8 @@ def _compute_gramian_and_offset_matrix(A, offset, product):
     dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
     B = B.astype(dtype=dtype, copy=False)
     X = X.astype(dtype=dtype, copy=False)
+
+    X -= B.conj().T@B
 
     return B, X
 
