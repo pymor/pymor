@@ -423,6 +423,8 @@ class SylvesterEquation(ImmutableObject):
         assert (C is None) == (Cr is None)
         assert C is None or C.range == Cr.range
 
+        assert not (B is None and C is None)
+
         self.__auto_init(locals())
 
     @property
