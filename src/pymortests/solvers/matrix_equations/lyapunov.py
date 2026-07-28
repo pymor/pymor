@@ -10,7 +10,6 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.core.config import config
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix_equations.equations import LyapunovEquation
 
 pytestmark = pytest.mark.builtin
@@ -143,11 +142,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B if not trans else B.T)
-
-    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
+    equation = LyapunovEquation.from_matrices(A, E, B, trans=trans)
 
     if backend == 'lradi':
         from pymor.solvers.matrix_equations.lradi import LradiLyapunovSolverLRCF
@@ -202,11 +197,7 @@ def test_disc_lrcf(n, m, with_E, trans, backend, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B if not trans else B.T)
-
-    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
+    equation = LyapunovEquation.from_matrices(A, E, B, trans=trans, cont_time=False)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
@@ -256,11 +247,7 @@ def test_cont_dense(n, m, with_E, trans, backend, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B if not trans else B.T)
-
-    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans)
+    equation = LyapunovEquation.from_matrices(A, E, B, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolver
@@ -306,11 +293,7 @@ def test_disc_dense(n, m, with_E, trans, backend, rng):
     mat_old.append(B.copy())
     mat_new.append(B)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B if not trans else B.T)
-
-    equation = LyapunovEquation(Aop, Eop, Bva, trans=trans, cont_time=False)
+    equation = LyapunovEquation.from_matrices(A, E, B, trans=trans, cont_time=False)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolver

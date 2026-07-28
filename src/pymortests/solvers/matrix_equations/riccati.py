@@ -9,7 +9,6 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.solvers.matrix_equations.equations import PositiveRiccatiEquation, RiccatiEquation
 from pymor.solvers.matrix_equations.utils import chol
 from pymortests.solvers.matrix_equations.lyapunov import (
@@ -120,13 +119,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
-
-    equation = RiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
+    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotRiccatiSolver
@@ -194,13 +187,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
-
-    equation = PositiveRiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
+    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolver
@@ -268,13 +255,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
-
-    equation = RiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
+    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'lrradi':
         from pymor.solvers.matrix_equations.lrradi import LrradiRiccatiSolverLRCF
@@ -347,13 +328,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
-
-    equation = PositiveRiccatiEquation(Aop, Eop, Bva, Cva, R, Sva, trans=trans)
+    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
