@@ -138,11 +138,7 @@ class SpectralFactorReductor(BasicObject):
         Ar, Br, Lr, Mr, Er = spectral_factor_rom.to_abcde_matrices()
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
 
-        A = spectral_factor_rom.A
-        E = spectral_factor_rom.E
-        L = spectral_factor_rom.C.as_source_array()
-
-        Xr = LyapunovEquation(A=A, E=E, B=L, trans=True, cont_time=True).solve()
+        Xr = LyapunovEquation.from_matrices(A=Ar, E=Er, B=Lr, trans=True, cont_time=True).solve()
 
         Cr = Br.T @ Xr + Mr.T @ Lr if Er is None else Br.T @ Xr @ Er + Mr.T @ Lr
 
