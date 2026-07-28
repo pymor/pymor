@@ -91,7 +91,7 @@ class LyapunovEquation(ImmutableObject):
         assert isinstance(solver, LyapunovSolverLRCF)
         return solver.solve(self)
 
-    def _dense_args(self):
+    def to_matrices(self):
         from pymor.algorithms.to_matrix import to_matrix
         A = to_matrix(self.A, format='dense')
         E = to_matrix(self.E, format='dense') if self.E is not None else None
@@ -122,7 +122,7 @@ class RiccatiEquation(ImmutableObject):
           - (E^T X B + S) R^{-1} (B^T X E + S^T)
           + C^T C = 0.
 
-    Only the continuous-time equation exists.
+    Only the continuous-time equation is supported.
 
     Parameters
     ----------
@@ -193,7 +193,7 @@ class RiccatiEquation(ImmutableObject):
         assert isinstance(solver, RiccatiSolverLRCF)
         return solver.solve(self)
 
-    def _dense_args(self):
+    def to_matrices(self):
         from pymor.algorithms.to_matrix import to_matrix
         A = to_matrix(self.A, format='dense')
         E = to_matrix(self.E, format='dense') if self.E is not None else None
@@ -296,7 +296,7 @@ class PositiveRiccatiEquation(ImmutableObject):
         assert isinstance(solver, PositiveRiccatiSolverLRCF)
         return solver.solve(self)
 
-    def _dense_args(self):
+    def to_matrices(self):
         from pymor.algorithms.to_matrix import to_matrix
         A = to_matrix(self.A, format='dense')
         E = to_matrix(self.E, format='dense') if self.E is not None else None
@@ -324,7 +324,7 @@ class SylvesterEquation(ImmutableObject):
     .. math::
         A^T W E_r + E^T W A_r + C^T C_r = 0
 
-    or both using (in case B, Br, C and Cr are given.
+    or both using (in case B, Br, C and Cr) are given.
 
     Parameters
     ----------
@@ -332,27 +332,21 @@ class SylvesterEquation(ImmutableObject):
         Real |Operator|.
     Ar
         Real |Operator|.
-        It is converted into a |NumPy array| using
-        :func:`~pymor.algorithms.to_matrix.to_matrix`.
     E
         Real |Operator| or `None` (then assumed to be the identity).
     Er
         Real |Operator| or `None` (then assumed to be the identity).
-        It is converted into a |NumPy array| using
-        :func:`~pymor.algorithms.to_matrix.to_matrix`.
     B
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
-        It is assumed that `Br.range.from_numpy` is implemented.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
-        It is assumed that `Cr.source.from_numpy` is implemented.
     """
 
-    def __init__(self, A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None, shifted_system_solver=None, name=None):
+    def __init__(self, A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None, name=None):
         assert isinstance(A, Operator)
         assert A.linear
         assert A.source == A.range
@@ -379,10 +373,7 @@ class SylvesterEquation(ImmutableObject):
         assert isinstance(solver, SylvesterSolver)
         return solver.solve(self)
 
-    def solve_lrcf(self, solver=None):
-        raise NotImplementedError
-
-    def _dense_args(self):
+    def to_matrices(self):
         raise NotImplementedError
 
 

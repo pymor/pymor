@@ -10,7 +10,7 @@ from pymor.solvers.matrix_equations.interface import SylvesterSolver
 
 
 class SylvesterSchurSolver(SylvesterSolver):
-    r"""Compuates the solution of a |SylvesterEquation|.
+    r"""Computes the solution of a |SylvesterEquation|.
 
     Solves the |SylvesterEquation| by (generalized) Schur decomposition
     (Algorithms 3 and 4 in :cite:`BKS11`), if the necessary parameters are given.

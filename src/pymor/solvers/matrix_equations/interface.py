@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.base import ImmutableObject
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.solvers.matrix_equations.equations import (
     LyapunovEquation,
     PositiveRiccatiEquation,
@@ -30,12 +30,13 @@ class LyapunovSolver(ImmutableObject):
         assert isinstance(equation, LyapunovEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class LyapunovSolverLRCF(ImmutableObject):
-    """Interface for solvers computing a low-rank Cholesky factor of a |LyapunovEquation|."""
+    """Interface for solvers computing a LR CF of the solution of a |LyapunovEquation|."""
 
     def solve(self, equation):
         """Solve a |LyapunovEquation|.
@@ -53,8 +54,9 @@ class LyapunovSolverLRCF(ImmutableObject):
         assert isinstance(equation, LyapunovEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class RiccatiSolver(ImmutableObject):
@@ -76,12 +78,13 @@ class RiccatiSolver(ImmutableObject):
         assert isinstance(equation, RiccatiEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class RiccatiSolverLRCF(ImmutableObject):
-    r"""Interface for solvers computing a low-rank Cholesky factor of a |RiccatiEquation|."""
+    r"""Interface for solvers computing a LR CF factor of the solution of a |RiccatiEquation|."""
 
     def solve(self, equation):
         """Solve a |RiccatiEquation|.
@@ -99,8 +102,9 @@ class RiccatiSolverLRCF(ImmutableObject):
         assert isinstance(equation, RiccatiEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class PositiveRiccatiSolver(ImmutableObject):
@@ -122,12 +126,13 @@ class PositiveRiccatiSolver(ImmutableObject):
         assert isinstance(equation, PositiveRiccatiEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class PositiveRiccatiSolverLRCF(ImmutableObject):
-    r"""Interface for solvers computing a LR Cholesky factor of a |PositiveRiccatiEquation|."""
+    r"""Interface for solvers computing a LR CF of the solution of a |PositiveRiccatiEquation|."""
 
     def solve(self, equation):
         """Solve a |PositiveRiccatiEquation|.
@@ -145,8 +150,9 @@ class PositiveRiccatiSolverLRCF(ImmutableObject):
         assert isinstance(equation, PositiveRiccatiEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass
 
 
 class SylvesterSolver(ImmutableObject):
@@ -172,5 +178,6 @@ class SylvesterSolver(ImmutableObject):
         assert isinstance(equation, SylvesterEquation)
         return self._solve(equation)
 
+    @abstractmethod
     def _solve(self, equation):
-        raise NotImplementedError
+        pass

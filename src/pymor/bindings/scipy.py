@@ -353,8 +353,8 @@ def matrix_astype_nocopy(matrix, dtype):
 class ScipyLyapunovSolver(LyapunovSolver):
     """Compute the solution of a |LyapunovEquation|.
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers
+    This function uses :func:`scipy.linalg.solve_continuous_lyapunov` or
+    :func:`scipy.linalg.solve_discrete_lyapunov`, which are dense solvers
     for Lyapunov equations with E=I.
 
     This solver has no tunable parameters.
@@ -365,7 +365,7 @@ class ScipyLyapunovSolver(LyapunovSolver):
     """
 
     def _solve(self, equation):
-        A, E, B = equation._dense_args()
+        A, E, B = equation.to_matrices()
         trans = equation.trans
         cont_time = equation.cont_time
 
@@ -382,7 +382,7 @@ class ScipyLyapunovSolver(LyapunovSolver):
 
 
 class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |LyapunovEquation| using SciPy.
+    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyLyapunovSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`, i.e. that
@@ -399,13 +399,13 @@ class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
 class ScipyRiccatiSolver(RiccatiSolver):
     """Compute the dense solution of a |RiccatiEquation| using SciPy.
 
-    Uses `scipy.linalg.solve_continuous_are`, which is a dense solver.
+    Uses :func:`scipy.linalg.solve_continuous_are`, which is a dense solver.
 
     This solver has no tunable parameters.
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation._dense_args()
+        A, E, B, C, R, S = equation.to_matrices()
         trans = equation.trans
 
         if R is None:
@@ -421,7 +421,7 @@ class ScipyRiccatiSolver(RiccatiSolver):
 
 
 class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |RiccatiEquation| using SciPy.
+    r"""Compute a low-rank Cholesky factor of the solution of a |RiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyRiccatiSolver` and
     factorizes it.
@@ -454,7 +454,7 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
 
 
 class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |PositiveRiccatiEquation| using SciPy.
+    r"""Compute a LR Choleksy factor of the solution of a |PositiveRiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyPositiveRiccatiSolver` and
     factorizes it.

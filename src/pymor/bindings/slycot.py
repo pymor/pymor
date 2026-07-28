@@ -33,7 +33,7 @@ class SlycotLyapunovSolver(LyapunovSolver):
     """
 
     def _solve(self, equation):
-        A, E, B = equation._dense_args()
+        A, E, B = equation.to_matrices()
         trans = equation.trans
         cont_time = equation.cont_time
 
@@ -60,7 +60,7 @@ class SlycotLyapunovSolver(LyapunovSolver):
 
 
 class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |LyapunovEquation| using slycot.
+    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotLyapunovSolver` and
     factorizes it.
@@ -85,7 +85,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation._dense_args()
+        A, E, B, C, R, S = equation.to_matrices()
         trans = equation.trans
 
         dico = 'C'
@@ -152,7 +152,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
 
 
 class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |RiccatiEquation| using slycot.
+    r"""Compute a low-rank Cholesky factor of a the solution of a |RiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotRiccatiSolver` and
     factorizes it.
@@ -185,7 +185,7 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
 
 
 class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a |PositiveRiccatiEquation| using slycot.
+    r"""Compute a LR Cholesky factor of the solution of a |PositiveRiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotPositiveRiccatiSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`.

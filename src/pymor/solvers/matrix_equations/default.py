@@ -54,16 +54,8 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
     """
 
-    @staticmethod
-    def _auto_backend(equation):
-        if not equation.cont_time:
-            return _dense_backend()
-        if equation.dim < mat_eqn_sparse_min_size():
-            return _dense_backend()
-        return 'lradi'
-
     def _solve(self, equation):
-        backend = self._auto_backend(equation)
+        backend = _dense_backend() if (not equation.cont_time or equation.dim < mat_eqn_sparse_min_size()) else 'lradi'
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
@@ -83,7 +75,7 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
 class DefaultRiccatiSolver(RiccatiSolver):
     r"""Default |RiccatiSolver|.
 
-    A solver backend is chosen based in the following order:
+    A solver backend is chosen based on availability in the following order:
 
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolver`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolver`).
@@ -102,7 +94,7 @@ class DefaultRiccatiSolver(RiccatiSolver):
 class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     r"""Default |RiccatiSolverLRCF|.
 
-    A solver backend, if not provided, is chosen based in the following order:
+    A solver backend is chosen based on availability in the following order:
 
         - for sparse problems (minimum size specified by
           :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
@@ -116,12 +108,8 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
     """
 
-    @staticmethod
-    def _auto_backend(equation):
-        return 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
-
     def _solve(self, equation):
-        backend = self._auto_backend(equation)
+        backend = 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
         if backend == 'lrradi':
             from pymor.solvers.matrix_equations.lrradi import LrradiRiccatiSolverLRCF
             solver = LrradiRiccatiSolverLRCF()
@@ -140,7 +128,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
 class DefaultPositiveRiccatiSolver(PositiveRiccatiSolver):
     r"""Default |PositiveRiccatiSolver|.
 
-    A solver backend is chosen based in the following order:
+    A solver backend is chosen based on availability in the following order:
 
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolver`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolver`).
@@ -158,9 +146,9 @@ class DefaultPositiveRiccatiSolver(PositiveRiccatiSolver):
 
 
 class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Default |PositiveRiccatiSolver|.
+    r"""Default |PositiveRiccatiSolverLRCF|.
 
-    A solver backend is chosen based in the following order:
+    A solver backend is chosen based on availability in the following order:
 
           1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLRCF`),
           2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLRCF`).
@@ -183,7 +171,7 @@ class DefaultSylvesterSolver(SylvesterSolver):
     r"""Default |SylvesterSolver|.
 
     As solver backend the :class:`pymor.solvers.matrix_equations.sylvester.SylvesterSchurSolver`
-    is choosen.
+    is chosen.
     """
 
     def _solve(self, equation):
