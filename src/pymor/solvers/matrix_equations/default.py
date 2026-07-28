@@ -209,7 +209,7 @@ class MatrixEquationSolvers(ImmutableObject):
 
         lyapunov = lyapunov or DefaultLyapunovSolver()
         lyapunov_lrcf = lyapunov_lrcf or DefaultLyapunovSolverLRCF()
-        riccati = riccati or RiccatiSolver()
+        riccati = riccati or DefaultRiccatiSolver()
         riccati_lrcf = riccati_lrcf or DefaultRiccatiSolverLRCF()
         positive_riccati = positive_riccati or DefaultPositiveRiccatiSolver()
         positive_riccati_lrcf = positive_riccati_lrcf or DefaultPositiveRiccatiSolverLRCF()
