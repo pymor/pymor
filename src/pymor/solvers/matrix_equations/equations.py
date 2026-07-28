@@ -143,8 +143,111 @@ class LyapunovEquation(ImmutableObject):
 
         return cls(A, E, B, trans=trans, cont_time=cont_time, name=name)
 
+class RiccatiData(ImmutableObject):
+    """Coefficient storage and validation shared by the two Riccati equations.
 
-class RiccatiEquation(ImmutableObject):
+    Not intended to be used directly.
+    """
+
+    def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range == A.source
+        assert B in A.source
+        assert C in A.source
+        if R is not None:
+            assert isinstance(R, np.ndarray)
+            assert R.ndim == 2
+            assert R.shape[0] == R.shape[1]
+            assert R.shape[0] == (len(C) if not trans else len(B))
+        if S is not None:
+            assert S in A.source
+            assert len(S) == (len(C) if not trans else len(B))
+        self.__auto_init(locals())
+
+    @property
+    def dim(self):
+        r"""Dimension of the unknown :math:`X`."""
+        return self.A.source.dim
+
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        A
+            The |NumPy array| A.
+        E
+            The |NumPy array| E or `None`.
+        B
+            The |NumPy array| B.
+        C
+            The |NumPy array| C.
+        R
+            The |NumPy array| R or `None`.
+        S
+            The |NumPy array| S or `None`.
+        """
+        from pymor.algorithms.to_matrix import to_matrix
+        A = to_matrix(self.A, format='dense')
+        E = to_matrix(self.E, format='dense') if self.E is not None else None
+        B = self.B.to_numpy()
+        C = self.C.to_numpy().T
+        S = self.S.to_numpy() if self.S is not None else None
+        if S is not None and not self.trans:
+            S = S.T
+        return A, E, B, C, self.R, S
+
+    @classmethod
+    def from_matrices(cls, A, E, B, C, R=None, S=None, trans=False, name=None):
+        """Create the |RiccatiEquation| or |PositiveRiccatiEquation| from matrices.
+
+        Parameters
+        ----------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None`.
+        B
+            The |NumPy array| B.
+        C
+            The |NumPy array| C.
+        R
+            The |NumPy array| R or `None`.
+        S
+            The |NumPy array| S or `None`.
+        trans
+            Whether the first matrix in the equation is transposed.
+        name
+            Name of the equation.
+        """
+        from pymor.bindings.scipy import sparray
+        from pymor.operators.numpy import NumpyMatrixOperator
+
+        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(B, np.ndarray)
+        assert isinstance(C, np.ndarray)
+        assert isinstance(R, np.ndarray | type(None))
+        assert isinstance(S, np.ndarray | type(None))
+
+        A = NumpyMatrixOperator(A)
+        E = NumpyMatrixOperator(E) if E is not None else None
+        B = A.source.from_numpy(B)
+        C = A.source.from_numpy(C.T)
+        if S is not None:
+            S = A.source.from_numpy(S.T if not trans else S)
+
+        return cls(A, E, B, C, R=R, S=S, trans=trans, name=name)
+
+
+class RiccatiEquation(RiccatiData):
     r"""A (generalized) continuous-time algebraic Riccati equation.
 
     With :math:`E` taken to be the identity if `None`, :math:`R` the identity if
@@ -186,39 +289,6 @@ class RiccatiEquation(ImmutableObject):
         Name of the equation.
     """
 
-    def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
-        assert isinstance(A, Operator)
-        assert A.linear
-        assert not A.parametric
-        assert A.source == A.range
-        if E is not None:
-            assert isinstance(E, Operator)
-            assert E.linear
-            assert not E.parametric
-            assert E.source == E.range == A.source
-        assert B in A.source
-        assert C in A.source
-        if R is not None:
-            assert isinstance(R, np.ndarray)
-            assert R.ndim == 2
-            assert R.shape[0] == R.shape[1]
-            if not trans:
-                assert R.shape[0] == len(C)
-            else:
-                assert R.shape[0] == len(B)
-        if S is not None:
-            assert S in A.source
-            if not trans:
-                assert len(C) == len(S)
-            else:
-                assert len(B) == len(S)
-        self.__auto_init(locals())
-
-    @property
-    def dim(self):
-        r"""Dimension of the unknown :math:`X`."""
-        return self.A.source.dim
-
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
         from pymor.solvers.matrix_equations.default import DefaultRiccatiSolver
@@ -235,81 +305,8 @@ class RiccatiEquation(ImmutableObject):
         assert isinstance(solver, RiccatiSolverLRCF)
         return solver.solve(self)
 
-    def to_matrices(self):
-        """Return operators as matrices.
 
-        Returns
-        -------
-        A
-            The |NumPy array| or |SciPy spmatrix| A.
-        E
-            The |NumPy array| or |SciPy spmatrix| E or `None`.
-        B
-            The |NumPy array| B.
-        C
-            The |Numpy array| C.
-        R
-            The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
-        """
-        from pymor.algorithms.to_matrix import to_matrix
-        A = to_matrix(self.A, format='dense')
-        E = to_matrix(self.E, format='dense') if self.E is not None else None
-        B = self.B.to_numpy()
-        C = self.C.to_numpy().T
-        S = self.S.to_numpy() if self.S is not None else None
-        if S is not None and not self.trans:
-            S = S.T
-
-        return A, E, B, C, self.R, S
-
-    @classmethod
-    def from_matrices(cls, A, E, B, C, R=None, S=None, trans=False, name=None):
-        r"""Create a |LyapunovEquation| from matrices.
-
-        Parameters
-        ----------
-        A
-            The |NumPy array| or |SciPy spmatrix| A.
-        E
-            The |NumPy array| or |SciPy spmatrix| E or `None`.
-        B
-            The |NumPy array| B.
-        C
-            The |NumPy array| C.
-        R
-            The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
-        trans
-            Whether the first matrix in the equation is transposed.
-        cont_time
-            If `True`, the continuous-time equation, otherwise the discrete-time one.
-        name
-            Name of the equation.
-        """
-        from pymor.bindings.scipy import sparray
-        from pymor.operators.numpy import NumpyMatrixOperator
-
-        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
-        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
-        assert isinstance(B, np.ndarray)
-        assert isinstance(C, np.ndarray)
-        assert isinstance(R, np.ndarray | type(None))
-        assert isinstance(S, np.ndarray | type(None))
-
-        A = NumpyMatrixOperator(A)
-        E = NumpyMatrixOperator(E) if E is not None else None
-        B = A.source.from_numpy(B)
-        C = A.source.from_numpy(C.T)
-        if S is not None:
-            S = A.source.from_numpy(S.T if not trans else S)
-
-        return cls(A, E, B, C, R=R, S=S, trans=trans, name=name)
-
-
-class PositiveRiccatiEquation(ImmutableObject):
+class PositiveRiccatiEquation(RiccatiData):
     r"""A (generalized) positive continuous-time algebraic Riccati equation.
 
     Differs from :class:`RiccatiEquation` only in the sign of the quadratic term:
@@ -348,39 +345,6 @@ class PositiveRiccatiEquation(ImmutableObject):
         Name of the equation.
     """
 
-    def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
-        assert isinstance(A, Operator)
-        assert A.linear
-        assert not A.parametric
-        assert A.source == A.range
-        if E is not None:
-            assert isinstance(E, Operator)
-            assert E.linear
-            assert not E.parametric
-            assert E.source == E.range == A.source
-        assert B in A.source
-        assert C in A.source
-        if R is not None:
-            assert isinstance(R, np.ndarray)
-            assert R.ndim == 2
-            assert R.shape[0] == R.shape[1]
-            if not trans:
-                assert R.shape[0] == len(C)
-            else:
-                assert R.shape[0] == len(B)
-        if S is not None:
-            assert S in A.source
-            if not trans:
-                assert len(C) == len(S)
-            else:
-                assert len(B) == len(S)
-        self.__auto_init(locals())
-
-    @property
-    def dim(self):
-        """Dimension of the unknown :math:`X`."""
-        return self.A.source.dim
-
     def solve(self, solver=None):
         r"""Compute the dense solution :math:`X` as a |NumPy array|."""
         from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolver
@@ -396,80 +360,6 @@ class PositiveRiccatiEquation(ImmutableObject):
         solver = DefaultPositiveRiccatiSolverLRCF() if solver is None else solver
         assert isinstance(solver, PositiveRiccatiSolverLRCF)
         return solver.solve(self)
-
-    def to_matrices(self):
-        """Return operators as matrices.
-
-        Returns
-        -------
-        A
-            The |NumPy array or |SciPy spmatrix| A.
-        E
-            The |NumPy array or |SciPy spmatrix| E or `None`.
-        B
-            The |NumPy array| B.
-        C
-            The |Numpy array| C.
-        R
-            The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
-        """
-        from pymor.algorithms.to_matrix import to_matrix
-        A = to_matrix(self.A, format='dense')
-        E = to_matrix(self.E, format='dense') if self.E is not None else None
-        B = self.B.to_numpy()
-        C = self.C.to_numpy().T
-        S = self.S.to_numpy() if self.S is not None else None
-        if S is not None and not self.trans:
-            S = S.T
-
-        return A, E, B, C, self.R, S
-
-    @classmethod
-    def from_matrices(cls, A, E, B, C, R=None, S=None, trans=False, name=None):
-        r"""Create a |LyapunovEquation| from matrices.
-
-        Parameters
-        ----------
-        A
-            The |NumPy array| or |SciPy spmatrix| A.
-        E
-            The |NumPy array| or |SciPy spmatrix| E or `None`.
-        B
-            The |NumPy array| B.
-        C
-            The |NumPy array| C.
-        R
-            The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
-        trans
-            Whether the first matrix in the equation is transposed.
-        cont_time
-            If `True`, the continuous-time equation, otherwise the discrete-time one.
-        name
-            Name of the equation.
-        """
-        from pymor.bindings.scipy import sparray
-        from pymor.operators.numpy import NumpyMatrixOperator
-
-        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
-        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
-        assert isinstance(B, np.ndarray)
-        assert isinstance(C, np.ndarray)
-        assert isinstance(R, np.ndarray | type(None))
-        assert isinstance(S, np.ndarray | type(None))
-
-        A = NumpyMatrixOperator(A)
-        E = NumpyMatrixOperator(E) if E is not None else None
-        B = A.source.from_numpy(B)
-        C = A.source.from_numpy(C.T)
-        if S is not None:
-            S = A.source.from_numpy(S.T if not trans else S)
-
-        return cls(A, E, B, C, R=R, S=S, trans=trans, name=name)
-
 
 class SylvesterEquation(ImmutableObject):
     r"""A |SylvesterEquation|.
@@ -510,6 +400,7 @@ class SylvesterEquation(ImmutableObject):
         assert isinstance(A, Operator)
         assert A.linear
         assert A.source == A.range
+
         assert isinstance(Ar, Operator)
         assert Ar.linear
         assert Ar.source == Ar.range
@@ -517,7 +408,10 @@ class SylvesterEquation(ImmutableObject):
         assert E is None or isinstance(E, Operator) and E.linear and E.source == E.range == A.source
         if E is None:
             E = IdentityOperator(A.source)
+
         assert Er is None or isinstance(Er, Operator) and Er.linear and Er.source == Er.range == Ar.source
+        if Er is None:
+            Er = IdentityOperator(Ar.source)
 
         assert B is None or isinstance(B, Operator) and B.linear and B.range == A.source
         assert Br is None or isinstance(Br, Operator) and Br.linear and Br.range == Ar.source
@@ -570,7 +464,7 @@ class SylvesterEquation(ImmutableObject):
         A = to_matrix(self.A, format='dense')
         Ar = to_matrix(self.Ar, format='dense')
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
-        Er = None if self.Er is None else to_matrix(self.Er, format='dense')
+        Er = None if isinstance(self.Er, IdentityOperator) else to_matrix(self.Er, format='dense')
         B = None if self.B is None else to_matrix(self.B, format='dense')
         Br = None if self.Br is None else to_matrix(self.Br, format='dense')
         C = None if self.C is None else to_matrix(self.C, format='dense')
