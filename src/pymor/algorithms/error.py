@@ -188,7 +188,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
     norms, error_estimates, errors, conditions, custom_values = \
         list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, error_estimator=error_estimator,
-                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes),
+                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes,
+                           task_label='compute errors'),
                  strict=True))
     print()
 
@@ -395,11 +396,6 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
 
 
 def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes):
-    import sys
-
-    print('.', end='')
-    sys.stdout.flush()
-
     error_estimates = np.empty(len(basis_sizes)) if error_estimator else None
     norms = np.empty(len(error_norms))
     errors = np.empty((len(error_norms), len(basis_sizes)))

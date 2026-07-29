@@ -7,6 +7,7 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
+from pymor.tools.progress import add_task
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
@@ -60,49 +61,51 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
     # main loop
     R = np.eye(len(A))
     remove = []  # indices of to be removed vectors
-    for i in range(offset, len(A)):
-        # first calculate norm
-        initial_norm = A[i].norm(product)[0]
+    with add_task('Gram-Schmidt', (len(A)-offset)*(len(A)-offset+1)//2) as task:
+        for i in range(offset, len(A)):
+            # first calculate norm
+            initial_norm = A[i].norm(product)[0]
 
-        if initial_norm <= atol:
-            logger.info(f'Removing vector {i} of norm {initial_norm}')
-            remove.append(i)
-            continue
+            if initial_norm <= atol:
+                logger.info(f'Removing vector {i} of norm {initial_norm}')
+                remove.append(i)
+                continue
 
-        if i == 0:
-            A[0].scal(1 / initial_norm)
-            R[i, i] = initial_norm
-        else:
-            norm = initial_norm
-            # If reiterate is True, reiterate as long as the norm of the vector changes
-            # strongly during orthogonalization (due to Andreas Buhr).
-            while True:
-                # orthogonalize to all vectors left
-                for j in range(i):
-                    if j in remove:
-                        continue
-                    p = A[j].pairwise_inner(A[i], product)[0]
-                    A[i].axpy(-p, A[j])
-                    common_dtype = np.promote_types(R.dtype, type(p))
-                    R = R.astype(common_dtype, copy=False)
-                    R[j, i] += p
+            if i == 0:
+                A[0].scal(1 / initial_norm)
+                R[i, i] = initial_norm
+            else:
+                norm = initial_norm
+                # If reiterate is True, reiterate as long as the norm of the vector changes
+                # strongly during orthogonalization (due to Andreas Buhr).
+                while True:
+                    # orthogonalize to all vectors left
+                    for j in range(i):
+                        if j in remove:
+                            continue
+                        p = A[j].pairwise_inner(A[i], product)[0]
+                        A[i].axpy(-p, A[j])
+                        common_dtype = np.promote_types(R.dtype, type(p))
+                        R = R.astype(common_dtype, copy=False)
+                        R[j, i] += p
 
-                # calculate new norm
-                old_norm, norm = norm, A[i].norm(product)[0]
+                    # calculate new norm
+                    old_norm, norm = norm, A[i].norm(product)[0]
 
-                # remove vector if it got too small
-                if norm <= rtol * initial_norm:
-                    logger.info(f'Removing linearly dependent vector {i}')
-                    remove.append(i)
-                    break
+                    # remove vector if it got too small
+                    if norm <= rtol * initial_norm:
+                        logger.info(f'Removing linearly dependent vector {i}')
+                        remove.append(i)
+                        break
 
-                # check if reorthogonalization should be done
-                if reiterate and norm < reiteration_threshold * old_norm:
-                    logger.info(f'Orthonormalizing vector {i} again')
-                else:
-                    A[i].scal(1 / norm)
-                    R[i, i] = norm
-                    break
+                    # check if reorthogonalization should be done
+                    if reiterate and norm < reiteration_threshold * old_norm:
+                        logger.info(f'Orthonormalizing vector {i} again')
+                    else:
+                        A[i].scal(1 / norm)
+                        R[i, i] = norm
+                        break
+            task.update((i+1-offset)*(i+1-offset+1)//2)
 
     if remove:
         del A[remove]

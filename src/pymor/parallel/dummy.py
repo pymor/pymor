@@ -40,9 +40,15 @@ class DummyPool(WorkerPool):
         kwargs = self._map_kwargs(kwargs)
         return function(*args, **kwargs)
 
-    def map(self, function, *args, **kwargs):
+    def map(self, function, *args, task_label=None, **kwargs):
         kwargs = self._map_kwargs(kwargs)
-        result = [function(*a, **kwargs) for a in zip(*args, strict=True)]
+        if task_label:
+            from pymor.tools.progress import track
+            result = [function(*a, **kwargs)
+                      for a in track(
+                          zip(*args, strict=True), label=task_label, total=len(args[0]))]
+        else:
+            result = [function(*a, **kwargs) for a in zip(*args, strict=True)]
         return result
 
     def __bool__(self):

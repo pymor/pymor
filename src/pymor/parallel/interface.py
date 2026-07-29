@@ -156,7 +156,7 @@ class WorkerPool(BasicObject):
         pass
 
     @abstractmethod
-    def map(self, function, *args, **kwargs):
+    def map(self, function, *args, task_label=None, **kwargs):
         """Parallel version of the builtin :func:`map` function.
 
         Each positional argument (after `function`) must be a sequence
@@ -177,6 +177,10 @@ class WorkerPool(BasicObject):
             The sequences of positional arguments for `function`.
         kwargs
             The keyword arguments for `function`.
+        task_label
+            If not `None`, a progress bar with this label will be created
+            in the active :class:`~pymor.tools.progress.ProgressDisplay` to
+            track the progress of the operator.
 
         Returns
         -------
