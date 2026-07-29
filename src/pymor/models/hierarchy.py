@@ -13,33 +13,48 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 class ModelHierarchy(Model):
 
-    def __init__(self, models, reductors, tol):
-        assert len(models) == len(reductors) + 1
+    def __init__(self, reductors, tol, models=None, fom=None):
+        if models is not None:
+            assert len(models) == len(reductors) + 1
+        else:
+            assert fom is not None
+            self.models = [red.reduce() for red in reductors] + [fom]
+
+        self.dim_input = 0
         self.__auto_init(locals())
 
     def _compute(self, quantities, data, mu):
         models, reductors, tol = self.models, self.reductors, self.tol
 
+        error_estimates = {'solution_error_estimate', 'output_error_estimate'}
+        base_quantities = quantities - error_estimates
+
         errors_to_compute = set()
-        if 'solution' in quantities:
+        if 'solution' in base_quantities:
             errors_to_compute.add('solution_error_estimate')
-        if 'output' in quantities:
+        if 'output' in base_quantities:
             errors_to_compute.add('output_error_estimate')
 
-        # find solution/output that is good enough
-        model_data = []
         for i_m, m in enumerate(models):
-            d = m.compute(**quantities, mu=mu)
-            model_data.append(d)
-            if ((d.get('solution_error_estimate', -1) <= tol)
-                    and (d.get('output_error_estimate', -1) <= tol)):
+            # reference model (the full-order model typically)
+            is_reference = i_m == len(models) - 1
+
+            if not is_reference and reductors[i_m].empty:
+                continue
+
+            requested = base_quantities if is_reference else base_quantities | errors_to_compute
+            d = m.compute(**dict.fromkeys(requested, True), mu=mu)
+            if is_reference or ((d.get('solution_error_estimate', -1) <= tol)
+                                and (d.get('output_error_estimate', -1) <= tol)):
                 break
 
-        # update data
         i_m_sufficient = i_m
         data.update(d)
+        for q in quantities & error_estimates:
+            data.setdefault(q, np.zeros(1))  # fills missing error estimates if the reference model was used
+
+        data['used_model'] = i_m_sufficient
         if 'solution' in quantities:
-            # might need to reconstruct solution
             s = d['solution']
             for r in reductors[i_m_sufficient:]:
                 s = r.reconstruct(s)  # could be a nop
@@ -48,18 +63,15 @@ class ModelHierarchy(Model):
         if i_m_sufficient == 0:
             return
 
-        # adapt models
-        m_new, adapt_data = reductors[i_m_sufficient-1].adapt(
-            mu, tol, fom_solution=d.get('solution'), fom_output=d.get('output')
-        )
+        m_new, adapt_data = reductors[i_m_sufficient-1].adapt(mu, tol, fom_solution=d.get('solution'),
+                                                              fom_output=d.get('output'))
         if models[i_m_sufficient-1] == m_new:
             return
         models[i_m_sufficient-1] = m_new
 
-        for i in range(i_m_sufficient-1, -1, -1):
-            m_new, adapt_data = reductors[i].adapt(
-                mu, tol, fom=m_new, fom_solution=adapt_data.get('solution'), fom_output=adapt_data.get('output')
-            )
+        for i in range(i_m_sufficient-2, -1, -1):
+            m_new, adapt_data = reductors[i].adapt(mu, tol, new_fom=m_new, fom_solution=adapt_data.get('solution'),
+                                                   fom_output=adapt_data.get('output'))
             if models[i] == m_new:
                 return
             models[i] = m_new
@@ -70,11 +82,18 @@ class AdaptiveRBReductor(BasicObject):
     def __init__(self, fom, reductor, compression=None):
         self.__auto_init(locals())
 
-    def reduce(self):
-        return self.redutor.reduce()
+    @property
+    def empty(self):
+        return len(self.reductor.bases['RB']) == 0
 
-    def adapt(self, mu, tol, fom=None, fom_solution=None, fom_output=None):
-        if fom:
+    def reduce(self):
+        return self.reductor.reduce()
+
+    def reconstruct(self, u):
+        return self.reductor.reconstruct(u)
+
+    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
+        if new_fom:
             raise NotImplementedError
 
         if fom_solution is None:
@@ -86,8 +105,8 @@ class AdaptiveRBReductor(BasicObject):
 
         new_rom = self.reductor.reduce()
 
-        projected_fom_solution = self.reductor.bases['RB'].inner(
-            fom_solution, product=self.rb_reductor.products.get('RB')
+        projected_fom_solution = new_rom.solution_space.make_array(
+            self.reductor.bases['RB'].inner(fom_solution, product=self.reductor.products.get('RB'))
         )
 
         return new_rom, {'solution': projected_fom_solution, 'output': fom_output}
@@ -95,16 +114,29 @@ class AdaptiveRBReductor(BasicObject):
 
 class AdaptiveDDReductor(BasicObject):
 
-    def __init__(self, fom, dd_reductor_parameters, retrain_interval=1):
+    def __init__(self, dd_reductor_parameters, retrain_interval=1, fom=None):
         self.__auto_init(locals())
         self.dd_reductors = []
         self.dd_models = []
         self._pending_retrains = []
 
-    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
-        if new_fom is not None:
-            pass
+    @property
+    def empty(self):
+        return not self.dd_models
 
+    def _build_model(self):
+        error_estimator = self.fom.error_estimator if self.fom is not None else None
+        output_functional = self.fom.output_functional if self.fom is not None else None
+        return MultiModel(self.dd_models, output_functional=output_functional,
+                          error_estimator=error_estimator)
+
+    def reduce(self):
+        return self._build_model()
+
+    def reconstruct(self, u):
+        return u
+
+    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
         if fom_solution is None:
             fom_solution = (new_fom or self.fom).solve(mu)
 
@@ -130,15 +162,14 @@ class AdaptiveDDReductor(BasicObject):
             self.dd_models.append(self.dd_reductors[-1].reduce())
             self._pending_retrains.append(0)
 
-        new_rom = MultiModel(self.dd_models, self.fom.output_function)
-
-        return new_rom, {'solution': fom_solution, 'output': fom_output}
+        return self._build_model(), {'solution': fom_solution, 'output': fom_output}
 
 
 class MultiModel(Model):
 
     def __init__(self, models, output_functional=None, error_estimator=None):
         assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
+        super().__init__(error_estimator=error_estimator)
         self.__auto_init(locals())
         self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
 
