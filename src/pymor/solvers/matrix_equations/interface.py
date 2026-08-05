@@ -12,7 +12,7 @@ from pymor.solvers.matrix_equations.equations import (
 
 
 class LyapunovSolver(ImmutableObject):
-    r"""Interface for solvers computing the dense solution of a |LyapunovEquation|."""
+    r"""Dense solver interface for |LyapunovEquations|."""
 
     def solve(self, equation):
         """Solve a |LyapunovEquation|.
@@ -36,7 +36,10 @@ class LyapunovSolver(ImmutableObject):
 
 
 class LyapunovSolverLRCF(ImmutableObject):
-    """Interface for solvers computing a LR CF of the solution of a |LyapunovEquation|."""
+    """Low-rank solver interface for |LyapunovEquations|.
+
+    Computes a low-rank Cholesky factor of the solution of the |LyapunovEquation|.
+    """
 
     def solve(self, equation):
         """Solve a |LyapunovEquation|.
@@ -60,7 +63,7 @@ class LyapunovSolverLRCF(ImmutableObject):
 
 
 class RiccatiSolver(ImmutableObject):
-    r"""Interface for solvers computing the dense solution of a |RiccatiEquation|."""
+    r"""Dense solver interface for |RiccatiEquations|."""
 
     def solve(self, equation):
         """Solve a |RiccatiEquation|.
@@ -84,7 +87,10 @@ class RiccatiSolver(ImmutableObject):
 
 
 class RiccatiSolverLRCF(ImmutableObject):
-    r"""Interface for solvers computing a LR CF factor of the solution of a |RiccatiEquation|."""
+    r"""Low-rank solver interface for |RiccatiEquations|.
+
+    Computes a low-rank Cholesky factor of the solution of the |RiccatiEquation|.
+    """
 
     def solve(self, equation):
         """Solve a |RiccatiEquation|.
@@ -108,7 +114,7 @@ class RiccatiSolverLRCF(ImmutableObject):
 
 
 class PositiveRiccatiSolver(ImmutableObject):
-    r"""Interface for solvers computing the dense solution of a |PositiveRiccatiEquation|."""
+    r"""Dense solver interface for |PositiveRiccatiEquations|."""
 
     def solve(self, equation):
         """Solve a |PositiveRiccatiEquation|.
@@ -132,7 +138,10 @@ class PositiveRiccatiSolver(ImmutableObject):
 
 
 class PositiveRiccatiSolverLRCF(ImmutableObject):
-    r"""Interface for solvers computing a LR CF of the solution of a |PositiveRiccatiEquation|."""
+    r"""Low-rank solver interface for |PositiveRiccatiEquations|.
+
+    Computes a low-rank Cholesky factor of the solution of the |PositiveRiccatiEquation|.
+    """
 
     def solve(self, equation):
         """Solve a |PositiveRiccatiEquation|.
@@ -156,7 +165,7 @@ class PositiveRiccatiSolverLRCF(ImmutableObject):
 
 
 class SylvesterSolver(ImmutableObject):
-    r"""Interface for solvers computing a solution of a |SylvesterEquation|."""
+    r"""Dense solver interface for |SylvesterEquations|."""
 
     def solve(self, equation):
         r"""Solve a |SylvesterEquation|.
