@@ -17,7 +17,7 @@ def test_spectral_factor():
     R = np.array([[1, 0], [0, 2]])
     G = np.array([[1], [2]])
     S = np.array([[1e-12]])
-    fom = LTIModel.from_matrices(-R, G, G.T, S, solver_options={'ricc_pos_lrcf': 'slycot'})
+    fom = LTIModel.from_matrices(-R, G, G.T, S)
 
     Z = fom.gramian('pr_o_lrcf').to_numpy().T
     X = Z.T@Z
@@ -32,7 +32,6 @@ def test_spectral_factor():
 
     assert np.all(np.real(rom.poles()) < 0), 'Asymptotically stable ROM expected.'
 
-    rom = rom.with_(solver_options={'ricc_pos_lrcf': 'slycot'})
     Z2 = rom.gramian('pr_o_lrcf').to_numpy().T
     X2 = Z2.T@Z2
     assert np.all(spla.eigvals(X2) > 0), 'Passive ROM expected.'
@@ -40,7 +39,7 @@ def test_spectral_factor():
 def test_spectral_factor_invertible_D_assertion():
     R = np.array([[1, 0], [0, 2]])
     G = np.array([[1], [2]])
-    fom = LTIModel.from_matrices(-R, G, G.T, solver_options={'ricc_pos_lrcf': 'slycot'})
+    fom = LTIModel.from_matrices(-R, G, G.T)
 
     spectralFactor = SpectralFactorReductor(fom)
 

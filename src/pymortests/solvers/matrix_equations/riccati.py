@@ -9,10 +9,14 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.lyapunov import _chol
-from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
-from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
+from pymor.solvers.matrix_equations.equations import PositiveRiccatiEquation, RiccatiEquation
+from pymor.solvers.matrix_equations.utils import chol
+from pymortests.solvers.matrix_equations.lyapunov import (
+    conv_diff_1d_fd,
+    conv_diff_1d_fem,
+    fro_norm,
+    skip_if_missing_solver,
+)
 
 pytestmark = pytest.mark.builtin
 
@@ -21,14 +25,14 @@ n_list_small = [10, 20]
 n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
-ricc_lrcf_solver_list_small = [
+ricc_lrcf_backend_list_small = [
     'scipy',
     'slycot',
 ]
-ricc_lrcf_solver_list_big = [
+ricc_lrcf_backend_list_big = [
     'lrradi'
 ]
-ricc_dense_solver_list = [
+ricc_dense_backend_list = [
     'scipy',
     'slycot'
 ]
@@ -74,9 +78,9 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
-@pytest.mark.parametrize('solver', ricc_dense_solver_list)
-def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', ricc_dense_backend_list)
+def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     mat_old = []
     mat_new = []
@@ -115,9 +119,20 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
+    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
-    assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotRiccatiSolver
+        solver = SlycotRiccatiSolver()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyRiccatiSolver
+        solver = ScipyRiccatiSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
+
+    assert relative_residual(A, E, B, C, R, S, chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -131,9 +146,9 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
-@pytest.mark.parametrize('solver', ricc_dense_solver_list)
-def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', ricc_dense_backend_list)
+def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     mat_old = []
     mat_new = []
@@ -172,11 +187,22 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    X = solve_pos_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
+    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
+
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotPositiveRiccatiSolver
+        solver = SlycotPositiveRiccatiSolver()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyPositiveRiccatiSolver
+        solver = ScipyPositiveRiccatiSolver()
+    else:
+        raise ValueError
+
+    X = equation.solve(solver=solver)
 
     if not with_R:
         R = np.eye(p if not trans else m)
-    assert relative_residual(A, E, B, C, -R, S, _chol(X), trans) < 1e-8
+    assert relative_residual(A, E, B, C, -R, S, chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -189,11 +215,11 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize(('n', 'solver'), chain(product(n_list_small, ricc_lrcf_solver_list_small),
-                                                product(n_list_big, ricc_lrcf_solver_list_big)))
-def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
-    skip_if_missing_solver(solver)
-    if with_S and solver == 'lrradi':
+@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lrcf_backend_list_small),
+                                                product(n_list_big, ricc_lrcf_backend_list_big)))
+def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+    skip_if_missing_solver(backend)
+    if with_S and backend == 'lrradi':
         pytest.xfail('solver not implemented')
 
     mat_old = []
@@ -229,13 +255,21 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
+    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
-    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+    if backend == 'lrradi':
+        from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLRCF
+        solver =  LRRADIRiccatiSolverLRCF()
+    elif backend == 'slycot':
+        from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
+        solver = SlycotRiccatiSolverLRCF()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyRiccatiSolverLRCF
+        solver = ScipyRiccatiSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
 
     assert len(Zva) <= n
 
@@ -257,9 +291,9 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
-    skip_if_missing_solver(solver)
+@pytest.mark.parametrize('backend', ricc_lrcf_backend_list_small)
+def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+    skip_if_missing_solver(backend)
 
     mat_old = []
     mat_new = []
@@ -294,13 +328,18 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B)
-    Cva = Aop.source.from_numpy(C.T)
-    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
+    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
-    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+    if backend == 'slycot':
+        from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
+        solver = SlycotPositiveRiccatiSolverLRCF()
+    elif backend == 'scipy':
+        from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
+        solver = ScipyPositiveRiccatiSolverLRCF()
+    else:
+        raise ValueError
+
+    Zva = equation.solve_lrcf(solver=solver)
 
     assert len(Zva) <= n
 

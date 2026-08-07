@@ -7,8 +7,7 @@ import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.sylvester import solve_sylv_schur
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.solvers.matrix_equations.equations import SylvesterEquation
 
 pytestmark = pytest.mark.builtin
 
@@ -56,14 +55,7 @@ def test_sylv_schur_V(n, r, m, rng):
     Ar = rng.standard_normal((r, r)) - r * np.eye(r)
     Br = rng.standard_normal((r, m))
 
-    Aop = NumpyMatrixOperator(A)
-    Bop = NumpyMatrixOperator(B)
-
-    Arop = NumpyMatrixOperator(Ar)
-    Brop = NumpyMatrixOperator(Br)
-
-    Vva = solve_sylv_schur(Aop, Arop, B=Bop, Br=Brop)
-
+    Vva = SylvesterEquation.from_matrices(A, Ar, B=B, Br=Br).solve()
     V = Vva.to_numpy()
 
     AV = A.dot(V)
@@ -85,16 +77,7 @@ def test_sylv_schur_V_E(n, r, m, rng):
     Er += r * np.eye(r)
     Br = rng.standard_normal((r, m))
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E)
-    Bop = NumpyMatrixOperator(B)
-
-    Arop = NumpyMatrixOperator(Ar)
-    Erop = NumpyMatrixOperator(Er)
-    Brop = NumpyMatrixOperator(Br)
-
-    Vva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, B=Bop, Br=Brop)
-
+    Vva = SylvesterEquation.from_matrices(A, Ar, E=E, Er=Er, B=B, Br=Br).solve()
     V = Vva.to_numpy()
 
     AVErT = A.dot(V.dot(Er.T))
@@ -113,14 +96,7 @@ def test_sylv_schur_W(n, r, p, rng):
     Ar = rng.standard_normal((r, r)) - r * np.eye(r)
     Cr = rng.standard_normal((p, r))
 
-    Aop = NumpyMatrixOperator(A)
-    Cop = NumpyMatrixOperator(C)
-
-    Arop = NumpyMatrixOperator(Ar)
-    Crop = NumpyMatrixOperator(Cr)
-
-    Wva = solve_sylv_schur(Aop, Arop, C=Cop, Cr=Crop)
-
+    Wva = SylvesterEquation.from_matrices(A, Ar, C=C, Cr=Cr).solve()
     W = Wva.to_numpy()
 
     ATW = A.T.dot(W)
@@ -142,16 +118,7 @@ def test_sylv_schur_W_E(n, r, p, rng):
     Er += r * np.eye(r)
     Cr = rng.standard_normal((p, r))
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E)
-    Cop = NumpyMatrixOperator(C)
-
-    Arop = NumpyMatrixOperator(Ar)
-    Erop = NumpyMatrixOperator(Er)
-    Crop = NumpyMatrixOperator(Cr)
-
-    Wva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, C=Cop, Cr=Crop)
-
+    Wva = SylvesterEquation.from_matrices(A, Ar, E=E, Er=Er, C=C, Cr=Cr).solve()
     W = Wva.to_numpy()
 
     ATWEr = A.T.dot(W.dot(Er))

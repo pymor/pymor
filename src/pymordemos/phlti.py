@@ -40,8 +40,7 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
     S = fom.S.matrix.copy()
     S += np.eye(S.shape[0]) * eps
 
-    fom = fom.with_(S=NumpyMatrixOperator(S), N=None,
-                    solver_options={'ricc_pos_lrcf': 'slycot', 'ricc_pos_dense': 'slycot'})
+    fom = fom.with_(S=NumpyMatrixOperator(S), N=None)
 
     bt = BTReductor(fom).reduce
     prbt = PRBTReductor(fom).reduce

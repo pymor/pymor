@@ -5,12 +5,13 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
+from pymor.solvers.matrix_equations.equations import LyapunovEquation
+from pymor.solvers.matrix_equations.utils import chol
 
 
 class SpectralFactorReductor(BasicObject):
@@ -105,7 +106,7 @@ class SpectralFactorReductor(BasicObject):
 
         # Compute Cholesky-like factorization of W(X)
         A, B, C, D, E = self.fom.to_abcde_matrices()
-        M = _chol(D + D.T).T
+        M = chol(D + D.T).T
         L = spla.solve(M.T, C - B.T @ X if E is None else C - B.T @ X @ E)
 
         if compute_errors:
@@ -136,7 +137,9 @@ class SpectralFactorReductor(BasicObject):
 
         Ar, Br, Lr, Mr, Er = spectral_factor_rom.to_abcde_matrices()
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
-        Xr = solve_cont_lyap_dense(A=Ar, E=Er, B=Lr, trans=True)
+
+        Xr = LyapunovEquation.from_matrices(A=Ar, E=Er, B=Lr, trans=True, cont_time=True).solve()
+
         Cr = Br.T @ Xr + Mr.T @ Lr if Er is None else Br.T @ Xr @ Er + Mr.T @ Lr
 
         return LTIModel.from_matrices(Ar, Br, Cr, Dr, Er)

@@ -181,6 +181,23 @@ common = """
 .. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
 
+.. |LyapunovEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.LyapunovEquation`
+.. |LyapunovEquations| replace:: :class:`LyapunovEquations <pymor.solvers.matrix_equations.equations.LyapunovEquation>`
+.. |RiccatiEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.RiccatiEquation`
+.. |RiccatiEquations| replace:: :class:`RiccatiEquations <pymor.solvers.matrix_equations.equations.RiccatiEquation>`
+.. |PositiveRiccatiEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.PositiveRiccatiEquation`
+.. |PositiveRiccatiEquations| replace:: :class:`PositiveRiccatiEquations <pymor.solvers.matrix_equations.equations.PositiveRiccatiEquation>`
+.. |SylvesterEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.SylvesterEquation`
+.. |SylvesterEquations| replace:: :class:`SylvesterEquations <pymor.solvers.matrix_equations.equations.SylvesterEquation>`
+
+.. |LyapunovSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver`
+.. |LyapunovSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLRCF`
+.. |RiccatiSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.RiccatiSolver`
+.. |RiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.RiccatiSolverLRCF`
+.. |PositiveRiccatiSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolver`
+.. |PositiveRiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolverLRCF`
+.. |SylvesterSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.SylvesterSolver`
+
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 """  # noqa: E501
 
