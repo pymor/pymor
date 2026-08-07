@@ -41,17 +41,17 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
 
     A solver backend is chosen based on availability in the following order:
 
-        - for sparse, continous-time problems (minimum size specified by
-          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+    - for sparse, continous-time problems (minimum size specified by
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-          1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LradiLyapunovSolverLRCF`),
+        1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LradiLyapunovSolverLRCF`),
 
-        - for dense problems (smaller than
-          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
-          or discrete-time problems
+    - for dense problems (smaller than
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+        or discrete-time problems
 
-          1. `slycot` (see :class:`pymor.bindings.slycot.SlycotLyapunovSolverLRCF`),
-          2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
+        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotLyapunovSolverLRCF`),
+        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
     """
 
     def _solve(self, equation):
@@ -77,8 +77,8 @@ class DefaultRiccatiSolver(RiccatiSolver):
 
     A solver backend is chosen based on availability in the following order:
 
-          1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolver`),
-          2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolver`).
+    1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolver`),
+    2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolver`).
     """
 
     def _solve(self, equation):
@@ -96,16 +96,16 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
 
     A solver backend is chosen based on availability in the following order:
 
-        - for sparse problems (minimum size specified by
-          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+    - for sparse problems (minimum size specified by
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-          1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LrradiRiccatiSolverLRCF`),
+        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LrradiRiccatiSolverLRCF`),
 
-        - for dense problems (smaller than
-          :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+    - for dense problems (smaller than
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-          1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLRCF`),
-          2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
+        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLRCF`),
+        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
     """
 
     def _solve(self, equation):
@@ -150,8 +150,8 @@ class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
 
     A solver backend is chosen based on availability in the following order:
 
-          1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLRCF`),
-          2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLRCF`).
+    1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLRCF`),
+    2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLRCF`).
 
     Currently, only dense solvers are supported.
     """
@@ -188,7 +188,7 @@ class MatrixEquationSolvers(ImmutableObject):
     ----------
     lyapunov
         A |LyapunovSolver| or `None`, then :class:`DefaultLyapunovSolver` is used.
-    lyapunov_lr
+    lyapunov_lrcf
         A |LyapunovSolverLRCF| or `None`, then :class:`DefaultLyapunovSolverLRCF` is used.
     riccati
         A |RiccatiSolver| or `None`, then :class:`DefaultRiccatiSolver` is used.
