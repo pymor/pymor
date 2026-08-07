@@ -15,7 +15,7 @@ from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
 from pymor.solvers.matrix_equations.default import MatrixEquationSolvers
-from pymor.solvers.matrix_equations.lradi import LradiLyapunovSolverLRCF
+from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLRCF
 
 
 def fom_properties(fom, w, stable_lti=True):
@@ -175,7 +175,7 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     err = fom - rom
     if isinstance(err, LTIModel):
         matrix_equation_solvers = MatrixEquationSolvers(
-            lyapunov_lrcf=LradiLyapunovSolverLRCF()
+            lyapunov_lrcf=LRADILyapunovSolverLRCF()
         )
         err = err.with_(matrix_equation_solvers=matrix_equation_solvers)
 
@@ -307,7 +307,7 @@ def main(
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.solvers.matrix_equations.lradi.LradiLyapunovSolverLRCF': 'WARNING',
+        'pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLRCF': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
     })
     plt.rcParams['axes.grid'] = True
@@ -317,7 +317,7 @@ def main(
 
     # LTI system
     matrix_equation_solvers = MatrixEquationSolvers(
-        lyapunov_lrcf=LradiLyapunovSolverLRCF(lradi_shifts='wachspress_shifts')
+        lyapunov_lrcf=LRADILyapunovSolverLRCF(lradi_shifts='wachspress_shifts')
     )
 
     ts = ImplicitEulerTimeStepper(100)
