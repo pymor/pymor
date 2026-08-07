@@ -99,7 +99,7 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     - for sparse problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LrradiRiccatiSolverLRCF`),
+        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LRRADIRiccatiSolverLRCF`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
@@ -111,8 +111,8 @@ class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
     def _solve(self, equation):
         backend = 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
         if backend == 'lrradi':
-            from pymor.solvers.matrix_equations.lrradi import LrradiRiccatiSolverLRCF
-            solver = LrradiRiccatiSolverLRCF()
+            from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLRCF
+            solver = LRRADIRiccatiSolverLRCF()
         else:
             _warn_dense_fallback(self, equation, backend)
             if _dense_backend() == 'slycot':

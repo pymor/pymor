@@ -14,7 +14,7 @@ from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LrradiRiccatiSolverLRCF(RiccatiSolverLRCF):
+class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
     r"""Compute an approximate low-rank solution of a |RiccatiEquation|.
 
     This is an implementation of Algorithm 2 in :cite:`BBKS18`.
