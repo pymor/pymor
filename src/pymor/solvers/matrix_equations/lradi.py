@@ -10,12 +10,12 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
-from pymor.solvers.matrix_equations.interface import LyapunovSolverLRCF
+from pymor.solvers.matrix_equations.interface import LyapunovSolverLR
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LRADILyapunovSolverLRCF(LyapunovSolverLRCF):
+class LRADILyapunovSolverLR(LyapunovSolverLR):
     r"""Compute a LR Cholesky factor of the solution of a |LyapunovEquation| using ADI iteration.
 
     Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.

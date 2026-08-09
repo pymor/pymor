@@ -86,10 +86,10 @@ class LyapunovEquation(ImmutableObject):
 
     def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix_equations.default import DefaultLyapunovSolverLRCF
-        from pymor.solvers.matrix_equations.interface import LyapunovSolverLRCF
-        solver = DefaultLyapunovSolverLRCF() if solver is None else solver
-        assert isinstance(solver, LyapunovSolverLRCF)
+        from pymor.solvers.matrix_equations.default import DefaultLyapunovSolverLR
+        from pymor.solvers.matrix_equations.interface import LyapunovSolverLR
+        solver = DefaultLyapunovSolverLR() if solver is None else solver
+        assert isinstance(solver, LyapunovSolverLR)
         return solver.solve(self)
 
     def to_matrices(self):
@@ -299,10 +299,10 @@ class RiccatiEquation(RiccatiData):
 
     def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix_equations.default import DefaultRiccatiSolverLRCF
-        from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
-        solver = DefaultRiccatiSolverLRCF() if solver is None else solver
-        assert isinstance(solver, RiccatiSolverLRCF)
+        from pymor.solvers.matrix_equations.default import DefaultRiccatiSolverLR
+        from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
+        solver = DefaultRiccatiSolverLR() if solver is None else solver
+        assert isinstance(solver, RiccatiSolverLR)
         return solver.solve(self)
 
 
@@ -355,10 +355,10 @@ class PositiveRiccatiEquation(RiccatiData):
 
     def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolverLRCF
-        from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLRCF
-        solver = DefaultPositiveRiccatiSolverLRCF() if solver is None else solver
-        assert isinstance(solver, PositiveRiccatiSolverLRCF)
+        from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolverLR
+        from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLR
+        solver = DefaultPositiveRiccatiSolverLR() if solver is None else solver
+        assert isinstance(solver, PositiveRiccatiSolverLR)
         return solver.solve(self)
 
 class SylvesterEquation(ImmutableObject):

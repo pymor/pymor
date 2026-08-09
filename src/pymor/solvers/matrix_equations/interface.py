@@ -35,7 +35,7 @@ class LyapunovSolver(ImmutableObject):
         pass
 
 
-class LyapunovSolverLRCF(ImmutableObject):
+class LyapunovSolverLR(ImmutableObject):
     """Low-rank solver interface for |LyapunovEquations|.
 
     Computes a low-rank Cholesky factor of the solution of the |LyapunovEquation|.
@@ -86,7 +86,7 @@ class RiccatiSolver(ImmutableObject):
         pass
 
 
-class RiccatiSolverLRCF(ImmutableObject):
+class RiccatiSolverLR(ImmutableObject):
     r"""Low-rank solver interface for |RiccatiEquations|.
 
     Computes a low-rank Cholesky factor of the solution of the |RiccatiEquation|.
@@ -137,7 +137,7 @@ class PositiveRiccatiSolver(ImmutableObject):
         pass
 
 
-class PositiveRiccatiSolverLRCF(ImmutableObject):
+class PositiveRiccatiSolverLR(ImmutableObject):
     r"""Low-rank solver interface for |PositiveRiccatiEquations|.
 
     Computes a low-rank Cholesky factor of the solution of the |PositiveRiccatiEquation|.

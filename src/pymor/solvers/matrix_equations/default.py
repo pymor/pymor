@@ -7,11 +7,11 @@ from pymor.core.base import ImmutableObject
 from pymor.core.config import config
 from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
-    LyapunovSolverLRCF,
+    LyapunovSolverLR,
     PositiveRiccatiSolver,
-    PositiveRiccatiSolverLRCF,
+    PositiveRiccatiSolverLR,
     RiccatiSolver,
-    RiccatiSolverLRCF,
+    RiccatiSolverLR,
     SylvesterSolver,
 )
 from pymor.solvers.matrix_equations.utils import mat_eqn_sparse_min_size
@@ -36,22 +36,22 @@ class DefaultLyapunovSolver(LyapunovSolver):
         return solver.solve(equation)
 
 
-class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
-    """Default |LyapunovSolverLRCF|.
+class DefaultLyapunovSolverLR(LyapunovSolverLR):
+    """Default |LyapunovSolverLR|.
 
     A solver backend is chosen based on availability in the following order:
 
     - for sparse, continous-time problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLRCF`),
+        1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLR`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
         or discrete-time problems
 
-        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotLyapunovSolverLRCF`),
-        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLRCF`).
+        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotLyapunovSolverLR`),
+        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyLyapunovSolverLR`).
     """
 
     def _solve(self, equation):
@@ -59,16 +59,16 @@ class DefaultLyapunovSolverLRCF(LyapunovSolverLRCF):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
-            from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLRCF
-            solver = LRADILyapunovSolverLRCF()
+            from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLR
+            solver = LRADILyapunovSolverLR()
         else:
             _warn_dense_fallback(self, equation, backend)
             if _dense_backend() == 'slycot':
-                from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
-                solver = SlycotLyapunovSolverLRCF()
+                from pymor.bindings.slycot import SlycotLyapunovSolverLR
+                solver = SlycotLyapunovSolverLR()
             else:
-                from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
-                solver = ScipyLyapunovSolverLRCF()
+                from pymor.bindings.scipy import ScipyLyapunovSolverLR
+                solver = ScipyLyapunovSolverLR()
 
         return solver.solve(equation)
 
@@ -91,36 +91,36 @@ class DefaultRiccatiSolver(RiccatiSolver):
         return solver.solve(equation)
 
 
-class DefaultRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Default |RiccatiSolverLRCF|.
+class DefaultRiccatiSolverLR(RiccatiSolverLR):
+    r"""Default |RiccatiSolverLR|.
 
     A solver backend is chosen based on availability in the following order:
 
     - for sparse problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LRRADIRiccatiSolverLRCF`),
+        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LRRADIRiccatiSolverLR`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLRCF`),
-        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLRCF`).
+        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLR`),
+        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLR`).
     """
 
     def _solve(self, equation):
         backend = 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
         if backend == 'lrradi':
-            from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLRCF
-            solver = LRRADIRiccatiSolverLRCF()
+            from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLR
+            solver = LRRADIRiccatiSolverLR()
         else:
             _warn_dense_fallback(self, equation, backend)
             if _dense_backend() == 'slycot':
-                from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
-                solver = SlycotRiccatiSolverLRCF()
+                from pymor.bindings.slycot import SlycotRiccatiSolverLR
+                solver = SlycotRiccatiSolverLR()
             else:
-                from pymor.bindings.scipy import ScipyRiccatiSolverLRCF
-                solver = ScipyRiccatiSolverLRCF()
+                from pymor.bindings.scipy import ScipyRiccatiSolverLR
+                solver = ScipyRiccatiSolverLR()
 
         return solver.solve(equation)
 
@@ -145,24 +145,24 @@ class DefaultPositiveRiccatiSolver(PositiveRiccatiSolver):
         return solver.solve(equation)
 
 
-class DefaultPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Default |PositiveRiccatiSolverLRCF|.
+class DefaultPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
+    r"""Default |PositiveRiccatiSolverLR|.
 
     A solver backend is chosen based on availability in the following order:
 
-    1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLRCF`),
-    2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLRCF`).
+    1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLR`),
+    2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLR`).
 
     Currently, only dense solvers are supported.
     """
 
     def _solve(self, equation):
         if _dense_backend() == 'slycot':
-            from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
-            solver = SlycotPositiveRiccatiSolverLRCF()
+            from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
+            solver = SlycotPositiveRiccatiSolverLR()
         else:
-            from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
-            solver = ScipyPositiveRiccatiSolverLRCF()
+            from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLR
+            solver = ScipyPositiveRiccatiSolverLR()
 
         return solver.solve(equation)
 
@@ -189,17 +189,17 @@ class MatrixEquationSolvers(ImmutableObject):
     lyapunov
         A |LyapunovSolver| or `None`, then :class:`DefaultLyapunovSolver` is used.
     lyapunov_lr
-        A |LyapunovSolverLRCF| or `None`, then :class:`DefaultLyapunovSolverLRCF` is used.
+        A |LyapunovSolverLR| or `None`, then :class:`DefaultLyapunovSolverLR` is used.
     riccati
         A |RiccatiSolver| or `None`, then :class:`DefaultRiccatiSolver` is used.
     riccati_lr
-        A |RiccatiSolverLRCF| or `None`, then :class:`DefaultRiccatiSolverLRCF` is used.
+        A |RiccatiSolverLR| or `None`, then :class:`DefaultRiccatiSolverLR` is used.
     positive_riccati
         A |PositiveRiccatiSolver| or `None`, then :class:`DefaultPositiveRiccatiSolver`
         is used.
     positive_riccati_lr
-        A |PositiveRiccatiSolverLRCF| or `None`, then
-        :class:`DefaultPositiveRiccatiSolverLRCF` is used.
+        A |PositiveRiccatiSolverLR| or `None`, then
+        :class:`DefaultPositiveRiccatiSolverLR` is used.
     sylvester
         A |SylvesterSolver| or `None`, then :class:`DefaultSylvesterSolver` is used.
     """
@@ -208,19 +208,19 @@ class MatrixEquationSolvers(ImmutableObject):
                  positive_riccati=None, positive_riccati_lr=None, sylvester=None):
 
         lyapunov = lyapunov or DefaultLyapunovSolver()
-        lyapunov_lr = lyapunov_lr or DefaultLyapunovSolverLRCF()
+        lyapunov_lr = lyapunov_lr or DefaultLyapunovSolverLR()
         riccati = riccati or DefaultRiccatiSolver()
-        riccati_lr = riccati_lr or DefaultRiccatiSolverLRCF()
+        riccati_lr = riccati_lr or DefaultRiccatiSolverLR()
         positive_riccati = positive_riccati or DefaultPositiveRiccatiSolver()
-        positive_riccati_lr = positive_riccati_lr or DefaultPositiveRiccatiSolverLRCF()
+        positive_riccati_lr = positive_riccati_lr or DefaultPositiveRiccatiSolverLR()
         sylvester = sylvester or DefaultSylvesterSolver()
 
         assert isinstance(lyapunov, LyapunovSolver)
-        assert isinstance(lyapunov_lr, LyapunovSolverLRCF)
+        assert isinstance(lyapunov_lr, LyapunovSolverLR)
         assert isinstance(riccati, RiccatiSolver)
-        assert isinstance(riccati_lr, RiccatiSolverLRCF)
+        assert isinstance(riccati_lr, RiccatiSolverLR)
         assert isinstance(positive_riccati, PositiveRiccatiSolver)
-        assert isinstance(positive_riccati_lr, PositiveRiccatiSolverLRCF)
+        assert isinstance(positive_riccati_lr, PositiveRiccatiSolverLR)
         assert isinstance(sylvester, SylvesterSolver)
 
         self.__auto_init(locals())

@@ -191,11 +191,11 @@ common = """
 .. |SylvesterEquations| replace:: :class:`SylvesterEquations <pymor.solvers.matrix_equations.equations.SylvesterEquation>`
 
 .. |LyapunovSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver`
-.. |LyapunovSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLRCF`
+.. |LyapunovSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR`
 .. |RiccatiSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.RiccatiSolver`
-.. |RiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.RiccatiSolverLRCF`
+.. |RiccatiSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.RiccatiSolverLR`
 .. |PositiveRiccatiSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolver`
-.. |PositiveRiccatiSolverLRCF| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolverLRCF`
+.. |PositiveRiccatiSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolverLR`
 .. |SylvesterSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.SylvesterSolver`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`

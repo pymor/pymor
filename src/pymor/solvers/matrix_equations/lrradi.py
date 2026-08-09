@@ -9,12 +9,12 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
-from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
+from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
+class LRRADIRiccatiSolverLR(RiccatiSolverLR):
     r"""Compute an approximate low-rank solution of a |RiccatiEquation|.
 
     This is an implementation of Algorithm 2 in :cite:`BBKS18`.
