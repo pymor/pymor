@@ -25,11 +25,11 @@ n_list_small = [10, 20]
 n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
-ricc_lrcf_backend_list_small = [
+ricc_lr_backend_list_small = [
     'scipy',
     'slycot',
 ]
-ricc_lrcf_backend_list_big = [
+ricc_lr_backend_list_big = [
     'lrradi'
 ]
 ricc_dense_backend_list = [
@@ -215,9 +215,9 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lrcf_backend_list_small),
-                                                product(n_list_big, ricc_lrcf_backend_list_big)))
-def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
+                                                product(n_list_big, ricc_lr_backend_list_big)))
+def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
     if with_S and backend == 'lrradi':
         pytest.xfail('solver not implemented')
@@ -291,8 +291,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('backend', ricc_lrcf_backend_list_small)
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+@pytest.mark.parametrize('backend', ricc_lr_backend_list_small)
+def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
