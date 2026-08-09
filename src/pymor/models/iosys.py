@@ -1036,23 +1036,23 @@ class LTIModel(Model):
         typ
             The type of the Gramian:
 
-            - `'c_lr'`: low-rank Cholesky factor of the controllability Gramian,
-            - `'o_lr'`: low-rank Cholesky factor of the observability Gramian,
+            - `'c_lr'`: low-rank factor of the controllability Gramian,
+            - `'o_lr'`: low-rank factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
             - `'o_dense'`: dense observability Gramian,
-            - `'bs_c_lr'`: low-rank Cholesky factor of the Bernoulli stabilized controllability
+            - `'bs_c_lr'`: low-rank factor of the Bernoulli stabilized controllability
               Gramian,
-            - `'bs_o_lr'`: low-rank Cholesky factor of the Bernoulli stabilized observability
+            - `'bs_o_lr'`: low-rank factor of the Bernoulli stabilized observability
               Gramian,
-            - `'lqg_c_lr'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
-            - `'lqg_o_lr'`: low-rank Cholesky factor of the "observability" LQG Gramian,
-            - `('br_c_lr', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
+            - `'lqg_c_lr'`: low-rank factor of the "controllability" LQG Gramian,
+            - `'lqg_o_lr'`: low-rank factor of the "observability" LQG Gramian,
+            - `('br_c_lr', gamma)`: low-rank factor of the "controllability" bounded real
               Gramian,
-            - `('br_o_lr', gamma)`: low-rank Cholesky factor of the "observability" bounded real
+            - `('br_o_lr', gamma)`: low-rank factor of the "observability" bounded real
               Gramian.
-            - `'pr_c_lr'`: low-rank Cholesky factor of the "controllability" positive real
+            - `'pr_c_lr'`: low-rank factor of the "controllability" positive real
               Gramian,
-            - `'pr_o_lr'`: low-rank Cholesky factor of the "observability" positive real
+            - `'pr_o_lr'`: low-rank factor of the "observability" positive real
               Gramian.
 
             .. note::
@@ -2506,10 +2506,10 @@ class SecondOrderModel(Model):
         typ
             The type of the Gramian:
 
-            - `'pc_lr'`: low-rank Cholesky factor of the position controllability Gramian,
-            - `'vc_lr'`: low-rank Cholesky factor of the velocity controllability Gramian,
-            - `'po_lr'`: low-rank Cholesky factor of the position observability Gramian,
-            - `'vo_lr'`: low-rank Cholesky factor of the velocity observability Gramian,
+            - `'pc_lr'`: low-rank factor of the position controllability Gramian,
+            - `'vc_lr'`: low-rank factor of the velocity controllability Gramian,
+            - `'po_lr'`: low-rank factor of the position observability Gramian,
+            - `'vo_lr'`: low-rank factor of the velocity observability Gramian,
             - `'pc_dense'`: dense position controllability Gramian,
             - `'vc_dense'`: dense velocity controllability Gramian,
             - `'po_dense'`: dense position observability Gramian,

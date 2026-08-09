@@ -34,7 +34,7 @@ class GenericBTReductor(BasicObject):
         self._pg_reductor = None
 
     def _gramians(self):
-        """Return low-rank Cholesky factors of Gramians."""
+        """Return low-rank factors of Gramians."""
         raise NotImplementedError
 
     def _hankel_svd(self):

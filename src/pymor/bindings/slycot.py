@@ -60,7 +60,7 @@ class SlycotLyapunovSolver(LyapunovSolver):
 
 
 class SlycotLyapunovSolverLR(LyapunovSolverLR):
-    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using slycot.
+    r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotLyapunovSolver` and
     factorizes it.
@@ -152,7 +152,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
 
 
 class SlycotRiccatiSolverLR(RiccatiSolverLR):
-    r"""Compute a low-rank Cholesky factor of a the solution of a |RiccatiEquation| using slycot.
+    r"""Compute a low-rank factor of a the solution of a |RiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotRiccatiSolver` and
     factorizes it.
@@ -185,7 +185,7 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
 
 
 class SlycotPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
-    r"""Compute a LR Cholesky factor of the solution of a |PositiveRiccatiEquation| using slycot.
+    r"""Compute a low-rank factor of the solution of a |PositiveRiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotPositiveRiccatiSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`.

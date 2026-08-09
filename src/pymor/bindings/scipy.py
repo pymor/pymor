@@ -380,7 +380,7 @@ class ScipyLyapunovSolver(LyapunovSolver):
 
 
 class ScipyLyapunovSolverLR(LyapunovSolverLR):
-    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using SciPy.
+    r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyLyapunovSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`, i.e. that
@@ -419,7 +419,7 @@ class ScipyRiccatiSolver(RiccatiSolver):
 
 
 class ScipyRiccatiSolverLR(RiccatiSolverLR):
-    r"""Compute a low-rank Cholesky factor of the solution of a |RiccatiEquation| using SciPy.
+    r"""Compute a low-rank factor of the solution of a |RiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyRiccatiSolver` and
     factorizes it.
@@ -452,7 +452,7 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
 
 
 class ScipyPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
-    r"""Compute a LR Choleksy factor of the solution of a |PositiveRiccatiEquation| using SciPy.
+    r"""Compute a low-rank factor of the solution of a |PositiveRiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyPositiveRiccatiSolver` and
     factorizes it.

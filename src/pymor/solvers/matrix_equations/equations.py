@@ -38,7 +38,7 @@ class LyapunovEquation(ImmutableObject):
           A^T X A - E^T X E + B^T B = 0.
 
     Use :meth:`solve` to obtain the dense solution :math:`X` and :meth:`solve_lr`
-    to obtain a low-rank Cholesky factor :math:`Z` with :math:`X \approx Z Z^H`.
+    to obtain a low-rank factor :math:`Z` with :math:`X \approx Z Z^H`.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ class LyapunovEquation(ImmutableObject):
         return solver.solve(self)
 
     def solve_lr(self, solver=None):
-        r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        r"""Compute a low-rank factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultLyapunovSolverLR
         from pymor.solvers.matrix_equations.interface import LyapunovSolverLR
         solver = DefaultLyapunovSolverLR() if solver is None else solver
@@ -298,7 +298,7 @@ class RiccatiEquation(RiccatiData):
         return solver.solve(self)
 
     def solve_lr(self, solver=None):
-        r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        r"""Compute a low-rank factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultRiccatiSolverLR
         from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
         solver = DefaultRiccatiSolverLR() if solver is None else solver
@@ -354,7 +354,7 @@ class PositiveRiccatiEquation(RiccatiData):
         return solver.solve(self)
 
     def solve_lr(self, solver=None):
-        r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
+        r"""Compute a low-rank factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolverLR
         from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLR
         solver = DefaultPositiveRiccatiSolverLR() if solver is None else solver
