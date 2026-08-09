@@ -271,7 +271,7 @@ def main(diameter: float = 0.01, r: int = 5):
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.solvers.matrix_equations.lradi.solve_lyap_lr': 'WARNING',
+        'pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLR': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
     })
     plt.rcParams['axes.grid'] = True

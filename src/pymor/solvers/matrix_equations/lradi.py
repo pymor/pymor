@@ -8,7 +8,6 @@ import scipy.linalg as spla
 from pymor.algorithms.eigs import _arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.solvers.matrix_equations.interface import LyapunovSolverLR
 from pymor.tools.random import new_rng
@@ -70,8 +69,6 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
         if not cont_time:
             raise NotImplementedError
 
-        logger = getLogger('pymor.solvers.matrix_equations.lradi.solve_lyap_lr')
-
         if self.lradi_shifts == 'projection_shifts':
             init_shifts = self.projection_shifts_init
             iteration_shifts = self.projection_shifts
@@ -123,13 +120,13 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
                 j += 2
             j_shift += 1
             res = np.linalg.norm(W.gramian(), ord=2)
-            logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+            self.logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
                 shifts = iteration_shifts(A, E, V, Z, shifts)
                 j_shift = 0
 
         if res > Btol:
-            logger.warning(f'Prescribed relative residual tolerance was not achieved '
+            self.logger.warning(f'Prescribed relative residual tolerance was not achieved '
                             f'({res/init_res:e} > {self.lradi_tol:e}) after {self.lradi_maxiter} ADI steps.')
 
         return Z

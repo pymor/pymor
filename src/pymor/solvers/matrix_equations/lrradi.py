@@ -7,7 +7,6 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
 from pymor.tools.random import new_rng
@@ -54,8 +53,6 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
 
         if S is not None:
             raise NotImplementedError
-
-        logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lr')
 
         if self.lrradi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
@@ -158,7 +155,7 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
                 j += 2
             j_shift += 1
             res = np.linalg.norm(RF.gramian(), ord=2)
-            logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+            self.logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
                 shifts = iteration_shifts(A, E, B, RF, K, Z)
                 j_shift = 0
