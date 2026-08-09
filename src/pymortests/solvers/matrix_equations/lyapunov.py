@@ -17,7 +17,7 @@ pytestmark = pytest.mark.builtin
 n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]
-cont_lyap_lrcf_backend_list = [
+cont_lyap_lr_backend_list = [
     'lradi',
 ]
 cont_lyap_dense_backend_list = [
@@ -120,8 +120,8 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, cont_lyap_dense_backend_list),
-                                                product(n_list_big, cont_lyap_lrcf_backend_list)))
-def test_cont_lrcf(n, m, with_E, trans, backend, rng):
+                                                product(n_list_big, cont_lyap_lr_backend_list)))
+def test_cont_lr(n, m, with_E, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -156,7 +156,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver)
+    Zva = equation.solve_lr(solver)
 
     assert len(Zva) <= n
 
@@ -176,7 +176,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('backend', disc_lyap_dense_backend_list)
-def test_disc_lrcf(n, m, with_E, trans, backend, rng):
+def test_disc_lr(n, m, with_E, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -208,7 +208,7 @@ def test_disc_lrcf(n, m, with_E, trans, backend, rng):
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 

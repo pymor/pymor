@@ -55,7 +55,7 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
         if S is not None:
             raise NotImplementedError
 
-        logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lrcf')
+        logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lr')
 
         if self.lrradi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
@@ -162,7 +162,7 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
             if j_shift >= shifts.size:
                 shifts = iteration_shifts(A, E, B, RF, K, Z)
                 j_shift = 0
-        # transform solution to lrcf
+        # transform solution to low-rank Choleksy factor
         cf = spla.cholesky(Y)
         Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
         return Z_cf

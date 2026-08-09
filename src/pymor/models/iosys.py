@@ -106,7 +106,7 @@ class LTIModel(Model):
         intermediate vector that is calculated is returned.
     presets
         A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
-        attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
+        attributes of |LTIModel| such as `poles`, `c_lr`, `o_lr`, `c_dense`, `o_dense`, `hsv`,
         `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     matrix_equation_solvers
@@ -209,7 +209,7 @@ class LTIModel(Model):
             if time_stepper is not None:
                 raise ValueError('Time-stepper is given but T is not.')
 
-        assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
+        assert presets is None or presets.keys() <= {'poles', 'c_lr', 'o_lr', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
         if presets:
             assert all(not obj.parametric for obj in [A, B, C, D, E])
@@ -959,14 +959,14 @@ class LTIModel(Model):
 
     @cached
     def _gramian(self, typ, mu=None):
-        if typ == 'c_lrcf' and 'c_dense' in self.presets:
+        if typ == 'c_lr' and 'c_dense' in self.presets:
             return self.A.source.from_numpy(chol(self.presets['c_dense']))
-        elif typ == 'o_lrcf' and 'o_dense' in self.presets:
+        elif typ == 'o_lr' and 'o_dense' in self.presets:
             return self.A.source.from_numpy(chol(self.presets['o_dense']))
-        elif typ == 'c_dense' and 'c_lrcf' in self.presets:
-            return self.presets['c_lrcf'].to_numpy() @ self.presets['c_lrcf'].to_numpy().T
-        elif typ == 'o_dense' and 'o_lrcf' in self.presets:
-            return self.presets['o_lrcf'].to_numpy() @ self.presets['o_lrcf'].to_numpy().T
+        elif typ == 'c_dense' and 'c_lr' in self.presets:
+            return self.presets['c_lr'].to_numpy() @ self.presets['c_lr'].to_numpy().T
+        elif typ == 'o_dense' and 'o_lr' in self.presets:
+            return self.presets['o_lr'].to_numpy() @ self.presets['o_lr'].to_numpy().T
 
         A = self.A.assemble(mu)
         B = self.B.as_range_array(mu=mu)
@@ -979,53 +979,53 @@ class LTIModel(Model):
 
         cont_time = self.sampling_time == 0
 
-        if typ == 'c_lrcf' or typ=='c_dense':
-            solver = self.matrix_equation_solvers.lyapunov_lrcf if typ == 'c_lrcf' \
+        if typ == 'c_lr' or typ=='c_dense':
+            solver = self.matrix_equation_solvers.lyapunov_lr if typ == 'c_lr' \
                 else self.matrix_equation_solvers.lyapunov
             return solver.solve(LyapunovEquation(A, E, B, trans=False, cont_time=cont_time))
-        elif typ == 'o_lrcf' or typ=='o_dense':
-            solver = self.matrix_equation_solvers.lyapunov_lrcf if typ == 'o_lrcf' \
+        elif typ == 'o_lr' or typ=='o_dense':
+            solver = self.matrix_equation_solvers.lyapunov_lr if typ == 'o_lr' \
                 else self.matrix_equation_solvers.lyapunov
             return solver.solve(LyapunovEquation(A, E, C, trans=True, cont_time=cont_time))
-        elif typ == 'bs_c_lrcf':
+        elif typ == 'bs_c_lr':
             ast_spectrum = self.get_ast_spectrum(mu=mu)
             K = bernoulli_stabilize(A, E, B, ast_spectrum, trans=True)
             BK = LowRankOperator(B, np.eye(len(K)), K)
-            return LyapunovEquation(A - BK, E, B, trans=False).solve_lrcf(
-                solver=self.matrix_equation_solvers.lyapunov_lrcf
+            return LyapunovEquation(A - BK, E, B, trans=False).solve_lr(
+                solver=self.matrix_equation_solvers.lyapunov_lr
             )
-        elif typ == 'bs_o_lrcf':
+        elif typ == 'bs_o_lr':
             ast_spectrum = self.get_ast_spectrum(mu=mu)
             K = bernoulli_stabilize(A, E, C, ast_spectrum, trans=False)
             KC = LowRankOperator(K, np.eye(len(K)), C)
-            return LyapunovEquation(A - KC, E, C, trans=True).solve_lrcf(
-                solver=self.matrix_equation_solvers.lyapunov_lrcf
+            return LyapunovEquation(A - KC, E, C, trans=True).solve_lr(
+                solver=self.matrix_equation_solvers.lyapunov_lr
             )
-        elif typ == 'lqg_c_lrcf':
-            return RiccatiEquation(A, E, B, C, trans=False).solve_lrcf(
-                solver=self.matrix_equation_solvers.riccati_lrcf
+        elif typ == 'lqg_c_lr':
+            return RiccatiEquation(A, E, B, C, trans=False).solve_lr(
+                solver=self.matrix_equation_solvers.riccati_lr
             )
-        elif typ == 'lqg_o_lrcf':
-            return RiccatiEquation(A, E, B, C, trans=True).solve_lrcf(
-                solver=self.matrix_equation_solvers.riccati_lrcf
+        elif typ == 'lqg_o_lr':
+            return RiccatiEquation(A, E, B, C, trans=True).solve_lr(
+                solver=self.matrix_equation_solvers.riccati_lr
             )
-        elif typ == 'pr_c_lrcf' or typ == 'pr_c_dense':
-            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_c_lrcf' \
+        elif typ == 'pr_c_lr' or typ == 'pr_c_dense':
+            solver = self.matrix_equation_solvers.positive_riccati_lr if typ == 'pr_c_lr' \
                 else self.matrix_equation_solvers.positive_riccati
             return solver.solve(PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B, trans=False))
-        elif typ == 'pr_o_lrcf' or typ == 'pr_o_dense':
-            solver = self.matrix_equation_solvers.positive_riccati_lrcf if typ == 'pr_o_lrcf' \
+        elif typ == 'pr_o_lr' or typ == 'pr_o_dense':
+            solver = self.matrix_equation_solvers.positive_riccati_lr if typ == 'pr_o_lr' \
                 else self.matrix_equation_solvers.positive_riccati
             return solver.solve(PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True))
-        elif typ[0] == 'br_c_lrcf':
+        elif typ[0] == 'br_c_lr':
             R = typ[1] ** 2 * np.eye(self.dim_output) if typ[1] != 1 else None
-            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=False).solve_lrcf(
-                solver=self.matrix_equation_solvers.positive_riccati_lrcf
+            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=False).solve_lr(
+                solver=self.matrix_equation_solvers.positive_riccati_lr
             )
-        elif typ[0] == 'br_o_lrcf':
+        elif typ[0] == 'br_o_lr':
             R = typ[1] ** 2 * np.eye(self.dim_input) if typ[1] != 1 else None
-            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=True).solve_lrcf(
-                solver=self.matrix_equation_solvers.positive_riccati_lrcf
+            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=True).solve_lr(
+                solver=self.matrix_equation_solvers.positive_riccati_lr
             )
 
     def gramian(self, typ, mu=None):
@@ -1036,44 +1036,44 @@ class LTIModel(Model):
         typ
             The type of the Gramian:
 
-            - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
-            - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
+            - `'c_lr'`: low-rank Cholesky factor of the controllability Gramian,
+            - `'o_lr'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
             - `'o_dense'`: dense observability Gramian,
-            - `'bs_c_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized controllability
+            - `'bs_c_lr'`: low-rank Cholesky factor of the Bernoulli stabilized controllability
               Gramian,
-            - `'bs_o_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized observability
+            - `'bs_o_lr'`: low-rank Cholesky factor of the Bernoulli stabilized observability
               Gramian,
-            - `'lqg_c_lrcf'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
-            - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian,
-            - `('br_c_lrcf', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
+            - `'lqg_c_lr'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
+            - `'lqg_o_lr'`: low-rank Cholesky factor of the "observability" LQG Gramian,
+            - `('br_c_lr', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
               Gramian,
-            - `('br_o_lrcf', gamma)`: low-rank Cholesky factor of the "observability" bounded real
+            - `('br_o_lr', gamma)`: low-rank Cholesky factor of the "observability" bounded real
               Gramian.
-            - `'pr_c_lrcf'`: low-rank Cholesky factor of the "controllability" positive real
+            - `'pr_c_lr'`: low-rank Cholesky factor of the "controllability" positive real
               Gramian,
-            - `'pr_o_lrcf'`: low-rank Cholesky factor of the "observability" positive real
+            - `'pr_o_lr'`: low-rank Cholesky factor of the "observability" positive real
               Gramian.
 
             .. note::
-                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_lr'` types, the method assumes the system is asymptotically stable.
                 For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
                 has a unique solution, i.e. no pair of system poles adds to zero in the
                 continuous-time case and no pair of system poles multiplies to one in the
                 discrete-time case.
-                Additionally, for `'pr_c_lrcf'` and `'pr_o_lrcf'`, it is assumed that `D + D^T` is
+                Additionally, for `'pr_c_lr'` and `'pr_o_lr'`, it is assumed that `D + D^T` is
                 invertible.
         mu
             |Parameter values|.
 
         Returns
         -------
-        If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
+        If typ ends with `'_lr'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf',
-                        'pr_c_lrcf', 'pr_o_lrcf', 'pr_c_dense', 'pr_o_dense')
-                or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
+        assert (typ in ('c_lr', 'o_lr', 'c_dense', 'o_dense', 'bs_c_lr', 'bs_o_lr', 'lqg_c_lr', 'lqg_o_lr',
+                        'pr_c_lr', 'pr_o_lr', 'pr_c_dense', 'pr_o_dense')
+                or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lr', 'br_o_lr'))
 
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
                 and self.sampling_time > 0):
@@ -1086,7 +1086,7 @@ class LTIModel(Model):
         gramian = self.presets[typ] if typ in self.presets else self._gramian(typ, mu=mu)
 
         # assert correct return types
-        assert ((isinstance(typ, str) and typ.endswith('_lrcf') or isinstance(typ, tuple))
+        assert ((isinstance(typ, str) and typ.endswith('_lr') or isinstance(typ, tuple))
                 and gramian in self.A.source
                 or isinstance(gramian, np.ndarray)
                 and gramian.shape == (self.A.source.dim, self.A.source.dim))
@@ -1126,21 +1126,21 @@ class LTIModel(Model):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
         if typ == 'lyap':
-            cf = self.gramian('c_lrcf', mu=mu)
-            of = self.gramian('o_lrcf', mu=mu)
+            cf = self.gramian('c_lr', mu=mu)
+            of = self.gramian('o_lr', mu=mu)
         elif typ == 'bs':
-            cf = self.gramian('bs_c_lrcf', mu=mu)
-            of = self.gramian('bs_o_lrcf', mu=mu)
+            cf = self.gramian('bs_c_lr', mu=mu)
+            of = self.gramian('bs_o_lr', mu=mu)
         elif typ == 'lqg':
-            cf = self.gramian('lqg_c_lrcf', mu=mu)
-            of = self.gramian('lqg_o_lrcf', mu=mu)
+            cf = self.gramian('lqg_c_lr', mu=mu)
+            of = self.gramian('lqg_o_lr', mu=mu)
         elif typ == 'pr':
-            cf = self.gramian('pr_c_lrcf', mu=mu)
-            of = self.gramian('pr_o_lrcf', mu=mu)
+            cf = self.gramian('pr_c_lr', mu=mu)
+            of = self.gramian('pr_o_lr', mu=mu)
         elif isinstance(typ, tuple) and typ[0] == 'br' and typ[1] > 0:
             gamma = typ[1]
-            cf = self.gramian(('br_c_lrcf', gamma), mu=mu)
-            of = self.gramian(('br_o_lrcf', gamma), mu=mu)
+            cf = self.gramian(('br_c_lr', gamma), mu=mu)
+            of = self.gramian(('br_o_lr', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
         return spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
@@ -1176,10 +1176,10 @@ class LTIModel(Model):
             D_norm2 = 0
         assert self.parameters.assert_compatible(mu)
         if self.dim_input <= self.dim_output:
-            cf = self.gramian('c_lrcf', mu=mu)
+            cf = self.gramian('c_lr', mu=mu)
             return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum() + D_norm2)
         else:
-            of = self.gramian('o_lrcf', mu=mu)
+            of = self.gramian('o_lr', mu=mu)
             return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum() + D_norm2)
 
     def h2_norm(self, mu=None):
@@ -1288,14 +1288,14 @@ class LTIModel(Model):
         cont_time = self.sampling_time == 0
         if self.dim_input <= self.dim_output:
             cf = LyapunovEquation(A - KC, E, BmKD.as_range_array(mu=mu),
-                                  trans=False, cont_time=cont_time).solve_lrcf(
-                                      solver=self.matrix_equation_solvers.lyapunov_lrcf
+                                  trans=False, cont_time=cont_time).solve_lr(
+                                      solver=self.matrix_equation_solvers.lyapunov_lr
                                     )
             return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
         else:
             of = LyapunovEquation(A - KC, E, C.as_source_array(mu=mu),
-                                  trans=True, cont_time=cont_time).solve_lrcf(
-                                      solver=self.matrix_equation_solvers.lyapunov_lrcf
+                                  trans=True, cont_time=cont_time).solve_lr(
+                                      solver=self.matrix_equation_solvers.lyapunov_lr
                                     )
             return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
 
@@ -2506,17 +2506,17 @@ class SecondOrderModel(Model):
         typ
             The type of the Gramian:
 
-            - `'pc_lrcf'`: low-rank Cholesky factor of the position controllability Gramian,
-            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity controllability Gramian,
-            - `'po_lrcf'`: low-rank Cholesky factor of the position observability Gramian,
-            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity observability Gramian,
+            - `'pc_lr'`: low-rank Cholesky factor of the position controllability Gramian,
+            - `'vc_lr'`: low-rank Cholesky factor of the velocity controllability Gramian,
+            - `'po_lr'`: low-rank Cholesky factor of the position observability Gramian,
+            - `'vo_lr'`: low-rank Cholesky factor of the velocity observability Gramian,
             - `'pc_dense'`: dense position controllability Gramian,
             - `'vc_dense'`: dense velocity controllability Gramian,
             - `'po_dense'`: dense position observability Gramian,
             - `'vo_dense'`: dense velocity observability Gramian.
 
             .. note::
-                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_lr'` types, the method assumes the system is asymptotically stable.
                 For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
                 has a unique solution, i.e. no pair of system poles adds to zero in the
                 continuous-time case and no pair of system poles multiplies to one in the
@@ -2526,15 +2526,15 @@ class SecondOrderModel(Model):
 
         Returns
         -------
-        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`, then the Gramian factor as a
+        If typ is `'pc_lr'`, `'vc_lr'`, `'po_lr'` or `'vo_lr'`, then the Gramian factor as a
         |VectorArray| from `self.M.source`.
         If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
         |NumPy array|.
         """
-        assert typ in ('pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
+        assert typ in ('pc_lr', 'vc_lr', 'po_lr', 'vo_lr',
                        'pc_dense', 'vc_dense', 'po_dense', 'vo_dense')
 
-        if typ.endswith('lrcf'):
+        if typ.endswith('lr'):
             return self.to_lti().gramian(typ[1:], mu=mu).blocks[0 if typ.startswith('p') else 1].copy()
         else:
             g = self.to_lti().gramian(typ[1:], mu=mu)
@@ -2559,8 +2559,8 @@ class SecondOrderModel(Model):
         One-dimensional |NumPy array| of singular values.
         """
         return spla.svdvals(
-            self.gramian('po_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order])
+            self.gramian('po_lr', mu=mu)[:self.order]
+                .inner(self.gramian('pc_lr', mu=mu)[:self.order])
         )
 
     def vsv(self, mu=None):
@@ -2579,8 +2579,8 @@ class SecondOrderModel(Model):
         One-dimensional |NumPy array| of singular values.
         """
         return spla.svdvals(
-            self.gramian('vo_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order], product=self.M)
+            self.gramian('vo_lr', mu=mu)[:self.order]
+                .inner(self.gramian('vc_lr', mu=mu)[:self.order], product=self.M)
         )
 
     def pvsv(self, mu=None):
@@ -2599,8 +2599,8 @@ class SecondOrderModel(Model):
         One-dimensional |NumPy array| of singular values.
         """
         return spla.svdvals(
-            self.gramian('vo_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order], product=self.M)
+            self.gramian('vo_lr', mu=mu)[:self.order]
+                .inner(self.gramian('pc_lr', mu=mu)[:self.order], product=self.M)
         )
 
     def vpsv(self, mu=None):
@@ -2619,8 +2619,8 @@ class SecondOrderModel(Model):
         One-dimensional |NumPy array| of singular values.
         """
         return spla.svdvals(
-            self.gramian('po_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order])
+            self.gramian('po_lr', mu=mu)[:self.order]
+                .inner(self.gramian('vc_lr', mu=mu)[:self.order])
         )
 
     def h2_norm(self, mu=None):

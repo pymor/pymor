@@ -423,7 +423,7 @@ For example, the following computes the low-rank Cholesky factor of the
 controllability Gramian as a {{ VectorArray }}:
 
 ```{code-cell} ipython3
-fom.gramian('c_lrcf')
+fom.gramian('c_lr')
 ```
 
 ## Hankel singular values

@@ -188,39 +188,39 @@ class MatrixEquationSolvers(ImmutableObject):
     ----------
     lyapunov
         A |LyapunovSolver| or `None`, then :class:`DefaultLyapunovSolver` is used.
-    lyapunov_lrcf
+    lyapunov_lr
         A |LyapunovSolverLRCF| or `None`, then :class:`DefaultLyapunovSolverLRCF` is used.
     riccati
         A |RiccatiSolver| or `None`, then :class:`DefaultRiccatiSolver` is used.
-    riccati_lrcf
+    riccati_lr
         A |RiccatiSolverLRCF| or `None`, then :class:`DefaultRiccatiSolverLRCF` is used.
     positive_riccati
         A |PositiveRiccatiSolver| or `None`, then :class:`DefaultPositiveRiccatiSolver`
         is used.
-    positive_riccati_lrcf
+    positive_riccati_lr
         A |PositiveRiccatiSolverLRCF| or `None`, then
         :class:`DefaultPositiveRiccatiSolverLRCF` is used.
     sylvester
         A |SylvesterSolver| or `None`, then :class:`DefaultSylvesterSolver` is used.
     """
 
-    def __init__(self, lyapunov=None, lyapunov_lrcf=None, riccati=None, riccati_lrcf=None,
-                 positive_riccati=None, positive_riccati_lrcf=None, sylvester=None):
+    def __init__(self, lyapunov=None, lyapunov_lr=None, riccati=None, riccati_lr=None,
+                 positive_riccati=None, positive_riccati_lr=None, sylvester=None):
 
         lyapunov = lyapunov or DefaultLyapunovSolver()
-        lyapunov_lrcf = lyapunov_lrcf or DefaultLyapunovSolverLRCF()
+        lyapunov_lr = lyapunov_lr or DefaultLyapunovSolverLRCF()
         riccati = riccati or DefaultRiccatiSolver()
-        riccati_lrcf = riccati_lrcf or DefaultRiccatiSolverLRCF()
+        riccati_lr = riccati_lr or DefaultRiccatiSolverLRCF()
         positive_riccati = positive_riccati or DefaultPositiveRiccatiSolver()
-        positive_riccati_lrcf = positive_riccati_lrcf or DefaultPositiveRiccatiSolverLRCF()
+        positive_riccati_lr = positive_riccati_lr or DefaultPositiveRiccatiSolverLRCF()
         sylvester = sylvester or DefaultSylvesterSolver()
 
         assert isinstance(lyapunov, LyapunovSolver)
-        assert isinstance(lyapunov_lrcf, LyapunovSolverLRCF)
+        assert isinstance(lyapunov_lr, LyapunovSolverLRCF)
         assert isinstance(riccati, RiccatiSolver)
-        assert isinstance(riccati_lrcf, RiccatiSolverLRCF)
+        assert isinstance(riccati_lr, RiccatiSolverLRCF)
         assert isinstance(positive_riccati, PositiveRiccatiSolver)
-        assert isinstance(positive_riccati_lrcf, PositiveRiccatiSolverLRCF)
+        assert isinstance(positive_riccati_lr, PositiveRiccatiSolverLRCF)
         assert isinstance(sylvester, SylvesterSolver)
 
         self.__auto_init(locals())

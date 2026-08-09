@@ -175,7 +175,7 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     err = fom - rom
     if isinstance(err, LTIModel):
         matrix_equation_solvers = MatrixEquationSolvers(
-            lyapunov_lrcf=LRADILyapunovSolverLRCF()
+            lyapunov_lr=LRADILyapunovSolverLRCF()
         )
         err = err.with_(matrix_equation_solvers=matrix_equation_solvers)
 
@@ -317,7 +317,7 @@ def main(
 
     # LTI system
     matrix_equation_solvers = MatrixEquationSolvers(
-        lyapunov_lrcf=LRADILyapunovSolverLRCF(lradi_shifts='wachspress_shifts')
+        lyapunov_lr=LRADILyapunovSolverLRCF(lradi_shifts='wachspress_shifts')
     )
 
     ts = ImplicitEulerTimeStepper(100)

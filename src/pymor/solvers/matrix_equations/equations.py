@@ -37,7 +37,7 @@ class LyapunovEquation(ImmutableObject):
       .. math::
           A^T X A - E^T X E + B^T B = 0.
 
-    Use :meth:`solve` to obtain the dense solution :math:`X` and :meth:`solve_lrcf`
+    Use :meth:`solve` to obtain the dense solution :math:`X` and :meth:`solve_lr`
     to obtain a low-rank Cholesky factor :math:`Z` with :math:`X \approx Z Z^H`.
 
     Parameters
@@ -84,7 +84,7 @@ class LyapunovEquation(ImmutableObject):
         assert isinstance(solver, LyapunovSolver)
         return solver.solve(self)
 
-    def solve_lrcf(self, solver=None):
+    def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultLyapunovSolverLRCF
         from pymor.solvers.matrix_equations.interface import LyapunovSolverLRCF
@@ -297,7 +297,7 @@ class RiccatiEquation(RiccatiData):
         assert isinstance(solver, RiccatiSolver)
         return solver.solve(self)
 
-    def solve_lrcf(self, solver=None):
+    def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultRiccatiSolverLRCF
         from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
@@ -353,7 +353,7 @@ class PositiveRiccatiEquation(RiccatiData):
         assert isinstance(solver, PositiveRiccatiSolver)
         return solver.solve(self)
 
-    def solve_lrcf(self, solver=None):
+    def solve_lr(self, solver=None):
         r"""Compute a low-rank Cholesky factor :math:`Z` as a |VectorArray| from `A.source`."""
         from pymor.solvers.matrix_equations.default import DefaultPositiveRiccatiSolverLRCF
         from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLRCF

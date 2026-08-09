@@ -269,7 +269,7 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 
@@ -339,7 +339,7 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 

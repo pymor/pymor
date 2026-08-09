@@ -19,7 +19,7 @@ def test_spectral_factor():
     S = np.array([[1e-12]])
     fom = LTIModel.from_matrices(-R, G, G.T, S)
 
-    Z = fom.gramian('pr_o_lrcf').to_numpy().T
+    Z = fom.gramian('pr_o_lr').to_numpy().T
     X = Z.T@Z
     assert np.all(spla.eigvals(X) > 0), 'Passive FOM expected.'
 
@@ -32,7 +32,7 @@ def test_spectral_factor():
 
     assert np.all(np.real(rom.poles()) < 0), 'Asymptotically stable ROM expected.'
 
-    Z2 = rom.gramian('pr_o_lrcf').to_numpy().T
+    Z2 = rom.gramian('pr_o_lr').to_numpy().T
     X2 = Z2.T@Z2
     assert np.all(spla.eigvals(X2) > 0), 'Passive ROM expected.'
 
