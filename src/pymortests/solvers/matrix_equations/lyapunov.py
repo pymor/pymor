@@ -145,14 +145,14 @@ def test_cont_lr(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation.from_matrices(A, E, B, trans=trans)
 
     if backend == 'lradi':
-        from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLRCF
-        solver =  LRADILyapunovSolverLRCF()
+        from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLR
+        solver =  LRADILyapunovSolverLR()
     elif backend == 'slycot':
-        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
-        solver = SlycotLyapunovSolverLRCF()
+        from pymor.bindings.slycot import SlycotLyapunovSolverLR
+        solver = SlycotLyapunovSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
-        solver = ScipyLyapunovSolverLRCF()
+        from pymor.bindings.scipy import ScipyLyapunovSolverLR
+        solver = ScipyLyapunovSolverLR()
     else:
         raise ValueError
 
@@ -200,11 +200,11 @@ def test_disc_lr(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation.from_matrices(A, E, B, trans=trans, cont_time=False)
 
     if backend == 'slycot':
-        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
-        solver = SlycotLyapunovSolverLRCF()
+        from pymor.bindings.slycot import SlycotLyapunovSolverLR
+        solver = SlycotLyapunovSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
-        solver = ScipyLyapunovSolverLRCF()
+        from pymor.bindings.scipy import ScipyLyapunovSolverLR
+        solver = ScipyLyapunovSolverLR()
     else:
         raise ValueError
 

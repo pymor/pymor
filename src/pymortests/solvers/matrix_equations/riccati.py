@@ -258,14 +258,14 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'lrradi':
-        from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLRCF
-        solver =  LRRADIRiccatiSolverLRCF()
+        from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLR
+        solver =  LRRADIRiccatiSolverLR()
     elif backend == 'slycot':
-        from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
-        solver = SlycotRiccatiSolverLRCF()
+        from pymor.bindings.slycot import SlycotRiccatiSolverLR
+        solver = SlycotRiccatiSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyRiccatiSolverLRCF
-        solver = ScipyRiccatiSolverLRCF()
+        from pymor.bindings.scipy import ScipyRiccatiSolverLR
+        solver = ScipyRiccatiSolverLR()
     else:
         raise ValueError
 
@@ -331,11 +331,11 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'slycot':
-        from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
-        solver = SlycotPositiveRiccatiSolverLRCF()
+        from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
+        solver = SlycotPositiveRiccatiSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
-        solver = ScipyPositiveRiccatiSolverLRCF()
+        from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLR
+        solver = ScipyPositiveRiccatiSolverLR()
     else:
         raise ValueError
 
