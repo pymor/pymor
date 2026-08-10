@@ -79,6 +79,7 @@ ADAPTIVE_MODEL_HIERARCHY_ARGS = (
     ('hierarchy', [0, 'vkoga', 20, 50, '--no-use-dd-model']),
     ('hierarchy', [0, 'gpr', 20, 50]),
     ('hierarchy', [1, 'vkoga', 20, 50, '--time-steps=10']),
+    ('hierarchy', [1, 'vkoga', 20, 50, '--time-steps=10', '--time-reduction=mean']),
 )
 
 THERMALBLOCK_ARGS = (

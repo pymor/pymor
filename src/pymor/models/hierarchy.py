@@ -8,7 +8,7 @@ from pymor.models.interface import Model
 
 
 class ModelHierarchy(Model):
-    """Adaptive hierarchy of models of increasing fidelity.
+    r"""Adaptive hierarchy of models of increasing fidelity.
 
     The hierarchy consists of a sequence of reduced models of increasing fidelity
     together with a high-fidelity reference model (typically the full-order model)
@@ -51,11 +51,18 @@ class ModelHierarchy(Model):
     fom
         The high-fidelity reference model used as the final fallback. Required if
         `models` is not given.
+    time_reduction
+        Callable mapping a (possibly time-dependent) error estimate to a single scalar
+        that is compared against `tol`. For instationary problems the error estimate is a
+        trajectory over time; the default `numpy.max` uses the maximum in time (i.e. the
+        :math:`\ell^\infty`-in-time norm). Other choices (e.g. the value at the final time
+        or an :math:`\ell^2`-in-time norm) can be passed here.
     """
 
-    def __init__(self, reductors, tol, models=None, fom=None):
+    def __init__(self, reductors, tol, models=None, fom=None, time_reduction=np.max):
         assert len(reductors) >= 1
         assert tol > 0
+        assert callable(time_reduction)
         assert models is not None or fom is not None
         assert all(hasattr(red, attr) for red in reductors
                    for attr in ('empty', 'reduce', 'reconstruct', 'adapt'))
@@ -85,6 +92,9 @@ class ModelHierarchy(Model):
         if quantities & {'output', 'output_error_estimate'}:
             errors_to_compute.add('output_error_estimate')
 
+        def below_tol(estimate):
+            return estimate is None or self.time_reduction(estimate) <= tol
+
         for i_m, m in enumerate(models):
             is_reference = i_m == len(models) - 1
 
@@ -93,8 +103,8 @@ class ModelHierarchy(Model):
 
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
             d = m.compute(**dict.fromkeys(requested, True), mu=mu)
-            if is_reference or (np.max(d.get('solution_error_estimate', -1)) <= tol
-                                and np.max(d.get('output_error_estimate', -1)) <= tol):
+            if is_reference or (below_tol(d.get('solution_error_estimate'))
+                                and below_tol(d.get('output_error_estimate'))):
                 break
 
         i_m_sufficient = i_m

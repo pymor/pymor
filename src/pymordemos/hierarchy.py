@@ -35,6 +35,7 @@ def main(
     output_scaling: bool = False,
     use_dd_model: bool = True,
     quantity: Literal['state', 'output', 'state+output'] = 'state',
+    time_reduction: Literal['max', 'mean'] = 'max',
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 
@@ -72,6 +73,10 @@ def main(
         `'output'`, or `'state+output'`. The hierarchy selects the model based on the
         error estimator(s) matching the requested quantity; for `'state+output'` a model
         is only accepted if both estimates are below the tolerance.
+    time_reduction
+        How the time-dependent error estimate of an instationary problem is reduced to a
+        single number compared against the tolerance: `'max'` (maximum in time) or
+        `'mean'` (mean in time).
     """
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
@@ -125,8 +130,10 @@ def main(
         reductors.append(AdaptiveDDReductor(dd_reductor_parameters, retrain_interval=1))
         model_labels.append('DD')
 
+    time_reduction_fn = {'max': np.max, 'mean': np.mean}[time_reduction]
+
     tol = 5e-3
-    hierarchy = ModelHierarchy(reductors, tol, fom=fom)
+    hierarchy = ModelHierarchy(reductors, tol, fom=fom, time_reduction=time_reduction_fn)
 
     want_state = 'state' in quantity
     want_output = 'output' in quantity
