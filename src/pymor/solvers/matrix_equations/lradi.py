@@ -15,7 +15,7 @@ from pymor.vectorarrays.constructions import cat_arrays
 
 
 class LRADILyapunovSolverLR(LyapunovSolverLR):
-    r"""Compute a LR Cholesky factor of the solution of a |LyapunovEquation| using ADI iteration.
+    r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using ADI iteration.
 
     Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
