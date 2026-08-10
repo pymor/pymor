@@ -99,8 +99,17 @@ class ModelHierarchy(Model):
 
         i_m_sufficient = i_m
         data.update(d)
+        # the reference model is exact: report a zero error, shaped like the corresponding
+        # estimate, for any requested estimate that no model produced
         for q in quantities & error_estimates:
-            data.setdefault(q, np.zeros(1))  # fills missing error estimates if the reference model was used
+            if q in data:
+                continue
+            if q == 'solution_error_estimate' and 'solution' in data:
+                data[q] = np.zeros(len(data['solution']))
+            elif q == 'output_error_estimate' and 'output' in data:
+                data[q] = np.zeros_like(data['output'])
+            else:
+                data[q] = np.zeros(1)
 
         data['used_model'] = len(models) - 1 - i_m_sufficient
         if 'solution' in quantities:
