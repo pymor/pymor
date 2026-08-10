@@ -636,7 +636,7 @@ The model hierarchy was described in detail in {cite}`HKOSW23`.
 
 We now show how to use the model hierarchy in pyMOR. In this example,
 we consider again the elliptic problem from the beginning of the
-tutorial. Since we do
+tutorial.
 
 ```{code-cell} ipython3
 fom = two_dimensional_parametric_diffusion()
@@ -662,24 +662,35 @@ regressor_parameters = {'kernel': kernel, 'criterion': 'fp', 'max_centers': 30, 
 dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters}
 ```
 
-We can finally set up the adaptive model hierarchy as
-a {class}`~pymor.models.hierarchy.DDRBModelHierarchy`. We pass the full-order model,
-the reduced basis reductor, the parameters for the data-driven reductor and the tolerance
-to the constructor:
+We can finally set up the adaptive model hierarchy as a
+{class}`~pymor.models.hierarchy.ModelHierarchy`. The hierarchy is built from a sequence
+of adaptive reductors, ordered from the highest-fidelity reduced model down to the
+cheapest one, together with the full-order model as the reference. Here we wrap the
+reduced basis reductor in an {class}`~pymor.reductors.basic.AdaptiveRBReductor` and add
+an {class}`~pymor.reductors.data_driven.AdaptiveDDReductor` for the data-driven
+surrogate. We also pass the tolerance against which the estimated errors are compared:
 
 ```{code-cell} ipython3
 tol = 5e-3
 
-from pymor.models.hierarchy import DDRBModelHierarchy
-hierarchy = DDRBModelHierarchy(fom, rb_reductor, dd_reductor_parameters, tol)
+from pymor.models.hierarchy import ModelHierarchy
+from pymor.reductors.basic import AdaptiveRBReductor
+from pymor.reductors.data_driven import AdaptiveDDReductor
+adaptive_rb_reductor = AdaptiveRBReductor(fom, rb_reductor)
+adaptive_dd_reductor = AdaptiveDDReductor(dd_reductor_parameters)
+hierarchy = ModelHierarchy([adaptive_rb_reductor, adaptive_dd_reductor], tol, fom=fom)
 ```
 
 The model hierarchy can now be used similar to any other model by calling its
 `compute`-method. Some additional data such as the model used internally to compute
-the solution or the estimated error are also provided in the data dictionary.
+the solution or the estimated error are also provided in the data dictionary. The
+`used_model` entry is the index of the model that was used, counting from the reference
+model (`0` is the full-order model, `1` the reduced basis model and `2` the data-driven
+surrogate):
 
 ```{code-cell} ipython3
 parameters = parameter_space.sample_randomly(100)
+model_labels = ['FOM', 'RB', 'DD']
 
 timings_red = []
 used_models = []
@@ -688,8 +699,8 @@ for mu in parameters:
     tic = time.perf_counter()
     data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
     timings_red.append(time.perf_counter() - tic)
-    used_models.append(data['used_model'])
-    estimated_errors.append(data['estimated_error'])
+    used_models.append(model_labels[data['used_model']])
+    estimated_errors.append(np.max(data['solution_error_estimate']))
 
 timings_red = np.array(timings_red)
 estimated_errors = np.array(estimated_errors)
@@ -750,6 +761,25 @@ and used quite frequently. The full-order model is only used a few times and
 was never required after building a suitable reduced space. It is important
 to remark that the runtimes of the full-order model and the reduced basis
 model also include the training times for the surrogates.
+
+Since {class}`~pymor.models.hierarchy.ModelHierarchy` accepts an arbitrary sequence of
+adaptive reductors, it is not restricted to this particular set of three models. For
+instance, we can build a two-level hierarchy consisting only of the reduced basis model
+and the full-order model by omitting the data-driven reductor:
+
+```{code-cell} ipython3
+rb_only_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
+rb_hierarchy = ModelHierarchy([AdaptiveRBReductor(fom, rb_only_reductor)], tol, fom=fom)
+
+rb_model_labels = ['FOM', 'RB']
+rb_used_models = []
+for mu in parameter_space.sample_randomly(20):
+    data = rb_hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
+    rb_used_models.append(rb_model_labels[data['used_model']])
+
+for model in rb_model_labels:
+    print(f'{model}: {rb_used_models.count(model)}')
+```
 
 Download the code:
 {download}`tutorial_mor_with_ml.md`
