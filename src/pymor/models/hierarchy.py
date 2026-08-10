@@ -143,3 +143,16 @@ class ModelHierarchy(Model):
             if models[i] == m_new:
                 return
             models[i] = m_new
+
+    def retrain(self):
+        """Manually retrain all reductors that support it and refresh the active models.
+
+        A manual alternative to the automatic retraining controlled by a reductor's
+        retraining interval: every reductor providing a `retrain` method (e.g.
+        :class:`~pymor.reductors.data_driven.AdaptiveDDReductor`) is retrained on the
+        training data collected so far, and the corresponding model in the hierarchy is
+        replaced by the retrained one.
+        """
+        for i, reductor in enumerate(self.reductors):
+            if hasattr(reductor, 'retrain'):
+                self.models[i] = reductor.retrain()
