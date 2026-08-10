@@ -6,9 +6,10 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
-from pymor.algorithms.rand_la import RandomizedRangeFinder
+from pymor.algorithms.rand_la import RandomizedSVD
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
+from pymor.core.defaults import defaults
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
@@ -306,21 +307,21 @@ class RandomizedERAReductor(ERAReductor):
         larger than the number of outputs, as it reduces the second dimension of the Hankel matrix.
         The transposition only happens internally and is resolved after randomized SVD such that the
         in- and output dimensionality of the ROM is not affected. Defaults to `True`.
-    rrf_opts
-        Dictionary of options to pass to the constructor of |RandomizedRangeFinder| for the
-        randomized SVD of the Hankel matrix. See :class:`RandomizedRangeFinder` for details. It is
-        recommended to use a memory-efficient QR method, e.g., `shifted_chol_qr`, for better
-        performance, as well as two power iterations for a good balance of accuracy and speed.
-        Defaults to `{'qr_method': 'shifted_chol_qr', 'power_iterations': 2}`.
+    power_iterations
+        Number of power iterations used by the randomized SVD. Defaults to `2`.
+    rrf_args
+        Additional options passed to the underlying |RandomizedRangeFinder|. In particular,
+        `qr_method` defaults to `'shifted_chol_qr'` but can be overridden. The error estimator is
+        always `'loo'`, as required by the adaptive ERA algorithm, see :cite:`PS26`.
     num_left
         Number of left (output) directions for tangential projection.
     num_right
         Number of right (input) directions for tangential projection.
     """
 
+    @defaults('power_iterations')
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
-                 rrf_opts={'qr_method': 'shifted_chol_qr', 'power_iterations': 2},
-                 num_left=None, num_right=None):
+                 power_iterations=2, rrf_args=None, num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability=force_stability, feedthrough=feedthrough)
         self.__auto_init(locals())
         if num_left is not None or num_right is not None:
@@ -335,8 +336,13 @@ class RandomizedERAReductor(ERAReductor):
             self.logger.info('Using transposed formulation.')
             self._H = self._H.H
         self._last_sv_U_V = None
-        self._rrf = RandomizedRangeFinder(self._H, error_estimator='loo', **rrf_opts)
-        self._rrf._draw_samples = self._draw_samples
+        rrf_args = {
+            'qr_method': 'shifted_chol_qr',  # default, can override
+            **(rrf_args or {}),
+            'error_estimator': 'loo',  # must use LOO
+        }
+        self._rsvd = RandomizedSVD(self._H, power_iterations=power_iterations, rrf_args=rrf_args)
+        self._rsvd.range_finder._draw_samples = self._draw_samples
 
     @cached
     def _weighted_h2_norm(self):
@@ -347,52 +353,35 @@ class RandomizedERAReductor(ERAReductor):
         eta[s+1:] *= np.arange(s-1)[::-1][:T-s-1] + 1
         return spla.norm(self.data*np.sqrt(eta.reshape(-1, 1, 1)))
 
-    def _sv_U_V(self, num_left, num_right):
-        return self._last_sv_U_V
-
     def _draw_samples(self, num):
         # faster way of computing the random samples for Hankel matrices
-        self._rrf.logger.info(f'Taking {num} samples ...')
+        self._rsvd.range_finder.logger.info(f'Taking {num} samples ...')
         V = np.zeros((self._H._circulant.source.dim, num))
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy()
         return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:self._H.range.dim])
 
     def reduce(self, r=None, tol=None):
-        """Construct a reduced realization with randomized methods.
+        r"""Construct a reduced realization with randomized methods.
 
         Parameters
         ----------
         r
             Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
         tol
-            Tolerance for the heuristic estimator of the relative error. For details, see Section
-            5.1 in :cite:`PS26`.
+            Tolerance for the LOO range-approximation error estimator, scaled by the weighted
+            :math:`\mathcal{H}_2` norm. For details, see Section 5.1 in :cite:`PS26`.
 
         Returns
         -------
         rom
             Reduced-order |LTIModel|.
         """
+        _, p, m = self.data.shape
         if tol is not None:
             tol *= self._weighted_h2_norm()
-        last_basis_size = len(self._rrf.Q[-1])
-        Q = self._rrf.find_range(basis_size=r, tol=tol)
-        r = len(Q) if r is None else r
-        if r > last_basis_size:
-            self.logger.info('Projecting onto reduced space ...')
-            B = self._H.apply_adjoint(Q).to_numpy().T
-            self.logger.info(f'Computing reduced SVD of size {B.shape[0]}x{B.shape[1]} ...')
-            Ub, sv, Vh = np.linalg.svd(B, full_matrices=False)
-            self.logger.info('Lifting left singular vectors ...')
-            U = Q.lincomb(Ub)
-            self._last_sv_U_V = (sv, U.to_numpy(), Vh.T)
-        else:
-            self.logger.info('Smaller model order requested. Reusing last SVD.')
-        sv, U, V = self._last_sv_U_V
-        sv, U, V = sv[:r], U[:, :r], V[:, :r]
+        U, sv, V = self._rsvd.compute_svd(n=r, oversampling=0, rrf_tol=tol)
         if self._transpose:  # switch back, if transposed formulation was used
             U, V = V, U
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
-        _, p, m = self.data.shape
-        return self._construct_realization(sv, U, V, m, p, self.num_left, self.num_right)
+        return self._construct_realization(sv, U.to_numpy(), V.to_numpy(), m, p, self.num_left, self.num_right)
