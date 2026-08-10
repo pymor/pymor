@@ -13,7 +13,9 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
-from pymor.models.hierarchy import DDRBModelHierarchy
+from pymor.models.hierarchy import ModelHierarchy
+from pymor.reductors.basic import AdaptiveRBReductor
+from pymor.reductors.data_driven import AdaptiveDDReductor
 
 app = App(help_on_error=True)
 
@@ -31,6 +33,7 @@ def main(
     validation_ratio: float = 0.1,
     input_scaling: bool = False,
     output_scaling: bool = False,
+    use_dd_model: bool = True,
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 
@@ -60,6 +63,9 @@ def main(
         Scale the input of the regressor (i.e. the parameter).
     output_scaling
         Scale the output of the regressor (i.e. reduced coefficients or output quantity).
+    use_dd_model
+        Include the data-driven surrogate in the hierarchy. If `False`, the hierarchy
+        consists only of the reduced basis model and the full-order model.
     """
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
@@ -97,19 +103,24 @@ def main(
     else:
         output_scaler = None
 
-    compression = None
     if problem_number == 0:
         rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
     else:
         rb_reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product,
                                           coercivity_estimator=ProjectionParameterFunctional('diffusion'))
-        compression = lambda U: pod(U, product=fom.h1_0_semi_product)[0]
 
     dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters,
                               'input_scaler': input_scaler, 'output_scaler': output_scaler,
                               'time_vectorized': (problem_number == 1 and time_vectorized)}
+
+    reductors = [AdaptiveRBReductor(fom, rb_reductor)]
+    model_labels = ['FOM', 'RB']
+    if use_dd_model:
+        reductors.append(AdaptiveDDReductor(dd_reductor_parameters, retrain_interval=1))
+        model_labels.append('DD')
+
     tol = 5e-3
-    hierarchy = DDRBModelHierarchy(fom, rb_reductor, dd_reductor_parameters, tol, compression=compression)
+    hierarchy = ModelHierarchy(reductors, tol, fom=fom)
 
     print(f'Performing test on parameter set of size {len(parameters)} ...')
     U = fom.solution_space.empty(reserve=len(parameters))
@@ -128,8 +139,8 @@ def main(
         data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
         timings_red.append(time.perf_counter() - tic)
         U_red.append(data['solution'])
-        used_models.append(data['used_model'])
-        estimated_errors.append(np.max(data['estimated_error']))
+        used_models.append(model_labels[data['used_model']])
+        estimated_errors.append(np.max(data['solution_error_estimate']))
 
     timings_fom = np.array(timings_fom)
     timings_red = np.array(timings_red)

@@ -10,7 +10,7 @@ from pymor.algorithms.ml.vkoga import VKOGARegressor
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
-from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
+from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModel
 
 
 class DataDrivenReductor(BasicObject):
@@ -320,3 +320,82 @@ class DataDrivenPODReductor(DataDrivenReductor):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.reduced_basis.lincomb(u.to_numpy())
+
+
+class AdaptiveDDReductor(BasicObject):
+    """Adaptive data-driven reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
+
+    Manages one or more :class:`DataDrivenReductor` surrogates that approximate the
+    reduced coefficients of the model above it in the hierarchy (typically a reduced
+    basis model). Whenever the reduced basis of that model is extended, a new
+    data-driven surrogate is added for the additional basis coefficients. The training
+    data is split accordingly and passed to the respective surrogates before
+    (re-)training. For prediction, all surrogates are evaluated for the given parameter
+    and their outputs are combined into a single :class:`~pymor.models.data_driven.MultiModel`.
+
+    Parameters
+    ----------
+    dd_reductor_parameters
+        Attributes used to generate the :class:`DataDrivenReductor` surrogates.
+    retrain_interval
+        Number of new training data points to collect before retraining a surrogate.
+    fom
+        Reference model whose reduced coefficients the surrogates approximate (the model
+        above this one in the hierarchy). It is `None` until the first adaptation provides
+        it and supplies the error estimator and output functional of the resulting model.
+    """
+
+    def __init__(self, dd_reductor_parameters, retrain_interval=1, fom=None):
+        assert isinstance(dd_reductor_parameters, dict)
+        assert isinstance(retrain_interval, int)
+        assert retrain_interval >= 1
+        self.__auto_init(locals())
+        self.dd_reductors = []
+        self.dd_models = []
+        self._pending_retrains = []
+
+    @property
+    def empty(self):
+        return not self.dd_models
+
+    def _build_model(self):
+        error_estimator = self.fom.error_estimator if self.fom is not None else None
+        output_functional = self.fom.output_functional if self.fom is not None else None
+        T = getattr(self.fom, 'T', None)
+        time_stepper = getattr(self.fom, 'time_stepper', None)
+        return MultiModel(self.dd_models, output_functional=output_functional,
+                          error_estimator=error_estimator, T=T, time_stepper=time_stepper)
+
+    def reduce(self):
+        return self._build_model()
+
+    def reconstruct(self, u):
+        return u
+
+    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
+        if fom_solution is None:
+            fom_solution = (new_fom or self.fom).solve(mu)
+
+        reduced_coefficients = fom_solution.to_numpy()
+
+        sum_dims = 0
+        for i, red in enumerate(self.dd_reductors):
+            coeffs = reduced_coefficients[sum_dims:sum_dims+red.dim_solution_space]
+            red.extend_training_data([mu], coeffs.T)
+            self._pending_retrains[i] += 1
+            if self._pending_retrains[i] >= self.retrain_interval:
+                self.dd_models[i] = red.reduce()
+                self._pending_retrains[i] = 0
+            sum_dims += red.dim_solution_space
+
+        if new_fom is not None:
+            self.fom = new_fom
+            old_rb_size = sum(red.dim_solution_space for red in self.dd_reductors)
+            # add new data-driven reductor and model to account for new basis components
+            T = getattr(new_fom, 'T', None)
+            self.dd_reductors.append(DataDrivenReductor([mu], reduced_coefficients[old_rb_size:].T,
+                                                        T=T, **self.dd_reductor_parameters))
+            self.dd_models.append(self.dd_reductors[-1].reduce())
+            self._pending_retrains.append(0)
+
+        return self._build_model(), {'solution': fom_solution, 'output': fom_output}

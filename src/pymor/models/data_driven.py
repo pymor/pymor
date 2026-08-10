@@ -200,3 +200,45 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         if self.time_vectorized:
             U = U.reshape((self.nt, -1))
         return U.T
+
+
+class MultiModel(Model):
+    """Model combining several sub-models into a single stacked solution.
+
+    The solutions of the sub-models are stacked into a single solution vector whose
+    space is the direct sum of the sub-model solution spaces. Used by
+    :class:`~pymor.reductors.data_driven.AdaptiveDDReductor` to combine the data-driven
+    surrogates for the individual blocks of reduced basis coefficients into one model.
+
+    Parameters
+    ----------
+    models
+        Sequence of sub-models with :class:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
+        solution spaces.
+    output_functional
+        |Operator| mapping the stacked solution to the model output.
+    error_estimator
+        Error estimator operating on the stacked solution (e.g. the error estimator of
+        the reduced basis model whose coefficients are approximated).
+    T
+        Final time of the reference model. Mirrored so that time-dependent error
+        estimators (which read `m.T` from the model passed to them) work when borrowed
+        from an instationary reference model.
+    time_stepper
+        Time stepper of the reference model, mirrored for the same reason (error
+        estimators may read `m.time_stepper.nt`).
+    """
+
+    def __init__(self, models, output_functional=None, error_estimator=None, T=None, time_stepper=None):
+        assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
+        super().__init__(error_estimator=error_estimator)
+        self.__auto_init(locals())
+        self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
+
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
+            data['solution'] = self.solution_space.make_array(solution_np)
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
