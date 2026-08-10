@@ -7,6 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
 from pymor.algorithms.rand_la import RandomizedSVD
+from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
@@ -341,8 +342,8 @@ class RandomizedERAReductor(ERAReductor):
             **(rrf_args or {}),
             'error_estimator': 'loo',  # must use LOO
         }
-        self._rsvd = RandomizedSVD(self._H, power_iterations=power_iterations, rrf_args=rrf_args)
-        self._rsvd.range_finder._draw_samples = self._draw_samples
+        self.randomized_svd = RandomizedSVD(self._H, power_iterations=power_iterations, rrf_args=rrf_args)
+        self.randomized_svd.range_finder._draw_samples = self._draw_samples
 
     @cached
     def _weighted_h2_norm(self):
@@ -353,12 +354,33 @@ class RandomizedERAReductor(ERAReductor):
         eta[s+1:] *= np.arange(s-1)[::-1][:T-s-1] + 1
         return spla.norm(self.data*np.sqrt(eta.reshape(-1, 1, 1)))
 
+    def relative_error_estimate(self):
+        r"""Estimate the relative :math:`\mathcal{H}_2` error of the most recently reduced model.
+
+        The estimate is the LOO error estimate for the randomized Hankel approximation,
+        normalized by the weighted :math:`\mathcal{H}_2` norm. It is not a rigorous error bound.
+        See Section 3.5 in :cite:`PS26`.
+        """
+        range_finder = self.randomized_svd.range_finder
+        if len(range_finder.Q[-1]) == 0:
+            raise RuntimeError('Call reduce before estimating the relative error.')
+        return range_finder.estimate_error() / self._weighted_h2_norm()
+
     def _draw_samples(self, num):
         # faster way of computing the random samples for Hankel matrices
-        self._rsvd.range_finder.logger.info(f'Taking {num} samples ...')
+        self.randomized_svd.range_finder.logger.info(f'Taking {num} samples ...')
         V = np.zeros((self._H._circulant.source.dim, num))
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy()
         return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:self._H.range.dim])
+
+    def _sv_U_V(self, num_left, num_right):
+        m, n = self._H.range.dim, self._H.source.dim
+        self.logger.warning(
+            f'Computing full SVD of the Hankel operator of size {m} x {n}! '
+            'Use `relative_error_estimate` for the randomized estimator.'
+        )
+        U, sv, Vh = SVD_VA_METHODS[self.randomized_svd.low_rank_svd_method](self._H.as_range_array(), modes=min(m, n))
+        return sv, U.to_numpy(), Vh.T
 
     def reduce(self, r=None, tol=None):
         r"""Construct a reduced realization with randomized methods.
@@ -379,7 +401,7 @@ class RandomizedERAReductor(ERAReductor):
         _, p, m = self.data.shape
         if tol is not None:
             tol *= self._weighted_h2_norm()
-        U, sv, V = self._rsvd.compute_svd(n=r, oversampling=0, rrf_tol=tol)
+        U, sv, V = self.randomized_svd.compute_svd(n=r, oversampling=0, rrf_tol=tol)
         if self._transpose:  # switch back, if transposed formulation was used
             U, V = V, U
 
