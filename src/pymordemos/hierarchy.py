@@ -34,6 +34,7 @@ def main(
     input_scaling: bool = False,
     output_scaling: bool = False,
     use_dd_model: bool = True,
+    quantity: Literal['state', 'output', 'state+output'] = 'state',
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 
@@ -66,6 +67,11 @@ def main(
     use_dd_model
         Include the data-driven surrogate in the hierarchy. If `False`, the hierarchy
         consists only of the reduced basis model and the full-order model.
+    quantity
+        Quantity of interest to query and certify: the `'state'` (the solution), the
+        `'output'`, or `'state+output'`. The hierarchy selects the model based on the
+        error estimator(s) matching the requested quantity; for `'state+output'` a model
+        is only accepted if both estimates are below the tolerance.
     """
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError
@@ -122,34 +128,61 @@ def main(
     tol = 5e-3
     hierarchy = ModelHierarchy(reductors, tol, fom=fom)
 
+    want_state = 'state' in quantity
+    want_output = 'output' in quantity
+
+    # quantities requested from the hierarchy and the corresponding a posteriori estimates
+    compute_kwargs = {}
+    if want_state:
+        compute_kwargs.update(solution=True, solution_error_estimate=True)
+    if want_output:
+        compute_kwargs.update(output=True, output_error_estimate=True)
+
     print(f'Performing test on parameter set of size {len(parameters)} ...')
     U = fom.solution_space.empty(reserve=len(parameters))
+    outputs = []
     timings_fom = []
     for mu in parameters:
         tic = time.perf_counter()
-        U.append(fom.solve(mu))
+        fom_data = fom.compute(solution=want_state, output=want_output, mu=mu)
         timings_fom.append(time.perf_counter() - tic)
+        if want_state:
+            U.append(fom_data['solution'])
+        if want_output:
+            outputs.append(fom_data['output'])
 
     U_red = fom.solution_space.empty(reserve=len(parameters))
+    outputs_red = []
     timings_red = []
     used_models = []
     estimated_errors = []
     for mu in parameters:
         tic = time.perf_counter()
-        data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
+        data = hierarchy.compute(**compute_kwargs, mu=mu)
         timings_red.append(time.perf_counter() - tic)
-        U_red.append(data['solution'])
+        if want_state:
+            U_red.append(data['solution'])
+        if want_output:
+            outputs_red.append(data['output'])
         used_models.append(model_labels[data['used_model']])
-        estimated_errors.append(np.max(data['solution_error_estimate']))
+        error_key = 'solution_error_estimate' if want_state else 'output_error_estimate'
+        estimated_errors.append(np.max(data[error_key]))
 
     timings_fom = np.array(timings_fom)
     timings_red = np.array(timings_red)
     estimated_errors = np.array(estimated_errors)
 
     print(f'Mean speedup: {np.mean(timings_fom / timings_red)}')
-    norms = U.norm()
-    relative_errors = (U - U_red).norm() / np.where(norms > 0, norms, 1.)
-    print(f'Mean errors: {np.mean(relative_errors)}')
+    if want_state:
+        norms = U.norm()
+        state_errors = (U - U_red).norm() / np.where(norms > 0, norms, 1.)
+        print(f'Mean state errors: {np.mean(state_errors)}')
+    if want_output:
+        ref = np.array([o.ravel() for o in outputs])
+        red = np.array([o.ravel() for o in outputs_red])
+        norms = np.linalg.norm(ref, axis=1)
+        output_errors = np.linalg.norm(ref - red, axis=1) / np.where(norms > 0, norms, 1.)
+        print(f'Mean output errors: {np.mean(output_errors)}')
 
     n = len(used_models)
     for model in ('FOM', 'RB', 'DD'):
@@ -204,11 +237,20 @@ def main(
 def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
-        from pymor.models.examples import two_dimensional_parametric_diffusion
-        fom = two_dimensional_parametric_diffusion(diameter=1./grid_intervals)
+        # same parametric diffusion problem as two_dimensional_parametric_diffusion, but with a
+        # single domain l2 output whose error can be estimated by the reduced basis estimator
+        rhs = LincombFunction([ExpressionFunction('10', 2), ConstantFunction(1., 2)],
+                              [ProjectionParameterFunctional('mu'), 0.1])
+        dirichlet_data = LincombFunction([ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
+                                         [ProjectionParameterFunctional('mu'), 0.5])
+        diffusion = LincombFunction([ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
+                                    [ProjectionParameterFunctional('mu'), 1])
+        problem = StationaryProblem(domain=RectDomain(), rhs=rhs, diffusion=diffusion,
+                                    dirichlet_data=dirichlet_data, outputs=[('l2', rhs)], name='2DProblem')
+        fom, _ = discretize_stationary_cg(problem, diameter=1./grid_intervals)
         parameter_space = fom.parameters.space((0.1, 1))
     else:
-        stationary_part = text_problem(text='p')
+        stationary_part = text_problem(text='p').with_(outputs=[('l2', ConstantFunction(1., 2))])
         problem = InstationaryProblem(stationary_part, initial_data=ConstantFunction(0., 2), T=1.)
         fom, _ = discretize_instationary_cg(problem, diameter=5., nt=time_steps)
         parameter_space = fom.parameters.space((0.1, 1))
