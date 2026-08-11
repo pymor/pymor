@@ -159,10 +159,10 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
             if j_shift >= shifts.size:
                 shifts = iteration_shifts(A, E, B, RF, K, Z)
                 j_shift = 0
-        # transform solution to low-rank Choleksy factor
+        # transform solution to low-rank factor
         cf = spla.cholesky(Y)
-        Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
-        return Z_cf
+        Z_lr = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
+        return Z_lr
 
 
     def hamiltonian_shifts_init(self, A, E, B, C):
