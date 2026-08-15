@@ -66,7 +66,10 @@ class ModelHierarchy(Model):
         assert models is not None or fom is not None
         assert all(hasattr(red, attr) for red in reductors
                    for attr in ('empty', 'reduce', 'reconstruct', 'adapt'))
+
+        # the reductors list is reversed internally to simplify the iteration over the reductors
         reductors = list(reversed(reductors))
+
         if models is not None:
             assert len(models) == len(reductors) + 1
             models = list(reversed(models))
@@ -80,10 +83,9 @@ class ModelHierarchy(Model):
         self.dim_output = reference_model.dim_output
         self.__auto_init(locals())
 
-    def _compute(self, quantities, data, mu):
+    def _select_model(self, mu, quantities):
         models, reductors, tol = self.models, self.reductors, self.tol
 
-        error_estimates = {'solution_error_estimate', 'output_error_estimate'}
         base_quantities = quantities & {'solution', 'output'}
 
         errors_to_compute = set()
@@ -102,47 +104,65 @@ class ModelHierarchy(Model):
                 continue
 
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
-            d = m.compute(**dict.fromkeys(requested, True), mu=mu)
-            if is_reference or (below_tol(d.get('solution_error_estimate'))
-                                and below_tol(d.get('output_error_estimate'))):
+            result = m.compute(**dict.fromkeys(requested, True), mu=mu)
+            if is_reference or (below_tol(result.get('solution_error_estimate'))
+                                and below_tol(result.get('output_error_estimate'))):
                 break
 
         i_m_sufficient = i_m
-        data.update(d)
+
+        return result, i_m_sufficient
+
+    def _fill_zero_error_estimates(self, data, quantities):
+        error_estimates = {'solution_error_estimate', 'output_error_estimate'}
         # the reference model is exact: report a zero error, shaped like the corresponding
         # estimate, for any requested estimate that no model produced
-        for q in quantities & error_estimates:
-            if q in data:
+        for quantity in quantities & error_estimates:
+            if quantity in data:
                 continue
-            if q == 'solution_error_estimate' and 'solution' in data:
-                data[q] = np.zeros(len(data['solution']))
-            elif q == 'output_error_estimate' and 'output' in data:
-                data[q] = np.zeros_like(data['output'])
+            if quantity == 'solution_error_estimate' and 'solution' in data:
+                data[quantity] = np.zeros(len(data['solution']))
+            elif quantity == 'output_error_estimate' and 'output' in data:
+                data[quantity] = np.zeros_like(data['output'])
             else:
-                data[q] = np.zeros(1)
+                data[quantity] = np.zeros(1)
 
-        data['used_model'] = len(models) - 1 - i_m_sufficient
+    def _reconstruct(self, data, i_m_sufficient, quantities, result):
+        data['used_model'] = len(self.models) - 1 - i_m_sufficient
         if 'solution' in quantities:
-            s = d['solution']
-            for r in reductors[i_m_sufficient:]:
-                s = r.reconstruct(s)  # could be a nop
-            data['solution'] = s
+            solution = result['solution']
+            for red in self.reductors[i_m_sufficient:]:
+                solution = red.reconstruct(solution)  # could be a nop
+            data['solution'] = solution
 
+    def _adapt_lower_fidelity_models(self, mu, i_m_sufficient, result):
+        m_new, adapt_data = self.reductors[i_m_sufficient-1].adapt(mu, self.tol, fom_solution=result.get('solution'),
+                                                                   fom_output=result.get('output'))
+        if self.models[i_m_sufficient-1] == m_new:
+            return
+        self.models[i_m_sufficient-1] = m_new
+
+        for i in range(i_m_sufficient-2, -1, -1):
+            m_new, adapt_data = self.reductors[i].adapt(mu, self.tol, new_fom=m_new,
+                                                        fom_solution=adapt_data.get('solution'),
+                                                        fom_output=adapt_data.get('output'))
+            if self.models[i] == m_new:
+                return
+            self.models[i] = m_new
+
+    def _compute(self, quantities, data, mu):
+        result, i_m_sufficient = self._select_model(mu, quantities)
+        data.update(result)
+
+        self._fill_zero_error_estimates(data, quantities)
+
+        self._reconstruct(data, i_m_sufficient, quantities, result)
+
+        base_quantities = quantities & {'solution', 'output'}
         if not base_quantities or i_m_sufficient == 0:
             return
 
-        m_new, adapt_data = reductors[i_m_sufficient-1].adapt(mu, tol, fom_solution=d.get('solution'),
-                                                              fom_output=d.get('output'))
-        if models[i_m_sufficient-1] == m_new:
-            return
-        models[i_m_sufficient-1] = m_new
-
-        for i in range(i_m_sufficient-2, -1, -1):
-            m_new, adapt_data = reductors[i].adapt(mu, tol, new_fom=m_new, fom_solution=adapt_data.get('solution'),
-                                                   fom_output=adapt_data.get('output'))
-            if models[i] == m_new:
-                return
-            models[i] = m_new
+        self._adapt_lower_fidelity_models(mu, i_m_sufficient, result)
 
     def retrain(self):
         """Manually retrain all reductors that support it and refresh the active models.

@@ -391,7 +391,7 @@ and use the {class}`~pymor.reductors.data_driven.DataDrivenReductor` with the ar
 `target_quantity='output'` to derive a reduced model that can solely be used to solve
 for the output quantity without computing a reduced state at all.
 
-Our problem from above also has two output, namely the l2-product of the solution with
+Our problem from above also has two outputs, namely the l2-product of the solution with
 the right hand side respectively Dirichlet boundary data of our original problem.
 Consequently, the output dimension is {math}`q=2`.
 
@@ -682,7 +682,7 @@ hierarchy = ModelHierarchy([adaptive_rb_reductor, adaptive_dd_reductor], tol, fo
 ```
 
 The model hierarchy can now be used similar to any other model by calling its
-`compute`-method. Some additional data such as the model used internally to compute
+`compute`-method. Some additional data that the model used internally to compute
 the solution or the estimated error are also provided in the data dictionary. The
 `used_model` entry is the index of the model that was used, counting from the reference
 model (`0` is the full-order model, `1` the reduced basis model and `2` the data-driven

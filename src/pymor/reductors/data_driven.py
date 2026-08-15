@@ -10,7 +10,7 @@ from pymor.algorithms.ml.vkoga import VKOGARegressor
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
-from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModel
+from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModelOfDataDrivenModels
 
 
 class DataDrivenReductor(BasicObject):
@@ -331,7 +331,8 @@ class AdaptiveDDReductor(BasicObject):
     data-driven surrogate is added for the additional basis coefficients. The training
     data is split accordingly and passed to the respective surrogates before
     (re-)training. For prediction, all surrogates are evaluated for the given parameter
-    and their outputs are combined into a single :class:`~pymor.models.data_driven.MultiModel`.
+    and their outputs are combined into a single
+    :class:`~pymor.models.data_driven.MultiModelOfDataDrivenModels`.
 
     Parameters
     ----------
@@ -363,7 +364,7 @@ class AdaptiveDDReductor(BasicObject):
         output_functional = self.fom.output_functional if self.fom is not None else None
         T = getattr(self.fom, 'T', None)
         time_stepper = getattr(self.fom, 'time_stepper', None)
-        return MultiModel(self.dd_models, output_functional=output_functional,
+        return MultiModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
                           error_estimator=error_estimator, T=T, time_stepper=time_stepper)
 
     def reduce(self):

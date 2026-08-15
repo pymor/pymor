@@ -202,7 +202,7 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         return U.T
 
 
-class MultiModel(Model):
+class MultiModelOfDataDrivenModels(Model):
     """Model combining several sub-models into a single stacked solution.
 
     The solutions of the sub-models are stacked into a single solution vector whose
@@ -213,8 +213,8 @@ class MultiModel(Model):
     Parameters
     ----------
     models
-        Sequence of sub-models with :class:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
-        solution spaces.
+        Sequence of :class:`~pymor.models.data_driven.DataDrivenModel` sub-models
+        with :class:`~pymor.vectorarrays.numpy.NumpyVectorSpace` solution spaces.
     output_functional
         |Operator| mapping the stacked solution to the model output.
     error_estimator
@@ -231,6 +231,7 @@ class MultiModel(Model):
 
     def __init__(self, models, output_functional=None, error_estimator=None, T=None, time_stepper=None):
         assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
+        assert all(isinstance(m, DataDrivenModel) for m in models)
         super().__init__(error_estimator=error_estimator)
         self.__auto_init(locals())
         self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
