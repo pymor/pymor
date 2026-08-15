@@ -84,8 +84,6 @@ class ModelHierarchy(Model):
         self.__auto_init(locals())
 
     def _select_model(self, mu, quantities):
-        models, reductors, tol = self.models, self.reductors, self.tol
-
         base_quantities = quantities & {'solution', 'output'}
 
         errors_to_compute = set()
@@ -95,12 +93,12 @@ class ModelHierarchy(Model):
             errors_to_compute.add('output_error_estimate')
 
         def below_tol(estimate):
-            return estimate is None or self.time_reduction(estimate) <= tol
+            return estimate is None or self.time_reduction(estimate) <= self.tol
 
-        for i_m, m in enumerate(models):
-            is_reference = i_m == len(models) - 1
+        for i_m, m in enumerate(self.models):
+            is_reference = i_m == len(self.models) - 1
 
-            if not is_reference and reductors[i_m].empty:
+            if not is_reference and self.reductors[i_m].empty:
                 continue
 
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
@@ -136,14 +134,14 @@ class ModelHierarchy(Model):
             data['solution'] = solution
 
     def _adapt_lower_fidelity_models(self, mu, i_m_sufficient, result):
-        m_new, adapt_data = self.reductors[i_m_sufficient-1].adapt(mu, self.tol, fom_solution=result.get('solution'),
+        m_new, adapt_data = self.reductors[i_m_sufficient-1].adapt(mu, fom_solution=result.get('solution'),
                                                                    fom_output=result.get('output'))
         if self.models[i_m_sufficient-1] == m_new:
             return
         self.models[i_m_sufficient-1] = m_new
 
         for i in range(i_m_sufficient-2, -1, -1):
-            m_new, adapt_data = self.reductors[i].adapt(mu, self.tol, new_fom=m_new,
+            m_new, adapt_data = self.reductors[i].adapt(mu, new_fom=m_new,
                                                         fom_solution=adapt_data.get('solution'),
                                                         fom_output=adapt_data.get('output'))
             if self.models[i] == m_new:

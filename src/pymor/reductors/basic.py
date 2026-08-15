@@ -603,7 +603,59 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
         raise ExtensionError
 
 
-class AdaptiveRBReductor(BasicObject):
+class AdaptiveReductor(BasicObject):
+    """Base class for adaptive reductors used in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
+
+    An adaptive reductor represents one level of a
+    :class:`~pymor.models.hierarchy.ModelHierarchy`. It starts empty and is improved on
+    demand: whenever the hierarchy falls back to a more accurate model, the reductor is
+    :meth:`adapted <adapt>` using the more accurate solution as training data (e.g. by
+    extending a reduced basis or retraining a data-driven surrogate). Subclasses have to
+    implement the :attr:`empty` property and the :meth:`reduce`, :meth:`reconstruct` and
+    :meth:`adapt` methods.
+    """
+
+    @property
+    @abstractmethod
+    def empty(self):
+        """Whether the reductor is still empty, i.e. no usable model can be built yet."""
+
+    @abstractmethod
+    def reduce(self):
+        """Build the reduced model from the current state of the reductor."""
+
+    @abstractmethod
+    def reconstruct(self, u):
+        """Reconstruct a high-dimensional solution from the reduced solution `u`."""
+
+    @abstractmethod
+    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
+        """Adapt the reductor using a more accurate solution and build a new model.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| for which to adapt. Only used to compute `fom_solution` if it
+            is not provided.
+        new_fom
+            A more accurate model (one level above in the hierarchy) to adapt from.
+            If `None`, the reductor adapts from its own reference (full-order) model.
+        fom_solution
+            More accurate solution used as training data. Computed from `mu` if not provided.
+        fom_output
+            Corresponding more accurate output.
+
+        Returns
+        -------
+        new_rom
+            The reduced model obtained after adaptation.
+        adapt_data
+            Dict with the (projected) solution (`'solution'`) and output (`'output'`),
+            usable as training data for the next level below.
+        """
+
+
+class AdaptiveRBReductor(AdaptiveReductor):
     """Adaptive reduced basis reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
 
     Wraps a :class:`ProjectionBasedReductor` so that it can be used as a level in a
@@ -627,49 +679,15 @@ class AdaptiveRBReductor(BasicObject):
 
     @property
     def empty(self):
-        """Whether all reduced bases are still empty (no snapshot added yet)."""
         return all(len(basis) == 0 for basis in self.reductor.bases.values())
 
     def reduce(self):
-        """Build the reduced model from the current basis."""
         return self.reductor.reduce()
 
     def reconstruct(self, u):
-        """Reconstruct a full-order solution from reduced coefficients."""
         return self.reductor.reconstruct(u)
 
-    def adapt(self, mu, tol, new_fom=None, fom_solution=None, fom_output=None):
-        """Extend the reduced basis using a high-fidelity solution.
-
-        Implements the adaptive reductor interface expected by
-        :class:`~pymor.models.hierarchy.ModelHierarchy`. The reduced basis is extended
-        by the POD modes of the given high-fidelity solution (which compresses
-        instationary solution trajectories) and a new reduced model is built.
-
-        Parameters
-        ----------
-        mu
-            |Parameter value| for which to adapt. Only used to compute `fom_solution`
-            if it is not provided.
-        tol
-            Tolerance. Part of the adaptive reductor interface; unused here.
-        new_fom
-            Part of the adaptive reductor interface. A reduced basis reductor is always
-            adapted from a full-order solution, so a value other than `None` is not
-            supported.
-        fom_solution
-            High-fidelity solution used to extend the basis. Computed from `self.fom`
-            if not provided.
-        fom_output
-            Corresponding high-fidelity output, passed through unchanged.
-
-        Returns
-        -------
-        new_rom
-            The reduced model obtained after extending the basis.
-        adapt_data
-            Dict with the projected solution (`'solution'`) and `fom_output` (`'output'`).
-        """
+    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
         if new_fom is not None:
             raise NotImplementedError
         if fom_solution is None:
