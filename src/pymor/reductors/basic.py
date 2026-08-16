@@ -611,7 +611,7 @@ class AdaptiveReductor(BasicObject):
     demand: whenever the hierarchy falls back to a more accurate model, the reductor is
     :meth:`adapted <adapt>` using the more accurate solution as training data (e.g. by
     extending a reduced basis or retraining a data-driven surrogate). Subclasses have to
-    implement the :attr:`empty` property and the :meth:`reduce`, :meth:`reconstruct` and
+    implement the `empty` property and the :meth:`reduce`, :meth:`reconstruct` and
     :meth:`adapt` methods.
     """
 
