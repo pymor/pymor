@@ -5,6 +5,7 @@
 import numpy as np
 
 from pymor.models.interface import Model
+from pymor.reductors.basic import AdaptiveReductor
 
 
 class ModelHierarchy(Model):
@@ -64,8 +65,7 @@ class ModelHierarchy(Model):
         assert tol > 0
         assert callable(time_reduction)
         assert models is not None or fom is not None
-        assert all(hasattr(red, attr) for red in reductors
-                   for attr in ('empty', 'reduce', 'reconstruct', 'adapt'))
+        assert all(isinstance(red, AdaptiveReductor) for red in reductors)
 
         # the reductors list is reversed internally to simplify the iteration over the reductors
         reductors = list(reversed(reductors))
