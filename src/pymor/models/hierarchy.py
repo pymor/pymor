@@ -65,18 +65,22 @@ class ModelHierarchy(Model):
         assert tol > 0
         assert callable(time_reduction)
         assert models is not None or fom is not None
+        # make sure that all reductors fulfill the `AdaptiveReductor`-interface
         assert all(isinstance(red, AdaptiveReductor) for red in reductors)
 
         # the reductors list is reversed internally to simplify the iteration over the reductors
         reductors = list(reversed(reductors))
 
+        # set up the models list either using the provided models or the given reductors
         if models is not None:
             assert len(models) == len(reductors) + 1
             models = list(reversed(models))
         else:
             models = [red.reduce() for red in reductors] + [fom]
 
+        # use the last model as reference model
         reference_model = models[-1]
+
         super().__init__(dim_input=reference_model.dim_input, products=reference_model.products,
                          visualizer=reference_model.visualizer)
         self.solution_space = reference_model.solution_space
@@ -95,14 +99,21 @@ class ModelHierarchy(Model):
         def below_tol(estimate):
             return estimate is None or self.time_reduction(estimate) <= self.tol
 
+        # iterate over the models to determine sufficiently accurate solution and/or output
         for i_m, m in enumerate(self.models):
+            # check if the current model is the reference model
             is_reference = i_m == len(self.models) - 1
 
+            # skip the current model if the corresponding reductor is empty
             if not is_reference and self.reductors[i_m].empty:
                 continue
 
+            # determine the requested quantities and call the `compute`-method of the current model
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
             result = m.compute(**dict.fromkeys(requested, True), mu=mu)
+
+            # except the result by leaving the loop if the reference model was reached
+            # or the estimated errors in solution and output are below the tolerance
             if is_reference or (below_tol(result.get('solution_error_estimate'))
                                 and below_tol(result.get('output_error_estimate'))):
                 break
@@ -127,8 +138,12 @@ class ModelHierarchy(Model):
 
     def _reconstruct(self, data, i_m_sufficient, quantities, result):
         data['used_model'] = len(self.models) - 1 - i_m_sufficient
+        # if the solution is requested, reconstruct it such that it lives
+        # in the solution space of the reference model
         if 'solution' in quantities:
             solution = result['solution']
+            # iteratively reconstruct through all reductors in the hierarchy starting from the one
+            # whose model was the first to produce a sufficiently accurate solution
             for red in self.reductors[i_m_sufficient:]:
                 solution = red.reconstruct(solution)  # could be a nop
             data['solution'] = solution
@@ -140,12 +155,17 @@ class ModelHierarchy(Model):
             return
         self.models[i_m_sufficient-1] = m_new
 
+        # iteratively adapt the lower fidelity models using the higher fidelity data
+        # from the previous model in the hierarchy
         for i in range(i_m_sufficient-2, -1, -1):
+            # call the `adapt`-method of the respective `AdaptiveReductor`
             m_new, adapt_data = self.reductors[i].adapt(mu, new_fom=m_new,
                                                         fom_solution=adapt_data.get('solution'),
                                                         fom_output=adapt_data.get('output'))
+            # end the loop if the model did not change
             if self.models[i] == m_new:
                 return
+            # update the model in the models list
             self.models[i] = m_new
 
     def _compute(self, quantities, data, mu):
