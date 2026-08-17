@@ -172,7 +172,7 @@ class ERAReductor(CacheableObject):
             + 2 \sigma_{r + 1}(\mathcal{H}) \sqrt{r + n_L + n_R},
 
         where :math:`\Theta_L,\,\Theta_R` is the matrix of horizontally or vertically stacked Markov
-        parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details and note that there
+        parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details and note that the
         present bound is squared due to a typographical error in :cite:`K78` that was reported in
         :cite:`PS26`.
         """
@@ -274,7 +274,7 @@ class RandomizedERAReductor(ERAReductor):
     `num_right` in the constructor.
 
     The basic randomized ERA algorithm is based on :cite:`MSKC21`. Several computational
-    improvements, i.e., a memory-efficient Cholesky QR algorithm :cite:`BPS25` and a fast
+    improvements, i.e., a memory-efficient Cholesky QR algorithm :cite:`BPS26` and a fast
     leave-one-out error estimator :cite:`ET24`, are implemented on top of that. Further, a heuristic
     error estimator is implemented which enables an adaptive refinement of the ROM that reuses
     previous computations. The heuristic error estimator, as well as the adaptive numerical
