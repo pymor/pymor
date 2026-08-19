@@ -5,7 +5,6 @@
 import numpy as np
 
 from pymor.models.interface import Model
-from pymor.reductors.basic import AdaptiveReductor
 
 
 class ModelHierarchy(Model):
@@ -36,22 +35,19 @@ class ModelHierarchy(Model):
 
     Parameters
     ----------
-    reductors
-        Sequence of adaptive reductors ordered from the highest-fidelity reduced model
-        down to the cheapest one (i.e. right below the reference model first). Each
-        reductor has to provide `empty`, `reduce`, `reconstruct` and `adapt` methods
-        (see :class:`~pymor.reductors.basic.ProjectionBasedReductor` and
+    fom
+        The high-fidelity reference model used as the final fallback.
+    reductor_factories
+        Sequence of callables, ordered from the highest-fidelity reduced model down to
+        the cheapest one (i.e. the reductor right below the reference model first). Each
+        callable is passed the next higher-fidelity model (starting with `fom`) and has
+        to return an adaptive reductor for the level below it. A reductor has to provide
+        `reduce`, `reconstruct` and `adapt` methods (see
+        :class:`~pymor.reductors.basic.ProjectionBasedReductor` and
         :class:`~pymor.reductors.data_driven.AdaptiveDDReductor`).
     tol
         Tolerance against which the estimated errors are compared to decide which
         model's solution to return.
-    models
-        Optional sequence of already constructed models, ordered from the reference
-        model down to the cheapest reduced model (`len(reductors) + 1` entries). If not
-        provided, the models are constructed from `reductors` and `fom`.
-    fom
-        The high-fidelity reference model used as the final fallback. Required if
-        `models` is not given.
     time_reduction
         Callable mapping a (possibly time-dependent) error estimate to a single scalar
         that is compared against `tol`. For instationary problems the error estimate is a
@@ -60,31 +56,29 @@ class ModelHierarchy(Model):
         or an :math:`\ell^2`-in-time norm) can be passed here.
     """
 
-    def __init__(self, reductors, tol, models=None, fom=None, time_reduction=np.max):
-        assert len(reductors) >= 1
+    def __init__(self, fom, reductor_factories, tol, time_reduction=np.max):
+        assert len(reductor_factories) >= 1
+        assert all(callable(rf) for rf in reductor_factories)
         assert tol > 0
         assert callable(time_reduction)
-        assert models is not None or fom is not None
-        # make sure that all reductors fulfill the `AdaptiveReductor`-interface
-        assert all(isinstance(red, AdaptiveReductor) for red in reductors)
 
-        # the reductors list is reversed internally to simplify the iteration over the reductors
+        models = [fom]
+        reductors = []
+        for rf in reductor_factories:
+            reductor = rf(models[-1])
+            reductors.append(reductor)
+            models.append(reductor.reduce())
+
+        models = list(reversed(models))
         reductors = list(reversed(reductors))
 
-        # set up the models list either using the provided models or the given reductors
-        if models is not None:
-            assert len(models) == len(reductors) + 1
-            models = list(reversed(models))
-        else:
-            models = [red.reduce() for red in reductors] + [fom]
-
-        # use the last model as reference model
         reference_model = models[-1]
-
         super().__init__(dim_input=reference_model.dim_input, products=reference_model.products,
                          visualizer=reference_model.visualizer)
         self.solution_space = reference_model.solution_space
         self.dim_output = reference_model.dim_output
+        self.models = models
+        self.reductors = reductors
         self.__auto_init(locals())
 
     def _select_model(self, mu, quantities):
@@ -96,26 +90,29 @@ class ModelHierarchy(Model):
         if quantities & {'output', 'output_error_estimate'}:
             errors_to_compute.add('output_error_estimate')
 
-        def below_tol(estimate):
-            return estimate is None or self.time_reduction(estimate) <= self.tol
+        def accurate_enough(result):
+            # checks if all request error estimates are available and below the tolerance
+            return all(
+                (est := result.get(q)) is not None and self.time_reduction(est) <= self.tol
+                for q in errors_to_compute
+            )
 
-        # iterate over the models to determine sufficiently accurate solution and/or output
+        # iterate over the models to determine a sufficiently accurate solution and/or output
         for i_m, m in enumerate(self.models):
             # check if the current model is the reference model
             is_reference = i_m == len(self.models) - 1
 
-            # skip the current model if the corresponding reductor is empty
-            if not is_reference and self.reductors[i_m].empty:
+            # skip non-reference models that cannot certify the requested quantities
+            if not is_reference and m.error_estimator is None:
                 continue
 
             # determine the requested quantities and call the `compute`-method of the current model
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
             result = m.compute(**dict.fromkeys(requested, True), mu=mu)
 
-            # except the result by leaving the loop if the reference model was reached
-            # or the estimated errors in solution and output are below the tolerance
-            if is_reference or (below_tol(result.get('solution_error_estimate'))
-                                and below_tol(result.get('output_error_estimate'))):
+            # accept the result by leaving the loop if the reference model was reached
+            # or the estimated errors in solution and/or output are below the tolerance
+            if is_reference or accurate_enough(result):
                 break
 
         i_m_sufficient = i_m
@@ -158,7 +155,7 @@ class ModelHierarchy(Model):
         # iteratively adapt the lower fidelity models using the higher fidelity data
         # from the previous model in the hierarchy
         for i in range(i_m_sufficient-2, -1, -1):
-            # call the `adapt`-method of the respective `AdaptiveReductor`
+            # call the `adapt`-method of the respective reductor
             m_new, adapt_data = self.reductors[i].adapt(mu, new_fom=m_new,
                                                         fom_solution=adapt_data.get('solution'),
                                                         fom_output=adapt_data.get('output'))

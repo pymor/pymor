@@ -148,6 +148,64 @@ class ProjectionBasedReductor(BasicObject):
             if err >= self.check_tol:
                 raise AccuracyError(f'result not orthogonal (max err={err})')
 
+    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
+        """Adapt the reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
+
+        Extends the reduced basis using a more accurate solution and returns the newly
+        reduced model together with the (projected) solution and output, which serve as
+        training data for the next level below in the hierarchy. Only implemented for
+        reductors with a single `'RB'` basis.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| for which to adapt. Only used to compute `fom_solution` if it
+            is not provided.
+        new_fom
+            A more accurate model (one level above in the hierarchy) to adapt from. If given,
+            the reference model of this reductor is replaced by `new_fom` and the existing
+            basis is embedded into its (enlarged) solution space by zero-padding. This is
+            exact whenever the basis of the model above is extended orthonormally.
+        fom_solution
+            More accurate solution used as training data. Computed from `mu` if not provided.
+        fom_output
+            Corresponding more accurate output.
+
+        Returns
+        -------
+        new_rom
+            The reduced model obtained after adaptation.
+        adapt_data
+            Dict with the (projected) solution (`'solution'`) and output (`'output'`),
+            usable as training data for the next level below.
+        """
+        assert list(self.bases) == ['RB'], 'adapt is only implemented for reductors with a single `RB` basis'
+        if new_fom is not None:
+            self._adapt_reference_model(new_fom)
+        if fom_solution is None:
+            fom_solution = self.fom.solve(mu)
+        self.extend_basis(fom_solution, method='pod')
+        new_rom = self.reduce()
+        RB = self.bases['RB']
+        projected_fom_solution = new_rom.solution_space.make_array(
+            RB.inner(fom_solution, product=self.products.get('RB'))
+        )
+        return new_rom, {'solution': projected_fom_solution, 'output': fom_output}
+
+    def _adapt_reference_model(self, new_fom):
+        """Replace the reference model, zero-padding the `'RB'` basis to its solution space."""
+        old_dim = self.fom.solution_space.dim
+        new_dim = new_fom.solution_space.dim
+        RB = self.bases['RB']
+        if len(RB) > 0 and new_dim != old_dim:
+            coeffs = RB.to_numpy()
+            padded = np.zeros((new_dim, coeffs.shape[1]), dtype=coeffs.dtype)
+            padded[:old_dim] = coeffs
+            self.bases['RB'] = new_fom.solution_space.make_array(padded)
+        self.fom = new_fom
+        # force re-projection of the operators against the new reference model on next reduce
+        self._last_rom = None
+
 
 class StationaryRBReductor(ProjectionBasedReductor):
     """Galerkin projection of a |StationaryModel|.
@@ -601,100 +659,3 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
 
     if len(basis) <= basis_length:
         raise ExtensionError
-
-
-class AdaptiveReductor(BasicObject):
-    """Base class for adaptive reductors used in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
-
-    An adaptive reductor represents one level of a
-    :class:`~pymor.models.hierarchy.ModelHierarchy`. It starts empty and is improved on
-    demand: whenever the hierarchy falls back to a more accurate model, the reductor is
-    :meth:`adapted <adapt>` using the more accurate solution as training data (e.g. by
-    extending a reduced basis or retraining a data-driven surrogate). Subclasses have to
-    implement the `empty` property and the :meth:`reduce`, :meth:`reconstruct` and
-    :meth:`adapt` methods.
-    """
-
-    @property
-    @abstractmethod
-    def empty(self):
-        """Whether the reductor is still empty, i.e. no usable model can be built yet."""
-
-    @abstractmethod
-    def reduce(self):
-        """Build the reduced model from the current state of the reductor."""
-
-    @abstractmethod
-    def reconstruct(self, u):
-        """Reconstruct a high-dimensional solution from the reduced solution `u`."""
-
-    @abstractmethod
-    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
-        """Adapt the reductor using a more accurate solution and build a new model.
-
-        Parameters
-        ----------
-        mu
-            |Parameter value| for which to adapt. Only used to compute `fom_solution` if it
-            is not provided.
-        new_fom
-            A more accurate model (one level above in the hierarchy) to adapt from.
-            If `None`, the reductor adapts from its own reference (full-order) model.
-        fom_solution
-            More accurate solution used as training data. Computed from `mu` if not provided.
-        fom_output
-            Corresponding more accurate output.
-
-        Returns
-        -------
-        new_rom
-            The reduced model obtained after adaptation.
-        adapt_data
-            Dict with the (projected) solution (`'solution'`) and output (`'output'`),
-            usable as training data for the next level below.
-        """
-
-
-class AdaptiveRBReductor(AdaptiveReductor):
-    """Adaptive reduced basis reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
-
-    Wraps a :class:`ProjectionBasedReductor` so that it can be used as a level in a
-    :class:`~pymor.models.hierarchy.ModelHierarchy`. The reduced basis is empty
-    initially and extended on demand whenever the hierarchy falls back to a more
-    accurate model. Trajectory solutions are compressed via the POD-based basis
-    extension of the underlying reductor.
-
-    Parameters
-    ----------
-    fom
-        Full-order model used to compute training snapshots.
-    reductor
-        Reduced basis reductor that assembles the reduced model and its a posteriori
-        error estimator.
-    """
-
-    def __init__(self, fom, reductor):
-        assert isinstance(reductor, ProjectionBasedReductor)
-        self.__auto_init(locals())
-
-    @property
-    def empty(self):
-        return all(len(basis) == 0 for basis in self.reductor.bases.values())
-
-    def reduce(self):
-        return self.reductor.reduce()
-
-    def reconstruct(self, u):
-        return self.reductor.reconstruct(u)
-
-    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
-        if new_fom is not None:
-            raise NotImplementedError
-        if fom_solution is None:
-            fom_solution = self.fom.solve(mu)
-        self.reductor.extend_basis(fom_solution, method='pod')
-        new_rom = self.reductor.reduce()
-        projected_fom_solution = new_rom.solution_space.make_array(
-            self.reductor.bases['RB'].inner(fom_solution, product=self.reductor.products.get('RB'))
-        )
-        return new_rom, {'solution': projected_fom_solution, 'output': fom_output}

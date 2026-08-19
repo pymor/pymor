@@ -643,13 +643,16 @@ fom = two_dimensional_parametric_diffusion()
 parameter_space = fom.parameters.space((0.1, 1))
 ```
 
-Now, we create a suitable reductor that automatically assembles an
-a posteriori error estimator:
+Now, we create a factory for a suitable reductor that automatically assembles an
+a posteriori error estimator. The hierarchy builds each level by passing the next
+higher-fidelity model to such a factory, so instead of a fixed reductor we define a
+callable that receives the model to reduce:
 
 ```{code-cell} ipython3
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.parameters.functionals import ProjectionParameterFunctional
-rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
+rb_reductor_factory = lambda model: CoerciveRBReductor(
+    model, coercivity_estimator=ProjectionParameterFunctional('mu'))
 ```
 
 Furthermore, we use again the {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`
@@ -663,22 +666,22 @@ dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': r
 ```
 
 We can finally set up the adaptive model hierarchy as a
-{class}`~pymor.models.hierarchy.ModelHierarchy`. The hierarchy is built from a sequence
-of adaptive reductors, ordered from the highest-fidelity reduced model down to the
-cheapest one, together with the full-order model as the reference. Here we wrap the
-reduced basis reductor in an {class}`~pymor.reductors.basic.AdaptiveRBReductor` and add
-an {class}`~pymor.reductors.data_driven.AdaptiveDDReductor` for the data-driven
-surrogate. We also pass the tolerance against which the estimated errors are compared:
+{class}`~pymor.models.hierarchy.ModelHierarchy`. The hierarchy is built from the
+full-order model as the reference together with a sequence of reductor factories,
+ordered from the highest-fidelity reduced model down to the cheapest one. Each factory
+is passed the next higher-fidelity model (starting with the full-order model) and returns
+the adaptive reductor for the level below it. Here we use the reduced basis reductor
+factory defined above and add a factory for an
+{class}`~pymor.reductors.data_driven.AdaptiveDDReductor` for the data-driven surrogate.
+We also pass the tolerance against which the estimated errors are compared:
 
 ```{code-cell} ipython3
 tol = 5e-3
 
 from pymor.models.hierarchy import ModelHierarchy
-from pymor.reductors.basic import AdaptiveRBReductor
 from pymor.reductors.data_driven import AdaptiveDDReductor
-adaptive_rb_reductor = AdaptiveRBReductor(fom, rb_reductor)
-adaptive_dd_reductor = AdaptiveDDReductor(dd_reductor_parameters)
-hierarchy = ModelHierarchy([adaptive_rb_reductor, adaptive_dd_reductor], tol, fom=fom)
+dd_reductor_factory = lambda model: AdaptiveDDReductor(dd_reductor_parameters, fom=model)
+hierarchy = ModelHierarchy(fom, [rb_reductor_factory, dd_reductor_factory], tol)
 ```
 
 The model hierarchy can now be used similar to any other model by calling its
@@ -763,13 +766,12 @@ to remark that the runtimes of the full-order model and the reduced basis
 model also include the training times for the surrogates.
 
 Since {class}`~pymor.models.hierarchy.ModelHierarchy` accepts an arbitrary sequence of
-adaptive reductors, it is not restricted to this particular set of three models. For
+reductor factories, it is not restricted to this particular set of three models. For
 instance, we can build a two-level hierarchy consisting only of the reduced basis model
-and the full-order model by omitting the data-driven reductor:
+and the full-order model by omitting the data-driven reductor factory:
 
 ```{code-cell} ipython3
-rb_only_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
-rb_hierarchy = ModelHierarchy([AdaptiveRBReductor(fom, rb_only_reductor)], tol, fom=fom)
+rb_hierarchy = ModelHierarchy(fom, [rb_reductor_factory], tol)
 
 rb_model_labels = ['FOM', 'RB']
 rb_used_models = []

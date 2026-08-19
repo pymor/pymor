@@ -238,8 +238,11 @@ class MultiModelOfDataDrivenModels(Model):
 
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
-            solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
-            data['solution'] = self.solution_space.make_array(solution_np)
+            if self.models:
+                solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
+                data['solution'] = self.solution_space.make_array(solution_np)
+            else:
+                data['solution'] = self.solution_space.zeros(1)
             quantities.remove('solution')
 
         super()._compute(quantities, data, mu=mu)

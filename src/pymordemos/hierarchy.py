@@ -14,7 +14,6 @@ from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.models.hierarchy import ModelHierarchy
-from pymor.reductors.basic import AdaptiveRBReductor
 from pymor.reductors.data_driven import AdaptiveDDReductor
 
 app = App(help_on_error=True)
@@ -115,25 +114,26 @@ def main(
         output_scaler = None
 
     if problem_number == 0:
-        rb_reductor = CoerciveRBReductor(fom, coercivity_estimator=ProjectionParameterFunctional('mu'))
+        rb_factory = lambda model: CoerciveRBReductor(model, coercivity_estimator=ProjectionParameterFunctional('mu'))
     else:
-        rb_reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product,
-                                          coercivity_estimator=ProjectionParameterFunctional('diffusion'))
+        rb_factory = lambda model: ParabolicRBReductor(model, product=model.h1_0_semi_product,
+                                                       coercivity_estimator=ProjectionParameterFunctional('diffusion'))
 
     dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters,
                               'input_scaler': input_scaler, 'output_scaler': output_scaler,
                               'time_vectorized': (problem_number == 1 and time_vectorized)}
 
-    reductors = [AdaptiveRBReductor(fom, rb_reductor)]
+    reductor_factories = [rb_factory]
     model_labels = ['FOM', 'RB']
     if use_dd_model:
-        reductors.append(AdaptiveDDReductor(dd_reductor_parameters, retrain_interval=1))
+        reductor_factories.append(
+            lambda model: AdaptiveDDReductor(dd_reductor_parameters, retrain_interval=1, fom=model))
         model_labels.append('DD')
 
     time_reduction_fn = {'max': np.max, 'mean': np.mean}[time_reduction]
 
     tol = 5e-3
-    hierarchy = ModelHierarchy(reductors, tol, fom=fom, time_reduction=time_reduction_fn)
+    hierarchy = ModelHierarchy(fom, reductor_factories, tol, time_reduction=time_reduction_fn)
 
     want_state = 'state' in quantity
     want_output = 'output' in quantity

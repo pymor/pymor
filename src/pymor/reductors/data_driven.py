@@ -11,7 +11,6 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModelOfDataDrivenModels
-from pymor.reductors.basic import AdaptiveReductor
 
 
 class DataDrivenReductor(BasicObject):
@@ -323,7 +322,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
         return self.reduced_basis.lincomb(u.to_numpy())
 
 
-class AdaptiveDDReductor(AdaptiveReductor):
+class AdaptiveDDReductor(BasicObject):
     """Adaptive data-driven reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
 
     Manages one or more :class:`DataDrivenReductor` surrogates that approximate the
@@ -356,13 +355,10 @@ class AdaptiveDDReductor(AdaptiveReductor):
         self.dd_models = []
         self._pending_retrains = []
 
-    @property
-    def empty(self):
-        return not self.dd_models
-
     def _build_model(self):
-        error_estimator = self.fom.error_estimator if self.fom is not None else None
-        output_functional = self.fom.output_functional if self.fom is not None else None
+        borrow_from = self.fom if (len(self.dd_models) > 0 and self.fom is not None) else None
+        error_estimator = borrow_from.error_estimator if borrow_from is not None else None
+        output_functional = borrow_from.output_functional if borrow_from is not None else None
         T = getattr(self.fom, 'T', None)
         time_stepper = getattr(self.fom, 'time_stepper', None)
         return MultiModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
