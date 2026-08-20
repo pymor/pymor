@@ -102,10 +102,6 @@ class ModelHierarchy(Model):
             # check if the current model is the reference model
             is_reference = i_m == len(self.models) - 1
 
-            # skip non-reference models that cannot certify the requested quantities
-            if not is_reference and m.error_estimator is None:
-                continue
-
             # determine the requested quantities and call the `compute`-method of the current model
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
             result = m.compute(**dict.fromkeys(requested, True), mu=mu)

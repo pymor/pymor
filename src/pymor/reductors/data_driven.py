@@ -356,9 +356,8 @@ class AdaptiveDDReductor(BasicObject):
         self._pending_retrains = []
 
     def _build_model(self):
-        borrow_from = self.fom if (len(self.dd_models) > 0 and self.fom is not None) else None
-        error_estimator = borrow_from.error_estimator if borrow_from is not None else None
-        output_functional = borrow_from.output_functional if borrow_from is not None else None
+        error_estimator = self.fom.error_estimator if self.fom is not None else None
+        output_functional = self.fom.output_functional if self.fom is not None else None
         T = getattr(self.fom, 'T', None)
         time_stepper = getattr(self.fom, 'time_stepper', None)
         return MultiModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,

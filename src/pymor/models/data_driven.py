@@ -242,7 +242,8 @@ class MultiModelOfDataDrivenModels(Model):
                 solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
                 data['solution'] = self.solution_space.make_array(solution_np)
             else:
-                data['solution'] = self.solution_space.zeros(1)
+                nt = self.time_stepper.nt + 1 if self.time_stepper is not None else 1
+                data['solution'] = self.solution_space.zeros(nt)
             quantities.remove('solution')
 
         super()._compute(quantities, data, mu=mu)
