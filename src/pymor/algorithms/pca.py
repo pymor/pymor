@@ -67,10 +67,8 @@ def pca(A, product=None, modes=None, rtol=None, atol=None, l2_err=None,
     A.axpy(-1, mean)
 
     with logger.block('Applying POD to centered data ...'):
-        principal_coponents, svals, coeffs = pod(A, product=product, modes=modes, rtol=rtol,
-                                                    atol=atol, l2_err=l2_err, method=method,
-                                                    orth_tol=orth_tol, return_reduced_coefficients=True)
+        pod_result = pod(A, product=product, modes=modes, rtol=rtol,
+                         atol=atol, l2_err=l2_err, method=method,
+                         orth_tol=orth_tol, return_reduced_coefficients=return_reduced_coefficients)
 
-    if return_reduced_coefficients:
-        return mean, principal_coponents, svals, coeffs
-    return mean, principal_coponents, svals
+    return (mean,) + pod_result
