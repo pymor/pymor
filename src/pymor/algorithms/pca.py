@@ -10,12 +10,12 @@ from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
 
 
-def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
-        method='method_of_snapshots', orth_tol=1e-10,
+def pca(A, product=None, modes=None, rtol=None, atol=None, l2_err=None,
+        method=None, orth_tol=None,
         return_reduced_coefficients=False, copy=True):
-    """Principal component analysis (PCA) wrapper that centers `A` and applies 'pod'.
+    """Principal component analysis (PCA) of `A` using :func:`~pymor.algorithms.pod.pod`.
 
-    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
+    Viewing the |VectorArray| `A` as an `A.dim` x `len(A)` matrix, the
     return values of this method are the |VectorArray| of left singular
     vectors and a |NumPy array| of singular values of the singular value
     decomposition of `A` centered around the `mean`, where the inner
@@ -31,32 +31,31 @@ def pca(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     Parameters
     ----------
     A
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     product
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     modes
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     rtol
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     atol
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     l2_err
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     method
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     orth_tol
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     return_reduced_coefficients
-        See :class:`~pymor.algorithms.pod`.
+        See :func:`~pymor.algorithms.pod.pod`.
     copy
         If `True` (default) create a centered copy of `A`. If `False` subtract the mean
-        from `A` in-place and return the modified `A` as the
-        centered data.
+        from `A` in-place.
 
     Returns
     -------
     principal_components
-        |VectorArray| of PCA coordinates.
+        |VectorArray| of principal components.
     svals
         One-dimensional |NumPy array| of singular values.
     coeffs
