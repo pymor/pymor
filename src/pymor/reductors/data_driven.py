@@ -11,6 +11,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModelOfDataDrivenModels
+from pymor.reductors.basic import ProxyEstimator
 
 
 class DataDrivenReductor(BasicObject):
@@ -356,12 +357,10 @@ class AdaptiveDDReductor(BasicObject):
         self._pending_retrains = []
 
     def _build_model(self):
-        error_estimator = self.fom.error_estimator if self.fom is not None else None
+        error_estimator = ProxyEstimator(self.fom) if self.fom is not None else None
         output_functional = self.fom.output_functional if self.fom is not None else None
-        T = getattr(self.fom, 'T', None)
-        time_stepper = getattr(self.fom, 'time_stepper', None)
         return MultiModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
-                                            error_estimator=error_estimator, T=T, time_stepper=time_stepper)
+                                            error_estimator=error_estimator)
 
     def reduce(self):
         return self._build_model()

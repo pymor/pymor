@@ -13,7 +13,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
 from pymor.bindings.scipy import ScipyLSTSQSolver
-from pymor.core.base import BasicObject, abstractmethod
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
@@ -632,6 +632,48 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
 
     def reconstruct(self, u, basis='V'):
         return super().reconstruct(u, basis)
+
+
+class ProxyEstimator(ImmutableObject):
+    """Estimate error using the FOM's error estimator.
+
+    This error estimator reconstructs the given ROM solution and then evaluates
+    the error estimator of the FOM for the reconstructed solution.
+
+    .. note::
+        This approach assumes that the FOM error estimator yields appropriate
+        estimates for arbitrary vectors from the FOM's
+        :attr:`~pymor.models.interface.Model.solution_space`.
+        While this is typically true for residual-based ROM error estimators, most
+        FEM error estimators only yield reliable estimates for the actual
+        finite-element solution.
+
+    Parameters
+    ----------
+    fom
+        The full-order |Model| which is used to estimate the error. Must have
+        an `error_estimator` attribute.
+    reductor
+        The reductor used for reconstructing the solution vector. When `None`,
+        it is assumed that both models have the same
+        :attr:`~pymor.models.interface.Model.solution_space`.
+    """
+
+    def __init__(self, fom, reductor=None):
+        assert getattr(fom, 'error_estimator', None)
+        self.__auto_init(locals())
+
+    def estimate_error(self, U, mu, m):
+        if len(U) == 0:
+            return [np.inf]
+        if self.reductor:
+            U = self.reductor.reconstruct(U)
+        return self.fom.error_estimator.estimate_error(U, mu, self.fom)
+
+    def estimate_output_error(self, U, mu, m):
+        if self.reductor:
+            U = self.reductor.reconstruct(U)
+        return self.fom.error_estimator.estimate_output_error(U, mu, self.fom)
 
 
 def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):

@@ -220,16 +220,9 @@ class MultiModelOfDataDrivenModels(Model):
     error_estimator
         Error estimator operating on the stacked solution (e.g. the error estimator of
         the reduced basis model whose coefficients are approximated).
-    T
-        Final time of the reference model. Mirrored so that time-dependent error
-        estimators (which read `m.T` from the model passed to them) work when borrowed
-        from an instationary reference model.
-    time_stepper
-        Time stepper of the reference model, mirrored for the same reason (error
-        estimators may read `m.time_stepper.nt`).
     """
 
-    def __init__(self, models, output_functional=None, error_estimator=None, T=None, time_stepper=None):
+    def __init__(self, models, output_functional=None, error_estimator=None):
         assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
         assert all(isinstance(m, DataDrivenModel) for m in models)
         super().__init__(error_estimator=error_estimator)
@@ -242,8 +235,7 @@ class MultiModelOfDataDrivenModels(Model):
                 solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
                 data['solution'] = self.solution_space.make_array(solution_np)
             else:
-                nt = self.time_stepper.nt + 1 if self.time_stepper is not None else 1
-                data['solution'] = self.solution_space.zeros(nt)
+                data['solution'] = self.solution_space.empty()
             quantities.remove('solution')
 
         super()._compute(quantities, data, mu=mu)
