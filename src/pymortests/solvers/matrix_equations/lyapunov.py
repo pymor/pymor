@@ -145,8 +145,8 @@ def test_cont_lr(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation.from_matrices(A, E, B, trans=trans)
 
     if backend == 'lradi':
-        from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLR
-        solver =  LRADILyapunovSolverLR()
+        from pymor.solvers.matrix_equations.adi import ADILyapunovSolver
+        solver =  ADILyapunovSolver()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotLyapunovSolverLR
         solver = SlycotLyapunovSolverLR()

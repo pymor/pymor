@@ -14,19 +14,19 @@ from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LRADILyapunovSolverLR(LyapunovSolverLR):
+class ADILyapunovSolver(LyapunovSolverLR):
     r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using ADI iteration.
 
     Uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
     Parameters
     ----------
-    lradi_tol
+    adi_tol
         Convergence tolerance for the ADI iteration.
-    lradi_maxiter
+    adi_maxiter
         Maximum number of ADI steps. A real shift counts as one step, a
         complex-conjugate shift pair as two.
-    lradi_shifts
+    adi_shifts
         Strategy for computing the ADI shift parameters, either
         ``'projection_shifts'`` or ``'wachspress_shifts'``.
     shifted_system_solver
@@ -51,10 +51,10 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
 
     """
 
-    @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'shifted_system_solver',
+    @defaults('adi_tol', 'adi_maxiter', 'adi_shifts', 'shifted_system_solver',
           'projection_shifts_init_maxiter', 'projection_shifts_subspace_columns',
           'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
-    def __init__(self, lradi_tol=1e-10, lradi_maxiter=500, lradi_shifts='projection_shifts',
+    def __init__(self, adi_tol=1e-10, adi_maxiter=500, adi_shifts='projection_shifts',
                  shifted_system_solver=None, projection_shifts_init_maxiter=20, projection_shifts_subspace_columns=6,
                  wachspress_large_ritz_num=50, wachspress_small_ritz_num=25, wachspress_tol=1e-10):
 
@@ -69,10 +69,10 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
         if not cont_time:
             raise NotImplementedError
 
-        if self.lradi_shifts == 'projection_shifts':
+        if self.adi_shifts == 'projection_shifts':
             init_shifts = self.projection_shifts_init
             iteration_shifts = self.projection_shifts
-        elif self.lradi_shifts == 'wachspress_shifts':
+        elif self.adi_shifts == 'wachspress_shifts':
             init_shifts = self.wachspress_shifts_init
             iteration_shifts = self.cycle_shifts
         else:
@@ -91,9 +91,9 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
         shifts = init_shifts(A, E, W)
         res = np.linalg.norm(W.gramian(), ord=2)
         init_res = res
-        Btol = res * self.lradi_tol
+        Btol = res * self.adi_tol
 
-        while res > Btol and j < self.lradi_maxiter:
+        while res > Btol and j < self.adi_maxiter:
             if shifts[j_shift].imag == 0:
                 AaE = A + shifts[j_shift].real * E
                 if not trans:
@@ -127,7 +127,7 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
 
         if res > Btol:
             self.logger.warning(f'Prescribed relative residual tolerance was not achieved '
-                            f'({res/init_res:e} > {self.lradi_tol:e}) after {self.lradi_maxiter} ADI steps.')
+                            f'({res/init_res:e} > {self.adi_tol:e}) after {self.adi_maxiter} ADI steps.')
 
         return Z
 
@@ -171,7 +171,7 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
     def projection_shifts(self, A, E, V, Z, prev_shifts):
         """Find further projection shifts.
 
-        Uses Galerkin projection on spaces spanned by LR-ADI iterates.
+        Uses Galerkin projection on spaces spanned by ADI iterates.
         See :cite:`PK16`, pp. 92-95.
 
         Parameters
@@ -216,7 +216,7 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
     def wachspress_shifts_init(self, A, E, B):
         """Compute optimal shifts for symmetric matrices.
 
-        This method computes optimal shift parameters for the LR-ADI iteration
+        This method computes optimal shift parameters for the ADI iteration
         based on Wachspress' method which is discussed in :cite:`LiW02`. This
         implementation assumes that :math:`A` and :math:`E` are both real and
         symmetric.
@@ -253,7 +253,7 @@ class LRADILyapunovSolverLR(LyapunovSolverLR):
             m = 2 * np.cos(alpha)**2 / cos2b - 1
             if m < 1:
                 # shifts are complex, method not applicable
-                raise NotImplementedError('LR-ADI shift parameter strategy can not handle complex shifts.')
+                raise NotImplementedError('ADI shift parameter strategy can not handle complex shifts.')
             kp = 1 / (m + np.sqrt(m**2 - 1))
 
         # make sure k is not exactly 1

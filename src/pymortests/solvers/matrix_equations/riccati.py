@@ -258,8 +258,8 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'lrradi':
-        from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLR
-        solver =  LRRADIRiccatiSolverLR()
+        from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
+        solver =  RADIRiccatiSolver()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotRiccatiSolverLR
         solver = SlycotRiccatiSolverLR()

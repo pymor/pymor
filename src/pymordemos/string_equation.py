@@ -38,7 +38,7 @@ def main(n: int = 101, r: int = 5):
     """
     set_log_levels({
         'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
-        'pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLR': 'WARNING',
+        'pymor.solvers.matrix_equations.adi.ADILyapunovSolver': 'WARNING',
         'pymor.reductors.basic.LTIPGReductor': 'WARNING',
         'pymor.reductors.basic.SOLTIPGReductor': 'WARNING',
     })

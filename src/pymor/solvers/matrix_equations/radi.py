@@ -13,19 +13,19 @@ from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LRRADIRiccatiSolverLR(RiccatiSolverLR):
-    r"""Compute an approximate low-rank solution of a |RiccatiEquation|.
+class RADIRiccatiSolver(RiccatiSolverLR):
+    r"""Compute an approximate low-rank factor of the solution of a |RiccatiEquation|.
 
     This is an implementation of Algorithm 2 in :cite:`BBKS18`.
 
     Parameters
     ----------
-    lrradi_tol
+    radi_tol
         Convergence tolerance for the RADI iteration.
-    lrradi_maxiter
+    radi_maxiter
         Maximum number of RADI steps. A real shift counts as one step, a
         complex-conjugate shift pair as two.
-    lrradi_shifts
+    radi_shifts
          Strategy for computing the RADI shift parameters. Currently only
         ``'hamiltonian_shifts'`` is supported.
     shifted_system_solver
@@ -38,9 +38,9 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
         Galerkin subspace for the subsequent shifts. See :meth:`hamiltonian_shifts`.
     """
 
-    @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',
+    @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
               'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
-    def __init__(self, lrradi_tol=1e-10, lrradi_maxiter=500, lrradi_shifts='hamiltonian_shifts',
+    def __init__(self, radi_tol=1e-10, radi_maxiter=500, radi_shifts='hamiltonian_shifts',
                  shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
                  hamiltonian_shifts_subspace_columns=6):
 
@@ -54,11 +54,11 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
         if S is not None:
             raise NotImplementedError
 
-        if self.lrradi_shifts == 'hamiltonian_shifts':
+        if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
         else:
-            raise ValueError('Unknown lrradi shift strategy.')
+            raise ValueError('Unknown radi shift strategy.')
 
         solver = self.shifted_system_solver
 
@@ -76,7 +76,7 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
         if not trans:
             B, C = C, B
 
-        Z = A.source.empty(reserve=len(C) * self.lrradi_maxiter)
+        Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
 
         K = A.source.zeros(len(B))
@@ -88,9 +88,9 @@ class LRRADIRiccatiSolverLR(RiccatiSolverLR):
 
         res = np.linalg.norm(RF.gramian(), ord=2)
         init_res = res
-        Ctol = res * self.lrradi_tol
+        Ctol = res * self.radi_tol
 
-        while res > Ctol and j < self.lrradi_maxiter:
+        while res > Ctol and j < self.radi_maxiter:
             if not trans:
                 AsE = A + shifts[j_shift] * E
             else:

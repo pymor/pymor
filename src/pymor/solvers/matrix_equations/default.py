@@ -44,7 +44,7 @@ class DefaultLyapunovSolverLR(LyapunovSolverLR):
     - for sparse, continous-time problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lradi` (see :func:`pymor.solvers.matrix_equations.lradi.LRADILyapunovSolverLR`),
+        1. `lradi` (see :func:`pymor.solvers.matrix_equations.adi.ADILyapunovSolver`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
@@ -59,8 +59,8 @@ class DefaultLyapunovSolverLR(LyapunovSolverLR):
         if backend == 'lradi':
             if not equation.cont_time:
                 raise ValueError('lradi solves only continuous-time Lyapunov equations.')
-            from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLR
-            solver = LRADILyapunovSolverLR()
+            from pymor.solvers.matrix_equations.adi import ADILyapunovSolver
+            solver = ADILyapunovSolver()
         else:
             _warn_dense_fallback(self, equation, backend)
             if _dense_backend() == 'slycot':
@@ -99,7 +99,7 @@ class DefaultRiccatiSolverLR(RiccatiSolverLR):
     - for sparse problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.lrradi.LRRADIRiccatiSolverLR`),
+        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
@@ -111,8 +111,8 @@ class DefaultRiccatiSolverLR(RiccatiSolverLR):
     def _solve(self, equation):
         backend = 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
         if backend == 'lrradi':
-            from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLR
-            solver = LRRADIRiccatiSolverLR()
+            from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
+            solver = RADIRiccatiSolver()
         else:
             _warn_dense_fallback(self, equation, backend)
             if _dense_backend() == 'slycot':
