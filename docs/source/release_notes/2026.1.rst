@@ -1,37 +1,81 @@
+pyMOR 2026.1 (September 4, 2026)
+------------------------------
+
+We are proud to announce the release of pyMOR 2026.1!
+
+This release includes an adaptive and randomized ERA reductor, classes for matrix-equation
+solvers, an implementation of adaptive model hierarchies and energy-stable projection
+for port-Hamiltonian systems.
+
+pyMOR 2026.1 contains contributions by Maximilian Bindhak, Art Pelling, Timo Plath
+and Sven Ullmann. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+for more details.
+
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Adaptive `RandomizedERAReductor`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[2423] <https://github.com/pymor/pymor/pull/2423>`_
+
 Matrix Equation Solver
 ~~~~~~~~~~~~~~~~~~~~~~
 In `[2572] <https://github.com/pymor/pymor/pull/2572>`_, we restructured the solution
-of matrix-equations around a matrix-equation solver interface. Every matrix-equation solver exposes a solve method
-that takes the equation to solve, represented by one of four new
+of matrix-equations around a matrix-equation solver interface. Every matrix-equation
+solver exposes a solve method that takes the equation to solve, represented by one of four new
 matrix-equation classes: :class:`~pymor.solvers.matrix_equations.equations.LyapunovEquation`,
 :class:`~pymor.algorithms.solvers.matrix_equations.equations.RiccatiEquation`,
 :class:`~pymor.algorithms.solvers.matrix_equations.equations.PositiveRiccatiEquation` and
-:class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`. Since one is typically
-interested either in the full dense solution or in a low-rank of it, each equation
+:class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`. Since one is
+typically interested either in the full dense solution or in a low-rank of it, each equation
 (except :class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`,
 for which only dense solvers are available in pyMOR) comes with two solver interfaces, e.g.
 :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver` for the
-dense solver and :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR` for the low-rank solver,
-resulting in a total of seven interface classes.
+dense solver and :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR`
+for the low-rank solver, resulting in a total of seven interface classes.
 
-The previously standalone matrix-equation solver functions in :mod:`~pymor.bindings.scipy`, :mod:`~pymor.bindings.slycot`,
-:mod:`~pymor.matrix_equations.equations.adi`, :mod:`~pymor.solvers.matrix_equations.radi` and :class:`~pymor.solvers.matrix_equations.sylvester`
+The previously standalone matrix-equation solver functions in :mod:`~pymor.bindings.scipy`,
+:mod:`~pymor.bindings.slycot`, :mod:`~pymor.matrix_equations.equations.adi`,
+:mod:`~pymor.solvers.matrix_equations.radi` and :class:`~pymor.solvers.matrix_equations.sylvester`
 are now classes implementing one of these seven interfaces. In line with the equation solvers
-introduced in the previous release, default solvers are provided in :mod:`~pymor.solvers.matrix_equations.default` for each of
-the seven interfaces, selecting a concrete solver based on the available bindings and the problem size.
+introduced in the previous release, default solvers are provided in
+:mod:`~pymor.solvers.matrix_equations.default` for each of the seven interfaces, selecting
+a concrete solver based on the available bindings and the problem size.
 
+Adaptive model hierarchy
+~~~~~~~~~~~~~~~~~~~~~~~~
+`[2577] <https://github.com/pymor/pymor/pull/2577>`_
 
 Energy-stable projection for PHLTIModels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[#2553] <https://github.com/pymor/pymor/pull/2553>`_, we added an alternative test-space choice to the :class:`pymor.reductors.ph.basic.PHLTIPGReductor`.
-Previously, the test space was always fixed to :math:`W = QV`, which yields a reduced system that is again port-Hamiltonian.
-The new energy-stable projection instead uses :math:`W = (J - R)^{-\top} E V`. In this case the reduced system is
-no longer port-Hamiltonian, but the Hamiltonian is preserved, i.e., :math:`\tilde{H}(\tilde{x}) = H(V \tilde{x})`.
-The same projection was added as an option to :class:`~pymor.reductors.ph.ph_irka.PHIRKAReductor` :meth:`~pymor.reductors.ph.ph_irka.PHIRKAReductor.reduce`
-method and can be tried in the :mod:`!phlti` demo script.
-This follows the energy-stable approximation of :cite:`EHS20`, extended to the port-Hamiltonian setting as in :cite:`RWBBZFB23`.
+In `[#2553] <https://github.com/pymor/pymor/pull/2553>`_, we added an alternative test-space
+choice to the :class:`pymor.reductors.ph.basic.PHLTIPGReductor`. Previously, the test space
+was always fixed to :math:`W = QV`, which yields a reduced system that is again port-Hamiltonian.
+The new energy-stable projection instead uses :math:`W = (J - R)^{-\top} E V`. In this case the
+reduced system is no longer port-Hamiltonian, but the Hamiltonian is preserved, i.e.,
+:math:`\tilde{H}(\tilde{x}) = H(V \tilde{x})`. The same projection was added as an option
+to :class:`~pymor.reductors.ph.ph_irka.PHIRKAReductor`
+:meth:`~pymor.reductors.ph.ph_irka.PHIRKAReductor.reduce` method and can be tried in the
+:mod:`!phlti` demo script. This follows the energy-stable approximation of :cite:`EHS20`,
+extended to the port-Hamiltonian setting as in :cite:`RWBBZFB23`.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#2540] Fix issue in PolygonalDomain violating the DomainDiscretizer interface <https://github.com/pymor/pymor/pull/2540>`_
-- `[#2567] Add arguments in PHLTIModel construction such that solve can be called <https://github.com/pymor/pymor/pull/2567>`_
+- `[#2581] Add incremental extend method to VKOGARegressor <https://github.com/pymor/pymor/pull/2581>`_
+- `[#2578] Revert default SVD method for pod to method of snapshots <https://github.com/pymor/pymor/pull/2578>`_
+- `[#2574] Rename low-rank Cholesky factor (LRCF) to low-rank (LR) <https://github.com/pymor/pymor/pull/2574>`_
+- `[#2573] Unify and improve QR tests <https://github.com/pymor/pymor/pull/2573>`_
+- `[#2570] Various shifted_chol_qr improvements <https://github.com/pymor/pymor/pull/2570>`_
+- `[#2567] equip PHLTIModel with missing arguments such that solve can be called <https://github.com/pymor/pymor/pull/2567>`_
+- `[#2566] Adaptive RandomizedSVD class <https://github.com/pymor/pymor/pull/2566>`_
+- `[#2556] Some RandLA improvements <https://github.com/pymor/pymor/pull/2556>`_
+- `[#2555] Support Python 3.14 <https://github.com/pymor/pymor/pull/2555>`_
+- `[#2552] Progress bars <https://github.com/pymor/pymor/pull/2552>`_
+- `[#2540] add set method around dict in skfem discretizer boundary treatment <https://github.com/pymor/pymor/pull/2540>`_
+- `[#2535] Improvements in neural network training and evaluation <https://github.com/pymor/pymor/pull/2535>`_
+- `[#2530] Add pymor-config script <https://github.com/pymor/pymor/pull/2530>`_
+- `[#2527] Use cyclopts for CLI applications <https://github.com/pymor/pymor/pull/2527>`_
+- `[#2519] Compatibility of regressors with hyperparameter tuning in scikit-learn <https://github.com/pymor/pymor/pull/2519>`_
+- `[#2507] implemented a principal component analysis (PCA) algorithm <https://github.com/pymor/pymor/pull/2507>`_
+- `[#2411] Improving Loewner Construction in p-AAA <https://github.com/pymor/pymor/pull/2411>`_

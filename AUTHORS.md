@@ -11,6 +11,25 @@
 
 ## Contributors
 
+### pyMOR 2026.1
+
+* Maximilian Bindhak, @maxbindhak
+  * unification and improvements of the QR tests
+  * improvements of the `shifted_chol_qr`
+
+* Art Pelling, @artpelling
+  * improvements to the `rand_la` module
+  * `RandomizedERAReductor`
+
+* Timo Plath, @TiPlath
+  * implementation of a principal component analysis
+
+* Sven Ullmann, @ullmannsven
+  * fixed boundary handling bug for some domains
+  * energy-stable Petrov-Galerkin projection in the `PGLTIPHReductor`
+  * matrix equation solver classes
+  * renaming of low-rank Cholesky factor (LRCF) to low-rank (LR)
+
 ### pyMOR 2025.2
 
 * Maximilian Bindhak, @maxbindhak
