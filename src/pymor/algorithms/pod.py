@@ -14,7 +14,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
 def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
-        method='qr_svd', orth_tol=1e-10,
+        method='method_of_snapshots', orth_tol=1e-10,
         return_reduced_coefficients=False):
     """Proper orthogonal decomposition of `A`.
 
