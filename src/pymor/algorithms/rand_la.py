@@ -104,7 +104,7 @@ class RandomizedRangeFinder(BasicObject):
         r"""Update the QR decomposition.
 
         Q[:offset]R is assumed to be a QR decomposition.
-        Q[offset:] are contains new vectors that will be orthogonalized in place.
+        Q[offset:] contains new vectors that will be orthogonalized in place.
 
         Parameters
         ----------
