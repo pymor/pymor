@@ -2,8 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import inspect
-
 import numpy as np
 
 from pymor.algorithms.ml.vkoga import VKOGARegressor
@@ -46,14 +44,10 @@ class DataDrivenReductor(BasicObject):
         In the case of a time-dependent problem, the snapshots are assumed to be
         equidistant in time.
     regressor
-        Regressor with `fit` and `predict` methods similar to scikit-learn
-        regressors that is trained in the `reduce`-method.
-        Defaults to :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
-        Alternatively, one can pass a class which will be instantiated using
-        the attributes in `regressor_parameters`.
-    regressor_parameters
-        Dictionary with parameters for regressor instantiation. This will be used
-        only when a class instead of a regressor object is passed as `regressor`.
+        Regressor object with `fit` and `predict` methods similar to scikit-learn
+        regressors that is trained in the `reduce`-method. If `None`, a
+        :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` with default
+        settings is used.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     T
@@ -89,7 +83,7 @@ class DataDrivenReductor(BasicObject):
     """
 
     def __init__(self, training_parameters, training_snapshots,
-                 regressor=VKOGARegressor, regressor_parameters=None, target_quantity='solution',
+                 regressor=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
                  input_scaler=None, output_scaler=None,
                  input_scaler_fitted=False, output_scaler_fitted=False):
@@ -97,10 +91,8 @@ class DataDrivenReductor(BasicObject):
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
 
-        if inspect.isclass(self.regressor):
-            if self.regressor_parameters is None:
-                self.regressor_parameters = {}
-            self.regressor = self.regressor(**regressor_parameters)
+        if self.regressor is None:
+            self.regressor = VKOGARegressor()
 
         assert training_parameters is not None
         assert len(training_parameters) > 0
@@ -338,7 +330,10 @@ class AdaptiveDDReductor(BasicObject):
     Parameters
     ----------
     dd_reductor_parameters
-        Attributes used to generate the :class:`DataDrivenReductor` surrogates.
+        Attributes used to generate the :class:`DataDrivenReductor` surrogates. A
+        `'regressor'` entry, if present, must be a factory (a callable returning a fresh
+        regressor) rather than a single regressor object, since each surrogate is trained
+        independently and therefore needs its own regressor.
     retrain_interval
         Number of new training data points to collect before retraining a surrogate.
     fom
@@ -399,10 +394,15 @@ class AdaptiveDDReductor(BasicObject):
         if new_fom is not None:
             self.fom = new_fom
             old_rb_size = sum(red.dim_solution_space for red in self.dd_reductors)
-            # add new data-driven reductor and model to account for new basis components
+            # add new data-driven reductor and model to account for new basis components;
+            # each surrogate is trained independently, so build it a fresh regressor from
+            # the (optional) `regressor` factory in `dd_reductor_parameters`
+            dd_params = dict(self.dd_reductor_parameters)
+            regressor_factory = dd_params.pop('regressor', None)
+            regressor = regressor_factory() if regressor_factory is not None else None
             T = getattr(new_fom, 'T', None)
             self.dd_reductors.append(DataDrivenReductor([mu], reduced_coefficients[old_rb_size:].T,
-                                                        T=T, **self.dd_reductor_parameters))
+                                                        T=T, regressor=regressor, **dd_params))
             self.dd_models.append(self.dd_reductors[-1].reduce())
             self._pending_retrains.append(0)
 

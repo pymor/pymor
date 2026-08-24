@@ -91,9 +91,10 @@ class ModelHierarchy(Model):
             errors_to_compute.add('output_error_estimate')
 
         def accurate_enough(result):
-            # checks if all request error estimates are available and below the tolerance
+            # checks if all requested error estimates are available and below the tolerance
             return all(
-                (est := result.get(q)) is not None and self.time_reduction(est) <= self.tol
+                (est := result.get(q)) is not None and np.asarray(est).size > 0
+                and self.time_reduction(est) <= self.tol
                 for q in errors_to_compute
             )
 

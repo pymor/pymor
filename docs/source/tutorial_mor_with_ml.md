@@ -655,14 +655,15 @@ rb_reductor_factory = lambda model: CoerciveRBReductor(
     model, coercivity_estimator=ProjectionParameterFunctional('mu'))
 ```
 
-Furthermore, we use again the {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`
-and set several parameters for creation of the regressor:
+Furthermore, we use again the {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
+Since each data-driven surrogate in the hierarchy is trained independently and therefore
+needs its own regressor, we pass a factory (a callable returning a fresh regressor) rather
+than a single regressor object:
 
 ```{code-cell} ipython3
-regressor_type = VKOGARegressor
 kernel = GaussianKernel(length_scale=1.0)
 regressor_parameters = {'kernel': kernel, 'criterion': 'fp', 'max_centers': 30, 'tol': 1e-6, 'reg': 1e-12}
-dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters}
+dd_reductor_parameters = {'regressor': lambda: VKOGARegressor(**regressor_parameters)}
 ```
 
 We can finally set up the adaptive model hierarchy as a

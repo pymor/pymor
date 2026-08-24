@@ -119,7 +119,7 @@ def main(
         rb_factory = lambda model: ParabolicRBReductor(model, product=model.h1_0_semi_product,
                                                        coercivity_estimator=ProjectionParameterFunctional('diffusion'))
 
-    dd_reductor_parameters = {'regressor': regressor_type, 'regressor_parameters': regressor_parameters,
+    dd_reductor_parameters = {'regressor': lambda: regressor_type(**regressor_parameters),
                               'input_scaler': input_scaler, 'output_scaler': output_scaler,
                               'time_vectorized': (problem_number == 1 and time_vectorized)}
 
