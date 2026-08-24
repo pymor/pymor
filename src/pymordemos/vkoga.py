@@ -24,6 +24,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          tol: float = 1e-6,
          reg: float = 1e-12,
          length_scale: float = 1.0,
+         test_extend: bool = True,
          grid_search_parameter_optimization: bool = False,
          num_points_plotting: int = 200):
     """Approximates a function with 2d output from training data using VKOGA.
@@ -31,7 +32,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
     Parameters
     ----------
     training_points_sampling
-        Method for sampling the training points
+        Method for sampling the training points.
     kernel
         Kernel to use in VKOGA.
     num_training_points
@@ -46,6 +47,9 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
         Regularization parameter for the kernel interpolation.
     length_scale
         The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+    test_extend
+        If True, also test the incremental `extend` method by fitting on 1/2 of
+        the data and extending twice with 1/4 each, then comparing with the full fit.
     grid_search_parameter_optimization
         Perform a grid search in order to optimize the hyperparameters
         of the kernel surrogate and the VKOGA greedy search.
@@ -115,6 +119,35 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
     plt.suptitle('VKOGA Surrogate vs Training Data')
     plt.tight_layout()
     plt.show()
+
+    if test_extend:
+        n = len(X)
+        n_init = n // 2
+        n_ext1 = (n - n_init) // 2
+        n_ext2 = n - n_init - n_ext1
+
+        X_init, X_ext1, X_ext2 = X[:n_init], X[n_init:n_init+n_ext1], X[n_init+n_ext1:]
+        F_init, F_ext1, F_ext2 = F[:n_init], F[n_init:n_init+n_ext1], F[n_init+n_ext1:]
+
+        regressor_ext = VKOGARegressor(kernel=kernel, criterion=greedy_criterion,
+                                       max_centers=max_centers, tol=tol, reg=reg)
+        regressor_ext.fit(X_init, F_init)
+        n_centers_fit = len(regressor_ext._surrogate._centers)
+        print(f'\nExtend test: fit on {n_init} points -> {n_centers_fit} centers')
+
+        regressor_ext.extend(X_ext1, F_ext1)
+        n_centers_ext1 = len(regressor_ext._surrogate._centers)
+        print(f'Extended with {n_ext1} points -> {n_centers_ext1} centers')
+
+        regressor_ext.extend(X_ext2, F_ext2)
+        n_centers_ext2 = len(regressor_ext._surrogate._centers)
+        print(f'Extended with {n_ext2} points -> {n_centers_ext2} centers')
+
+        X_dense = np.linspace(X.min(), X.max(), 200)[:, None]
+        err_full = np.max(np.abs(regressor.predict(X_dense) - regressor_ext.predict(X_dense)))
+        print(f'Full fit: {len(regressor._surrogate._centers)} centers, '
+              f'fit+extend: {n_centers_ext2} centers, '
+              f'max prediction difference: {err_full:.3e}')
 
 
 if __name__ == '__main__':
