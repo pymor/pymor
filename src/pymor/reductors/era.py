@@ -16,7 +16,108 @@ from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
 
-class ERAReductor(CacheableObject):
+class GenericERAReductor(CacheableObject):
+    r"""Generic Eigensystem Realization Algorithm reductor.
+
+    This class implements ROM construction from a orthogonal factorization of the Hankel matrix, as well as tangential
+    projections of inputs and outputs. The actual factorization and error bounds/estimators are implemented by the
+    subclasses.
+
+    Attributes
+    ----------
+    data
+        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
+        Has to be one- or three-dimensional with either::
+
+            data.shape == (n,)
+
+        for scalar-valued Markov parameters or::
+
+            data.shape == (n, p, m)
+
+        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
+        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
+    sampling_time
+        A number that denotes the sampling time of the system (in seconds).
+    force_stability
+        Whether the Markov parameters are zero-padded to double the length in order to enforce
+        Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
+    feedthrough
+        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        defines the feedthrough of the realization. Defaults to `None`.
+    """
+
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
+        assert sampling_time >= 0
+        assert feedthrough is None or isinstance(feedthrough, np.ndarray | Operator)
+        assert np.isrealobj(data)
+        if data.ndim == 1:
+            data = data.reshape(-1, 1, 1)
+        assert data.ndim == 3
+        if isinstance(feedthrough, np.ndarray):
+            feedthrough = NumpyMatrixOperator(feedthrough)
+        if isinstance(feedthrough, Operator):
+            assert feedthrough.range.dim == data.shape[1]
+            assert feedthrough.source.dim == data.shape[2]
+        self.__auto_init(locals())
+
+    @cached
+    def _s1_W1(self):
+        self.logger.info('Computing output SVD ...')
+        W1, s1, _ = spla.svd(np.hstack(self.data), full_matrices=False)
+        return s1, W1
+
+    @cached
+    def _s2_W2(self):
+        self.logger.info('Computing input SVD ...')
+        _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
+        return s2, W2.T
+
+    def output_projector(self, num_left):
+        """Construct the left/output projector :math:`W_1`."""
+        assert isinstance(num_left, int)
+        assert num_left <= self.data.shape[1]
+        self.logger.info(f'Constructing output projector ({num_left} tangential directions) ...')
+        return self._s1_W1()[1][:, :num_left]
+
+    def input_projector(self, num_right):
+        """Construct the right/input projector :math:`W_2`."""
+        assert isinstance(num_right, int)
+        assert num_right <= self.data.shape[2]
+        self.logger.info(f'Constructing input projector ({num_right} tangential directions) ...')
+        return self._s2_W2()[1][:, :num_right]
+
+    def _project_markov_parameters(self, num_left, num_right):
+        self.logger.info('Projecting Markov parameters ...')
+        mp = self.data
+        # computation strategy below is already improved but probably not optimal, see PR #1587.
+        if num_right:
+            mp = np.einsum('npm,mk->npk', mp, self.input_projector(num_right), optimize='optimal')
+        if num_left:
+            mp = self.output_projector(num_left).T @ mp
+        return mp
+
+    def _construct_realization(self, sv, U, V, m, p, num_left, num_right):
+        m, p = num_right or m, num_left or p
+        sqsv = np.sqrt(sv)
+        A, *_ = spla.lstsq(U[: -p], U[p:])
+        A = NumpyMatrixOperator((1/sqsv).reshape(-1,1)*A*sqsv.reshape(1,-1))
+        B = NumpyMatrixOperator((V[:m]*sqsv.reshape(1, -1)).T)
+        C = NumpyMatrixOperator(U[:p]*sqsv.reshape(1, -1))
+        if num_left:
+            self.logger.info('Backprojecting tangential output directions ...')
+            W1 = self.output_projector(num_left)
+            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1.T))
+        if num_right:
+            self.logger.info('Backprojecting tangential input directions ...')
+            W2 = self.input_projector(num_right)
+            B = project(B, source_basis=B.source.from_numpy(W2.T), range_basis=None)
+
+        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
+                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv), 'hsv': sv})
+
+
+class ERAReductor(GenericERAReductor):
     r"""Eigensystem Realization Algorithm reductor.
 
     Constructs a (reduced) realization from a sequence of Markov parameters :math:`h_i`,
@@ -76,42 +177,6 @@ class ERAReductor(CacheableObject):
 
     cache_region = 'memory'
 
-    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
-        assert sampling_time >= 0
-        assert feedthrough is None or isinstance(feedthrough, np.ndarray | Operator)
-        assert np.isrealobj(data)
-        if data.ndim == 1:
-            data = data.reshape(-1, 1, 1)
-        assert data.ndim == 3
-        if isinstance(feedthrough, np.ndarray):
-            feedthrough = NumpyMatrixOperator(feedthrough)
-        if isinstance(feedthrough, Operator):
-            assert feedthrough.range.dim == data.shape[1]
-            assert feedthrough.source.dim == data.shape[2]
-        self.__auto_init(locals())
-
-    @cached
-    def _s1_W1(self):
-        self.logger.info('Computing output SVD ...')
-        W1, s1, _ = spla.svd(np.hstack(self.data), full_matrices=False)
-        return s1, W1
-
-    @cached
-    def _s2_W2(self):
-        self.logger.info('Computing input SVD ...')
-        _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
-        return s2, W2.T
-
-    def _project_markov_parameters(self, num_left, num_right):
-        self.logger.info('Projecting Markov parameters ...')
-        mp = self.data
-        # computation strategy below is already improved but probably not optimal, see PR #1587.
-        if num_right:
-            mp = np.einsum('npm,mk->npk', mp, self.input_projector(num_right), optimize='optimal')
-        if num_left:
-            mp = self.output_projector(num_left).T @ mp
-        return mp
-
     @cached
     def _sv_U_V(self, num_left, num_right):
         n, p, m = self.data.shape
@@ -124,20 +189,6 @@ class ERAReductor(CacheableObject):
         H = NumpyHankelOperator(h[:s], r=h[s-1:])
         U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
         return sv, U, Vh.T
-
-    def output_projector(self, num_left):
-        """Construct the left/output projector :math:`W_1`."""
-        assert isinstance(num_left, int)
-        assert num_left <= self.data.shape[1]
-        self.logger.info(f'Constructing output projector ({num_left} tangential directions) ...')
-        return self._s1_W1()[1][:, :num_left]
-
-    def input_projector(self, num_right):
-        """Construct the right/input projector :math:`W_2`."""
-        assert isinstance(num_right, int)
-        assert num_right <= self.data.shape[2]
-        self.logger.info(f'Constructing input projector ({num_right} tangential directions) ...')
-        return self._s2_W2()[1][:, :num_right]
 
     def error_bounds(self, num_left=None, num_right=None):
         r"""Compute the error bounds for all possible reduction orders.
@@ -195,25 +246,6 @@ class ERAReductor(CacheableObject):
 
         return np.sqrt(err)
 
-    def _construct_realization(self, sv, U, V, m, p, num_left, num_right):
-        m, p = num_right or m, num_left or p
-        sqsv = np.sqrt(sv)
-        A, *_ = spla.lstsq(U[: -p], U[p:])
-        A = NumpyMatrixOperator((1/sqsv).reshape(-1,1)*A*sqsv.reshape(1,-1))
-        B = NumpyMatrixOperator((V[:m]*sqsv.reshape(1, -1)).T)
-        C = NumpyMatrixOperator(U[:p]*sqsv.reshape(1, -1))
-        if num_left:
-            self.logger.info('Backprojecting tangential output directions ...')
-            W1 = self.output_projector(num_left)
-            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1.T))
-        if num_right:
-            self.logger.info('Backprojecting tangential input directions ...')
-            W2 = self.input_projector(num_right)
-            B = project(B, source_basis=B.source.from_numpy(W2.T), range_basis=None)
-
-        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
-                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv), 'hsv': sv})
-
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
 
@@ -260,7 +292,7 @@ class ERAReductor(CacheableObject):
         return self._construct_realization(sv, U, V, m, p, num_left, num_right)
 
 
-class RandomizedERAReductor(ERAReductor):
+class RandomizedERAReductor(GenericERAReductor):
     r"""Randomized Eigensystem Realization Algorithm reductor.
 
     Constructs a (reduced) realization from a sequence of Markov parameters :math:`h_i`, for
@@ -320,6 +352,8 @@ class RandomizedERAReductor(ERAReductor):
         Number of right (input) directions for tangential projection.
     """
 
+    cache_region = "memory"
+
     @defaults('power_iterations')
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
                  power_iterations=2, rrf_args=None, num_left=None, num_right=None):
@@ -372,15 +406,6 @@ class RandomizedERAReductor(ERAReductor):
         V = np.zeros((self._H._circulant.source.dim, num))
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy()
         return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:self._H.range.dim])
-
-    def _sv_U_V(self, num_left, num_right):
-        m, n = self._H.range.dim, self._H.source.dim
-        self.logger.warning(
-            f'Computing full SVD of the Hankel operator of size {m} x {n}! '
-            'Use `relative_error_estimate` for the randomized estimator.'
-        )
-        U, sv, Vh = SVD_VA_METHODS[self.randomized_svd.low_rank_svd_method](self._H.as_range_array(), modes=min(m, n))
-        return sv, U.to_numpy(), Vh.T
 
     def reduce(self, r=None, tol=None):
         r"""Construct a reduced realization with randomized methods.
