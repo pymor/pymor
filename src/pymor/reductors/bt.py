@@ -34,7 +34,7 @@ class GenericBTReductor(BasicObject):
         self._pg_reductor = None
 
     def _gramians(self):
-        """Return low-rank Cholesky factors of Gramians."""
+        """Return low-rank factors of Gramians."""
         raise NotImplementedError
 
     def _hankel_svd(self):
@@ -126,7 +126,7 @@ class BTReductor(GenericBTReductor):
     """
 
     def _gramians(self):
-        return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
+        return self.fom.gramian('c_lr', mu=self.mu), self.fom.gramian('o_lr', mu=self.mu)
 
     def _hankel_svd(self):
         return self.fom._hankel_svd(mu=self.mu)
@@ -155,7 +155,7 @@ class FDBTReductor(GenericBTReductor):
         super().__init__(fom, mu=mu)
 
     def _gramians(self):
-        return self.fom.gramian('bs_c_lrcf', mu=self.mu), self.fom.gramian('bs_o_lrcf', mu=self.mu)
+        return self.fom.gramian('bs_c_lr', mu=self.mu), self.fom.gramian('bs_o_lr', mu=self.mu)
 
     def _hankel_svd(self):
         return self.fom._hankel_svd('bs', mu=self.mu)
@@ -185,7 +185,7 @@ class LQGBTReductor(GenericBTReductor):
         super().__init__(fom, mu=mu)
 
     def _gramians(self):
-        return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
+        return self.fom.gramian('lqg_c_lr', mu=self.mu), self.fom.gramian('lqg_o_lr', mu=self.mu)
 
     def _hankel_svd(self):
         return self.fom._hankel_svd('lqg', mu=self.mu)
@@ -217,8 +217,8 @@ class BRBTReductor(GenericBTReductor):
         self.gamma = gamma
 
     def _gramians(self):
-        cf = self.fom.gramian(('br_c_lrcf', self.gamma), mu=self.mu)
-        of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
+        cf = self.fom.gramian(('br_c_lr', self.gamma), mu=self.mu)
+        of = self.fom.gramian(('br_o_lr', self.gamma), mu=self.mu)
         return cf, of
 
     def _hankel_svd(self):
@@ -248,8 +248,8 @@ class PRBTReductor(GenericBTReductor):
         super().__init__(fom, mu=mu)
 
     def _gramians(self):
-        cf = self.fom.gramian('pr_c_lrcf', mu=self.mu)
-        of = self.fom.gramian('pr_o_lrcf', mu=self.mu)
+        cf = self.fom.gramian('pr_c_lr', mu=self.mu)
+        of = self.fom.gramian('pr_o_lr', mu=self.mu)
         return cf, of
 
     def _hankel_svd(self):

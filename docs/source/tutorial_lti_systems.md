@@ -417,13 +417,13 @@ the {meth}`~pymor.models.iosys.LTIModel.gramian` method can be used.
 Although solutions to Lyapunov equations are generally dense matrices,
 they can be often be very well approximated by a low-rank matrix.
 With {meth}`~pymor.models.iosys.LTIModel.gramian`,
-it is possible to compute the dense solution or only the low-rank Cholesky
+it is possible to compute the dense solution or only the low-rank
 factor.
-For example, the following computes the low-rank Cholesky factor of the
+For example, the following computes the low-rank factor of the
 controllability Gramian as a {{ VectorArray }}:
 
 ```{code-cell} ipython3
-fom.gramian('c_lrcf')
+fom.gramian('c_lr')
 ```
 
 ## Hankel singular values

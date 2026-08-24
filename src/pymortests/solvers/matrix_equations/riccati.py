@@ -25,11 +25,11 @@ n_list_small = [10, 20]
 n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
-ricc_lrcf_backend_list_small = [
+ricc_lr_backend_list_small = [
     'scipy',
     'slycot',
 ]
-ricc_lrcf_backend_list_big = [
+ricc_lr_backend_list_big = [
     'lrradi'
 ]
 ricc_dense_backend_list = [
@@ -215,9 +215,9 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lrcf_backend_list_small),
-                                                product(n_list_big, ricc_lrcf_backend_list_big)))
-def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
+                                                product(n_list_big, ricc_lr_backend_list_big)))
+def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
     if with_S and backend == 'lrradi':
         pytest.xfail('solver not implemented')
@@ -258,18 +258,18 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'lrradi':
-        from pymor.solvers.matrix_equations.lrradi import LRRADIRiccatiSolverLRCF
-        solver =  LRRADIRiccatiSolverLRCF()
+        from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
+        solver =  RADIRiccatiSolver()
     elif backend == 'slycot':
-        from pymor.bindings.slycot import SlycotRiccatiSolverLRCF
-        solver = SlycotRiccatiSolverLRCF()
+        from pymor.bindings.slycot import SlycotRiccatiSolverLR
+        solver = SlycotRiccatiSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyRiccatiSolverLRCF
-        solver = ScipyRiccatiSolverLRCF()
+        from pymor.bindings.scipy import ScipyRiccatiSolverLR
+        solver = ScipyRiccatiSolverLR()
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 
@@ -291,8 +291,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('backend', ricc_lrcf_backend_list_small)
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
+@pytest.mark.parametrize('backend', ricc_lr_backend_list_small)
+def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -331,15 +331,15 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
 
     if backend == 'slycot':
-        from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLRCF
-        solver = SlycotPositiveRiccatiSolverLRCF()
+        from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
+        solver = SlycotPositiveRiccatiSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLRCF
-        solver = ScipyPositiveRiccatiSolverLRCF()
+        from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLR
+        solver = ScipyPositiveRiccatiSolverLR()
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 

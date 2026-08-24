@@ -14,11 +14,11 @@ import slycot
 from pymor.core.logger import getLogger
 from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
-    LyapunovSolverLRCF,
+    LyapunovSolverLR,
     PositiveRiccatiSolver,
-    PositiveRiccatiSolverLRCF,
+    PositiveRiccatiSolverLR,
     RiccatiSolver,
-    RiccatiSolverLRCF,
+    RiccatiSolverLR,
 )
 from pymor.solvers.matrix_equations.utils import chol
 
@@ -59,8 +59,8 @@ class SlycotLyapunovSolver(LyapunovSolver):
         return X
 
 
-class SlycotLyapunovSolverLRCF(LyapunovSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using slycot.
+class SlycotLyapunovSolverLR(LyapunovSolverLR):
+    r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotLyapunovSolver` and
     factorizes it.
@@ -151,8 +151,8 @@ class SlycotRiccatiSolver(RiccatiSolver):
         return X
 
 
-class SlycotRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of a the solution of a |RiccatiEquation| using slycot.
+class SlycotRiccatiSolverLR(RiccatiSolverLR):
+    r"""Compute a low-rank factor of a the solution of a |RiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotRiccatiSolver` and
     factorizes it.
@@ -184,8 +184,8 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
         return SlycotRiccatiSolver()._solve(temp_equation)
 
 
-class SlycotPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Compute a LR Cholesky factor of the solution of a |PositiveRiccatiEquation| using slycot.
+class SlycotPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
+    r"""Compute a low-rank factor of the solution of a |PositiveRiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotPositiveRiccatiSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`.

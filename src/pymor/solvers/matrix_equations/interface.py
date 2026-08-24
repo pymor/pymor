@@ -35,10 +35,10 @@ class LyapunovSolver(ImmutableObject):
         pass
 
 
-class LyapunovSolverLRCF(ImmutableObject):
+class LyapunovSolverLR(ImmutableObject):
     """Low-rank solver interface for |LyapunovEquations|.
 
-    Computes a low-rank Cholesky factor of the solution of the |LyapunovEquation|.
+    Computes a low-rank factor of the solution of the |LyapunovEquation|.
     """
 
     def solve(self, equation):
@@ -52,7 +52,7 @@ class LyapunovSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
+            Low-rank factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, LyapunovEquation)
         return self._solve(equation)
@@ -86,10 +86,10 @@ class RiccatiSolver(ImmutableObject):
         pass
 
 
-class RiccatiSolverLRCF(ImmutableObject):
+class RiccatiSolverLR(ImmutableObject):
     r"""Low-rank solver interface for |RiccatiEquations|.
 
-    Computes a low-rank Cholesky factor of the solution of the |RiccatiEquation|.
+    Computes a low-rank factor of the solution of the |RiccatiEquation|.
     """
 
     def solve(self, equation):
@@ -103,7 +103,7 @@ class RiccatiSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
+            Low-rank factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, RiccatiEquation)
         return self._solve(equation)
@@ -137,10 +137,10 @@ class PositiveRiccatiSolver(ImmutableObject):
         pass
 
 
-class PositiveRiccatiSolverLRCF(ImmutableObject):
+class PositiveRiccatiSolverLR(ImmutableObject):
     r"""Low-rank solver interface for |PositiveRiccatiEquations|.
 
-    Computes a low-rank Cholesky factor of the solution of the |PositiveRiccatiEquation|.
+    Computes a low-rank factor of the solution of the |PositiveRiccatiEquation|.
     """
 
     def solve(self, equation):
@@ -154,7 +154,7 @@ class PositiveRiccatiSolverLRCF(ImmutableObject):
         Returns
         -------
         Z
-            Low-rank Cholesky factor of the solution, |VectorArray| from `equation.A.source`.
+            Low-rank factor of the solution, |VectorArray| from `equation.A.source`.
         """
         assert isinstance(equation, PositiveRiccatiEquation)
         return self._solve(equation)

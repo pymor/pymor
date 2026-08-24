@@ -25,11 +25,11 @@ from pymor.core.exceptions import InversionError
 from pymor.solvers.interface import Solver
 from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
-    LyapunovSolverLRCF,
+    LyapunovSolverLR,
     PositiveRiccatiSolver,
-    PositiveRiccatiSolverLRCF,
+    PositiveRiccatiSolverLR,
     RiccatiSolver,
-    RiccatiSolverLRCF,
+    RiccatiSolverLR,
 )
 from pymor.solvers.matrix_equations.utils import chol
 from pymor.tools.weakrefcache import WeakRefCache
@@ -379,8 +379,8 @@ class ScipyLyapunovSolver(LyapunovSolver):
             return solve_discrete_lyapunov(A, B @ B.T)
 
 
-class ScipyLyapunovSolverLRCF(LyapunovSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of the solution of a |LyapunovEquation| using SciPy.
+class ScipyLyapunovSolverLR(LyapunovSolverLR):
+    r"""Compute a low-rank factor of the solution of a |LyapunovEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyLyapunovSolver` and
     factorizes it.  The factorization assumes :math:`X \succcurlyeq 0`, i.e. that
@@ -418,8 +418,8 @@ class ScipyRiccatiSolver(RiccatiSolver):
             return solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
 
 
-class ScipyRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Compute a low-rank Cholesky factor of the solution of a |RiccatiEquation| using SciPy.
+class ScipyRiccatiSolverLR(RiccatiSolverLR):
+    r"""Compute a low-rank factor of the solution of a |RiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyRiccatiSolver` and
     factorizes it.
@@ -451,8 +451,8 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
         return ScipyRiccatiSolver()._solve(temp_equation)
 
 
-class ScipyPositiveRiccatiSolverLRCF(PositiveRiccatiSolverLRCF):
-    r"""Compute a LR Choleksy factor of the solution of a |PositiveRiccatiEquation| using SciPy.
+class ScipyPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
+    r"""Compute a low-rank factor of the solution of a |PositiveRiccatiEquation| using SciPy.
 
     Computes the dense solution :math:`X` with :class:`ScipyPositiveRiccatiSolver` and
     factorizes it.

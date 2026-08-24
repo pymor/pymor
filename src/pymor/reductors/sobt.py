@@ -120,10 +120,10 @@ class SOBTpReductor(GenericSOBTpvReductor):
     """
 
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
-        pof = self.fom.gramian('po_lrcf', mu=self.mu)
-        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
-        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
+        pcf = self.fom.gramian('pc_lr', mu=self.mu)
+        pof = self.fom.gramian('po_lr', mu=self.mu)
+        vcf = self.fom.gramian('vc_lr', mu=self.mu)
+        vof = self.fom.gramian('vo_lr', mu=self.mu)
         return pcf, pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -147,8 +147,8 @@ class SOBTvReductor(GenericSOBTpvReductor):
     """
 
     def _gramians(self):
-        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
-        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
+        vcf = self.fom.gramian('vc_lr', mu=self.mu)
+        vof = self.fom.gramian('vo_lr', mu=self.mu)
         return vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -171,8 +171,8 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     """
 
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
-        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
+        pcf = self.fom.gramian('pc_lr', mu=self.mu)
+        vof = self.fom.gramian('vo_lr', mu=self.mu)
         return pcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -195,9 +195,9 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     """
 
     def _gramians(self):
-        pof = self.fom.gramian('po_lrcf', mu=self.mu)
-        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
-        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
+        pof = self.fom.gramian('po_lr', mu=self.mu)
+        vcf = self.fom.gramian('vc_lr', mu=self.mu)
+        vof = self.fom.gramian('vo_lr', mu=self.mu)
         return pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -257,8 +257,8 @@ class SOBTfvReductor(BasicObject):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
-        pof = self.fom.gramian('po_lrcf', mu=self.mu)
+        pcf = self.fom.gramian('pc_lr', mu=self.mu)
+        pof = self.fom.gramian('po_lr', mu=self.mu)
 
         if r > min(len(pcf), len(pof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
@@ -343,10 +343,10 @@ class SOBTReductor(BasicObject):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
-        pof = self.fom.gramian('po_lrcf', mu=self.mu)
-        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
-        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
+        pcf = self.fom.gramian('pc_lr', mu=self.mu)
+        pof = self.fom.gramian('po_lr', mu=self.mu)
+        vcf = self.fom.gramian('vc_lr', mu=self.mu)
+        vof = self.fom.gramian('vo_lr', mu=self.mu)
 
         if r > min(len(pcf), len(pof), len(vcf), len(vof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')

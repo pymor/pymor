@@ -7,26 +7,25 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
-from pymor.solvers.matrix_equations.interface import RiccatiSolverLRCF
+from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
-    r"""Compute an approximate low-rank solution of a |RiccatiEquation|.
+class RADIRiccatiSolver(RiccatiSolverLR):
+    r"""Compute an approximate low-rank factor of the solution of a |RiccatiEquation|.
 
     This is an implementation of Algorithm 2 in :cite:`BBKS18`.
 
     Parameters
     ----------
-    lrradi_tol
+    radi_tol
         Convergence tolerance for the RADI iteration.
-    lrradi_maxiter
+    radi_maxiter
         Maximum number of RADI steps. A real shift counts as one step, a
         complex-conjugate shift pair as two.
-    lrradi_shifts
+    radi_shifts
          Strategy for computing the RADI shift parameters. Currently only
         ``'hamiltonian_shifts'`` is supported.
     shifted_system_solver
@@ -39,9 +38,9 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
         Galerkin subspace for the subsequent shifts. See :meth:`hamiltonian_shifts`.
     """
 
-    @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'shifted_system_solver',
+    @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
               'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
-    def __init__(self, lrradi_tol=1e-10, lrradi_maxiter=500, lrradi_shifts='hamiltonian_shifts',
+    def __init__(self, radi_tol=1e-10, radi_maxiter=500, radi_shifts='hamiltonian_shifts',
                  shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
                  hamiltonian_shifts_subspace_columns=6):
 
@@ -55,13 +54,11 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
         if S is not None:
             raise NotImplementedError
 
-        logger = getLogger('pymor.solvers.matrix_equations.lrradi.solve_ricc_lrcf')
-
-        if self.lrradi_shifts == 'hamiltonian_shifts':
+        if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
         else:
-            raise ValueError('Unknown lrradi shift strategy.')
+            raise ValueError('Unknown radi shift strategy.')
 
         solver = self.shifted_system_solver
 
@@ -79,7 +76,7 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
         if not trans:
             B, C = C, B
 
-        Z = A.source.empty(reserve=len(C) * self.lrradi_maxiter)
+        Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
 
         K = A.source.zeros(len(B))
@@ -91,9 +88,9 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
 
         res = np.linalg.norm(RF.gramian(), ord=2)
         init_res = res
-        Ctol = res * self.lrradi_tol
+        Ctol = res * self.radi_tol
 
-        while res > Ctol and j < self.lrradi_maxiter:
+        while res > Ctol and j < self.radi_maxiter:
             if not trans:
                 AsE = A + shifts[j_shift] * E
             else:
@@ -158,14 +155,14 @@ class LRRADIRiccatiSolverLRCF(RiccatiSolverLRCF):
                 j += 2
             j_shift += 1
             res = np.linalg.norm(RF.gramian(), ord=2)
-            logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+            self.logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
                 shifts = iteration_shifts(A, E, B, RF, K, Z)
                 j_shift = 0
-        # transform solution to lrcf
+        # transform solution to low-rank factor
         cf = spla.cholesky(Y)
-        Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
-        return Z_cf
+        Z_lr = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
+        return Z_lr
 
 
     def hamiltonian_shifts_init(self, A, E, B, C):

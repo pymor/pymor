@@ -17,7 +17,7 @@ pytestmark = pytest.mark.builtin
 n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]
-cont_lyap_lrcf_backend_list = [
+cont_lyap_lr_backend_list = [
     'lradi',
 ]
 cont_lyap_dense_backend_list = [
@@ -120,8 +120,8 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, cont_lyap_dense_backend_list),
-                                                product(n_list_big, cont_lyap_lrcf_backend_list)))
-def test_cont_lrcf(n, m, with_E, trans, backend, rng):
+                                                product(n_list_big, cont_lyap_lr_backend_list)))
+def test_cont_lr(n, m, with_E, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -145,18 +145,18 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation.from_matrices(A, E, B, trans=trans)
 
     if backend == 'lradi':
-        from pymor.solvers.matrix_equations.lradi import LRADILyapunovSolverLRCF
-        solver =  LRADILyapunovSolverLRCF()
+        from pymor.solvers.matrix_equations.adi import ADILyapunovSolver
+        solver =  ADILyapunovSolver()
     elif backend == 'slycot':
-        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
-        solver = SlycotLyapunovSolverLRCF()
+        from pymor.bindings.slycot import SlycotLyapunovSolverLR
+        solver = SlycotLyapunovSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
-        solver = ScipyLyapunovSolverLRCF()
+        from pymor.bindings.scipy import ScipyLyapunovSolverLR
+        solver = ScipyLyapunovSolverLR()
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver)
+    Zva = equation.solve_lr(solver)
 
     assert len(Zva) <= n
 
@@ -176,7 +176,7 @@ def test_cont_lrcf(n, m, with_E, trans, backend, rng):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('backend', disc_lyap_dense_backend_list)
-def test_disc_lrcf(n, m, with_E, trans, backend, rng):
+def test_disc_lr(n, m, with_E, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -200,15 +200,15 @@ def test_disc_lrcf(n, m, with_E, trans, backend, rng):
     equation = LyapunovEquation.from_matrices(A, E, B, trans=trans, cont_time=False)
 
     if backend == 'slycot':
-        from pymor.bindings.slycot import SlycotLyapunovSolverLRCF
-        solver = SlycotLyapunovSolverLRCF()
+        from pymor.bindings.slycot import SlycotLyapunovSolverLR
+        solver = SlycotLyapunovSolverLR()
     elif backend == 'scipy':
-        from pymor.bindings.scipy import ScipyLyapunovSolverLRCF
-        solver = ScipyLyapunovSolverLRCF()
+        from pymor.bindings.scipy import ScipyLyapunovSolverLR
+        solver = ScipyLyapunovSolverLR()
     else:
         raise ValueError
 
-    Zva = equation.solve_lrcf(solver=solver)
+    Zva = equation.solve_lr(solver=solver)
 
     assert len(Zva) <= n
 
