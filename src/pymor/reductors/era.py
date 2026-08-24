@@ -7,7 +7,6 @@ import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
 from pymor.algorithms.rand_la import RandomizedSVD
-from pymor.algorithms.svd_va import SVD_VA_METHODS
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
@@ -19,9 +18,9 @@ from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 class GenericERAReductor(CacheableObject):
     r"""Generic Eigensystem Realization Algorithm reductor.
 
-    This class implements ROM construction from a orthogonal factorization of the Hankel matrix, as well as tangential
-    projections of inputs and outputs. The actual factorization and error bounds/estimators are implemented by the
-    subclasses.
+    This class implements ROM construction from a orthogonal factorization of the Hankel matrix, as
+    well as tangential projections of inputs and outputs. The actual factorization and error
+    bounds/estimators are implemented by the subclasses.
 
     Attributes
     ----------
@@ -352,7 +351,7 @@ class RandomizedERAReductor(GenericERAReductor):
         Number of right (input) directions for tangential projection.
     """
 
-    cache_region = "memory"
+    cache_region = 'memory'
 
     @defaults('power_iterations')
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
@@ -389,12 +388,13 @@ class RandomizedERAReductor(GenericERAReductor):
         return spla.norm(self.data*np.sqrt(eta.reshape(-1, 1, 1)))
 
     def relative_error_estimate(self):
-        r"""Estimate the relative :math:`\mathcal{H}_2` error of the reduced model based on the current range space.
+        r"""Estimate the relative :math:`\mathcal{H}_2` error based on the current range space.
 
-        The estimate is the LOO error estimate for the randomized Hankel approximation, normalized by the weighted
-        :math:`\mathcal{H}_2` norm. It is not a rigorous error bound. The latest approximation of the range space will
-        be used for estimation. This means that the error corresponds to a ROM of order
-        `r=len(self.randomized_svd.range_finder.Q[-1])`. See Section 3.5 in :cite:`PS26` for details.
+        The estimate is the LOO error estimate for the randomized Hankel approximation, normalized
+        by the weighted :math:`\mathcal{H}_2` norm. It is not a rigorous error bound. The latest
+        approximation of the range space will be used for estimation. This means that the error
+        corresponds to a ROM of order `r=len(self.randomized_svd.range_finder.Q[-1])`. See Section
+        3.5 in :cite:`PS26` for details.
 
         .. note::
             To estimate the error of a ROM whose order is smaller than the latest range-space basis,
