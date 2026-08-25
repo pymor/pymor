@@ -107,14 +107,13 @@ def _get_matplotlib_version():
 
 
 def _get_slycot_version():
-    from slycot.version import version
-    if list(map(int, version.split('.'))) < [0, 3, 1]:
-        import warnings
+    slycot_version = version('slycot')
+    if parse(slycot_version) < parse('0.3.1'):
         warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
         return False
-    else:
-        info = ', '.join(_get_threadpool_internal_api('slycot'))
-        return version, info
+
+    info = ', '.join(_get_threadpool_internal_api('slycot'))
+    return slycot_version, info
 
 
 def _get_qt_version():
