@@ -46,6 +46,8 @@ class ERAReductorBase(CacheableObject):
         defines the feedthrough of the realization. Defaults to `None`.
     """
 
+    cache_region = "memory"
+
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
         assert sampling_time >= 0
         assert feedthrough is None or isinstance(feedthrough, np.ndarray | Operator)
@@ -173,8 +175,6 @@ class ERAReductor(ERAReductorBase):
         (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
         defines the feedthrough of the realization. Defaults to `None`.
     """
-
-    cache_region = 'memory'
 
     @cached
     def _sv_U_V(self, num_left, num_right):
@@ -350,8 +350,6 @@ class RandomizedERAReductor(ERAReductorBase):
     num_right
         Number of right (input) directions for tangential projection.
     """
-
-    cache_region = 'memory'
 
     @defaults('power_iterations')
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
