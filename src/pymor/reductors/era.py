@@ -356,6 +356,9 @@ class RandomizedERAReductor(ERAReductorBase):
                  power_iterations=2, rrf_args=None, num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability=force_stability, feedthrough=feedthrough)
         self.__auto_init(locals())
+        if rrf_args is not None and 'error_estimator' in rrf_args:
+            assert rrf_args['error_estimator'] == 'loo', 'Only the leave-one-out error estimator is supported.'
+
         if num_left is not None or num_right is not None:
             self.logger.info('Computing the projected Markov parameters ...')
             data = self._project_markov_parameters(num_left, num_right)
