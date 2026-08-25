@@ -183,9 +183,7 @@ class ERAReductor(ERAReductorBase):
 
         h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
         self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
-        if self.force_stability:
-            h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
-        H = NumpyHankelOperator(h[:s], r=h[s-1:])
+        H = NumpyHankelOperator(h) if self.force_stability else NumpyHankelOperator(h[:s], r=h[s-1:])
         U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
         return sv, U, Vh.T
 
@@ -366,11 +364,9 @@ class RandomizedERAReductor(ERAReductorBase):
         if num_left is not None or num_right is not None:
             self.logger.info('Computing the projected Markov parameters ...')
             data = self._project_markov_parameters(num_left, num_right)
-        if self.force_stability:
-            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
-        s = (data.shape[0] + 1) // 2
+        s = data.shape[0] if self.force_stability else (data.shape[0] + 1) // 2
         self._transpose = (data.shape[1] < data.shape[2]) if allow_transpose else False
-        self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
+        self._H = NumpyHankelOperator(data) if self.force_stability else NumpyHankelOperator(data[:s], r=data[s-1:])
         if self._transpose:
             self.logger.info('Using transposed formulation.')
             self._H = self._H.H
