@@ -15,8 +15,8 @@ from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
 
-class GenericERAReductor(CacheableObject):
-    r"""Generic Eigensystem Realization Algorithm reductor.
+class ERAReductorBase(CacheableObject):
+    r"""Basic Eigensystem Realization Algorithm reductor.
 
     This class implements ROM construction from a orthogonal factorization of the Hankel matrix, as
     well as tangential projections of inputs and outputs. The actual factorization and error
@@ -116,7 +116,7 @@ class GenericERAReductor(CacheableObject):
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv), 'hsv': sv})
 
 
-class ERAReductor(GenericERAReductor):
+class ERAReductor(ERAReductorBase):
     r"""Eigensystem Realization Algorithm reductor.
 
     Constructs a (reduced) realization from a sequence of Markov parameters :math:`h_i`,
@@ -291,7 +291,7 @@ class ERAReductor(GenericERAReductor):
         return self._construct_realization(sv, U, V, m, p, num_left, num_right)
 
 
-class RandomizedERAReductor(GenericERAReductor):
+class RandomizedERAReductor(ERAReductorBase):
     r"""Randomized Eigensystem Realization Algorithm reductor.
 
     Constructs a (reduced) realization from a sequence of Markov parameters :math:`h_i`, for
