@@ -381,10 +381,12 @@ class RandomizedERAReductor(ERAReductorBase):
     @cached
     def _weighted_h2_norm(self):
         T = self.data.shape[0]
-        s = int((T+1)/2)
-        eta = np.ones(T)
-        eta[1:s+1] *= np.arange(s) + 1
-        eta[s+1:] *= np.arange(s-1)[::-1][:T-s-1] + 1
+        if self.force_stability:
+            eta = np.arange(1, T + 1)
+        else:
+            s = (T + 1) // 2
+            t = np.arange(T)
+            eta = np.minimum(np.minimum(t + 1, s), T - t)
         return spla.norm(self.data*np.sqrt(eta.reshape(-1, 1, 1)))
 
     def relative_error_estimate(self):
