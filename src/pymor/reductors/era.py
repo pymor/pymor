@@ -370,7 +370,6 @@ class RandomizedERAReductor(ERAReductorBase):
         if self._transpose:
             self.logger.info('Using transposed formulation.')
             self._H = self._H.H
-        self._last_sv_U_V = None
         rrf_args = {
             'qr_method': 'shifted_chol_qr',  # default, can override
             **(rrf_args or {}),
