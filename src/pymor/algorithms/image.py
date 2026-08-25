@@ -6,6 +6,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
+from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
@@ -246,6 +247,21 @@ class CollectOperatorRangeRules(RuleTable):
             firstrange = op.operators[-1].range.empty()
             type(self)(self.source, firstrange, self.extends).apply(op.operators[-1])
             type(self)(firstrange, self.image, self.extends).apply(op.with_(operators=op.operators[:-1]))
+
+    @match_class(BlockOperatorBase)
+    def action_BlockOperatorBase(self, op):
+        range_subspaces = op.range.subspaces if op.blocked_range else [op.range]
+        for i, range_space in enumerate(range_subspaces):
+            row_image = range_space.empty()
+            for j, block in enumerate(op.blocks[i]):
+                source = self.source.blocks[j] if op.blocked_source else self.source
+                type(self)(source, row_image, self.extends).apply(block)
+            if op.blocked_range:
+                blocks = [row_image if k == i else space.zeros(len(row_image))
+                          for k, space in enumerate(range_subspaces)]
+                self.image.append(op.range.make_array(blocks))
+            else:
+                self.image.append(row_image)
 
 
 class CollectVectorRangeRules(RuleTable):
