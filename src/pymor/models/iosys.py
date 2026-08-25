@@ -1337,7 +1337,7 @@ class LTIModel(Model):
         if 'fpeak' in self.presets:
             return spla.norm(self.transfer_function.eval_tf(self.presets['fpeak']), ord=2), self.presets['fpeak']
         elif not config.HAVE_SLYCOT:
-            raise NotImplementedError
+            raise NotImplementedError('The computation of the L-infinity norm requires slycot.')
 
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
