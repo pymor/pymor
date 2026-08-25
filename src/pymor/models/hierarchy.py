@@ -107,6 +107,10 @@ class ModelHierarchy(Model):
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
             result = m.compute(**dict.fromkeys(requested, True), mu=mu)
 
+            # fill missing error estimates when the reference model was reached
+            if is_reference:
+                self._fill_zero_error_estimates(result, quantities)
+
             # accept the result by leaving the loop if the reference model was reached
             # or the estimated errors in solution and/or output are below the tolerance
             if is_reference or accurate_enough(result):
@@ -165,8 +169,6 @@ class ModelHierarchy(Model):
     def _compute(self, quantities, data, mu):
         result, i_m_sufficient = self._select_model(mu, quantities)
         data.update(result)
-
-        self._fill_zero_error_estimates(data, quantities)
 
         self._reconstruct(data, i_m_sufficient, quantities, result)
 
