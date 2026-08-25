@@ -46,7 +46,7 @@ class ERAReductorBase(CacheableObject):
         defines the feedthrough of the realization. Defaults to `None`.
     """
 
-    cache_region = "memory"
+    cache_region = 'memory'
 
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
         assert sampling_time >= 0
