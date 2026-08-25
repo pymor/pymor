@@ -189,6 +189,17 @@ class ERAReductor(ERAReductorBase):
         U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
         return sv, U, Vh.T
 
+    def _resolve_tangential_directions(self, num_left, num_right):
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
+        if num_left is None and m * s < p:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            num_left = m * s
+        if num_right is None and p * s < m:
+            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
+            num_right = p * s
+        return num_left, num_right
+
     def error_bounds(self, num_left=None, num_right=None):
         r"""Compute the error bounds for all possible reduction orders.
 
@@ -226,13 +237,12 @@ class ERAReductor(ERAReductorBase):
         present bound is squared due to a typographical error in :cite:`K78` that was reported in
         :cite:`PS26`.
         """
-        n, p, m = self.data.shape
-        s = n if self.force_stability else (n + 1) // 2
-
+        _, p, m = self.data.shape
+        num_left, num_right = self._resolve_tangential_directions(num_left, num_right)
         sv = self._sv_U_V(num_left, num_right)[0]
 
-        a = p * s if num_right is None and p * s < m else (num_right or m)
-        b = m * s if num_left is None and m * s < p else (num_left or p)
+        a = num_right or m
+        b = num_left or p
         err = ((np.arange(len(sv)) + a + b) * sv**2)[1:]
 
         err = 2 * err if num_left or num_right else err
@@ -271,13 +281,7 @@ class ERAReductor(ERAReductorBase):
         assert num_right is None or isinstance(num_right, int) and 0 < num_right < m
         assert r is None or 0 < r <= min((num_left or p), (num_right or m)) * s
 
-        if num_left is None and m * s < p:
-            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
-            num_left = m * s
-        if num_right is None and p * s < m:
-            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
-            num_right = p * s
-
+        num_left, num_right = self._resolve_tangential_directions(num_left, num_right)
         sv, U, V = self._sv_U_V(num_left, num_right)
 
         if tol is not None:
