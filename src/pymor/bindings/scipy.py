@@ -152,27 +152,37 @@ class ScipySpSolveSolver(ScipyLinearSolver):
         self.__auto_init(locals())
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
-        # convert to csc
-        if not sps.isspmatrix_csc(matrix):
+        # cache_key keeps a reference to the ORIGINAL matrix object, which stays alive as long
+        # as the caller's operator does. The `_factorizations` cache must be keyed on this, not
+        # on `matrix` after it gets rebound below (`.tocsc()`/`matrix_astype_nocopy()` may return
+        # a brand-new, otherwise-unreferenced object that would be garbage collected -- and thus
+        # evicted from the WeakRefCache -- as soon as this method returns).
+        cache_key = matrix
+
+        def to_csc_if_needed(matrix):
             # csr is also fine when using umfpack
-            if sps.isspmatrix_csr(matrix) and self.use_umfpack and config.HAVE_UMFPACK:
-                pass
-            else:
-                matrix = matrix.tocsc()
+            if sps.isspmatrix_csc(matrix) or \
+                    (sps.isspmatrix_csr(matrix) and self.use_umfpack and config.HAVE_UMFPACK):
+                return matrix
+            return matrix.tocsc()
 
         try:
             if self.keep_factorization:
                 try:
-                    fac, dtype = self._factorizations.get(matrix)
+                    fac, dtype = self._factorizations.get(cache_key)
                     if not np.can_cast(V.dtype, dtype, casting='safe'):
                         raise KeyError
                 except KeyError:
+                    # only convert format/dtype when we actually need to build a new
+                    # factorization -- on a cache hit, the incoming matrix's format never
+                    # matters, so we avoid paying for a `.tocsc()`/astype on every call.
+                    matrix = to_csc_if_needed(matrix)
                     matrix = matrix_astype_nocopy(matrix, promoted_type)
                     if self.use_umfpack and config.HAVE_UMFPACK:
                         fac = scikits.umfpack.splu(matrix)
                     else:
                         fac = splu(matrix, permc_spec=self.permc_spec)
-                    self._factorizations.set(matrix, (fac, promoted_type))
+                    self._factorizations.set(cache_key, (fac, promoted_type))
                 # we may use a complex factorization of a real matrix to
                 # apply it to a real vector. In that case, we downcast
                 # the result here, removing the imaginary part,
@@ -181,6 +191,7 @@ class ScipySpSolveSolver(ScipyLinearSolver):
             else:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
+                matrix = to_csc_if_needed(matrix)
                 matrix = matrix_astype_nocopy(matrix, promoted_type)
                 if self.use_umfpack and config.HAVE_UMFPACK:
                     R = scikits.umfpack.spsolve(matrix, V)

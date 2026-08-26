@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from scipy.sparse import diags
+from scipy.sparse import coo_matrix, diags
 
 from pymor.algorithms.basic import almost_equal
 from pymor.bindings.scipy import (
@@ -99,3 +99,36 @@ def test_numpy_sparse_adjoint_solvers(numpy_sparse_solver):
     rhs = op.source.make_array(np.ones(10))
     solution = op.apply_inverse_adjoint(rhs)
     assert ((op.apply_adjoint(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
+
+
+def test_sp_solve_solver_reuses_factorization_for_non_csc_matrix(monkeypatch):
+    # regression test: ScipySpSolveSolver's `_factorizations` cache used to be keyed on the
+    # local `matrix` variable *after* it was rebound by `matrix.tocsc()`. For any matrix that
+    # wasn't already CSC (or CSR with UMFPACK), that rebound object had no other referrers and
+    # was garbage collected as soon as `_solve_impl` returned, evicting the cache entry
+    # immediately and silently defeating `keep_factorization=True` for every subsequent call.
+    import pymor.bindings.scipy as scipy_bindings
+
+    n = 20
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((n, n))
+    K = coo_matrix(A @ A.T + n * np.eye(n))  # SPD; COO is never CSC and never CSR+UMFPACK-exempt
+
+    splu_calls = []
+    real_splu = scipy_bindings.splu
+
+    def counting_splu(*args, **kwargs):
+        splu_calls.append(None)
+        return real_splu(*args, **kwargs)
+
+    monkeypatch.setattr(scipy_bindings, 'splu', counting_splu)
+
+    solver = ScipySpSolveSolver(keep_factorization=True, use_umfpack=False)
+    op = NumpyMatrixOperator(K, solver=solver)
+    rhs = op.range.make_array(np.ones(n))
+
+    for _ in range(5):
+        solution = op.apply_inverse(rhs)
+        assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
+
+    assert len(splu_calls) == 1
