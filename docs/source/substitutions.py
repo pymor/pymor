@@ -199,6 +199,7 @@ common = """
 .. |SylvesterSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.SylvesterSolver`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
+.. |RandomizedRangeFinder| replace:: :class:`randmomized range finder <pymor.algorithms.rand_la.RandomizedRangeFinder>`
 """  # noqa: E501
 
 substitutions = interfaces + common

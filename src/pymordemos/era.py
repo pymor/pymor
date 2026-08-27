@@ -9,7 +9,7 @@ from cyclopts import App
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
 from pymor.reductors.bt import BTReductor
-from pymor.reductors.era import ERAReductor
+from pymor.reductors.era import ERAReductor, RandomizedERAReductor
 from pymor.tools.random import get_rng, new_rng
 
 
@@ -87,22 +87,26 @@ def main(n: int = 10):
     mp = compute_markov_parameters(fom, n=100)
 
     era = ERAReductor(mp, sampling_time=sampling_time, feedthrough=fom.D)
+    randera = RandomizedERAReductor(mp, sampling_time=sampling_time, feedthrough=fom.D)
     bt = BTReductor(fom)
 
     era_rom = era.reduce(4)
+    randera_rom = randera.reduce(4)
     bt_rom = bt.reduce(4)
 
     fig, axs = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
     ax = axs[0]
-    fom.transfer_function.mag_plot(w, ax=ax, label='FOM', dB=True)
+    fom.transfer_function.mag_plot(w, ax=ax, label='FOM', dB=True, c='k')
     era_rom.transfer_function.mag_plot(w, ax=ax, label='ERA ROM', dB=True, linestyle='dashed')
+    randera_rom.transfer_function.mag_plot(w, ax=ax, label='RandERA ROM', dB=True, linestyle='dashdot')
     bt_rom.transfer_function.mag_plot(w, ax=ax, label='BT ROM', dB=True, linestyle='dotted')
     ax.set_title(r'Transfer function magnitude ($r=4$)')
     ax.legend()
 
     ax = axs[1]
     (fom-era_rom).transfer_function.mag_plot(w, ax=ax, label='ERA', dB=True)
-    (fom-bt_rom).transfer_function.mag_plot(w, ax=ax, label='BT', dB=True, linestyle='dashed')
+    (fom-randera_rom).transfer_function.mag_plot(w, ax=ax, label='RandERA', dB=True, linestyle='dashdot')
+    (fom-bt_rom).transfer_function.mag_plot(w, ax=ax, label='BT', dB=True, linestyle='dotted')
     ax.set_title(r'Error magnitude ($r=4$)')
     ax.legend()
 
