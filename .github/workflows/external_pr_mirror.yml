@@ -27,8 +27,8 @@ jobs:
         run: |
           owner="${HEAD_REPO%%/*}"
           num=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
-                 --head "$owner:$HEAD_BRANCH" --json number,headRefOid \
-                 -q ".[] | select(.headRefOid==\"$HEAD_SHA\") | .number")
+                 --head "$HEAD_BRANCH" --json number,headRefOid,headRepositoryOwner \
+                 -q ".[] | select(.headRefOid==\"$HEAD_SHA\" and .headRepositoryOwner.login == \"$HEAD_OWNER\") | .number")
           [ -n "$num" ] || { echo "no open PR matching $owner:$HEAD_BRANCH@$HEAD_SHA"; exit 1; }
           echo "number=$num" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
