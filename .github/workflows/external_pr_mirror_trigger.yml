@@ -1,0 +1,15 @@
+---
+name: external_pr_mirror_trigger
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+permissions: {}
+jobs:
+  noop:
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - run: |-
+          echo "Approval gate for mirroring PR #${{ github.event.pull_request.number }}"
