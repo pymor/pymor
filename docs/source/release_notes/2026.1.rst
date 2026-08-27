@@ -62,6 +62,7 @@ extended to the port-Hamiltonian setting as in :cite:`RWBBZFB23`.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#2583] Rule for block operators and image estimation test <https://github.com/pymor/pymor/pull/2583>`_
 - `[#2581] Add incremental extend method to VKOGARegressor <https://github.com/pymor/pymor/pull/2581>`_
 - `[#2578] Revert default SVD method for pod to method of snapshots <https://github.com/pymor/pymor/pull/2578>`_
 - `[#2574] Rename low-rank Cholesky factor (LRCF) to low-rank (LR) <https://github.com/pymor/pymor/pull/2574>`_
