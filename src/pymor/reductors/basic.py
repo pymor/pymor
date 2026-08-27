@@ -665,12 +665,14 @@ class ProxyEstimator(ImmutableObject):
 
     def estimate_error(self, U, mu, m):
         if len(U) == 0:
-            return [np.inf]
+            return np.array([np.inf])
         if self.reductor:
             U = self.reductor.reconstruct(U)
         return self.fom.error_estimator.estimate_error(U, mu, self.fom)
 
     def estimate_output_error(self, U, mu, m):
+        if len(U) == 0:
+            return np.full((self.fom.dim_output, 1), np.inf)
         if self.reductor:
             U = self.reductor.reconstruct(U)
         return self.fom.error_estimator.estimate_output_error(U, mu, self.fom)

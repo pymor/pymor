@@ -13,6 +13,7 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
+from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.models.hierarchy import ModelHierarchy
 from pymor.reductors.data_driven import AdaptiveDDReductor
 
@@ -244,17 +245,7 @@ def main(
 def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
-        # same parametric diffusion problem as two_dimensional_parametric_diffusion, but with a
-        # single domain l2 output whose error can be estimated by the reduced basis estimator
-        rhs = LincombFunction([ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-                              [ProjectionParameterFunctional('mu'), 0.1])
-        dirichlet_data = LincombFunction([ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-                                         [ProjectionParameterFunctional('mu'), 0.5])
-        diffusion = LincombFunction([ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-                                    [ProjectionParameterFunctional('mu'), 1])
-        problem = StationaryProblem(domain=RectDomain(), rhs=rhs, diffusion=diffusion,
-                                    dirichlet_data=dirichlet_data, outputs=[('l2', rhs)], name='2DProblem')
-        fom, _ = discretize_stationary_cg(problem, diameter=1./grid_intervals)
+        fom = two_dimensional_parametric_diffusion(diameter=1./grid_intervals)
         parameter_space = fom.parameters.space((0.1, 1))
     else:
         stationary_part = text_problem(text='p').with_(outputs=[('l2', ConstantFunction(1., 2))])
