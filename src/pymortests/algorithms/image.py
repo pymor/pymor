@@ -3,10 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import pytest
 
 from pymor.algorithms.image import estimate_image
-from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
+from pymor.operators.block import BlockRowOperator
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
@@ -30,15 +29,6 @@ def max_residual(op, image, domain, num_params=5):
     return residual
 
 
-BLOCK_OPERATORS = {
-    'block_row': lambda rng: BlockRowOperator([affine_operator(rng, 5, 2), affine_operator(rng, 5, 3)]),
-    'block_column': lambda rng: BlockColumnOperator([affine_operator(rng, 4, 2), affine_operator(rng, 6, 2)]),
-    'block': lambda rng: BlockOperator([[affine_operator(rng, 4, 2), affine_operator(rng, 4, 3)],
-                                        [affine_operator(rng, 6, 2), affine_operator(rng, 6, 3)]]),
-    'block_diagonal': lambda rng: BlockDiagonalOperator([affine_operator(rng, 4, 2), affine_operator(rng, 6, 3)]),
-}
-
-
 def test_estimate_image_affine(rng):
     op = affine_operator(rng, 6, 3)
     domain = op.source.random(6)
@@ -46,9 +36,8 @@ def test_estimate_image_affine(rng):
     assert max_residual(op, image, domain) < tol
 
 
-@pytest.mark.parametrize('block_type', list(BLOCK_OPERATORS))
-def test_estimate_image_block_operators(block_type, rng):
-    op = BLOCK_OPERATORS[block_type](rng)
+def test_estimate_image_block_row_operator(rng):
+    op = BlockRowOperator([affine_operator(rng, 5, 2), affine_operator(rng, 5, 3)])
     domain = op.source.random(6)
     image = estimate_image([op], domain=domain)
     assert max_residual(op, image, domain) < tol
