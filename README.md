@@ -10,7 +10,7 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pymor/pymor/main.svg)](https://results.pre-commit.ci/latest/github/pymor/pymor/main)
 [![Affiliated with NumFOCUS](https://img.shields.io/badge/NumFOCUS-affiliated%20project-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org/sponsored-projects/affiliated-projects)
 
-# pyMOR - Model Order Reduction With Python
+# pyMOR - Model Order Reduction with Python
 
 pyMOR is a software library for building
 [model order reduction](https://modelreduction.org/)
