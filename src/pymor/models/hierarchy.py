@@ -146,20 +146,16 @@ class ModelHierarchy(Model):
                 solution = red.reconstruct(solution)  # could be a nop
             data['solution'] = solution
 
-    def _adapt_lower_fidelity_models(self, mu, i_m_sufficient, result):
-        m_new, adapt_data = self.reductors[i_m_sufficient-1].adapt(mu, fom_solution=result.get('solution'),
-                                                                   fom_output=result.get('output'))
-        if self.models[i_m_sufficient-1] == m_new:
-            return
-        self.models[i_m_sufficient-1] = m_new
-
+    def _adapt_lower_fidelity_models(self, mu, i_m_sufficient, quantities):
         # iteratively adapt the lower fidelity models using the higher fidelity data
         # from the previous model in the hierarchy
-        for i in range(i_m_sufficient-2, -1, -1):
+        m_new = None
+        for i in range(i_m_sufficient-1, -1, -1):
+            adapt_data = self.models[i+1].compute(**dict.fromkeys(quantities, True), mu=mu)
             # call the `adapt`-method of the respective reductor
-            m_new, adapt_data = self.reductors[i].adapt(mu, new_fom=m_new,
-                                                        fom_solution=adapt_data.get('solution'),
-                                                        fom_output=adapt_data.get('output'))
+            m_new = self.reductors[i].adapt(mu, new_fom=m_new,
+                                            fom_solution=adapt_data.get('solution'),
+                                            fom_output=adapt_data.get('output'))
             # end the loop if the model did not change
             if self.models[i] == m_new:
                 return
@@ -176,17 +172,4 @@ class ModelHierarchy(Model):
         if not base_quantities or i_m_sufficient == 0:
             return
 
-        self._adapt_lower_fidelity_models(mu, i_m_sufficient, result)
-
-    def retrain(self):
-        """Manually retrain all reductors that support it and refresh the active models.
-
-        A manual alternative to the automatic retraining controlled by a reductor's
-        retraining interval: every reductor providing a `retrain` method (e.g.
-        :class:`~pymor.reductors.data_driven.AdaptiveDDReductor`) is retrained on the
-        training data collected so far, and the corresponding model in the hierarchy is
-        replaced by the retrained one.
-        """
-        for i, reductor in enumerate(self.reductors):
-            if hasattr(reductor, 'retrain'):
-                self.models[i] = reductor.retrain()
+        self._adapt_lower_fidelity_models(mu, i_m_sufficient, base_quantities)

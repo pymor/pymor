@@ -164,8 +164,7 @@ class ProjectionBasedReductor(BasicObject):
         new_fom
             A more accurate model (one level above in the hierarchy) to adapt from. If given,
             the reference model of this reductor is replaced by `new_fom` and the existing
-            basis is embedded into its (enlarged) solution space by zero-padding. This is
-            exact whenever the basis of the model above is extended orthonormally.
+            basis is embedded into its (enlarged) solution space by zero-padding.
         fom_solution
             More accurate solution used as training data. Computed from `mu` if not provided.
         fom_output
@@ -175,22 +174,14 @@ class ProjectionBasedReductor(BasicObject):
         -------
         new_rom
             The reduced model obtained after adaptation.
-        adapt_data
-            Dict with the (projected) solution (`'solution'`) and output (`'output'`),
-            usable as training data for the next level below.
         """
         assert list(self.bases) == ['RB'], 'adapt is only implemented for reductors with a single `RB` basis'
         if new_fom is not None:
             self._adapt_reference_model(new_fom)
         if fom_solution is None:
             fom_solution = self.fom.solve(mu)
-        self.extend_basis(fom_solution, method='pod')
-        new_rom = self.reduce()
-        RB = self.bases['RB']
-        projected_fom_solution = new_rom.solution_space.make_array(
-            RB.inner(fom_solution, product=self.products.get('RB'))
-        )
-        return new_rom, {'solution': projected_fom_solution, 'output': fom_output}
+        self.extend_basis(fom_solution)
+        return self.reduce()
 
     def _adapt_reference_model(self, new_fom):
         """Replace the reference model, zero-padding the `'RB'` basis to its solution space."""

@@ -363,18 +363,6 @@ class AdaptiveDDReductor(BasicObject):
     def reconstruct(self, u):
         return u
 
-    def retrain(self):
-        """Retrain all surrogates on the training data collected so far.
-
-        Provides a manual training trigger: instead of relying on `retrain_interval`,
-        the data-driven surrogates can be retrained on demand on all training data
-        accumulated through :meth:`adapt`. Returns the refreshed model.
-        """
-        for i, red in enumerate(self.dd_reductors):
-            self.dd_models[i] = red.reduce()
-            self._pending_retrains[i] = 0
-        return self._build_model()
-
     def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
         if fom_solution is None:
             fom_solution = (new_fom or self.fom).solve(mu)
@@ -406,4 +394,4 @@ class AdaptiveDDReductor(BasicObject):
             self.dd_models.append(self.dd_reductors[-1].reduce())
             self._pending_retrains.append(0)
 
-        return self._build_model(), {'solution': fom_solution, 'output': fom_output}
+        return self._build_model()
