@@ -135,7 +135,7 @@ scikit-learn = [
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
-  "pymor[docs_additional,tests,dev,slycot,ann,ipyparallel,gui,jupyter,vtk,gmsh,scikit-fem]",
+  "pymor[tests,dev,slycot,ann,ipyparallel,gui,jupyter,vtk,gmsh,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
