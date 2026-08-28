@@ -106,17 +106,6 @@ def _get_matplotlib_version():
     return mpl.__version__
 
 
-def _get_slycot_version():
-    from slycot.version import version
-    if list(map(int, version.split('.'))) < [0, 3, 1]:
-        import warnings
-        warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
-        return False
-    else:
-        info = ', '.join(_get_threadpool_internal_api('slycot'))
-        return version, info
-
-
 def _get_qt_version():
     try:
         import qtpy
@@ -174,7 +163,7 @@ _PACKAGES = {
     'SCIKIT_FEM': _get_version('skfem'),
     'SCIPY': _get_version('scipy', True),
     'SKLEARN': _get_version('sklearn', True),
-    'SLYCOT': _get_slycot_version,
+    'SLYCOT': _get_version('slycot', True),
     'SPHINX': _get_version('sphinx'),
     'TORCH': _get_version('torch', True),
     'THREADPOOLCTL': _get_version('threadpoolctl'),
