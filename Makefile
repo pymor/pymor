@@ -42,7 +42,7 @@ ci_preflight_image: ## build CI image used in preflight stage
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
 CI_EXTRAS= \
-	--extra tests \
+	--extra dev \
 	--extra ann \
 	--extra slycot \
 	--extra ipyparallel \
@@ -81,7 +81,7 @@ ci_oldest_requirements:
 ci_fenics_requirements:
 	uv pip compile  \
 		--extra docs_additional \
-		--extra tests \
+		--extra dev \
 		--extra ann \
 		--extra ipyparallel \
 		--extra scikit-learn \
@@ -96,7 +96,7 @@ ci_fenics_requirements:
 ci_fenicsx_requirements:
 	uv pip compile  \
 		--extra docs_additional \
-		--extra tests \
+		--extra dev \
 		--extra ann \
 		--extra ipyparallel \
 		--extra mpi \
@@ -109,7 +109,7 @@ ci_fenicsx_requirements:
 		./pyproject.toml
 
 CONDA_EXTRAS = \
-	--extras tests \
+	--extras dev \
 	--extras ci-conda \
 	--extras slycot \
 	--extras ipyparallel \
@@ -123,7 +123,7 @@ CONDA_EXTRAS = \
 	# mpi segfaults on windows
 
 ci_conda_requirements:
-	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
+	conda-lock --micromamba -c conda-forge --filter-extras $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
 ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_fenicsx_requirements ci_conda_requirements ## build the CI requirement files
