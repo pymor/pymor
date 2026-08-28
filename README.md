@@ -80,7 +80,7 @@ corresponding release branch of the repository.
 
 ## Additional dependencies
 
-There are some optional packages not included with `pymor[full]`
+The following optional packages are not included with `pymor[full]`
 because they need additional setup on your system:
 
 * [mpi4py](https://mpi4py.readthedocs.io/en/stable/mpi4py.html):
@@ -88,42 +88,6 @@ because they need additional setup on your system:
   algorithms (requires MPI development headers and a C compiler):
 
       pip install mpi4py
-
-* [Slycot](https://github.com/python-control/Slycot):
-  dense matrix equation solvers for system-theoretic methods and
-  H-infinity norm calculation (requires OpenBLAS headers and a
-  Fortran compiler):
-
-      pip install slycot
-
-  Note that building Slycot might fail for the following reasons:
-
-  * The Slycot package contains a cmake check which fails when it
-    detects multiply NumPy include directories. This will cause the
-    build to fail in venvs with any Python interpreter that has NumPy
-    globally installed.
-    To circumvent this problem, use another Python interpreter. If
-    you do not want to build CPython yourself, you can use
-    [pyenv](https://github.com/pyenv/pyenv),
-    [uv](https://github.com/astral-sh/uv) or
-    [mise-en-place](https://mise.jdx.dev/)
-    to easily install another interpreter.
-  * Slycot's build environment contains `numpy>=2`. However,
-    scikit-builds's `FindF2PY.cmake`
-    [will select any globally installed f2py3 executable](https://github.com/scikit-build/scikit-build/issues/449)
-    to generate the Fortran wrapper code.
-    On most systems, an older NumPy version is installed, whose
-    f2py will generate incorrect wrapper code for `numpy>=2`.
-    To mitigate this issue, install `numpy>=2` into your venv
-    and link `f2py3` to `f2py` its `/bin` directory.
-  * Building Slycot on Windows is challenging. We recommend using
-    conda-forge packages instead. If you do not want to install
-    the pyMOR conda-forge package, you can also `pip` install pyMOR
-    into an existing conda environment.
-
-  If you are on Linux and don't want to build Slycot yourself, you
-  can try our experimental
-  [manylinux wheels for Slycot](https://github.com/pymor/slycot-wheels/releases).
 
 ## Installation via conda
 
