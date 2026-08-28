@@ -43,7 +43,7 @@ pip install -e .
 or, to install all optional dependencies and development tools:
 
 ```
-pip install -e '.[full-compiled,dev]'
+pip install -e '.[full-compiled,dev,docs]'
 ```
 
 Note that the `full-compiled` extra will install `mpi4py`, which will require C and
