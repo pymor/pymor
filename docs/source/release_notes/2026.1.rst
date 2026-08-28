@@ -7,9 +7,9 @@ This release includes an adaptive and randomized ERA reductor, classes for matri
 solvers, an implementation of adaptive model hierarchies and energy-stable projection
 for port-Hamiltonian systems.
 
-pyMOR 2026.1 contains contributions by Maximilian Bindhak, Art Pelling, Timo Plath
-and Sven Ullmann. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
-for more details.
+pyMOR 2026.1 contains contributions by Maximilian Bindhak, Nicholas Lüer, Art Pelling, Timo Plath,
+Johannes Rettberg, and Sven Ullmann.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
 
 
 Main new features

@@ -17,12 +17,18 @@
   * unification and improvements of the QR tests
   * improvements of the `shifted_chol_qr`
 
+* Nicholas Lüer, @NLITM
+  * fix of `ScipySpSolveSolver` factorization cache being defeated by matrix identity churn
+
 * Art Pelling, @artpelling
   * improvements to the `rand_la` module
   * `RandomizedERAReductor`
 
 * Timo Plath, @TiPlath
   * implementation of a principal component analysis
+
+* Johannes Rettberg, @JohannesRettberg
+  * fix of the slycot version check
 
 * Sven Ullmann, @ullmannsven
   * fixed boundary handling bug for some domains
