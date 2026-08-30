@@ -613,6 +613,13 @@ class NonlinearReactionOperator(Operator):
 
         return NumpyMatrixOperator(A, solver=self._jacobian_solver)
 
+    def restricted(self, dofs):
+        sub_grid = SubGrid(self.grid, dofs.copy())
+        op = self.with_(grid=sub_grid, space_id=None, name=f'{self.name}_restricted')
+        sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
+        proj = ComponentProjectionOperator(sub_grid_indices, op.range)  # indices might be reordered
+        return proj @ op, sub_grid.parent_indices(0)
+
 
 class L2Functional(NumpyMatrixBasedOperator):
     """Finite volume functional representing the inner product with an L2-|Function|.
