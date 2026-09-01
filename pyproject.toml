@@ -67,7 +67,7 @@ dev = [
   "nbmake",
   "pytest-cov",
   "pytest-datadir",
-  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
+  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail due to wrong paths in co_filename
   "ruff==0.15.20", # our linter of choice
   "conda_lock==2.5.7", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
