@@ -58,19 +58,16 @@ docs-additional = [
   "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
 ]
-# additional dependencies for running tests via 'make tests'
-tests = [
-  "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
-  "nbmake",
-  "pytest-cov",
-  "pytest-datadir",
-  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
-]
 ci-conda = [
   "pyopengl!=3.1.7,!=3.1.9,!=3.1.10", # CI crashes
 ]
 # additional dependencies for pyMOR development
 dev = [
+  "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
+  "nbmake",
+  "pytest-cov",
+  "pytest-datadir",
+  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail due to wrong paths in co_filename
   "ruff==0.15.20", # our linter of choice
   "conda_lock==2.5.7", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
@@ -135,11 +132,11 @@ scikit-learn = [
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
-  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]",
+  "pymor[slycot,ann,ipyparallel,gui,jupyter,vtk,gmsh,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
-  "pymor[full,slycot,mpi]",
+  "pymor[full,mpi]",
 ]
 
 [project.scripts]

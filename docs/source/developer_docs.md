@@ -43,12 +43,12 @@ pip install -e .
 or, to install all optional dependencies and development tools:
 
 ```
-pip install -e '.[full-compiled,dev]'
+pip install -e '.[full-compiled,dev,docs]'
 ```
 
-Note that the `full-compiled` extra will install `mpi4py` and `slycot`, which will require C and
-Fortran compilers as well as MPI and OpenBLAS headers.
-Alternatively, use the `full` extra to avoid building these additional packages.
+Note that the `full-compiled` extra will install `mpi4py`, which will require C and
+MPI headers.
+Alternatively, use the `full` extra to avoid building this additional package.
 
 ### Environment with CI images
 
