@@ -84,7 +84,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     """
     assert isinstance(A, VectorArray)
     assert 0 <= offset <= len(A)
-    assert A.dim >= len(A[offset:])
+    assert A.dim >= len(A)
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
