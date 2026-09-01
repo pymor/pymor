@@ -171,7 +171,8 @@ class ModelHierarchy(Model):
         self._reconstruct(data, i_m_sufficient, quantities, result)
 
         base_quantities = quantities & {'solution', 'output'}
-        if not base_quantities or i_m_sufficient == 0:
-            return
+        if base_quantities and i_m_sufficient != 0:
+            self._adapt_lower_fidelity_models(mu, i_m_sufficient, base_quantities)
 
-        self._adapt_lower_fidelity_models(mu, i_m_sufficient, base_quantities)
+        quantities -= data.keys()
+        super()._compute(quantities, data, mu=mu)
