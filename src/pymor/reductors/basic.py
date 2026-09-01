@@ -42,14 +42,17 @@ class ProjectionBasedReductor(BasicObject):
     check_tol
         If `check_orthonormality` is `True`, the numerical tolerance with which the checks
         are performed.
+    extension_params
+        Dict of default keyword arguments for :meth:`extend_basis`.
     """
 
     @defaults('check_orthonormality', 'check_tol')
-    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
+    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3, extension_params=None):
         assert products.keys() <= bases.keys()
         bases = dict(bases)
         products = dict(products)
         self.__auto_init(locals())
+        self.extension_params = extension_params or {}
         self._last_rom = None
 
         if check_orthonormality:
@@ -126,12 +129,18 @@ class ProjectionBasedReductor(BasicObject):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.bases[basis][:u.dim].lincomb(u.to_numpy())
 
-    def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+    def extend_basis(self, U, basis='RB', method=None, pod_modes=None, pod_orthonormalize=None, copy_U=None):
+        """Extend a reduced basis with new vectors.
+
+        Keyword arguments left as `None` fall back to `extension_params` and anything not set
+        there uses the defaults of :func:`extend_basis`.
+        """
         basis_length = len(self.bases[basis])
 
-        extend_basis(U, self.bases[basis], self.products.get(basis), method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize,
-                     copy_U=copy_U)
+        func_params = {'method': method, 'pod_modes': pod_modes,
+                       'pod_orthonormalize': pod_orthonormalize, 'copy_U': copy_U}
+        params = self.extension_params | {k: v for k, v in func_params.items() if v is not None}
+        extend_basis(U, self.bases[basis], self.products.get(basis), **params)
 
         self._check_orthonormality(basis, basis_length)
 
@@ -214,14 +223,17 @@ class StationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None, extension_params=None):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         extension_params=extension_params)
 
     def project_operators(self):
         fom = self.fom
@@ -271,15 +283,18 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, extension_params=None):
         assert isinstance(fom, InstationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         extension_params=extension_params)
         self.initial_data_product = initial_data_product or product
         self.product_is_mass = product_is_mass
 

@@ -52,16 +52,23 @@ class ParabolicRBReductor(InstationaryRBReductor):
     coercivity_estimator
         `None` or a |ParameterFunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, extension_params=None):
         if not isinstance(fom.time_stepper, ImplicitEulerTimeStepper):
             raise NotImplementedError
         if fom.mass is not None and fom.mass.parametric and 't' in fom.mass.parameters:
             raise NotImplementedError
         super().__init__(fom, RB, product=product,
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         extension_params=extension_params)
         self.coercivity_estimator = coercivity_estimator
 
         self.residual_reductor = ImplicitEulerResidualReductor(

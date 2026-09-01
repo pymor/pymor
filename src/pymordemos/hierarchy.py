@@ -118,7 +118,8 @@ def main(
         rb_factory = lambda model: CoerciveRBReductor(model, coercivity_estimator=ProjectionParameterFunctional('mu'))
     else:
         rb_factory = lambda model: ParabolicRBReductor(model, product=model.h1_0_semi_product,
-                                                       coercivity_estimator=ProjectionParameterFunctional('diffusion'))
+                                                       coercivity_estimator=ProjectionParameterFunctional('diffusion'),
+                                                       extension_params={'method': 'pod', 'pod_modes': 1})
 
     dd_reductor_parameters = {'regressor': lambda: regressor_type(**regressor_parameters),
                               'input_scaler': input_scaler, 'output_scaler': output_scaler,

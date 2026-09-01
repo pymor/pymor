@@ -39,12 +39,18 @@ class CoerciveRBReductor(StationaryRBReductor):
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, extension_params=None):
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+                         check_tol=check_tol, extension_params=extension_params)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
@@ -130,10 +136,16 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, extension_params=None):
         assert fom.operator.linear
         assert fom.rhs.linear
         assert isinstance(fom.operator, LincombOperator)
@@ -143,7 +155,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
             assert all(not op.parametric for op in fom.rhs.operators)
 
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+                         check_tol=check_tol, extension_params=extension_params)
         self.coercivity_estimator = coercivity_estimator
         self.extends = None
 
