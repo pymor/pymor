@@ -7,12 +7,14 @@ import scipy.linalg as spla
 import scipy.sparse.linalg as spsla
 
 from pymor.core.base import BasicObject, abstractmethod
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.list import ListVectorArray
 
 
+@defaults('maxiter', 'orth_tol', 'recompute_shift', 'check_finite')
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     recompute_shift=False, check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
@@ -82,7 +84,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     """
     assert isinstance(A, VectorArray)
     assert 0 <= offset <= len(A)
-    assert A.dim >= len(A)
+    assert A.dim >= len(A[offset:])
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
@@ -107,7 +109,6 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     iter = 1
     while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
-            X -= B.conj().T@B
             Rx = chol_kernel.apply(X)
 
             # orthogonalize
@@ -155,15 +156,20 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
 
 def _compute_gramian_and_offset_matrix(A, offset, product):
     if isinstance(A, ListVectorArray):
-        # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
+        # due to `ListVectorArray.gramian` exploiting symmetry it is slightly faster
+        # for a |ListVectorArray| to compute `B` and `X` separately
         B = A[:offset].inner(A[offset:], product=product)
         X = A[offset:].gramian(product)
     else:
         B, X = np.split(A.inner(A[offset:], product=product), [offset], axis=0)
 
+    # dtypes of X and B might be different if `A` is a |ListVectorArray|
+    # due to the split up computation
     dtype = np.promote_types(X.dtype, np.promote_types(B.dtype, np.float32))
     B = B.astype(dtype=dtype, copy=False)
     X = X.astype(dtype=dtype, copy=False)
+
+    X -= B.conj().T@B
 
     return B, X
 
@@ -216,6 +222,10 @@ class BasicShiftedCholQRKernel(ShiftedCholQRKernel):
 
     INNER_ITERS = 10
 
+    def __init__(self, dim, product=None, product_norm=None, check_finite=True):
+        super().__init__(dim, product, product_norm, check_finite)
+        self.shift = None
+
     def apply(self, X):
         for _ in range(self.INNER_ITERS):
             try:
@@ -237,7 +247,7 @@ class RecomputedShiftedCholQRKernel(ShiftedCholQRKernel):
     INNER_ITERS = 10
 
     def apply(self, X):
-        shift = 0 # does not use self.shift; recomputes it in every CholQR iteration
+        shift = 0 # recomputes shift in every CholQR iteration
         for i in range(self.INNER_ITERS):
             try:
                 R = spla.cholesky(X + np.eye(len(X))*shift, overwrite_a=False, check_finite=self.check_finite)
