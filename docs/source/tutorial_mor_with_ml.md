@@ -673,15 +673,15 @@ ordered from the highest-fidelity reduced model down to the cheapest one. Each f
 is passed the next higher-fidelity model (starting with the full-order model) and returns
 the adaptive reductor for the level below it. Here we use the reduced basis reductor
 factory defined above and add a factory for an
-{class}`~pymor.reductors.data_driven.AdaptiveDDReductor` for the data-driven surrogate.
+{class}`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor` for the data-driven surrogate.
 We also pass the tolerance against which the estimated errors are compared:
 
 ```{code-cell} ipython3
 tol = 5e-3
 
 from pymor.models.hierarchy import ModelHierarchy
-from pymor.reductors.data_driven import AdaptiveDDReductor
-dd_reductor_factory = lambda model: AdaptiveDDReductor(dd_reductor_parameters, fom=model)
+from pymor.reductors.data_driven import AdaptiveDataDrivenReductor
+dd_reductor_factory = lambda model: AdaptiveDataDrivenReductor(dd_reductor_parameters, fom=model)
 hierarchy = ModelHierarchy(fom, [rb_reductor_factory, dd_reductor_factory], tol)
 ```
 

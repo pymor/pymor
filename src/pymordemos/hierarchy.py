@@ -15,7 +15,7 @@ from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.models.hierarchy import ModelHierarchy
-from pymor.reductors.data_driven import AdaptiveDDReductor
+from pymor.reductors.data_driven import AdaptiveDataDrivenReductor
 
 app = App(help_on_error=True)
 
@@ -128,7 +128,7 @@ def main(
     model_labels = ['FOM', 'RB']
     if use_dd_model:
         reductor_factories.append(
-            lambda model: AdaptiveDDReductor(dd_reductor_parameters, retrain_interval=1, fom=model))
+            lambda model: AdaptiveDataDrivenReductor(dd_reductor_parameters, retrain_interval=1, fom=model))
         model_labels.append('DD')
 
     time_reduction_fn = {'max': np.max, 'mean': np.mean}[time_reduction]

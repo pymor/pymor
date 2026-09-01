@@ -315,7 +315,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
         return self.reduced_basis.lincomb(u.to_numpy())
 
 
-class AdaptiveDDReductor(BasicObject):
+class AdaptiveDataDrivenReductor(BasicObject):
     """Adaptive data-driven reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
 
     Manages one or more :class:`DataDrivenReductor` surrogates that approximate the

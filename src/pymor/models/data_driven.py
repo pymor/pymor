@@ -207,7 +207,7 @@ class MultiModelOfDataDrivenModels(Model):
 
     The solutions of the sub-models are stacked into a single solution vector whose
     space is the direct sum of the sub-model solution spaces. Used by
-    :class:`~pymor.reductors.data_driven.AdaptiveDDReductor` to combine the data-driven
+    :class:`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor` to combine the data-driven
     surrogates for the individual blocks of reduced basis coefficients into one model.
 
     Parameters

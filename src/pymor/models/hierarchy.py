@@ -44,7 +44,7 @@ class ModelHierarchy(Model):
         to return an adaptive reductor for the level below it. A reductor has to provide
         `reduce`, `reconstruct` and `adapt` methods (see
         :class:`~pymor.reductors.basic.ProjectionBasedReductor` and
-        :class:`~pymor.reductors.data_driven.AdaptiveDDReductor`).
+        :class:`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor`).
     tol
         Tolerance against which the estimated errors are compared to decide which
         model's solution to return.
@@ -71,6 +71,8 @@ class ModelHierarchy(Model):
 
         models = list(reversed(models))
         reductors = list(reversed(reductors))
+
+        assert all(m.error_estimator is not None for m in models[:-1]), 'all surrogates must provide an error estimator'
 
         reference_model = models[-1]
         super().__init__(dim_input=reference_model.dim_input, products=reference_model.products,
