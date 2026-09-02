@@ -158,11 +158,10 @@ class ProjectionBasedReductor(BasicObject):
                 raise AccuracyError(f'result not orthogonal (max err={err})')
 
     def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
-        """Adapt the reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
+        """Adapt the ROM to new FOM solutions or to an updated FOM.
 
         Extends the reduced basis using a more accurate solution and returns the newly
-        reduced model together with the (projected) solution and output, which serve as
-        training data for the next level below in the hierarchy. Only implemented for
+        reduced model. Only implemented for
         reductors with a single `'RB'` basis.
 
         Parameters
@@ -177,7 +176,7 @@ class ProjectionBasedReductor(BasicObject):
         fom_solution
             More accurate solution used as training data. Computed from `mu` if not provided.
         fom_output
-            Corresponding more accurate output.
+            Corresponding more accurate output (ignored).
 
         Returns
         -------
@@ -186,16 +185,17 @@ class ProjectionBasedReductor(BasicObject):
         """
         assert list(self.bases) == ['RB'], 'adapt is only implemented for reductors with a single `RB` basis'
         if new_fom is not None:
-            self._adapt_reference_model(new_fom)
+            self._adapt_to_new_fom(new_fom)
         if fom_solution is None:
             fom_solution = self.fom.solve(mu)
         self.extend_basis(fom_solution)
         return self.reduce()
 
-    def _adapt_reference_model(self, new_fom):
-        """Replace the reference model, zero-padding the `'RB'` basis to its solution space."""
+    def _adapt_to_new_fom(self, new_fom):
+        """Replace the FOM, zero-padding the `'RB'` basis to its (larger) solution space."""
         old_dim = self.fom.solution_space.dim
         new_dim = new_fom.solution_space.dim
+        assert(new_dim >= old_dim)
         RB = self.bases['RB']
         if len(RB) > 0 and new_dim != old_dim:
             coeffs = RB.to_numpy()

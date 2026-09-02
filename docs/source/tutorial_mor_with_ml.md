@@ -616,7 +616,7 @@ data-driven model is evaluated. The accuracy of its result is verified by
 means of an a posteriori error estimator. If the estimated error is smaller
 than a prescribed tolerance, the result of the data-driven surrogate is
 returned. In case that the data-driven surrogate is not accurate enough,
-the reduced order model is called for the current parameter. Again, the a
+the reduced order model is called for the current parameter. Again, an a
 posteriori error estimator is used to quantify the accuracy of the solution.
 If the reduced basis solution is not sufficiently accurate, the hierarchy
 falls back to the full-order model. Otherwise, the reduced solution is
@@ -643,7 +643,7 @@ fom = two_dimensional_parametric_diffusion()
 parameter_space = fom.parameters.space((0.1, 1))
 ```
 
-Now, we create a factory for a suitable reductor that automatically assembles an
+Now, we create a factory for a suitable RB reductor that automatically assembles an
 a posteriori error estimator. The hierarchy builds each level by passing the next
 higher-fidelity model to such a factory, so instead of a fixed reductor we define a
 callable that receives the model to reduce:

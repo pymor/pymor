@@ -29,7 +29,7 @@ class ModelHierarchy(Model):
     hierarchy unchanged.
 
     This hierarchy is not restricted to a fixed set of models: any number of adaptive
-    reductors can be combined, e.g. only a reduced basis reductor together with a
+    reductors can be combined, e.g., only a reduced basis reductor together with a
     full-order model, or a data-driven surrogate on top of a reduced basis model. The
     implementation is based on the strategies described in :cite:`HKOSW23`.
 
@@ -127,8 +127,6 @@ class ModelHierarchy(Model):
         # the reference model is exact: report a zero error, shaped like the corresponding
         # estimate, for any requested estimate that no model produced
         for quantity in quantities & error_estimates:
-            if quantity in data:
-                continue
             if quantity == 'solution_error_estimate' and 'solution' in data:
                 data[quantity] = np.zeros(len(data['solution']))
             elif quantity == 'output_error_estimate' and 'output' in data:
