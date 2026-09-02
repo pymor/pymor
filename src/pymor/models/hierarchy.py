@@ -69,12 +69,9 @@ class ModelHierarchy(Model):
             reductors.append(reductor)
             models.append(reductor.reduce())
 
-        models = list(reversed(models))
-        reductors = list(reversed(reductors))
+        assert all(m.error_estimator is not None for m in models[1:]), 'all surrogates must provide an error estimator'
 
-        assert all(m.error_estimator is not None for m in models[:-1]), 'all surrogates must provide an error estimator'
-
-        reference_model = models[-1]
+        reference_model = models[0]
         super().__init__(dim_input=reference_model.dim_input, products=reference_model.products,
                          visualizer=reference_model.visualizer)
         self.solution_space = reference_model.solution_space
@@ -98,9 +95,10 @@ class ModelHierarchy(Model):
                        for q in errors_to_compute)
 
         # iterate over the models to determine a sufficiently accurate solution and/or output
-        for i_m, m in enumerate(self.models):
+        for i_m in range(len(self.models) - 1, -1, -1):
+            m = self.models[i_m]
             # check if the current model is the reference model
-            is_reference = i_m == len(self.models) - 1
+            is_reference = i_m == 0
 
             # determine the requested quantities and call the `compute`-method of the current model
             requested = base_quantities if is_reference else base_quantities | errors_to_compute
@@ -132,14 +130,14 @@ class ModelHierarchy(Model):
                 data[quantity] = np.zeros(1)
 
     def _reconstruct(self, data, i_m_sufficient, quantities, result):
-        data['used_model'] = len(self.models) - 1 - i_m_sufficient
+        data['used_model'] = i_m_sufficient
         # if the solution is requested, reconstruct it such that it lives
         # in the solution space of the reference model
         if 'solution' in quantities:
             solution = result['solution']
             # iteratively reconstruct through all reductors in the hierarchy starting from the one
             # whose model was the first to produce a sufficiently accurate solution
-            for red in self.reductors[i_m_sufficient:]:
+            for red in reversed(self.reductors[:i_m_sufficient]):
                 solution = red.reconstruct(solution)  # could be a nop
             data['solution'] = solution
 
@@ -147,17 +145,17 @@ class ModelHierarchy(Model):
         # iteratively adapt the lower fidelity models using the higher fidelity data
         # from the previous model in the hierarchy
         m_new = None
-        for i in range(i_m_sufficient-1, -1, -1):
-            adapt_data = self.models[i+1].compute(**dict.fromkeys(quantities, True), mu=mu)
+        for i in range(i_m_sufficient, len(self.models)-1):
+            adapt_data = self.models[i].compute(**dict.fromkeys(quantities, True), mu=mu)
             # call the `adapt`-method of the respective reductor
             m_new = self.reductors[i].adapt(mu, new_fom=m_new,
                                             fom_solution=adapt_data.get('solution'),
                                             fom_output=adapt_data.get('output'))
             # end the loop if the model did not change
-            if self.models[i] == m_new:
+            if self.models[i+1] == m_new:
                 return
             # update the model in the models list
-            self.models[i] = m_new
+            self.models[i+1] = m_new
 
     def _compute(self, quantities, data, mu):
         result, i_m_sufficient = self._select_model_and_compute(mu, quantities)
@@ -166,7 +164,7 @@ class ModelHierarchy(Model):
         self._reconstruct(data, i_m_sufficient, quantities, result)
 
         base_quantities = quantities & {'solution', 'output'}
-        if base_quantities and i_m_sufficient != 0:
+        if base_quantities and i_m_sufficient != len(self.models) - 1:
             self._adapt_lower_fidelity_models(mu, i_m_sufficient, base_quantities)
 
         quantities -= data.keys()
