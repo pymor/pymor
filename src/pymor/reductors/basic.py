@@ -195,7 +195,7 @@ class ProjectionBasedReductor(BasicObject):
         """Replace the FOM, zero-padding the `'RB'` basis to its (larger) solution space."""
         old_dim = self.fom.solution_space.dim
         new_dim = new_fom.solution_space.dim
-        assert(new_dim >= old_dim)
+        assert new_dim >= old_dim
         RB = self.bases['RB']
         if len(RB) > 0 and new_dim != old_dim:
             coeffs = RB.to_numpy()
