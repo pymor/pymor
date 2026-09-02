@@ -202,7 +202,7 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         return U.T
 
 
-class MultiModelOfDataDrivenModels(Model):
+class ModelOfDataDrivenModels(Model):
     """Model combining several sub-models into a single stacked solution.
 
     The solutions of the sub-models are stacked into a single solution vector whose

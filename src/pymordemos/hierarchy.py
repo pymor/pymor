@@ -35,7 +35,7 @@ def main(
     output_scaling: bool = False,
     use_dd_model: bool = True,
     quantity: Literal['state', 'output', 'state+output'] = 'state',
-    time_reduction: Literal['max', 'mean'] = 'max',
+    time_reduction: Literal['max', 'mean'] = 'mean',
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 

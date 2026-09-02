@@ -8,7 +8,7 @@ from pymor.algorithms.ml.vkoga import VKOGARegressor
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
-from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, MultiModelOfDataDrivenModels
+from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, ModelOfDataDrivenModels
 from pymor.reductors.basic import ProxyEstimator
 
 
@@ -267,6 +267,10 @@ class DataDrivenPODReductor(DataDrivenReductor):
         See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
     output_scaler
         See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    input_scaler_fitted
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    output_scaler_fitted
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
     product
         Inner product |Operators| defined on the discrete space the
         problem is posed on. Used for reduced basis computation via POD and
@@ -277,8 +281,9 @@ class DataDrivenPODReductor(DataDrivenReductor):
 
     def __init__(self, training_parameters, training_snapshots, regressor=None,
                  T=None, time_vectorized=False, output_functional=None,
-                 input_scaler=None, output_scaler=None, product=None,
-                 pod_params=None):
+                 input_scaler=None, output_scaler=None,
+                 input_scaler_fitted=False, output_scaler_fitted=False,
+                 product=None, pod_params=None):
         self.reduced_basis = None
         self.__auto_init(locals())
 
@@ -297,7 +302,9 @@ class DataDrivenPODReductor(DataDrivenReductor):
                              regressor=self.regressor, target_quantity='solution',
                              output_functional=projected_output_functional,
                              T=self.T, time_vectorized=self.time_vectorized,
-                             input_scaler=self.input_scaler, output_scaler=self.output_scaler)
+                             input_scaler=self.input_scaler, output_scaler=self.output_scaler,
+                             input_scaler_fitted=self.input_scaler_fitted,
+                             output_scaler_fitted=self.output_scaler_fitted)
 
         return super().reduce(**kwargs)
 
@@ -325,7 +332,7 @@ class AdaptiveDataDrivenReductor(BasicObject):
     data is split accordingly and passed to the respective surrogates before
     (re-)training. For prediction, all surrogates are evaluated for the given parameter
     and their outputs are combined into a single
-    :class:`~pymor.models.data_driven.MultiModelOfDataDrivenModels`.
+    :class:`~pymor.models.data_driven.ModelOfDataDrivenModels`.
 
     Parameters
     ----------
@@ -354,8 +361,8 @@ class AdaptiveDataDrivenReductor(BasicObject):
     def _build_model(self):
         error_estimator = ProxyEstimator(self.fom) if self.fom is not None else None
         output_functional = self.fom.output_functional if self.fom is not None else None
-        return MultiModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
-                                            error_estimator=error_estimator)
+        return ModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
+                                       error_estimator=error_estimator)
 
     def reduce(self):
         return self._build_model()

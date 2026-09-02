@@ -83,7 +83,7 @@ class ModelHierarchy(Model):
         self.reductors = reductors
         self.__auto_init(locals())
 
-    def _select_model(self, mu, quantities):
+    def _select_model_and_compute(self, mu, quantities):
         base_quantities = quantities & {'solution', 'output'}
 
         errors_to_compute = set()
@@ -94,11 +94,8 @@ class ModelHierarchy(Model):
 
         def accurate_enough(result):
             # checks if all requested error estimates are available and below the tolerance
-            return all(
-                (est := result.get(q)) is not None and np.asarray(est).size > 0
-                and self.time_reduction(est) <= self.tol
-                for q in errors_to_compute
-            )
+            return all((est := result.get(q)) is not None and self.time_reduction(est) <= self.tol
+                       for q in errors_to_compute)
 
         # iterate over the models to determine a sufficiently accurate solution and/or output
         for i_m, m in enumerate(self.models):
@@ -163,7 +160,7 @@ class ModelHierarchy(Model):
             self.models[i] = m_new
 
     def _compute(self, quantities, data, mu):
-        result, i_m_sufficient = self._select_model(mu, quantities)
+        result, i_m_sufficient = self._select_model_and_compute(mu, quantities)
         data.update(result)
 
         self._reconstruct(data, i_m_sufficient, quantities, result)
