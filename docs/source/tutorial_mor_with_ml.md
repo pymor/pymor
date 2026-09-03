@@ -762,10 +762,12 @@ fig.tight_layout()
 ```
 
 We observe that the data-driven surrogate is the fastest model and is used most
-often. The reduced basis model is also much faster than the full-order model
-and used quite frequently. The full-order model is only used a few times and
-was never required after building a suitable reduced space. It is important
-to remark that the runtimes of the full-order model and the reduced basis
+often. The reduced basis model is on average slightly slower than the full-order model
+due to the frequent training of the data-driven model. We expect that the average runtime
+of the reduced basis model will decrease further when querying the hierarchy more often
+and less retraining of the data-driven model is required. The full-order model is only
+used a few times and was never required after building a suitable reduced space.
+It is important to remark that the runtimes of the full-order model and the reduced basis
 model also include the training times for the surrogates.
 
 Since {class}`~pymor.models.hierarchy.ModelHierarchy` accepts an arbitrary sequence of
