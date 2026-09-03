@@ -45,7 +45,19 @@ a concrete solver based on the available bindings and the problem size.
 
 Adaptive model hierarchy
 ~~~~~~~~~~~~~~~~~~~~~~~~
-`[2577] <https://github.com/pymor/pymor/pull/2577>`_
+In `[2577] <https://github.com/pymor/pymor/pull/2577>`_, the adaptive and certified
+model hierarchy introduced in :cite:`HKOSW23` is implemented in a general fashion.
+When querying the model hierarchy for a new parameter, the cheapest but least accurate model
+in the hierarchy is evaluated first. Its accuracy is assessed by an a posteriori error
+estimator whose estimate is compared to a prescribed tolerance. If the result was accurate enough,
+it is returned, otherwise the hierarchy falls back to the next model, repeating this process.
+At the same time, the data of later models in the hierarchy is collected and used to train
+the earlier models. The different models in the hierarchy (except for the reference model,
+i.e. the final fallback option which does not require any error estimation) are thus constructed
+adaptively while already querying the hierarchy. In the :doc:`tutorial <../tutorial_mor_with_ml>`
+related to data-driven model reduction using machine learning, the application of the model
+hierarchy combining a full order model, a reduced basis reduced order model and a machine
+learning surrogate is shown in a multi-query setting.
 
 Energy-stable projection for PHLTIModels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
