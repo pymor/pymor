@@ -13,6 +13,7 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import SklearnMissingError, TorchMissingError
+from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.reductors.data_driven import DataDrivenReductor
 
 app = App(help_on_error=True)
@@ -23,7 +24,6 @@ def main(
     grid_intervals: int,
     training_samples: int,
     /, *,
-    fv: bool = False,
     vis: bool = False,
     validation_ratio: float = 0.1,
     input_scaling: bool = False,
@@ -40,8 +40,6 @@ def main(
         Grid interval count.
     training_samples
         Number of samples used for computing the reduced basis and training the regressor.
-    fv
-        Use finite volume discretization instead of finite elements.
     vis
         Visualize full order solution and reduced solution for a test set.
     validation_ratio
@@ -56,8 +54,7 @@ def main(
     elif (regressor == 'gpr' or input_scaling or output_scaling) and not config.HAVE_SKLEARN:
         raise SklearnMissingError
 
-    fom = create_fom(fv, grid_intervals)
-
+    fom = two_dimensional_parametric_diffusion(diameter=1./grid_intervals)
     parameter_space = fom.parameters.space((0.1, 1))
 
     training_parameters = parameter_space.sample_randomly(training_samples)
@@ -191,31 +188,6 @@ def main(
     axs[1, 1].boxplot(np.array(outputs_speedups).T, patch_artist=True)
     axs[1, 1].set_title('Speedups of the output approximation')
     plt.show()
-
-def create_fom(fv, grid_intervals):
-    f = LincombFunction(
-        [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.1])
-    g = LincombFunction(
-        [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-        [ProjectionParameterFunctional('mu'), 0.5])
-
-    problem = StationaryProblem(
-        domain=RectDomain(),
-        rhs=f,
-        diffusion=LincombFunction(
-            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-            [ProjectionParameterFunctional('mu'), 1]),
-        dirichlet_data=g,
-        outputs=[('l2', f), ('l2_boundary', g)],
-        name='2DProblem'
-    )
-
-    print('Discretize ...')
-    discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
-    fom, _ = discretizer(problem, diameter=1. / int(grid_intervals))
-
-    return fom
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
 from pymor.bindings.scipy import ScipyLSTSQSolver
-from pymor.core.base import BasicObject, abstractmethod
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
@@ -42,14 +42,17 @@ class ProjectionBasedReductor(BasicObject):
     check_tol
         If `check_orthonormality` is `True`, the numerical tolerance with which the checks
         are performed.
+    extension_params
+        Dict of default keyword arguments for :meth:`extend_basis`.
     """
 
     @defaults('check_orthonormality', 'check_tol')
-    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
+    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3, extension_params=None):
         assert products.keys() <= bases.keys()
         bases = dict(bases)
         products = dict(products)
         self.__auto_init(locals())
+        self.extension_params = extension_params or {}
         self._last_rom = None
 
         if check_orthonormality:
@@ -126,12 +129,18 @@ class ProjectionBasedReductor(BasicObject):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.bases[basis][:u.dim].lincomb(u.to_numpy())
 
-    def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+    def extend_basis(self, U, basis='RB', method=None, pod_modes=None, pod_orthonormalize=None, copy_U=None):
+        """Extend a reduced basis with new vectors.
+
+        Keyword arguments left as `None` fall back to `extension_params` and anything not set
+        there uses the defaults of :func:`extend_basis`.
+        """
         basis_length = len(self.bases[basis])
 
-        extend_basis(U, self.bases[basis], self.products.get(basis), method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize,
-                     copy_U=copy_U)
+        func_params = {'method': method, 'pod_modes': pod_modes,
+                       'pod_orthonormalize': pod_orthonormalize, 'copy_U': copy_U}
+        params = self.extension_params | {k: v for k, v in func_params.items() if v is not None}
+        extend_basis(U, self.bases[basis], self.products.get(basis), **params)
 
         self._check_orthonormality(basis, basis_length)
 
@@ -147,6 +156,54 @@ class ProjectionBasedReductor(BasicObject):
             err = np.max(np.abs(error_matrix))
             if err >= self.check_tol:
                 raise AccuracyError(f'result not orthogonal (max err={err})')
+
+    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
+        """Adapt the ROM to new FOM solutions or to an updated FOM.
+
+        Extends the reduced basis using a more accurate solution and returns the newly
+        reduced model. Only implemented for reductors with a single `'RB'` basis.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| for which to adapt. Only used to compute `fom_solution` if it
+            is not provided.
+        new_fom
+            A more accurate model (one level above in the hierarchy) to adapt from. If given,
+            the reference model of this reductor is replaced by `new_fom` and the existing
+            basis is embedded into its (enlarged) solution space by zero-padding.
+        fom_solution
+            More accurate solution used as training data. Computed from `mu` if not provided.
+        fom_output
+            Corresponding more accurate output (ignored).
+
+        Returns
+        -------
+        new_rom
+            The reduced model obtained after adaptation.
+        """
+        assert list(self.bases) == ['RB'], 'adapt is only implemented for reductors with a single `RB` basis'
+        if new_fom is not None:
+            self._adapt_to_new_fom(new_fom)
+        if fom_solution is None:
+            fom_solution = self.fom.solve(mu)
+        self.extend_basis(fom_solution)
+        return self.reduce()
+
+    def _adapt_to_new_fom(self, new_fom):
+        """Replace the FOM, zero-padding the `'RB'` basis to its (larger) solution space."""
+        old_dim = self.fom.solution_space.dim
+        new_dim = new_fom.solution_space.dim
+        assert new_dim >= old_dim
+        RB = self.bases['RB']
+        if len(RB) > 0 and new_dim != old_dim:
+            coeffs = RB.to_numpy()
+            padded = np.zeros((new_dim, coeffs.shape[1]), dtype=coeffs.dtype)
+            padded[:old_dim] = coeffs
+            self.bases['RB'] = new_fom.solution_space.make_array(padded)
+        self.fom = new_fom
+        # force re-projection of the operators against the new reference model on next reduce
+        self._last_rom = None
 
 
 class StationaryRBReductor(ProjectionBasedReductor):
@@ -165,14 +222,17 @@ class StationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None, extension_params=None):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         extension_params=extension_params)
 
     def project_operators(self):
         fom = self.fom
@@ -222,15 +282,18 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
+    extension_params
+        See :class:`ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, extension_params=None):
         assert isinstance(fom, InstationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         extension_params=extension_params)
         self.initial_data_product = initial_data_product or product
         self.product_is_mass = product_is_mass
 
@@ -574,6 +637,50 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
 
     def reconstruct(self, u, basis='V'):
         return super().reconstruct(u, basis)
+
+
+class ProxyEstimator(ImmutableObject):
+    """Estimate error using the FOM's error estimator.
+
+    This error estimator reconstructs the given ROM solution and then evaluates
+    the error estimator of the FOM for the reconstructed solution.
+
+    .. note::
+        This approach assumes that the FOM error estimator yields appropriate
+        estimates for arbitrary vectors from the FOM's
+        :attr:`~pymor.models.interface.Model.solution_space`.
+        While this is typically true for residual-based ROM error estimators, most
+        FEM error estimators only yield reliable estimates for the actual
+        finite-element solution.
+
+    Parameters
+    ----------
+    fom
+        The full-order |Model| which is used to estimate the error. Must have
+        an `error_estimator` attribute.
+    reductor
+        The reductor used for reconstructing the solution vector. When `None`,
+        it is assumed that both models have the same
+        :attr:`~pymor.models.interface.Model.solution_space`.
+    """
+
+    def __init__(self, fom, reductor=None):
+        assert getattr(fom, 'error_estimator', None)
+        self.__auto_init(locals())
+
+    def estimate_error(self, U, mu, m):
+        if len(U) == 0:
+            return np.array([np.inf])
+        if self.reductor:
+            U = self.reductor.reconstruct(U)
+        return self.fom.error_estimator.estimate_error(U, mu, self.fom)
+
+    def estimate_output_error(self, U, mu, m):
+        if len(U) == 0:
+            return np.full((self.fom.dim_output, 1), np.inf)
+        if self.reductor:
+            U = self.reductor.reconstruct(U)
+        return self.fom.error_estimator.estimate_output_error(U, mu, self.fom)
 
 
 def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):

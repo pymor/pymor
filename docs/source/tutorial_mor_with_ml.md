@@ -33,6 +33,8 @@ greedy algorithm (VKOGA), see {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGA
 
 In this tutorial we will learn about feedforward neural networks and greedy kernel methods,
 the basic idea of the approach by Hesthaven and Ubbiali, and how to use it in pyMOR.
+Furthermore, we discuss an adaptive model hierarchy that combines machine learning surrogates
+with reduced basis reduced order models to obtain certified solutions in an efficient way.
 
 ## Feedforward neural networks
 
@@ -160,30 +162,12 @@ u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 ```
 
 We discretize the problem using pyMOR's built-in discretization toolkit as
-explained in {doc}`tutorial_builtin_discretizer`:
+explained in {doc}`tutorial_builtin_discretizer`. The full-order model is already
+defined in {mod}`~pymor.models.examples`:
 
 ```{code-cell} ipython3
-from pymor.basic import *
-
-problem = StationaryProblem(
-      domain=RectDomain(),
-
-      rhs=LincombFunction(
-          [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
-          [ProjectionParameterFunctional('mu'), 0.1]),
-
-      diffusion=LincombFunction(
-          [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
-          [ProjectionParameterFunctional('mu'), 1]),
-
-      dirichlet_data=LincombFunction(
-          [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
-          [ProjectionParameterFunctional('mu'), 0.5]),
-
-      name='2DProblem'
-  )
-
-fom, _ = discretize_stationary_cg(problem, diameter=1/50)
+from pymor.models.examples import two_dimensional_parametric_diffusion
+fom = two_dimensional_parametric_diffusion()
 ```
 
 Since we employ a single {{ Parameter }}, and thus use the same range for each
@@ -407,19 +391,9 @@ and use the {class}`~pymor.reductors.data_driven.DataDrivenReductor` with the ar
 `target_quantity='output'` to derive a reduced model that can solely be used to solve
 for the output quantity without computing a reduced state at all.
 
-For the definition of the output, we define the output of out problem as the l2-product of the
-solution with the right hand side respectively Dirichlet boundary data of our original problem:
-
-```{code-cell} ipython3
-problem = problem.with_(outputs=[('l2', problem.rhs), ('l2_boundary', problem.dirichlet_data)])
-```
-
-Consequently, the output dimension is {math}`q=2`. After adjusting the problem definition,
-we also have to update the full order model to be aware of the output quantities:
-
-```{code-cell} ipython3
-fom, _ = discretize_stationary_cg(problem, diameter=1/50)
-```
+Our problem from above also has two outputs, namely the l2-product of the solution with
+the right hand side respectively Dirichlet boundary data of our original problem.
+Consequently, the output dimension is {math}`q=2`.
 
 We can now use again the {class}`~pymor.reductors.data_driven.DataDrivenReductor`
 (for simplicity we only consider kernel methods here) and initialize the reductor
@@ -630,6 +604,189 @@ print(f'Median of speedup: {np.median(speedups_vkoga_tv)}')
 
 We observe that in this example, the time-vectorized version of VKOGA
 performs best in terms of accuracy and speedup.
+
+## Adaptive and certified model hierarchy
+
+The data-driven models we have seen above can also be used in conjunction
+with traditional projection-based methods. To this end, we can create an
+adaptive model hierarchy consisting of a full-order model, a reduced basis
+reduced order model and a machine learning surrogate. For a new parameter,
+the model hierarchy is evaluated using the following scheme: First, the
+data-driven model is evaluated. The accuracy of its result is verified by
+means of an a posteriori error estimator. If the estimated error is smaller
+than a prescribed tolerance, the result of the data-driven surrogate is
+returned. In case that the data-driven surrogate is not accurate enough,
+the reduced order model is called for the current parameter. Again, an a
+posteriori error estimator is used to quantify the accuracy of the solution.
+If the reduced basis solution is not sufficiently accurate, the hierarchy
+falls back to the full-order model. Otherwise, the reduced solution is
+returned.
+
+The hierarchy always tries the faster models first, until a solution is
+obtained that fulfills the accuracy requirements. Whenever the hierarchy
+has to call more costly models (i.e. the reduced basis model or the
+full-order model) training data for the cheaper models (i.e. the
+data-driven surrogate or the reduced basis model) is generated.
+The model hierarchy therefore starts with empty reduced models and
+extends the reduced basis whenever new training snapshots are available.
+Similarly, the data-driven surrogate is retrained from time to time when
+enough training data has been collected from calls to the reduced model.
+
+The model hierarchy was described in detail in {cite}`HKOSW23`.
+
+We now show how to use the model hierarchy in pyMOR. In this example,
+we consider again the elliptic problem from the beginning of the
+tutorial.
+
+```{code-cell} ipython3
+fom = two_dimensional_parametric_diffusion()
+parameter_space = fom.parameters.space((0.1, 1))
+```
+
+Now, we create a factory for a suitable RB reductor that automatically assembles an
+a posteriori error estimator. The hierarchy builds each level by passing the next
+higher-fidelity model to such a factory, so instead of a fixed reductor we define a
+callable that receives the model to reduce:
+
+```{code-cell} ipython3
+from pymor.reductors.coercive import CoerciveRBReductor
+from pymor.parameters.functionals import ProjectionParameterFunctional
+rb_reductor_factory = lambda model: CoerciveRBReductor(
+    model, coercivity_estimator=ProjectionParameterFunctional('mu'))
+```
+
+Furthermore, we use again the {class}`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`.
+When extending the reduced basis in the hierarchy, a new data-driven surrogate for the
+additional coefficients is constructed. Since each of these data-driven surrogates is
+trained independently and therefore needs its own regressor, we pass a factory
+(a callable returning a fresh regressor) rather than a single regressor object.
+We further create a factory that builds an
+{class}`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor` for the data-driven surrogate.
+
+```{code-cell} ipython3
+kernel = GaussianKernel(length_scale=1.0)
+regressor_parameters = {'kernel': kernel, 'criterion': 'fp', 'max_centers': 30, 'tol': 1e-6, 'reg': 1e-12}
+dd_reductor_parameters = {'regressor': lambda: VKOGARegressor(**regressor_parameters)}
+
+from pymor.reductors.data_driven import AdaptiveDataDrivenReductor
+dd_reductor_factory = lambda model: AdaptiveDataDrivenReductor(dd_reductor_parameters, fom=model)
+```
+
+We can finally set up the adaptive model hierarchy as a
+{class}`~pymor.models.hierarchy.ModelHierarchy`. The hierarchy is built from the
+full-order model as the reference together with a sequence of reductor factories
+as defined above (`rb_reductor_factory` and `dd_reductor_factory`),
+ordered from the highest-fidelity reduced model down to the cheapest one.
+We also pass the tolerance against which the estimated errors are compared:
+
+```{code-cell} ipython3
+tol = 5e-3
+
+from pymor.models.hierarchy import ModelHierarchy
+hierarchy = ModelHierarchy(fom, [rb_reductor_factory, dd_reductor_factory], tol)
+```
+
+The model hierarchy can now be used similar to any other model by calling its
+`compute`-method. Some additional data that the model used internally to compute
+the solution or the estimated error are also provided in the data dictionary. The
+`used_model` entry is the index of the model that was used, counting from the reference
+model (`0` is the full-order model, `1` the reduced basis model and `2` the data-driven
+surrogate):
+
+```{code-cell} ipython3
+parameters = parameter_space.sample_randomly(100)
+model_labels = ['FOM', 'RB', 'DD']
+
+timings_red = []
+used_models = []
+estimated_errors = []
+for mu in parameters:
+    tic = time.perf_counter()
+    data = hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
+    timings_red.append(time.perf_counter() - tic)
+    used_models.append(model_labels[data['used_model']])
+    estimated_errors.append(np.max(data['solution_error_estimate']))
+
+timings_red = np.array(timings_red)
+estimated_errors = np.array(estimated_errors)
+```
+
+The data we collected above can be visualized to analyze the performance of the
+adaptive model hierarchy and the models contained in the hierarchy:
+
+```{code-cell} ipython3
+import matplotlib.pyplot as plt
+
+model_colors = {'FOM': 'C0', 'RB': 'C1', 'DD': 'C2'}
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# Model usage counts
+models = ('FOM', 'RB', 'DD')
+counts = [used_models.count(m) for m in models]
+axes[0].bar(models, counts, color=[model_colors[m] for m in models])
+axes[0].set_ylabel('count')
+axes[0].set_title('Model usage')
+
+# Runtime box plots
+timing_data = []
+labels = []
+colors = []
+for model in models:
+    idx = [i for i, m in enumerate(used_models) if m == model]
+    if idx:
+        timing_data.append(timings_red[idx])
+        labels.append(model)
+        colors.append(model_colors[model])
+bplot = axes[1].boxplot(timing_data, patch_artist=True)
+axes[1].set_xticklabels(labels)
+for patch, color in zip(bplot['boxes'], colors, strict=True):
+    patch.set_facecolor(color)
+    patch.set_alpha(0.7)
+axes[1].set_yscale('log')
+axes[1].set_ylabel('time [s]')
+axes[1].set_title('Runtimes')
+
+# Estimated errors
+for model, marker in (('DD', '*'), ('RB', '.')):
+    idx = [i for i, m in enumerate(used_models) if m == model]
+    if idx:
+        axes[2].plot(idx, estimated_errors[idx], marker,
+                     color=model_colors[model], label=model)
+axes[2].set_xlabel('parameter index')
+axes[2].set_ylabel('error estimate')
+axes[2].semilogy()
+axes[2].legend()
+axes[2].set_title('Estimated errors')
+
+fig.tight_layout()
+```
+
+We observe that the data-driven surrogate is the fastest model and is used most
+often. The reduced basis model is on average slightly slower than the full-order model
+due to the frequent training of the data-driven model. We expect that the average runtime
+of the reduced basis model will decrease further when querying the hierarchy more often
+and less retraining of the data-driven model is required. The full-order model is only
+used a few times and was never required after building a suitable reduced space.
+It is important to remark that the runtimes of the full-order model and the reduced basis
+model also include the training times for the surrogates.
+
+Since {class}`~pymor.models.hierarchy.ModelHierarchy` accepts an arbitrary sequence of
+reductor factories, it is not restricted to this particular set of three models. For
+instance, we can build a two-level hierarchy consisting only of the reduced basis model
+and the full-order model by omitting the data-driven reductor factory:
+
+```{code-cell} ipython3
+rb_hierarchy = ModelHierarchy(fom, [rb_reductor_factory], tol)
+
+rb_model_labels = ['FOM', 'RB']
+rb_used_models = []
+for mu in parameter_space.sample_randomly(20):
+    data = rb_hierarchy.compute(solution=True, solution_error_estimate=True, mu=mu)
+    rb_used_models.append(rb_model_labels[data['used_model']])
+
+for model in rb_model_labels:
+    print(f'{model}: {rb_used_models.count(model)}')
+```
 
 Download the code:
 {download}`tutorial_mor_with_ml.md`

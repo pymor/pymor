@@ -200,3 +200,42 @@ class DataDrivenInstationaryModel(DataDrivenModel):
         if self.time_vectorized:
             U = U.reshape((self.nt, -1))
         return U.T
+
+
+class ModelOfDataDrivenModels(Model):
+    """Model combining several sub-models into a single stacked solution.
+
+    The solutions of the sub-models are stacked into a single solution vector whose
+    space is the direct sum of the sub-model solution spaces. Used by
+    :class:`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor` to combine the data-driven
+    surrogates for the individual blocks of reduced basis coefficients into one model.
+
+    Parameters
+    ----------
+    models
+        Sequence of :class:`~pymor.models.data_driven.DataDrivenModel` sub-models
+        with :class:`~pymor.vectorarrays.numpy.NumpyVectorSpace` solution spaces.
+    output_functional
+        |Operator| mapping the stacked solution to the model output.
+    error_estimator
+        Error estimator operating on the stacked solution (e.g. the error estimator of
+        the reduced basis model whose coefficients are approximated).
+    """
+
+    def __init__(self, models, output_functional=None, error_estimator=None):
+        assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
+        assert all(isinstance(m, DataDrivenModel) for m in models)
+        super().__init__(error_estimator=error_estimator)
+        self.__auto_init(locals())
+        self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
+
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            if self.models:
+                solution_np = np.vstack([m.solve(mu).to_numpy() for m in self.models])
+                data['solution'] = self.solution_space.make_array(solution_np)
+            else:
+                data['solution'] = self.solution_space.empty()
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)

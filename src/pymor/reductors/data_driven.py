@@ -8,7 +8,8 @@ from pymor.algorithms.ml.vkoga import VKOGARegressor
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
-from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel
+from pymor.models.data_driven import DataDrivenInstationaryModel, DataDrivenModel, ModelOfDataDrivenModels
+from pymor.reductors.basic import ProxyEstimator
 
 
 class DataDrivenReductor(BasicObject):
@@ -43,10 +44,10 @@ class DataDrivenReductor(BasicObject):
         In the case of a time-dependent problem, the snapshots are assumed to be
         equidistant in time.
     regressor
-        Regressor with `fit` and `predict` methods similar to scikit-learn
-        regressors that is trained in the `reduce`-method.
-        If `None` (which is also the default),
-        a :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` is used.
+        Regressor object with `fit` and `predict` methods similar to scikit-learn
+        regressors that is trained in the `reduce`-method. If `None`, a
+        :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` with default
+        settings is used.
     target_quantity
         Either `'solution'` or `'output'`, determines which quantity to learn.
     T
@@ -70,12 +71,22 @@ class DataDrivenReductor(BasicObject):
         `inverse_transform` methods similar to the scikit-learn interface can be
         used to scale the outputs (reduced coeffcients or output quantities)
         before passing them to the regressor.
+    input_scaler_fitted
+        If `True`, the `input_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`. This enables the incremental
+        `extend` path for regressors that support it. Useful when the scaler
+        has been pre-fitted based on domain knowledge (e.g., the parameter space
+        bounds).
+    output_scaler_fitted
+        If `True`, the `output_scaler` is assumed to be already fitted and will
+        not be refitted during :meth:`reduce`.
     """
 
     def __init__(self, training_parameters, training_snapshots,
                  regressor=None, target_quantity='solution',
                  T=None, time_vectorized=False, output_functional=None,
-                 input_scaler=None, output_scaler=None):
+                 input_scaler=None, output_scaler=None,
+                 input_scaler_fitted=False, output_scaler_fitted=False):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
         self.__auto_init(locals())
@@ -100,6 +111,8 @@ class DataDrivenReductor(BasicObject):
 
         self.dim_solution_space = None
 
+        self._n_trained = 0
+
         # compute training data
         # i.e. pairs of parameters (potentially including time) and reduced coefficients
         with self.logger.block('Computing training data ...'):
@@ -111,8 +124,33 @@ class DataDrivenReductor(BasicObject):
         if self.is_stationary or not self.time_vectorized:
             assert len(self.training_data) == len(training_parameters) * self.nt
 
+    def _scale_data(self, data):
+        """Apply input and output scalers to training data."""
+        X = np.array([x[0] for x in data])
+        Y = np.array([x[1] for x in data])
+        if self.input_scaler is not None:
+            if not self.input_scaler_fitted:
+                self.input_scaler = self.input_scaler.fit(X)
+                self.input_scaler_fitted = True
+            X = self.input_scaler.transform(X)
+        if self.output_scaler is not None:
+            if not self.output_scaler_fitted:
+                self.output_scaler = self.output_scaler.fit(Y)
+                self.output_scaler_fitted = True
+            Y = self.output_scaler.transform(Y)
+        return X, Y
+
     def reduce(self, **kwargs):
         """Reduce by training a machine learning surrogate.
+
+        If the regressor supports incremental extension via an `extend` method
+        and has already been fitted, only the new training data (added via
+        :meth:`extend_training_data`) is passed to `extend`. Otherwise, the
+        regressor is fully retrained on all training data.
+
+        Incremental extension requires that all scalers are either pre-fitted
+        (via the `input_scaler_fitted` / `output_scaler_fitted` flags) or not
+        used, since unfitted scalers need to be refitted on the full dataset.
 
         Parameters
         ----------
@@ -124,24 +162,26 @@ class DataDrivenReductor(BasicObject):
         -------
         The data-driven reduced model.
         """
-        # run the actual training of the regressor
-        with self.logger.block('Training of machine learning method ...'):
-            # fit input and output scaler if required
-            if self.input_scaler is not None:
-                X = [x[0] for x in self.training_data]
-                self.input_scaler = self.input_scaler.fit(X)
-                X = [self.input_scaler.transform(np.atleast_2d(x[0]))[0] for x in self.training_data]
-            else:
-                X = [x[0] for x in self.training_data]
-            if self.output_scaler is not None:
-                Y = [x[1] for x in self.training_data]
-                self.output_scaler = self.output_scaler.fit(Y)
-                Y = [self.output_scaler.transform(np.atleast_2d(x[1]))[0] for x in self.training_data]
-            else:
-                Y = [x[1] for x in self.training_data]
-            # fit regressor to training data
-            self.regressor = self.regressor.fit(X, Y, **kwargs)
+        new_data = self.training_data[self._n_trained:]
 
+        scalers_ready = ((self.input_scaler is None or self.input_scaler_fitted)
+                         and (self.output_scaler is None or self.output_scaler_fitted))
+
+        use_extend = (self._n_trained > 0
+                      and len(new_data) > 0
+                      and hasattr(self.regressor, 'extend')
+                      and scalers_ready)
+
+        if use_extend:
+            with self.logger.block('Extending machine learning method ...'):
+                X_new, Y_new = self._scale_data(new_data)
+                self.regressor.extend(np.array(X_new), np.array(Y_new))
+        else:
+            with self.logger.block('Training of machine learning method ...'):
+                X, Y = self._scale_data(self.training_data)
+                self.regressor = self.regressor.fit(X, Y, **kwargs)
+
+        self._n_trained = len(self.training_data)
         return self._build_rom()
 
     def _compute_data(self, parameters, snapshots):
@@ -227,6 +267,10 @@ class DataDrivenPODReductor(DataDrivenReductor):
         See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
     output_scaler
         See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    input_scaler_fitted
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
+    output_scaler_fitted
+        See :class:`~pymor.reductors.data_driven.DataDrivenReductor`.
     product
         Inner product |Operators| defined on the discrete space the
         problem is posed on. Used for reduced basis computation via POD and
@@ -237,8 +281,9 @@ class DataDrivenPODReductor(DataDrivenReductor):
 
     def __init__(self, training_parameters, training_snapshots, regressor=None,
                  T=None, time_vectorized=False, output_functional=None,
-                 input_scaler=None, output_scaler=None, product=None,
-                 pod_params=None):
+                 input_scaler=None, output_scaler=None,
+                 input_scaler_fitted=False, output_scaler_fitted=False,
+                 product=None, pod_params=None):
         self.reduced_basis = None
         self.__auto_init(locals())
 
@@ -257,7 +302,9 @@ class DataDrivenPODReductor(DataDrivenReductor):
                              regressor=self.regressor, target_quantity='solution',
                              output_functional=projected_output_functional,
                              T=self.T, time_vectorized=self.time_vectorized,
-                             input_scaler=self.input_scaler, output_scaler=self.output_scaler)
+                             input_scaler=self.input_scaler, output_scaler=self.output_scaler,
+                             input_scaler_fitted=self.input_scaler_fitted,
+                             output_scaler_fitted=self.output_scaler_fitted)
 
         return super().reduce(**kwargs)
 
@@ -273,3 +320,85 @@ class DataDrivenPODReductor(DataDrivenReductor):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.reduced_basis.lincomb(u.to_numpy())
+
+
+class AdaptiveDataDrivenReductor(BasicObject):
+    """Adaptive data-driven reductor for use in a :class:`~pymor.models.hierarchy.ModelHierarchy`.
+
+    Manages one or more :class:`DataDrivenReductor` surrogates that approximate the
+    reduced coefficients of the model above it in the hierarchy (typically a reduced
+    basis model). Whenever the reduced basis of that model is extended, a new
+    data-driven surrogate is added for the additional basis coefficients. The training
+    data is split accordingly and passed to the respective surrogates before
+    (re-)training. For prediction, all surrogates are evaluated for the given parameter
+    and their outputs are combined into a single
+    :class:`~pymor.models.data_driven.ModelOfDataDrivenModels`.
+
+    Parameters
+    ----------
+    dd_reductor_parameters
+        Attributes used to generate the :class:`DataDrivenReductor` surrogates. A
+        `'regressor'` entry, if present, must be a factory (a callable returning a fresh
+        regressor) rather than a single regressor object, since each surrogate is trained
+        independently and therefore needs its own regressor.
+    retrain_interval
+        Number of new training data points to collect before retraining a surrogate.
+    fom
+        Reference model whose reduced coefficients the surrogates approximate (the model
+        above this one in the hierarchy). It is `None` until the first adaptation provides
+        it and supplies the error estimator and output functional of the resulting model.
+    """
+
+    def __init__(self, dd_reductor_parameters, retrain_interval=1, fom=None):
+        assert isinstance(dd_reductor_parameters, dict)
+        assert isinstance(retrain_interval, int)
+        assert retrain_interval >= 1
+        self.__auto_init(locals())
+        self.dd_reductors = []
+        self.dd_models = []
+        self._pending_retrains = []
+
+    def _build_model(self):
+        error_estimator = ProxyEstimator(self.fom) if self.fom is not None else None
+        output_functional = self.fom.output_functional if self.fom is not None else None
+        return ModelOfDataDrivenModels(self.dd_models, output_functional=output_functional,
+                                       error_estimator=error_estimator)
+
+    def reduce(self):
+        return self._build_model()
+
+    def reconstruct(self, u):
+        return u
+
+    def adapt(self, mu, new_fom=None, fom_solution=None, fom_output=None):
+        if fom_solution is None:
+            fom_solution = (new_fom or self.fom).solve(mu)
+
+        reduced_coefficients = fom_solution.to_numpy()
+
+        sum_dims = 0
+        for i, red in enumerate(self.dd_reductors):
+            coeffs = reduced_coefficients[sum_dims:sum_dims+red.dim_solution_space]
+            red.extend_training_data([mu], coeffs.T)
+            self._pending_retrains[i] += 1
+            if self._pending_retrains[i] >= self.retrain_interval:
+                self.dd_models[i] = red.reduce()
+                self._pending_retrains[i] = 0
+            sum_dims += red.dim_solution_space
+
+        if new_fom is not None:
+            self.fom = new_fom
+            old_rb_size = sum(red.dim_solution_space for red in self.dd_reductors)
+            # add new data-driven reductor and model to account for new basis components;
+            # each surrogate is trained independently, so build it a fresh regressor from
+            # the (optional) `regressor` factory in `dd_reductor_parameters`
+            dd_params = dict(self.dd_reductor_parameters)
+            regressor_factory = dd_params.pop('regressor', None)
+            regressor = regressor_factory() if regressor_factory is not None else None
+            T = getattr(new_fom, 'T', None)
+            self.dd_reductors.append(DataDrivenReductor([mu], reduced_coefficients[old_rb_size:].T,
+                                                        T=T, regressor=regressor, **dd_params))
+            self.dd_models.append(self.dd_reductors[-1].reduce())
+            self._pending_retrains.append(0)
+
+        return self._build_model()
