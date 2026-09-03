@@ -337,16 +337,27 @@ class ScipyQRLSTSQSolver(ScipyLinearSolver):
     least_squares = True
     _qr_factors = WeakRefCache()
 
+    @defaults('pivoting')
+    def __init__(self, pivoting=True, check_finite=None):
+        super().__init__(check_finite=check_finite)
+        self.pivoting = pivoting
+
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         try:
-            Q, R = self._qr_factors.get(matrix)
+            pivoting, factors = self._qr_factors.get(matrix)
+            if pivoting != self.pivoting:
+                raise KeyError
         except KeyError:
             try:
-                Q, R = qr(matrix, mode='economic', check_finite=self.check_finite)
+                factors = qr(matrix, mode='economic', pivoting=self.pivoting, check_finite=self.check_finite)
             except np.linalg.LinAlgError as e:
                 raise InversionError(f'{type(e)!s}: {e!s}') from e
-            self._qr_factors.set(matrix, (Q, R))
+            self._qr_factors.set(matrix, (self.pivoting, factors))
+        Q, R = factors[:2]
         U = solve_triangular(R, Q.T @ V, lower=False)
+        if self.pivoting:
+            P = factors[2]
+            U = U[P, :]
         return U
 
 

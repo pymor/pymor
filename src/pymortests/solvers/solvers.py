@@ -32,7 +32,9 @@ mat_op = NumpyMatrixOperator(mat)
 all_generic_solvers = [LGMRESSolver, LSMRSolver, LSQRSolver]
 all_scipy_sparse_solvers = [ScipyBicgStabSolver, ScipyBicgStabSpILUSolver, ScipyLGMRESSolver, ScipyLSMRSolver,
                             ScipyLSQRSolver, ScipySpSolveSolver]
-all_scipy_dense_solvers = [ScipyLUSolveSolver, ScipyLSTSQSolver, ScipyQRLSTSQSolver]
+all_scipy_dense_solvers = [ScipyLUSolveSolver, ScipyLSTSQSolver,
+                           lambda: ScipyQRLSTSQSolver(pivoting=False),
+                           lambda: ScipyQRLSTSQSolver(pivoting=True)]
 
 @pytest.fixture(params=all_generic_solvers)
 def generic_solver(request):
