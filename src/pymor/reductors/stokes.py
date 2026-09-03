@@ -4,7 +4,6 @@
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.models.basic import StationaryModel
-from pymor.models.saddle_point import SaddlePointModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import ProjectionBasedReductor, StationaryLSRBReductor, StationaryRBReductor
@@ -41,7 +40,6 @@ class SupremizerGalerkinStokesReductor(ProjectionBasedReductor):
 
     def __init__(self, fom, RB_u=None, RB_p=None, u_product=None, p_product=None,
                  check_orthonormality=None, check_tol=None):
-        assert isinstance(fom, SaddlePointModel)
         RB_u = fom.solution_space.subspaces[0].empty() if RB_u is None else RB_u
         RB_p = fom.solution_space.subspaces[1].empty() if RB_p is None else RB_p
         assert RB_u in fom.solution_space.subspaces[0]
@@ -79,8 +77,8 @@ class SupremizerGalerkinStokesReductor(ProjectionBasedReductor):
         block_pu = fom.operator.blocks[1,0]
 
         supremizer_rhs = block_pu.apply_adjoint(RB_p[offset:])
-        if fom.u_product:
-            supremizer_vector = fom.u_product.apply_inverse(supremizer_rhs)
+        if self.u_product:
+            supremizer_vector = self.u_product.apply_inverse(supremizer_rhs)
         else:
             supremizer_vector = supremizer_rhs
 
@@ -124,8 +122,6 @@ class LSRBStokesReductor(StationaryLSRBReductor):
 
     def __init__(self, fom, RB_u=None, RB_p=None, u_product=None, p_product=None,
                  use_normal_equations=False, check_orthonormality=None, check_tol=None):
-        assert isinstance(fom, SaddlePointModel)
-
         RB = fom.solution_space.make_block_diagonal_array([RB_u, RB_p])
         product = None
         if u_product or p_product:

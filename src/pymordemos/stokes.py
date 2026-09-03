@@ -8,10 +8,10 @@ import numpy as np
 from cyclopts import App
 
 from pymor.algorithms.pod import pod
-from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.core.config import config
 from pymor.models.examples import stokes_2Dexample
 from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesReductor
+from pymor.tools.random import new_rng
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
@@ -30,29 +30,34 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
     """
     # sets up the discrete Stokes model
     config.require('SCIKIT_FEM')
-    body_force = ExpressionFunction(('[0, x[0]]'), dim_domain=2)
-    fom_stokes = stokes_2Dexample(rhs=body_force)
+
+    # chooses the unit disk as the default domain and a default right-hand side
+    fom_stokes = stokes_2Dexample(diameter=1/10, mu_low=mu_low, mu_high=mu_high)
+    parameter_space = fom_stokes.parameters.space(mu_low, mu_high)
 
     # compute snapshot for the pressure and the velocity space
     snapshots_u = fom_stokes.solution_space.subspaces[0].empty()
     snapshots_p = fom_stokes.solution_space.subspaces[1].empty()
 
     for i in range(modes):
-        rng = np.random.default_rng(i)
-        mu = {'mu': rng.uniform(mu_low, mu_high)}
+        with new_rng(i):
+            mu = parameter_space.sample_randomly(1)[0]
         sol_u, sol_p = fom_stokes.solve(mu).blocks
         snapshots_u.append(sol_u)
         snapshots_p.append(sol_p)
 
-    basis_u, _ = pod(snapshots_u, modes=modes, rtol=1e-17, orth_tol=1e-17, product=fom_stokes.u_product)
-    basis_p, _ = pod(snapshots_p, modes=modes, rtol=1e-17, orth_tol=1e-17, product=fom_stokes.p_product)
+    u_product = fom_stokes.products['mixed'].blocks[0, 0]
+    p_product = fom_stokes.products['mixed'].blocks[1, 1]
+
+    basis_u, _ = pod(snapshots_u, modes=modes, rtol=1e-17, orth_tol=1e-17, product=u_product)
+    basis_p, _ = pod(snapshots_p, modes=modes, rtol=1e-17, orth_tol=1e-17, product=p_product)
 
     speedups = {}
     errors_u = {}
     errors_p = {}
 
-    rng = np.random.default_rng(442)
-    mus = rng.uniform(mu_low, mu_high, n_tests).tolist()
+    with new_rng(442):
+        mus = parameter_space.sample_uniformly(n_tests)
     results_fom = [evaluate_fom_once(fom_stokes, mu) for mu in mus]
 
     for method in PROJECTION_METHODS:
@@ -60,24 +65,24 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
         # construct reduced order model
         if method == 'supremizer_galerkin':
             reductor_stokes = SupremizerGalerkinStokesReductor(fom_stokes,
-                                                                         RB_u=basis_u,
-                                                                         RB_p=basis_p,
-                                                                         u_product = fom_stokes.u_product,
-                                                                         p_product=fom_stokes.p_product)
+                                                               RB_u=basis_u,
+                                                               RB_p=basis_p,
+                                                               u_product=u_product,
+                                                               p_product=p_product)
         elif method == 'ls-normal':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=True)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product=u_product,
+                                                 p_product=p_product,
+                                                 use_normal_equations=True)
         elif method == 'ls-ls':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=False)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product=u_product,
+                                                 p_product=p_product,
+                                                 use_normal_equations=False)
         else:
             raise ValueError(f'Unknown projection method {method}')
 
@@ -94,8 +99,9 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
 def evaluate_fom_once(fom, mu):
     # FOM solve & timing
     tic_fom = time.perf_counter()
-    fom_u, fom_p = fom.solve(mu).blocks
+    fom_sol = fom.solve(mu)
     t_fom = time.perf_counter() - tic_fom
+    fom_u, fom_p = fom_sol.blocks
 
     return {'fom_u': fom_u, 'fom_p': fom_p, 't_fom': t_fom}
 
