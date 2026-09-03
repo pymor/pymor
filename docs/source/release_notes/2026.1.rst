@@ -15,12 +15,15 @@ See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more deta
 Main new features
 ^^^^^^^^^^^^^^^^^
 
-Adaptive `RandomizedERAReductor`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Adaptive `RandomizedERAReductor` and `RandomizedSVD`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `[2423] <https://github.com/pymor/pymor/pull/2423>`_
+`[#2566] Adaptive RandomizedSVD class <https://github.com/pymor/pymor/pull/2566>`_
+`[#2556] Some RandLA improvements <https://github.com/pymor/pymor/pull/2556>`_
 
-Matrix Equation Solver
-~~~~~~~~~~~~~~~~~~~~~~
+
+Matrix equation solver classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[2572] <https://github.com/pymor/pymor/pull/2572>`_, we restructured the solution
 of matrix-equations around a matrix-equation solver interface. Every matrix-equation
 solver exposes a solve method that takes the equation to solve, represented by one of four new
@@ -28,8 +31,8 @@ matrix-equation classes: :class:`~pymor.solvers.matrix_equations.equations.Lyapu
 :class:`~pymor.algorithms.solvers.matrix_equations.equations.RiccatiEquation`,
 :class:`~pymor.algorithms.solvers.matrix_equations.equations.PositiveRiccatiEquation` and
 :class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`. Since one is
-typically interested either in the full dense solution or in a low-rank of it, each equation
-(except :class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`,
+typically interested either in the full dense solution or in a low-rank approximation, each
+equation (except :class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`,
 for which only dense solvers are available in pyMOR) comes with two solver interfaces, e.g.
 :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver` for the
 dense solver and :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR`
@@ -42,6 +45,11 @@ are now classes implementing one of these seven interfaces. In line with the equ
 introduced in the previous release, default solvers are provided in
 :mod:`~pymor.solvers.matrix_equations.default` for each of the seven interfaces, selecting
 a concrete solver based on the available bindings and the problem size.
+
+As part of the refactoring, the often inaccurate abbreviation "LRCF" (= Low Rank Cholesky Factor)
+has been shortened to "LR" (= Low Rank) throughout pyMOR. In particular, low-rank factors
+of the controllability and observability Gramians of an |LTIModel| `m` are now computing using
+`m.gramian('c_lr')` and `m.gramian('o_lr')` `[#2574]<https://github.com/pymor/pymor/pull/2574>`_.
 
 Adaptive model hierarchy
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,21 +82,21 @@ extended to the port-Hamiltonian setting as in :cite:`RWBBZFB23`.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#2583] Rule for block operators and image estimation test <https://github.com/pymor/pymor/pull/2583>`_
-- `[#2581] Add incremental extend method to VKOGARegressor <https://github.com/pymor/pymor/pull/2581>`_
-- `[#2578] Revert default SVD method for pod to method of snapshots <https://github.com/pymor/pymor/pull/2578>`_
-- `[#2574] Rename low-rank Cholesky factor (LRCF) to low-rank (LR) <https://github.com/pymor/pymor/pull/2574>`_
-- `[#2573] Unify and improve QR tests <https://github.com/pymor/pymor/pull/2573>`_
-- `[#2570] Various shifted_chol_qr improvements <https://github.com/pymor/pymor/pull/2570>`_
-- `[#2567] equip PHLTIModel with missing arguments such that solve can be called <https://github.com/pymor/pymor/pull/2567>`_
-- `[#2566] Adaptive RandomizedSVD class <https://github.com/pymor/pymor/pull/2566>`_
-- `[#2556] Some RandLA improvements <https://github.com/pymor/pymor/pull/2556>`_
-- `[#2555] Support Python 3.14 <https://github.com/pymor/pymor/pull/2555>`_
-- `[#2552] Progress bars <https://github.com/pymor/pymor/pull/2552>`_
-- `[#2540] add set method around dict in skfem discretizer boundary treatment <https://github.com/pymor/pymor/pull/2540>`_
-- `[#2535] Improvements in neural network training and evaluation <https://github.com/pymor/pymor/pull/2535>`_
-- `[#2530] Add pymor-config script <https://github.com/pymor/pymor/pull/2530>`_
-- `[#2527] Use cyclopts for CLI applications <https://github.com/pymor/pymor/pull/2527>`_
-- `[#2519] Compatibility of regressors with hyperparameter tuning in scikit-learn <https://github.com/pymor/pymor/pull/2519>`_
-- `[#2507] implemented a principal component analysis (PCA) algorithm <https://github.com/pymor/pymor/pull/2507>`_
 - `[#2411] Improving Loewner Construction in p-AAA <https://github.com/pymor/pymor/pull/2411>`_
+- `[#2507] implemented a principal component analysis (PCA) algorithm <https://github.com/pymor/pymor/pull/2507>`_
+- `[#2519] Compatibility of regressors with hyperparameter tuning in scikit-learn <https://github.com/pymor/pymor/pull/2519>`_
+- `[#2527] Use cyclopts for CLI applications <https://github.com/pymor/pymor/pull/2527>`_
+- `[#2530] Add pymor-config script <https://github.com/pymor/pymor/pull/2530>`_
+- `[#2535] Improvements in neural network training and evaluation <https://github.com/pymor/pymor/pull/2535>`_
+- `[#2540] add set method around dict in skfem discretizer boundary treatment <https://github.com/pymor/pymor/pull/2540>`_
+- `[#2552] Progress bars <https://github.com/pymor/pymor/pull/2552>`_
+- `[#2555] Support Python 3.14 <https://github.com/pymor/pymor/pull/2555>`_
+- `[#2567] equip PHLTIModel with missing arguments such that solve can be called <https://github.com/pymor/pymor/pull/2567>`_
+- `[#2570] Various shifted_chol_qr improvements <https://github.com/pymor/pymor/pull/2570>`_
+- `[#2581] Add incremental extend method to VKOGARegressor <https://github.com/pymor/pymor/pull/2581>`_
+- `[#2582] Fix slycot version check <https://github.com/pymor/pymor/pull/2582>`_
+- `[#2583] Rule for block operators and image estimation test <https://github.com/pymor/pymor/pull/2583>`_
+- `[#2585] Fix ScipySpSolveSolver factorization cache being defeated by matrix identity churn <https://github.com/pymor/pymor/pull/2585>`_
+- `[#2595] Diverse CholQR fixes and additions <https://github.com/pymor/pymor/pull/2595>`_
+- `[#2596] Unify and improve QR tests <https://github.com/pymor/pymor/pull/2596>`_
+- `[#2597] Add pivoting support to ScipyQRLSTSQSolver <https://github.com/pymor/pymor/pull/2597>`_
