@@ -22,11 +22,11 @@ from pymortests.algorithms.qr_test_util import (
 from pymortests.base import runmodule
 
 
-def test_chol_qr_empty():
+def test_gram_schmidt_empty():
     evaluate_qr_empty(gram_schmidt)
 
 
-def test_chol_qr_full_offset():
+def test_gram_schmidt_full_offset():
     evaluate_qr_full_offset(gram_schmidt)
 
 
