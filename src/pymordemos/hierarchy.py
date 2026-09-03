@@ -219,7 +219,8 @@ def main(
                 timing_data.append(timings_red[idx])
                 labels.append(f'Hierarchy ({model})')
                 colors.append(model_colors[model])
-        bplot = axes[1].boxplot(timing_data, labels=labels, patch_artist=True)
+        bplot = axes[1].boxplot(timing_data, patch_artist=True)
+        axes[1].set_xticklabels(labels)
         for patch, color in zip(bplot['boxes'], colors, strict=True):
             patch.set_facecolor(color)
             patch.set_alpha(0.7)

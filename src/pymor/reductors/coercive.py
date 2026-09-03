@@ -40,11 +40,11 @@ class CoerciveRBReductor(StationaryRBReductor):
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
     check_orthonormality
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     check_tol
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     extension_params
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
@@ -137,11 +137,11 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
     check_orthonormality
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     check_tol
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     extension_params
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,

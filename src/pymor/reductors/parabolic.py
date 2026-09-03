@@ -53,11 +53,11 @@ class ParabolicRBReductor(InstationaryRBReductor):
         `None` or a |ParameterFunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
     check_orthonormality
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     check_tol
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     extension_params
-        See :class:`ProjectionBasedReductor`.
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
