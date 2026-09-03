@@ -48,7 +48,7 @@ a concrete solver based on the available bindings and the problem size.
 
 As part of the refactoring, the often inaccurate abbreviation "LRCF" (= Low Rank Cholesky Factor)
 has been shortened to "LR" (= Low Rank) throughout pyMOR. In particular, low-rank factors
-of the controllability and observability Gramians of an |LTIModel| `m` are now computing using
+of the controllability and observability Gramians of an |LTIModel| `m` are now computed using
 `m.gramian('c_lr')` and `m.gramian('o_lr')` `[#2574]<https://github.com/pymor/pymor/pull/2574>`_.
 
 Adaptive model hierarchy
