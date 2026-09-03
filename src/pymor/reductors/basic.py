@@ -161,8 +161,7 @@ class ProjectionBasedReductor(BasicObject):
         """Adapt the ROM to new FOM solutions or to an updated FOM.
 
         Extends the reduced basis using a more accurate solution and returns the newly
-        reduced model. Only implemented for
-        reductors with a single `'RB'` basis.
+        reduced model. Only implemented for reductors with a single `'RB'` basis.
 
         Parameters
         ----------
