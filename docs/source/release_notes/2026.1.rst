@@ -18,17 +18,19 @@ Main new features
 Adaptive `RandomizedERAReductor` and `RandomizedSVD`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[2423] <https://github.com/pymor/pymor/pull/2423>`_, we have added a new data-driven reductor:
-:class:`~pymor.reductors.era.RandomizedERAReductor`. The algorithm uses randomized SVD to form an approximate orthogonal
-decomposition of the Hankel matrix. This accelerates the decomposition and avoids construction of the Hankel matrix
-which can become infeasibly large for certain problems. The reductor can be used in an adaptive way, successively
-refining the reduced realization whilst reusing previous computations. For this, a new adaptive
-:class:`~pymor.algorithms.rand_la.RandomizedSVD` class was introduced in `[#2566]
-<https://github.com/pymor/pymor/pull/2566>`_ that caches previous low-rank approximations that can be refined later on
-request. The new randomized SVD method has a settable driver for the low-rank SVD that is computed after projection onto
-the randomized approximation of the range space. A new driver :func:`~pymor.algorithms.svd_va.scipy_svd` was added for
-LAPACK SVD. Further improvements include a correction to the :meth:`~pymor.reductors.era.ERAReductor.error_bounds` which
-were flawed due to a typo in the original work and some small improvements to the :mod:`~pymor.algorithms.rand_la`
-module `[#2556] <https://github.com/pymor/pymor/pull/2556>`_.
+:class:`~pymor.reductors.era.RandomizedERAReductor`. The algorithm uses randomized SVD to form an
+approximate orthogonal decomposition of the Hankel matrix. This accelerates the decomposition and
+avoids construction of the Hankel matrix which can become infeasibly large for certain problems.
+The reductor can be used in an adaptive way, successively refining the reduced realization whilst
+reusing previous computations. For this, a new adaptive
+:class:`~pymor.algorithms.rand_la.RandomizedSVD` class was introduced in
+`[#2566] <https://github.com/pymor/pymor/pull/2566>`_ that caches previous low-rank approximations
+that can be refined later on request. The new randomized SVD method has a settable driver for the
+low-rank SVD that is computed after projection onto the randomized approximation of the range space.
+A new driver :func:`~pymor.algorithms.svd_va.scipy_svd` was added for LAPACK SVD. Further
+improvements include a correction to the :meth:`~pymor.reductors.era.ERAReductor.error_bounds` which
+were flawed due to a typo in the original work and some small improvements to the
+:mod:`~pymor.algorithms.rand_la` module `[#2556] <https://github.com/pymor/pymor/pull/2556>`_.
 
 Matrix equation solver classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,8 +49,8 @@ dense solver and :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolve
 for the low-rank solver, resulting in a total of seven interface classes.
 
 The previously standalone matrix-equation solver functions in :mod:`~pymor.bindings.scipy`,
-:mod:`~pymor.bindings.slycot`, :mod:`~pymor.solvers.matrix_equations.equations.adi`,
-:mod:`~pymor.solvers.matrix_equations.radi` and :class:`~pymor.solvers.matrix_equations.sylvester`
+:mod:`~pymor.bindings.slycot`, :mod:`~pymor.solvers.matrix_equations.adi`,
+:mod:`~pymor.solvers.matrix_equations.radi` and :mod:`~pymor.solvers.matrix_equations.sylvester`
 are now classes implementing one of these seven interfaces. In line with the equation solvers
 introduced in the previous release, default solvers are provided in
 :mod:`~pymor.solvers.matrix_equations.default` for each of the seven interfaces, selecting
@@ -78,7 +80,7 @@ learning surrogate is shown in a multi-query setting.
 Energy-stable projection for PHLTIModels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#2553] <https://github.com/pymor/pymor/pull/2553>`_, we added an alternative test-space
-choice to the :class:`pymor.reductors.ph.basic.PHLTIPGReductor`. Previously, the test space
+choice to the :class:`~pymor.reductors.ph.basic.PHLTIPGReductor`. Previously, the test space
 was always fixed to :math:`W = QV`, which yields a reduced system that is again port-Hamiltonian.
 The new energy-stable projection instead uses :math:`W = (J - R)^{-\top} E V`. In this case the
 reduced system is no longer port-Hamiltonian, but the Hamiltonian is preserved, i.e.,
