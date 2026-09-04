@@ -1,5 +1,5 @@
 pyMOR 2026.1 (September 4, 2026)
-------------------------------
+--------------------------------
 
 We are proud to announce the release of pyMOR 2026.1!
 
