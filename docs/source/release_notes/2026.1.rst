@@ -18,8 +18,8 @@ Main new features
 Adaptive `RandomizedERAReductor` and `RandomizedSVD`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[2423] <https://github.com/pymor/pymor/pull/2423>`_, we have added a new data-driven reductor:
-:class:`~pymor.reductors.era.RandomizedERA`. The algorithm uses randomized SVD to form an approximate orthogonal
-decomposition of the Hankel matrix. This accellerates the decomposition and avoids construction of the Hankel matrix
+:class:`~pymor.reductors.era.RandomizedERAReductor`. The algorithm uses randomized SVD to form an approximate orthogonal
+decomposition of the Hankel matrix. This accelerates the decomposition and avoids construction of the Hankel matrix
 which can become infeasibly large for certain problems. The reductor can be used in an adaptive way, successively
 refining the reduced realization whilst reusing previous computations. For this, a new adaptive
 :class:`~pymor.algorithms.rand_la.RandomizedSVD` class was introduced in `[#2566]
@@ -30,25 +30,24 @@ LAPACK SVD. Further improvements include a correction to the :meth:`~pymor.reduc
 were flawed due to a typo in the original work and some small improvements to the :mod:`~pymor.algorithms.rand_la`
 module `[#2556] <https://github.com/pymor/pymor/pull/2556>`_.
 
-
 Matrix equation solver classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[2572] <https://github.com/pymor/pymor/pull/2572>`_, we restructured the solution
 of matrix-equations around a matrix-equation solver interface. Every matrix-equation
 solver exposes a solve method that takes the equation to solve, represented by one of four new
 matrix-equation classes: :class:`~pymor.solvers.matrix_equations.equations.LyapunovEquation`,
-:class:`~pymor.algorithms.solvers.matrix_equations.equations.RiccatiEquation`,
-:class:`~pymor.algorithms.solvers.matrix_equations.equations.PositiveRiccatiEquation` and
-:class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`. Since one is
+:class:`~pymor.solvers.matrix_equations.equations.RiccatiEquation`,
+:class:`~pymor.solvers.matrix_equations.equations.PositiveRiccatiEquation` and
+:class:`~pymor.solvers.matrix_equations.equations.SylvesterEquation`. Since one is
 typically interested either in the full dense solution or in a low-rank approximation, each
-equation (except :class:`~pymor.algorithms.solvers.matrix_equations.equations.SylvesterEquation`,
+equation (except :class:`~pymor.solvers.matrix_equations.equations.SylvesterEquation`,
 for which only dense solvers are available in pyMOR) comes with two solver interfaces, e.g.
 :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver` for the
 dense solver and :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR`
 for the low-rank solver, resulting in a total of seven interface classes.
 
 The previously standalone matrix-equation solver functions in :mod:`~pymor.bindings.scipy`,
-:mod:`~pymor.bindings.slycot`, :mod:`~pymor.matrix_equations.equations.adi`,
+:mod:`~pymor.bindings.slycot`, :mod:`~pymor.solvers.matrix_equations.equations.adi`,
 :mod:`~pymor.solvers.matrix_equations.radi` and :class:`~pymor.solvers.matrix_equations.sylvester`
 are now classes implementing one of these seven interfaces. In line with the equation solvers
 introduced in the previous release, default solvers are provided in
