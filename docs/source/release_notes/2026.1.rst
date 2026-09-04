@@ -17,7 +17,7 @@ Main new features
 
 Adaptive `RandomizedERAReductor` and `RandomizedSVD`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[2423] <https://github.com/pymor/pymor/pull/2423>`_, we have added a new data-driven reductor:
+In `[#2423] <https://github.com/pymor/pymor/pull/2423>`_, we have added a new data-driven reductor:
 :class:`~pymor.reductors.era.RandomizedERAReductor`. The algorithm uses randomized SVD to form an
 approximate orthogonal decomposition of the Hankel matrix. This accelerates the decomposition and
 avoids construction of the Hankel matrix which can become infeasibly large for certain problems.
@@ -34,7 +34,7 @@ were flawed due to a typo in the original work and some small improvements to th
 
 Matrix equation solver classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[2572] <https://github.com/pymor/pymor/pull/2572>`_, we restructured the solution
+In `[#2572] <https://github.com/pymor/pymor/pull/2572>`_, we restructured the solution
 of matrix-equations around a matrix-equation solver interface. Every matrix-equation
 solver exposes a solve method that takes the equation to solve, represented by one of four new
 matrix-equation classes: :class:`~pymor.solvers.matrix_equations.equations.LyapunovEquation`,
@@ -59,11 +59,11 @@ a concrete solver based on the available bindings and the problem size.
 As part of the refactoring, the often inaccurate abbreviation "LRCF" (= Low Rank Cholesky Factor)
 has been shortened to "LR" (= Low Rank) throughout pyMOR. In particular, low-rank factors
 of the controllability and observability Gramians of an |LTIModel| `m` are now computed using
-`m.gramian('c_lr')` and `m.gramian('o_lr')` `[#2574]<https://github.com/pymor/pymor/pull/2574>`_.
+`m.gramian('c_lr')` and `m.gramian('o_lr')` `[#2574] <https://github.com/pymor/pymor/pull/2574>`_.
 
 Adaptive model hierarchy
 ~~~~~~~~~~~~~~~~~~~~~~~~
-In `[2577] <https://github.com/pymor/pymor/pull/2577>`_, the adaptive and certified
+In `[#2577] <https://github.com/pymor/pymor/pull/2577>`_, the adaptive and certified
 model hierarchy introduced in :cite:`HKOSW23` is implemented in a general fashion.
 When querying the model hierarchy for a new parameter, the cheapest but least accurate model
 in the hierarchy is evaluated first. Its accuracy is assessed by an a posteriori error
