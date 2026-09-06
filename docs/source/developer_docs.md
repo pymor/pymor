@@ -121,6 +121,9 @@ specified in `.markdownlint.yml`.
 The [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) tool
 (or the `pre-commit` hook; see below)
 can be used to check for errors.
+Internal links are checked with the [markdown-link-check](https://github.com/tcort/markdown-link-check) tool
+during `pre-commit` checks (see below),
+external links are verified in CI by [linkspector](https://github.com/UmbrellaDocs/linkspector).
 
 ### GitHub Project
 

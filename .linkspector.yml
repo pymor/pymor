@@ -1,0 +1,10 @@
+---
+dirs:
+  - .
+fileExtensions:
+  - md
+useGitIgnore: true
+ignorePatterns:
+  - pattern: '^mailto:'
+timeout: 10000
+retryCount: 3
