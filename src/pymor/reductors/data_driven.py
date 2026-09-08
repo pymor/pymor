@@ -296,7 +296,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
             projected_training_snapshots = self.training_snapshots.inner(self.reduced_basis, product=self.product)
             projected_output_functional = None
             if self.output_functional is not None:
-                projected_output_functional = project(self.output_functional, self.reduced_basis)
+                projected_output_functional = project(self.output_functional, None, self.reduced_basis)
 
             super().__init__(self.training_parameters, projected_training_snapshots,
                              regressor=self.regressor, target_quantity='solution',
