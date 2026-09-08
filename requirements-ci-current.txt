@@ -12,8 +12,6 @@ anyio==4.14.2
     #   httpx
     #   httpx2
     #   jupyter-server
-anywidget==0.11.0
-    # via k3d
 appdirs==1.4.4
     # via ensureconda
 argon2-cffi==25.1.0
@@ -213,7 +211,6 @@ ipython-pygments-lexers==1.1.1
 ipywidgets==8.1.9
     # via
     #   pymor (./pyproject.toml)
-    #   anywidget
     #   ipympl
     #   k3d
 isoduration==20.11.0
@@ -304,7 +301,7 @@ jupyterlab-server==2.28.0
     #   notebook
 jupyterlab-widgets==3.0.17
     # via ipywidgets
-k3d==3.0.0
+k3d==2.18.1
     # via pymor (./pyproject.toml)
 keyring==25.7.0
     # via
@@ -471,8 +468,6 @@ psutil==7.2.2
     #   ipykernel
     #   ipyparallel
     #   ipython
-psygnal==0.15.1
-    # via anywidget
 ptyprocess==0.7.0
     # via
     #   pexpect
@@ -736,7 +731,6 @@ truststore==0.10.4
     #   httpx2
 typing-extensions==4.16.0
     # via
-    #   anywidget
     #   beautifulsoup4
     #   conda-lock
     #   jupyter-client
