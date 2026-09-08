@@ -274,7 +274,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
     product
         Inner product |Operators| defined on the discrete space the
         problem is posed on. Used for reduced basis computation via POD and
-        or orthogonal projection onto the reduced basis.
+        orthogonal projection onto the reduced basis.
     pod_params
         Dict of additional parameters for the POD-method.
     """
