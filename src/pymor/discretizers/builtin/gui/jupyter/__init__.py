@@ -17,7 +17,7 @@ def get_visualizer(backend='prefer_k3d'):
     if backend == 'prefer_k3d':
         if config.HAVE_K3D:
             import k3d
-            if parse_version(k3d.__version__) >= parse_version('2.15.4'):
+            if parse_version('2.15.4') <= parse_version(k3d.__version__) < parse_version('3'):
                 backend = 'k3d'
             else:
                 backend = 'MPL'

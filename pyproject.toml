@@ -104,7 +104,7 @@ jupyter = [
   "ipywidgets>7",
   "jupyterlab",
   "jupyterlab-myst",
-  "k3d>=2.15.2",
+  "k3d>=2.15.2,<3",
   "notebook",
 ]
 # VTK output for builtin discretizations
