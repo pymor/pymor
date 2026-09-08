@@ -101,7 +101,7 @@ class VectorArrayPlot(K3DPlot):
         if warp and show_mesh:
             line_vertices = np.hstack([coordinates.astype(np.float32),
                                        np.zeros((len(coordinates), 1), dtype=np.float32)])
-            line_indices = np.array(subentities, dtype=np.float32)  # indices trait is float32
+            line_indices = np.array(subentities, dtype=np.uint32)
             line_indices = np.repeat(line_indices, 2, axis=1)[:,1:]
             line_indices = np.hstack([line_indices, line_indices[:,0:1]]).ravel()
             self.lines = k3d.lines(vertices=line_vertices,
