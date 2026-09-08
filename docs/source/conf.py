@@ -8,7 +8,6 @@ import sys
 import sysconfig
 from pathlib import Path
 
-import slugify
 import sphinx
 
 # Check Sphinx version
@@ -35,7 +34,6 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.linkcode',
               'sphinx.ext.napoleon',
               'sphinx.ext.intersphinx',
-              'try_on_binder',
               'myst_nb',
               'sphinx.ext.mathjax',
               'autoapi.extension',
@@ -303,9 +301,6 @@ modindex_common_prefix = ['pymor.']
 qt_documentation = 'PySide2'
 
 branch = os.environ.get('CI_COMMIT_REF_NAME', 'main')
-# this must match PYMOR_ROOT/.ci/gitlab/deploy_docs
-try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')
-try_on_binder_slug = os.environ.get('CI_COMMIT_REF_SLUG', slugify.slugify(try_on_binder_branch))
 
 
 def linkcode_resolve(domain, info):
