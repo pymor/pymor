@@ -305,6 +305,7 @@ class DataDrivenPODReductor(DataDrivenReductor):
                              input_scaler=self.input_scaler, output_scaler=self.output_scaler,
                              input_scaler_fitted=self.input_scaler_fitted,
                              output_scaler_fitted=self.output_scaler_fitted)
+            self.output_functional = projected_output_functional
 
         return super().reduce(**kwargs)
 

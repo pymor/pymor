@@ -119,6 +119,7 @@ def main(
     reductor_data_driven = DataDrivenPODReductor(training_parameters, training_snapshots,
                                                  regressor=regressor_solution, T=fom.T,
                                                  time_vectorized=time_vectorized,
+                                                 output_functional=fom.output_functional,
                                                  input_scaler=input_scaler_solution,
                                                  output_scaler=output_scaler_solution,
                                                  pod_params={'l2_err': 1e-5})
