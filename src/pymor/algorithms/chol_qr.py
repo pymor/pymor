@@ -56,7 +56,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         Assume that the first `offset` vectors are already orthonormal and apply the
         algorithm for the vectors starting at `offset + 1`.
     orth_tol
-        If not `None`, check if the resulting |VectorArray| is really orthornormal and
+        If not `None`, check if the resulting |VectorArray| is really orthonormal and
         repeat the algorithm until the check passes or `maxiter` is reached.
     recompute_shift
         If `False`, the shift is computed just once if the Cholesky decomposition fails
@@ -64,7 +64,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         for further iterations, which would lead to a non-orthonormal basis.
         If `True`, the shift is recomputed in iterations in which the Cholesky decomposition fails.
         Even for an ill-conditioned `A` (at least for matrix condition numbers up to 10^20)
-        is it able to compute an orthonormal basis at the cost of higher runtimes.
+        it is able to compute an orthonormal basis at the cost of higher runtimes.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
         performance gain, but may result in problems (crashes, non-termination) if the

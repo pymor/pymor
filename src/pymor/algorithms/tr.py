@@ -34,7 +34,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     The main idea for the algorithm can be found in :cite:`YM13`, and an application to
     box-constrained parameters with possible enlarging of the trust radius in :cite:`KMOSV21`.
 
-    This method contrasts itself from :func:`scipy.optimize.minimize` in the computation of the
+    This method differs from :func:`scipy.optimize.minimize` in the computation of the
     trust region: `scipy` TR implementations use a metric distance, whereas this function uses an
     error estimator obtained from the surrogate. Additionally, the cheap model function
     surrogate here is only updated for each outer iteration, not entirely reconstructed.
@@ -94,7 +94,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     Returns
     -------
     mu
-        |Numpy array| containing the computed optimal |parameter values|.
+        |NumPy array| containing the computed optimal |parameter values|.
     data
         Dict containing additional information of the optimization call.
 

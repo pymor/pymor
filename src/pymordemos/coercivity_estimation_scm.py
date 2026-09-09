@@ -34,7 +34,7 @@ def main(
     Parameters
     ----------
     num_training_parameters
-        Number of test parameters.
+        Number of training parameters.
     num_test_parameters
         Number of test parameters.
     max_extensions

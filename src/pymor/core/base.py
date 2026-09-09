@@ -298,7 +298,7 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
     def with_(self, new_type=None, **kwargs):
         """Returns a copy with changed attributes.
 
-        A a new class instance is created with the given keyword arguments as
+        A new class instance is created with the given keyword arguments as
         arguments for `__init__`.  Missing arguments are obtained form instance
         attributes with the
         same name.

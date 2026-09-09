@@ -243,7 +243,7 @@ class Parameters(SortedFrozenDict):
     def assert_compatible(self, mu, allow_time_dependent=False):
         """Assert that |parameter values| are compatible with the given |Parameters|.
 
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        Each of the parameters must be contained in  `mu` and the dimensions have to match,
         i.e. ::
 
             mu[parameter].size == self[parameter]
@@ -267,7 +267,7 @@ class Parameters(SortedFrozenDict):
     def is_compatible(self, mu, allow_time_dependent=False):
         """Check if |parameter values| are compatible with the given |Parameters|.
 
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        Each of the parameters must be contained in  `mu` and the dimensions have to match,
         i.e. ::
 
             mu[parameter].size == self[parameter]

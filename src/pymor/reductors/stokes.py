@@ -25,7 +25,7 @@ class SupremizerGalerkinStokesReductor(ProjectionBasedReductor):
         The basis of the reduced velocity space onto which to project.
         If `None`, an empty basis is used.
     RB_p
-        The basis of the redcued pressure space onto which to project.
+        The basis of the reduced pressure space onto which to project.
         If `None`, an empty basis is used.
     u_product
         Inner product |Operator| w.r.t. which `RB_u` is orthonormalized.
