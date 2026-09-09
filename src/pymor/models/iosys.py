@@ -709,7 +709,7 @@ class LTIModel(Model):
                 except NotImplementedError:
                     n = 0
             else:
-                n = self.num_values + 1
+                n = self.num_values
 
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
