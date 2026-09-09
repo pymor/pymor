@@ -709,7 +709,7 @@ class LTIModel(Model):
                 except NotImplementedError:
                     n = 0
             else:
-                n = self.num_values + 1
+                n = self.num_values
 
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
@@ -729,7 +729,7 @@ class LTIModel(Model):
             if compute_output:
                 if data_output_extra:
                     data['output'] = np.hstack((data['output'], data_output_extra))
-                if data['output'].shape[1] < i + 1:
+                if data['output'].shape[1] > i + 1:
                     data['output'] = data['output'][:, :i + 1]
 
             if compute_solution:
@@ -845,7 +845,7 @@ class LTIModel(Model):
             except NotImplementedError:
                 n = 0
         else:
-            n = self.num_values + 1
+            n = self.num_values
         output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
@@ -900,7 +900,7 @@ class LTIModel(Model):
             except NotImplementedError:
                 n = 0
         else:
-            n = self.num_values + 1
+            n = self.num_values
         output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
