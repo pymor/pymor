@@ -143,7 +143,7 @@ The main use of {{ ParameterSpaces }} in pyMOR is that they allow to easily samp
 Reduced basis methods are snapshot-based, which means that they build
 the reduced space as a linear subspace of the linear span of solutions
 of the `fom` for certain {{ parameter_values }}. The easiest
-approach is to just pick these values randomly, what we will do in the
+approach is to just pick these values randomly, as we will do in the
 following. First we define a training set of 25 parameters:
 
 ```{code-cell} ipython3
@@ -190,7 +190,7 @@ a different type of {{ VectorSpace }} which, for instance, might hold a
 reference to a discrete functions space object inside the PDE solver
 instead of the dimension.
 
-After appending all solutions vectors to `training_data`, we can verify that
+After appending all solution vectors to `training_data`, we can verify that
 `training_data` now really contains 25 vectors:
 
 ```{code-cell} ipython3
@@ -589,7 +589,7 @@ and {math}`V` is an {math}`K \times r`-matrix. Here {math}`n` denotes the dimens
 The diagonal entries {math}`\sigma_i` of {math}`\Sigma` are the singular values of {math}`A`, which are
 assumed to be monotonically decreasing. The pairwise orthogonal and normalized
 columns of {math}`U` and {math}`V` are the left- resp. right-singular vectors of {math}`A`.
-The {math}`i`-th POD mode is than simply the {math}`i`-th left-singular vector of {math}`A`,
+The {math}`i`-th POD mode is then simply the {math}`i`-th left-singular vector of {math}`A`,
 i.e. the {math}`i`-th column of {math}`U`. The larger the corresponding singular value is,
 the more important is this vector for the approximation of the snapshot data. In fact, if we
 let {math}`V_N` be the span of the first {math}`N` left-singular vectors of {math}`A`, then

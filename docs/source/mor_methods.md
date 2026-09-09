@@ -23,7 +23,7 @@ kernelspec:
 
 # Available MOR methods
 
-Here we give an overview over (most of) the available MOR methods implemented in pyMOR.
+Here we give an overview of (most of) the available MOR methods implemented in pyMOR.
 We provide short code snippets that show how to use these methods with pyMOR.
 For more in-depth explanations we refer to the {doc}`tutorials`.
 
@@ -85,7 +85,7 @@ reductor = CoerciveRBReductor(
 )
 
 # note: use SimpleCoerciveRBReductor for faster offline phase but error estimator that
-# only is accurate up to half machine precision
+# is only accurate up to half machine precision
 
 # use weak greedy algorithm to train the model
 from pymor.algorithms.greedy import rb_greedy

@@ -167,10 +167,10 @@ A class can be made immutable in pyMOR by deriving from |ImmutableObject|,
 which ensures that write access to the object's attributes is prohibited after
 `__init__` has been executed. However, note that changes to private attributes
 (attributes whose name starts with `_`) are still allowed. It lies in the
-implementors responsibility to ensure that changes to these attributes do not
+implementor's responsibility to ensure that changes to these attributes do not
 affect the outcome of calls to relevant interface methods. As an example, a call
 to :meth:`~pymor.core.cache.CacheableObject.enable_caching` will set the
-objects private `__cache_region` attribute, which might affect the speed of a
+object's private `__cache_region` attribute, which might affect the speed of a
 subsequent |solve| call, but not its result.
 
 Of course, in many situations one may wish to change properties of an immutable
@@ -261,7 +261,7 @@ the specialized dict-like class :class:`~pymor.parameters.base.Mu` is used.
 In particular, it ensures, that all of its values are one-dimensional |NumPy arrays|.
 
 The |Parameters| of a |ParametricObject| are usually automatically derived
-as the union of all |Parameters| of the objects that are passed to it's `__init__` method.
+as the union of all |Parameters| of the objects that are passed to its `__init__` method.
 For instance, an |Operator| that implements the L2-product with some user-provided
 |Function| will automatically inherit all |Parameters| of that |Function|.
 Additional |Parameters| can be easily added by setting the
@@ -379,4 +379,4 @@ about the underlying problem yielding the full order |Model| is available
 coercive problems).
 
 If you want to further dive into the inner workings of pyMOR, we
-recommend to study the :doc:`Projecting a Model <tutorial_projection>` tutorial.
+recommend studying the :doc:`Projecting a Model <tutorial_projection>` tutorial.
