@@ -45,7 +45,7 @@ def compile_shader(source, vertex=True):
 
 
 def link_shader_program(shaders):
-    """Create a shader program with from compiled shaders."""
+    """Create a shader program from compiled shaders."""
     program = gl.glCreateProgram()
     for shader in shaders:
         gl.glAttachShader(program, shader)

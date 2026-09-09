@@ -35,7 +35,7 @@ class RandomizedRangeFinder(BasicObject):
     A faster alternative is the leave-one-out error estimator from :cite:`ET24` which can be
     activated by setting `error_estimator='loo'`. The leave-one-out error estimator estimates the
     Frobenius norm of the approximation error. Note that while it can be faster and more accurate in
-    practice, this option does only support Euclidian inner products and there are no results on its
+    practice, this option only supports Euclidean inner products and there are no results on its
     failure probability so far.
 
     Parameters
@@ -51,7 +51,7 @@ class RandomizedRangeFinder(BasicObject):
     A_adj
         Adjoint |Operator| to use for power iterations. If `None` the
         adjoint is computed using `A`, `source_product` and `range_product`.
-        Set to `A` for a `self` for a known self-adjoint operator.
+        Set to `A` for a known self-adjoint operator.
     failure_tolerance
         Maximum failure probability. Only needed for error_estimator='bs18'.
     num_testvecs
@@ -254,8 +254,9 @@ class RandomizedRangeFinder(BasicObject):
 class RandomizedSVD(BasicObject):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
-    Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
-    returns the randomized generalized singular value decomposition of `A` according :cite:`SHB21`:
+    Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this method computes and
+    returns the randomized generalized singular value decomposition of `A` according to
+    :cite:`SHB21`:
 
     .. math::
 
@@ -310,7 +311,7 @@ class RandomizedSVD(BasicObject):
         Parameters
         ----------
         n
-            The number of singular values and signular vectors which are to be computed.
+            The number of singular values and singular vectors which are to be computed.
         rtol
             Relative truncation error tolerance for the low-rank SVD.
             See :func:`~pymor.algorithms.svd_va.method_of_snapshots` for a detailed description.
@@ -380,7 +381,7 @@ def randomized_svd(A, n=None, *, rtol=None, atol=None, l2_err=None, rrf_tol=None
                    low_rank_svd_method=None, rrf_args=None):
     r"""Randomized SVD of an |Operator|.
 
-    This is a just a wrapper for :class:`RandomizedSVD`.
+    This is just a wrapper for :class:`RandomizedSVD`.
     """
     svd_alg = RandomizedSVD(A, range_product=range_product, source_product=source_product,
                             power_iterations=power_iterations, low_rank_svd_method=low_rank_svd_method,
@@ -405,7 +406,7 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
 
     if `E` is not `None`.
 
-    This method is an implementation of algorithm 6 and 7 in :cite:`SJK16`.
+    This method is an implementation of algorithms 6 and 7 in :cite:`SJK16`.
 
     Parameters
     ----------
@@ -424,7 +425,7 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
     single_pass
         If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
         expense of lower numerical accuracy.
-        If `False`, the methods performs two sets of matvecs Ax (default).
+        If `False`, the method performs two sets of matvecs Ax (default).
     return_evecs
         If `True`, the eigenvectors are computed and returned. Defaults to `False`.
 

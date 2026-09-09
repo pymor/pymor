@@ -52,7 +52,7 @@ def main(
     test
         Number of parameters for stochastic error estimation.
     visualize
-        Visualize solution and reduczed solution
+        Visualize solution and reduced solution
     """
     # discretize
     ############

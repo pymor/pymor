@@ -32,7 +32,7 @@ class VectorArray(BasicObject):
     of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
     keyword argument which allows to specify to what size the array is assumed to grow.
 
-    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
+    As with |NumPy array|, |VectorArrays| can be indexed with numbers, slices and
     lists or one-dimensional |NumPy arrays|. Indexing will always return a new
     |VectorArray| which acts as a view into the original data. Thus, if the indexed
     array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
@@ -259,7 +259,7 @@ class VectorArray(BasicObject):
         self._len = len(self.impl)
 
     def to_numpy(self, ensure_copy=False):
-        """Return (self.dim, len(self)) NumPy Array with the data stored in the array.
+        """Return (self.dim, len(self)) NumPy array with the data stored in the array.
 
         Parameters
         ----------
@@ -412,7 +412,7 @@ class VectorArray(BasicObject):
         Complex conjugation is done in the first argument because
         most numerical software in the community handles it this way:
         Numpy, DUNE, FEniCS, Eigen, Matlab and BLAS do complex conjugation
-        in the first argument, only PetSc and deal.ii do complex
+        in the first argument, only PETSc and deal.II do complex
         conjugation in the second argument.
 
         Parameters
@@ -466,7 +466,7 @@ class VectorArray(BasicObject):
         Complex conjugation is done in the first argument because
         most numerical software in the community handles it this way:
         Numpy, DUNE, FEniCS, Eigen, Matlab and BLAS do complex conjugation
-        in the first argument, only PetSc and deal.ii do complex
+        in the first argument, only PETSc and deal.II do complex
         conjugation in the second argument.
 
 
@@ -806,9 +806,9 @@ class VectorSpace(ImmutableObject):
     :meth:`~VectorSpace.zeros`.  The
     :meth:`~VectorSpace.make_array` method builds a new
     |VectorArray| from given raw data of the underlying linear algebra
-    backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
+    backend (e.g. a |NumPy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
+    |NumPy array| via the :meth:`~VectorSpace.from_numpy`
     method.
 
     Vector spaces can be compared for equality via the `==` and `!=`

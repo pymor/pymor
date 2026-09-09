@@ -44,7 +44,7 @@ the memory cache region can be configured via the
 `pymor.core.cache.default_regions.persistent_max_size` and
 `pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
-There two ways to disable and enable caching in pyMOR:
+There are two ways to disable and enable caching in pyMOR:
 
     1. Calling :func:`disable_caching` (:func:`enable_caching`), to disable
        (enable) caching globally.

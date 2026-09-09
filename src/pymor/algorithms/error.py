@@ -293,7 +293,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         If `True`, use a logarithmic y-axis to plot the computed custom
         values.
     plot_custom_with_errors
-        It `True`, plot errors and custom values in a single plot (otherwise in separate ones).
+        If `True`, plot errors and custom values in a single plot (otherwise in separate ones).
     """
     error_norms = 'norms' in result
     error_estimator = 'error_estimates' in result

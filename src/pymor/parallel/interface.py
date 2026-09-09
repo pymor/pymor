@@ -128,7 +128,7 @@ class WorkerPool(BasicObject):
     def apply_only(self, function, worker, *args, **kwargs):
         """Apply function on a single worker.
 
-        This calls `function` on on the worker with number `worker`, passing
+        This calls `function` on the worker with number `worker`, passing
         `args` as positional and `kwargs` as keyword arguments. Keyword arguments
         which are |RemoteObjects| are automatically mapped to the
         respective object on the worker. Moreover, keyword arguments which

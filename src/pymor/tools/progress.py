@@ -46,7 +46,7 @@ class ProgressDisplay(ABC):
         label
             If not `None`, the label for the corresponding progress bar.
         total
-            If not `None`, the the length of the iterable.
+            If not `None`, the length of the iterable.
         """
         if total is None:
             try:
@@ -233,6 +233,6 @@ def track(iterable, label=None, total=None):
     label
         If not `None`, the label for the corresponding progress bar.
     total
-        If not `None`, the the length of the iterable.
+        If not `None`, the length of the iterable.
     """
     return get_progress_display().track(iterable, label=label, total=total)

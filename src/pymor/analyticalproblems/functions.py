@@ -517,7 +517,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         re-evaluation of the snapshot data at the evaluation points can be
         avoided, when this argument is specified together with `basis_evaluations`.
     basis_evaluations
-        Optional |Numpy array| of evaluations of the interpolation basis at
+        Optional |NumPy array| of evaluations of the interpolation basis at
         `evaluation_points`. Corresponds to the `basis` return value of
         :func:`~pymor.algorithms.ei.ei_greedy`.
     """

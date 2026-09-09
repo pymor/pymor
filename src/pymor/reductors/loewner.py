@@ -19,10 +19,10 @@ class LoewnerReductor(CacheableObject):
     Parameters
     ----------
     s
-        |Numpy Array| of shape (n,) containing the frequencies.
+        |NumPy array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
-        |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
+        |NumPy array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
+        |NumPy array| of shape (n,) for SISO systems where the |NumPy arrays| represent the transfer
         function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
         attribute.
     partitioning

@@ -248,7 +248,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         Let :math:`K_n` denote the full kernel matrix for the current set of selected
         centers :math:`X_n`. Since :math:`K_n` is a kernel matrix, it is in particular
         positive-definite, so it has a Cholesky decomposition,
-        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Choleksy decomposition
+        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Cholesky decomposition
         :math:`C_n := L_{n}^{-1}` will be used to efficiently compute and update the
         coefficients  of the kernel interpolant. The formula for the computation and update of
         :math:`C_n` can be found below.

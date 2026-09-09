@@ -123,7 +123,7 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
     nt
         If time_stepper is `None` and nt is specified, the
         :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`
-        as time_stepper.
+        is used as time_stepper.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.

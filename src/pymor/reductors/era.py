@@ -18,7 +18,7 @@ from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 class ERAReductorBase(CacheableObject):
     r"""Basic Eigensystem Realization Algorithm reductor.
 
-    This class implements ROM construction from a orthogonal factorization of the Hankel matrix, as
+    This class implements ROM construction from an orthogonal factorization of the Hankel matrix, as
     well as tangential projections of inputs and outputs. The actual factorization and error
     bounds/estimators are implemented by the subclasses.
 
@@ -42,7 +42,7 @@ class ERAReductorBase(CacheableObject):
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     feedthrough
-        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
         defines the feedthrough of the realization. Defaults to `None`.
     """
 
@@ -148,7 +148,7 @@ class ERAReductor(ERAReductorBase):
         \hat{h}_i = W_L^T h_i W_R,
 
     where :math:`n_L \leq p` and :math:`n_R \leq m` are the number of left and right tangential
-    directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` an
+    directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` and
     :math:`W_R \in \mathbb{R}^{m \times n_R}` are the left and right projectors, respectively.
     See :cite:`KG16`.
 
@@ -172,7 +172,7 @@ class ERAReductor(ERAReductorBase):
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     feedthrough
-        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
         defines the feedthrough of the realization. Defaults to `None`.
     """
 
@@ -333,7 +333,7 @@ class RandomizedERAReductor(ERAReductorBase):
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     feedthrough
-        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
         defines the feedthrough of the realization. Defaults to `None`.
     allow_transpose
         Whether to allow the computation of the transposed problem, i.e., the randomized SVD of

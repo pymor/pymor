@@ -78,7 +78,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     Returns
     -------
     mu
-        |Numpy array| containing the computed |parameter values|.
+        |NumPy array| containing the computed |parameter values|.
     data
         Dict containing the following fields:
 
