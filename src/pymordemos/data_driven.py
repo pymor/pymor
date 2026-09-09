@@ -47,7 +47,7 @@ def main(
     input_scaling
         Scale the input of the regressor (i.e. the parameter).
     output_scaling
-        Scale the output of the regressor (i.e. reduced coefficients or output quantity.
+        Scale the output of the regressor (i.e. reduced coefficients or output quantity).
     """
     if regressor == 'fcnn' and not config.HAVE_TORCH:
         raise TorchMissingError

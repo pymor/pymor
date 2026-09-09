@@ -47,7 +47,7 @@ class Operator(ParametricObject):
     def H(self):
         """Adjoint |Operator|.
 
-        It hold that ::
+        It holds that ::
 
             self.H.apply(V, mu) == self.apply_adjoint(V, mu)
 

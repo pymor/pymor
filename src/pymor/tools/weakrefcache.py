@@ -10,7 +10,7 @@ class WeakRefCache:
 
     This class allows storing additional data associated with any weakref-able
     object. The data is removed when the corresponding object dies.
-    Compared to WeakKeyDictionary, object do not need to implement hashablel
+    Compared to WeakKeyDictionary, objects do not need to implement hashable
     or comparable.
 
     See https://github.com/python/cpython/issues/88306 for further context.

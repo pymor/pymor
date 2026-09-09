@@ -57,7 +57,7 @@ class SORIRKAReductor(GenericIRKAReductor):
             iteration to. Larger number can avoid occasional cyclic
             behavior of IRKA.
         force_sigma_in_rhp
-            If `False`, new interpolation are reflections of the current
+            If `False`, new interpolation points are reflections of the current
             reduced order model's poles. Otherwise, only the poles in
             the left half-plane are reflected.
         projection

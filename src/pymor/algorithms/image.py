@@ -22,7 +22,7 @@ def estimate_image(operators=(), vectors=(),
     Let `operators` be a list of |Operators| with common source and range, and let
     `vectors` be a list of |VectorArrays| or vector-like |Operators| in the range
     of these operators. Given a |VectorArray| `domain` of vectors in the source of the
-    operators, this algorithms determines a |VectorArray| `image` of range vectors
+    operators, this algorithm determines a |VectorArray| `image` of range vectors
     such that the linear span of `image` contains:
 
     - `op.apply(U, mu=mu)` for all operators `op` in `operators`, for all possible |Parameters|
