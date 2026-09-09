@@ -845,7 +845,7 @@ class LTIModel(Model):
             except NotImplementedError:
                 n = 0
         else:
-            n = self.num_values + 1
+            n = self.num_values
         output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
@@ -900,7 +900,7 @@ class LTIModel(Model):
             except NotImplementedError:
                 n = 0
         else:
-            n = self.num_values + 1
+            n = self.num_values
         output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
