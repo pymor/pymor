@@ -11,9 +11,6 @@ kernelspec:
   name: python3
 ---
 
-```{try_on_binder}
-```
-
 ```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]

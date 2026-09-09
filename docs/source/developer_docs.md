@@ -267,8 +267,6 @@ tag docker images
   CI images are tagged with either `main` or the corresponding git tag in GitLab's container
   registry.
   This will prevent these images from being removed during registry cleanup.
-  In particular, this guarantees that the images are available for the binder setups linked in the
-  online documentation.
 
 ### GitHub Actions
 

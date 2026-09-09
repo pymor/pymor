@@ -20,6 +20,9 @@
     },
     {
       "pattern": "^https://epubs.siam.org"
+    },
+    {
+      "pattern": "^https://www.esaim-m2an.org"
     }
   ]
 }
