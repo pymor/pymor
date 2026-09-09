@@ -729,7 +729,7 @@ class LTIModel(Model):
             if compute_output:
                 if data_output_extra:
                     data['output'] = np.hstack((data['output'], data_output_extra))
-                if data['output'].shape[1] < i + 1:
+                if data['output'].shape[1] > i + 1:
                     data['output'] = data['output'][:, :i + 1]
 
             if compute_solution:
