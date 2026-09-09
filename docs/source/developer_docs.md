@@ -252,7 +252,7 @@ docs
 : Commits documentation built in {ref}`ref_gitlab_ci_stage_testbuild`to the
   [documentation repository](https://github.com/pymor/docs). This repository is the source for
   [https://docs.pymor.org/](https://docs.pymor.org/) served via GitHub Pages.
-  A binder setup for the generated tutorials notebooks is added on a branch with a name
+  A binder setup is added on a branch with a name
   matching the currently checked out git branch of pyMOR.
 
 submit coverage
@@ -267,8 +267,6 @@ tag docker images
   CI images are tagged with either `main` or the corresponding git tag in GitLab's container
   registry.
   This will prevent these images from being removed during registry cleanup.
-  In particular, this guarantees that the images are available for the binder setups linked in the
-  online documentation.
 
 ### GitHub Actions
 
