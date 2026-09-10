@@ -25,7 +25,7 @@ class ParameterFunctional(ParametricObject):
         pass
 
     def d_mu(self, parameter, index=0):
-        """Return the functionals's derivative with respect to a given parameter.
+        """Return the functional's derivative with respect to a given parameter.
 
         Parameters
         ----------
@@ -445,7 +445,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     for Q positive coefficient |ParameterFunctional| theta_1, ..., theta_Q and positive
     semi-definite component bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a
     parameter with respect to which the coercivity constant
-    of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t. ::
+    of a(., ., mu_bar) is known, i.e. we know alpha_mu_bar > 0, s.t. ::
 
       alpha_mu_bar |u|_V^2 <= a(u, u, mu=mu_bar).
 
@@ -510,7 +510,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     for Q coefficient |ParameterFunctional| theta_1, ..., theta_Q and continuous bilinear forms
     a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a
     parameter with respect to which the continuity constant of a(., ., mu_bar) or l(., mu_bar)
-    is known, i.e. we known gamma_mu_bar > 0, s.t. ::
+    is known, i.e. we know gamma_mu_bar > 0, s.t. ::
 
       a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V
 

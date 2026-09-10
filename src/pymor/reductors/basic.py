@@ -271,7 +271,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         The basis of the reduced space onto which to project. If `None` an empty basis is used.
     product
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
-        the Euclidean inner product is used.
+        Euclidean inner product is used.
     initial_data_product
         Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected.
         If `None`, the Euclidean inner product is used.

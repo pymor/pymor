@@ -375,7 +375,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
 
     Suitable configuration files can be created via :func:`write_defaults_to_file`.
     The file is loaded via Python's :func:`exec` function, so be very careful
-    with configuration files you have not created your own. You have been
+    with configuration files you have not created yourself. You have been
     warned!
 
     Parameters
@@ -450,9 +450,9 @@ def get_defaults(user=True, file=True, code=True):
 
 
 def defaults_changes():
-    """Returns the number of changes made to to pyMOR's global |defaults|.
+    """Returns the number of changes made to pyMOR's global |defaults|.
 
-    This methods returns the number of changes made to the state of
+    This method returns the number of changes made to the state of
     pyMOR's global |defaults| via :func:`set_defaults` or
     :func:`load_defaults_from_file` since the start of program execution.
 

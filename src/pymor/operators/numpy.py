@@ -311,7 +311,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 c_n    & \cdots & \cdots  & c_3    & c_2    & c_1
             \end{bmatrix} \in \mathbb{C}^{n*p \times n*m},
 
-    where the so-called circulant vector :math:`c \in \mathbb{C}^{\times n\times p\times m}` denotes
+    where the so-called circulant vector :math:`c \in \mathbb{C}^{n\times p\times m}` denotes
     the first (matrix-valued) column of the matrix. The matrix :math:`C` as seen above is not
     explicitly constructed, only `c` is stored. Efficient matrix-vector multiplications are realized
     with DFT in the class' `apply` method. See :cite:`GVL13` Chapter 4.8.2. for details.

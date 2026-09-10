@@ -278,7 +278,7 @@ def qdeim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_optio
     The collateral basis is determined by the first :func:`~pymor.algorithms.pod.pod` modes
     of `U`.
 
-    The intperpolation DOFs are computed using the Q-DEIM algorithm from
+    The interpolation DOFs are computed using the Q-DEIM algorithm from
     :cite:`DG16`. It leads to more stable interpolation matrices compared
     to :meth:`ei_greedy`. However, the algorithm only works with |NumPy| data, so the
     basis |VectorArray| needs to support the
@@ -361,7 +361,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
         A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
-        Has no effect if `alg == 'deim' or `alg == 'qdeim'`.
+        Has no effect if `alg == 'deim'` or `alg == 'qdeim'`.
     product
         Inner product for POD computation in :func:`deim`.
         Has no effect if `alg == 'ei_greedy'`.
@@ -446,7 +446,7 @@ def interpolate_function(function, parameter_sample, evaluation_points,
     """Parameter separable approximation of a |Function| using Empirical Interpolation.
 
     This method computes a parameter separated |LincombFunction| approximating
-    the input |Function| using Empirical Interpolation :cite`BMNP04`.
+    the input |Function| using Empirical Interpolation :cite:`BMNP04`.
     The actual EI Greedy algorithm is contained in :func:`ei_greedy`. This function
     acts as a convenience wrapper, which computes the training data and
     constructs an :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction`

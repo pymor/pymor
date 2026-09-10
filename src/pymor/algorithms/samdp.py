@@ -20,7 +20,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
-    :cite:`RM06` in Algorithm 2 in order to compute dominant pole triplets and residues of the
+    Algorithm 2 in :cite:`RM06` in order to compute dominant pole triplets and residues of the
     transfer function
 
     .. math::
@@ -393,7 +393,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter, shifted
     rqitol
         Convergence tolerance for the residual of the pole.
     maxiter
-        Maximum number of iteration.
+        Maximum number of iterations.
     shifted_system_solver
         The |Solver| for the shifted systems.
 
@@ -464,9 +464,9 @@ def _select_max_eig(H, G, X, V, B, C, which):
     Parameters
     ----------
     H
-        The |Numpy array| H from the SAMDP algorithm.
+        The |NumPy array| H from the SAMDP algorithm.
     G
-        The |Numpy array| G from the SAMDP algorithm.
+        The |NumPy array| G from the SAMDP algorithm.
     X
         A |VectorArray| describing the orthogonal search space used in the SAMDP algorithm.
     V

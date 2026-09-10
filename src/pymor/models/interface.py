@@ -60,7 +60,7 @@ class Model(CacheableObject, ParametricObject):
 
     @cached_property
     def computable_quantities(self):
-        """Set of quantities that can be compute via :meth:`compute`."""
+        """Set of quantities that can be computed via :meth:`compute`."""
         return (
             {'solution', 'output', 'output_d_mu', 'solution_error_estimate', 'output_error_estimate'}
             | {('solution_d_mu', param, idx) for param, dim in self.parameters.items() for idx in range(dim)}
@@ -229,7 +229,7 @@ class Model(CacheableObject, ParametricObject):
     def solve(self, mu=None, input=None, return_error_estimate=False):
         """Solve the discrete problem for the |parameter values| `mu`.
 
-        This method returns a |VectorArray| with a internal state
+        This method returns a |VectorArray| with an internal state
         representation of the model's solution for given
         |parameter values|. It is a convenience wrapper around
         :meth:`compute`.
@@ -350,9 +350,9 @@ class Model(CacheableObject, ParametricObject):
         Returns
         -------
         The output sensitivities as a dict `{(parameter, index): sensitivity}` where
-        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        `sensitivity` is a 2D |NumPy array| with axis 0 corresponding to time and axis 1
         corresponding to the output component.
-        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
+        The returned :class:`OutputDMuResult` object has a :meth:`~OutputDMuResult.to_numpy`
         method to convert it into a single NumPy array, e.g., for use in optimization
         libraries.
         """
@@ -461,7 +461,7 @@ class Model(CacheableObject, ParametricObject):
         computing its output or other :attr:`computable_quantities`.
 
         `_compute` is passed a :class:`set` of quantities to compute.
-        If `_compute` knows how to compute a given quantities, the computed value
+        If `_compute` knows how to compute a given quantity, the computed value
         has to be added to the provided `data` dict. After that, the quantity
         should be removed from `quantities` so that a ::
 
@@ -475,7 +475,7 @@ class Model(CacheableObject, ParametricObject):
         obtain the output. `solution_error_estimate` and `output_error_estimate` defer
         the error estimation to the model's :attr:`error_estimator`.
 
-        In case a requested quantity depends on another quantities, implementations should
+        In case a requested quantity depends on other quantities, implementations should
         call ::
 
             self._compute_required_quantities({'quantity_a', 'quantity_b'}, data, mu)

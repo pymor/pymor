@@ -52,7 +52,7 @@ class ReferenceElement(CacheableObject):
         Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
         subentities into the reference element.
 
-        For `subentity_codim > 1', the embedding is by default given recursively via
+        For `subentity_codim > 1`, the embedding is by default given recursively via
         `subentity_embedding(subentity_codim - 1)` and
         `sub_reference_element(subentity_codim - 1).subentity_embedding(1)` choosing always
         the superentity with smallest index.

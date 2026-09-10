@@ -185,7 +185,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     grid
         The underlying |Grid|.
     U
-        |VectorArray| of the data to visualize. If `len(U) 1`, the data is visualized
+        |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
         as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
         provided, in which case a subplot is created for each entry of the tuple. The
         lengths of all arrays have to agree.

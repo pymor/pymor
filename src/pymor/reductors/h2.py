@@ -233,7 +233,7 @@ class IRKAReductor(GenericIRKAReductor):
             iteration to. Larger number can avoid occasional cyclic
             behavior of IRKA.
         force_sigma_in_rhp
-            If `False`, new interpolation are reflections of the current
+            If `False`, new interpolation points are reflections of the current
             reduced-order model's poles. Otherwise, only poles in the
             left half-plane are reflected.
         projection
@@ -347,7 +347,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             iteration to. A larger number can avoid occasional cyclic
             behavior.
         force_sigma_in_rhp
-            If `False`, new interpolation are reflections of the current
+            If `False`, new interpolation points are reflections of the current
             reduced-order model's poles. Otherwise, only poles in the
             left half-plane are reflected.
         projection
@@ -602,7 +602,7 @@ class TFIRKAReductor(GenericIRKAReductor):
             iteration to. Larger number can avoid occasional cyclic
             behavior of TF-IRKA.
         force_sigma_in_rhp
-            If `False`, new interpolation are reflections of the current
+            If `False`, new interpolation points are reflections of the current
             reduced-order model's poles. Otherwise, only poles in the
             left half-plane are reflected.
         conv_crit

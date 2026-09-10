@@ -29,7 +29,7 @@ def main(
     order
         Finite element order.
     visualize
-        Visualize solution and reduczed solution.
+        Visualize solution and reduced solution.
     """
     if not config.HAVE_FENICS and not config.HAVE_FENICSX:
         from pymor.core.exceptions import DependencyMissingError
