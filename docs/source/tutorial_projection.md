@@ -226,7 +226,7 @@ freedom of the solution, but did not change the number of constraints (the dimen
 of {math}`F(\mu)`). So in general, this system will not have a solution.
 
 One approach to define {math}`u_N` from this ansatz is to choose {math}`u_N`
-as a minimizer of norm of the residual of the equations system, i.e. to minimize
+as a minimizer of the norm of the residual of the equation system, i.e. to minimize
 the defect by which {math}`u_N` fails to satisfy the equations:
 
 ```{math}
@@ -390,7 +390,7 @@ print(fom.parameters)
 print(rom.parameters)
 ```
 
-Solving the ROM for a new `mu` would mean to build a new ROM with updated
+Solving the ROM for a new `mu` would mean building a new ROM with updated
 system matrix and right-hand side. However, if we compare the timings,
 
 ```{code-cell} ipython3
@@ -488,7 +488,7 @@ application problems are actually of this type, and as you have seen in this
 section, these problems admit an *offline/online decomposition* that
 enables the *online efficient* solution of the ROM.
 
-For problems that do not allow such an decomposition and also for non-linear
+For problems that do not allow such a decomposition and also for non-linear
 problems, more advanced techniques are necessary such as
 {mod}`empirical interpolation <pymor.algorithms.ei>`.
 
@@ -515,7 +515,7 @@ The arguments of {meth}`~pymor.algorithms.projection.project` are the {{ Operato
 to project, a reduced basis for the {attr}`~pymor.operators.interface.Operator.range`
 (test) space and a reduced basis for the {attr}`~pymor.operators.interface.Operator.source`
 (ansatz) space of the {{ Operator }}. If no projection for one of these spaces shall be performed,
-`None` is passed.  Since we are performing Galerkin-projection, where test space into
+`None` is passed.  Since we are performing Galerkin-projection, where the test space into
 which the residual is projected is the same as the ansatz space in which the solution
 is determined, we pass `basis` twice when projecting `fom.operator`. Note that
 `fom.rhs` only takes scalars as input, so we do not need to project anything in the ansatz space.
@@ -579,7 +579,7 @@ which will recursively apply `ProjectionRules` to all
 {{ Operator }}, collect the results and then return a new {{ Operator }} where
 the children have been replaced by the results of the applications of the
 {{ RuleTable }}. Here, the {meth}`children <pymor.algorithms.rules.RuleTable.get_children>`
-of an {{ Operator }} are all of its attribute that are either {{ Operators }} or lists or dicts
+of an {{ Operator }} are all of its attributes that are either {{ Operators }} or lists or dicts
 of {{ Operators }}.
 
 In our case, `ProjectRules` will be applied to all {{ NumpyMatrixOperators }} held by

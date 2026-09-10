@@ -87,7 +87,7 @@ port-Hamiltonian structure, i.e., to compute a ROM that is also port-Hamiltonian
 
 If desired, a passive {{ LTIModel }} can be converted into a {{ PHLTIModel }} using
 the {meth}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel` method.
-Consequentely, one option to preserve port-Hamiltonian structure is to use a reductor
+Consequently, one option to preserve port-Hamiltonian structure is to use a reductor
 that preserves passivity (but returns a ROM of type {{ LTIModel }}) and convert the
 ROM into a {{ PHLTIModel }} in a post-processing step.
 
@@ -194,7 +194,7 @@ print(f'rom2 is of type {type(rom2).__qualname__}.')
 The {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` method
 is a wrapper reductor for another generic reductor. The method extracts a
 spectral factor from the FOM (this is only possible if the system is passive),
-which subsequentely is reduced by a reductor specified by the user.
+which subsequently is reduced by a reductor specified by the user.
 A spectral factor is a standard {{ LTIModel }}, and hence any LTI reduction can be used.
 For our example, we use the {class}`~pymor.reductors.h2.IRKAReductor` as the inner reductor.
 If the inner reductor returns a stable ROM, passivity is preserved.
