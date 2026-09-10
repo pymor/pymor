@@ -1775,8 +1775,6 @@ class PHLTIModel(LTIModel):
         ----------
         model
             The passive |LTIModel| to convert.
-        generalized
-            If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
         # Determine solution of KYP inequality
         X = model.gramian('pr_o_dense')
