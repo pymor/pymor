@@ -9,6 +9,7 @@ import numpy as np
 from cyclopts import App
 from matplotlib import pyplot as plt
 
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -18,6 +19,20 @@ from pymor.reductors.ph.ph_irka import PHIRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
 
 app = App(help_on_error=True)
+
+def ph_properties(model):
+    """Check the three defining properties of a pH system."""
+    densify = lambda op: to_matrix(op, format='dense')
+    J, R, G, P, S, N, E, Q = map(densify, (model.J, model.R, model.G, model.P, model.S, model.N, model.E, model.Q))
+    H = Q.T @ E
+    Gamma = np.block([[J, G], [-G.T, N]])
+    W = np.block([[R, P], [P.T, S]])
+
+    assert np.allclose(np.abs(H - H.T).max(), 0), 'H is not symmetric'
+    assert np.all(np.linalg.eigvalsh((H + H.T) / 2).min() > -1e-10), 'H is not positive definite'
+    assert np.allclose(np.abs(Gamma + Gamma.T).max(), 0), 'Gamma is not symmetric'
+    assert np.all(np.linalg.eigvalsh((W + W.T) / 2).min() > -1e-4), 'W is not positive semidefinite'
+
 
 @app.default
 def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
@@ -60,6 +75,9 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
         'pH-IRKA_energy_stable': phirka_energy_stable,
         'spectral_factor': spectral_factor_reduce,
     }
+
+    ph_reductors = ['PRBT', 'pH-IRKA', 'spectral_factor']
+
     markers = {
         'BT': '.',
         'PRBT': 'x',
@@ -81,6 +99,10 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
             if name in ('PRBT', 'spectral_factor'):
                print('Converting ROM to PHLTIModel.')
                rom = PHLTIModel.from_passive_LTIModel(rom)
+
+            if name in ph_reductors:
+                print(name, r)
+                ph_properties(rom)
 
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
         t1 = perf_counter()
