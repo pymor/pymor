@@ -1775,24 +1775,23 @@ class PHLTIModel(LTIModel):
         ----------
         model
             The passive |LTIModel| to convert.
-        generalized
-            If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
         # Determine solution of KYP inequality
         X = model.gramian('pr_o_dense')
         A, B, C, D, E = model.to_matrices()
 
-        XinvAT = np.linalg.solve(X, A.T)
-        AXinv = XinvAT.T # X is symmetric
-        XinvCT = np.linalg.solve(X, C.T)
+        Q = X if E is None else X @ E
 
-        Q = X
-        J = 0.5 * (AXinv - XinvAT)
-        R = -0.5 * (AXinv + XinvAT)
-        G = 0.5 * (XinvCT + B)
-        P = 0.5 * (XinvCT - B)
+        QinvTAT = np.linalg.solve(Q.T, A.T)
+        AQinv = QinvTAT.T
+        QinvTCT = np.linalg.solve(Q.T, C.T)
+
+        J = 0.5 * (AQinv - QinvTAT)
+        R = -0.5 * (AQinv + QinvTAT)
+        G = 0.5 * (QinvTCT + B)
+        P = 0.5 * (QinvTCT - B)
         S = 0.5 * (D + D.T)
-        N = 0.5 * (D - D.T)
+        N = 0.5 * (D.T - D)
 
         return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=model.sampling_time,
                                         T=model.T, initial_data=model.initial_data, time_stepper=model.time_stepper,
