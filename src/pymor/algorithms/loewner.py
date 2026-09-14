@@ -204,6 +204,9 @@ def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
 def _real_transformation(nodes):
     transformation = np.zeros((len(nodes), len(nodes)), dtype=np.complex128)
     visited = np.zeros(len(nodes), dtype=bool)
+    dtype = nodes.real.dtype
+    precision = np.finfo(dtype).eps if np.issubdtype(dtype, np.inexact) else np.finfo(float).eps
+    tolerance = 100 * precision
     for i, node in enumerate(nodes):
         if visited[i]:
             continue
@@ -211,8 +214,9 @@ def _real_transformation(nodes):
             transformation[i, i] = 1
             visited[i] = True
             continue
-        matches = np.flatnonzero(nodes == np.conj(node))
-        if len(matches) != 1 or matches[0] == i:
+        matches = np.flatnonzero(np.isclose(nodes, np.conj(node), rtol=tolerance, atol=tolerance))
+        matches = matches[matches != i]
+        if len(matches) != 1:
             raise ValueError('Nodes must contain unique complex conjugate pairs when real=True.')
         j = matches[0]
         if visited[j]:
