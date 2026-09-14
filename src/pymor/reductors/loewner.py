@@ -201,7 +201,7 @@ class LoewnerReductor(CacheableObject):
             return (left, right)
         else:
             if self.ordering == 'magnitude':
-                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in len(self.Hs[0])])
+                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in range(len(self.Hs))])
             elif self.ordering == 'random':
                 rng = new_rng(0)
                 idx = rng.permutation(self.s.shape[0])
