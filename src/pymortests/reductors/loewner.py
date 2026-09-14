@@ -80,3 +80,14 @@ def test_loewner_data(reduce_kwargs, loewner_kwargs, model_args):
     assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
     assert rom.order <= model_args[0]
+
+
+def test_loewner_magnitude_ordering_without_conjugates():
+    s = 1j * np.arange(1, 5)
+    Hs = np.array([4., 1., 3., 2.])
+    loewner = LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False)
+
+    left, right = loewner._partition_frequencies()
+    assert np.array_equal(left, [1, 2])
+    assert np.array_equal(right, [3, 0])
+    assert all(np.all(np.isfinite(matrix)) for matrix in loewner.loewner_quadruple())
