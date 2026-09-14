@@ -352,7 +352,7 @@ def full_nd_loewner(samples, svs, itpl_part):
         # construction of zero rows indices
         zr_idx = np.zeros(len(svs[i]), dtype=bool)
         zr_idx[itpl_part[i]] = 1
-        zr_idc = np.kron(zr_idx,zr_idc)
+        zr_idc = np.kron(zr_idc, zr_idx)
 
     L = samples.reshape(-1,1) * kron_C - (itpl_samples.reshape(-1,1) * kron_C.T).T
 
