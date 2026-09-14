@@ -12,7 +12,7 @@ from pymor.reductors.interpolation import TFBHIReductor
 pytestmark = pytest.mark.builtin
 
 
-def test_tfbhi_unitary_realification():
+def test_tfbhi_value_and_derivative_interpolation():
     fom = TransferFunction(
         1,
         1,
@@ -33,3 +33,6 @@ def test_tfbhi_unitary_realification():
 
     assert np.allclose(to_matrix(rom.B), (transformation @ values[:, np.newaxis]).real)
     assert np.allclose(to_matrix(rom.C), (values[np.newaxis] @ transformation.conj().T).real)
+    for node in sigma:
+        assert np.allclose(rom.transfer_function.eval_tf(node), fom.eval_tf(node))
+        assert np.allclose(rom.transfer_function.eval_dtf(node), fom.eval_dtf(node))
