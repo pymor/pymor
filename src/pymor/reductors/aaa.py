@@ -7,6 +7,7 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.loewner import loewner_matrix_nd
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
@@ -222,7 +223,7 @@ class PAAAReductor(BasicObject):
                         self.itpl_part[i].append(conj_idx[0])
 
             # solve LS problem
-            L = full_nd_loewner(samples, svs, self.itpl_part)
+            L = loewner_matrix_nd(svs, samples, self.itpl_part)
 
             _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
             VH = V.T.conj()
@@ -283,7 +284,9 @@ class PAAAReductor(BasicObject):
             for idc in itertools.product(*(range(s) for s in shapes)):
                 l_idc = list(idc)
                 l_idc.insert(i, slice(None))
-                L = full_nd_loewner(self.samples[tuple(l_idc)], [self.sampling_values[i]], [self.itpl_part[i]])
+                L = loewner_matrix_nd(
+                    [self.sampling_values[i]], self.samples[tuple(l_idc)], [self.itpl_part[i]]
+                )
                 rk = np.linalg.matrix_rank(L, tol=self.L_rk_tol)
                 if rk > max_rk:
                     max_rk = rk
@@ -299,64 +302,12 @@ class PAAAReductor(BasicObject):
             self.itpl_part[i] = self.itpl_part[i][0:max_rks[i]+1]
 
         # solve LS problem
-        L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
+        L = loewner_matrix_nd(self.sampling_values, self.samples, self.itpl_part)
         _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
         VH = np.conj(V.T)
         coefs = VH[:, -1]
 
         return coefs
-
-
-def _cauchy_itpl(s, itpl_part):
-    """Compute a modified Cauchy matrix for Loewner matrix construction."""
-    N = s.shape[0]
-    k = len(itpl_part)
-    ls_part = sorted(set(range(len(s))) - set(itpl_part))
-
-    C = np.zeros((k, N), dtype=s.dtype)
-    C[:, itpl_part] = np.eye(k)
-    C[:, ls_part] = 1.0 / (s[ls_part] - s[itpl_part][:, None])
-
-    return C.T
-
-def full_nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix using all combinations of partitions.
-
-    .. note::
-       For non-parametric data this is simply the regular Loewner matrix.
-
-    Parameters
-    ----------
-    samples
-        Tensor of samples (see :class:`PAAAReductor`).
-    svs
-        List of sampling values (see :class:`PAAAReductor`).
-    itpl_part
-        Nested list such that `itpl_part[i]` is a list of indices for interpolated
-        sampling values in `svs[i]`.
-
-    Returns
-    -------
-    L
-        (Parametric) Loewner matrix based on all combinations of partitions.
-    """
-    itpl_samples = samples[np.ix_(*itpl_part)]
-
-    kron_C = 1
-    zr_idc = True
-    for i in range(len(svs)):
-        # form modified Cauchy matrix kronecker product
-        C = _cauchy_itpl(svs[i], itpl_part[i])
-        kron_C = np.kron(kron_C, C)
-
-        # construction of zero rows indices
-        zr_idx = np.zeros(len(svs[i]), dtype=bool)
-        zr_idx[itpl_part[i]] = 1
-        zr_idc = np.kron(zr_idc, zr_idx)
-
-    L = samples.reshape(-1,1) * kron_C - (itpl_samples.reshape(-1,1) * kron_C.T).T
-
-    return L[np.invert(zr_idc),:]
 
 
 def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
