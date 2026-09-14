@@ -345,9 +345,10 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     def _circulant(self):
         return rfft(self._arr, axis=0) if np.isrealobj(self._arr) else fft(self._arr, axis=0)
 
-    def _circular_matvec(self, vec):
+    def _circular_matvec(self, vec, output_dim=None):
         n, p, m = self._arr.shape
         s, k = vec.shape
+        d = self.range.dim if output_dim is None else output_dim
 
         # use real arithmetic if possible
         isreal = np.isrealobj(self._arr) and np.isrealobj(vec)
@@ -368,7 +369,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 # setting n=n below is necessary to allow uneven lengths but considerably slower
                 # Hankel operator will always pad to even length to avoid that
                 Y = irfft(Y, n=n, axis=0) if isreal else ifft(Y, axis=0)
-                y[i::p] += Y[:self.range.dim // p]
+                y[i::p] += Y[:d // p]
         return y
 
     def apply(self, U, mu=None):
@@ -453,8 +454,10 @@ class NumpyToeplitzOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         n, _, m = self._circulant._arr.shape
-        U = np.concatenate([U.to_numpy(), np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array(self._circulant._circular_matvec(U)[:self.range.dim, :])
+        U = U.to_numpy()
+        x = np.zeros((n*m, U.shape[1]), dtype=U.dtype, order='F')
+        x[:self.source.dim] = U
+        return self.range.make_array(self._circulant._circular_matvec(x, self.range.dim))
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -540,7 +543,7 @@ class NumpyHankelOperator(Operator):
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array(self._circulant._circular_matvec(x)[:self.range.dim, :])
+        return self.range.make_array(self._circulant._circular_matvec(x, self.range.dim))
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
