@@ -360,7 +360,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
             C = np.concatenate([C, C[1:l].conj()[::-1]])
 
         dtype = float if isreal else complex
-        y = np.zeros((self.range.dim, k), dtype=dtype, order='F')
+        y = np.zeros((d, k), dtype=dtype, order='F')
         for j in range(m):
             x = vec[j::m]
             X = rfft(x, axis=0) if isreal else fft(x, axis=0)
@@ -540,7 +540,7 @@ class NumpyHankelOperator(Operator):
         assert U in self.source
         U = U.to_numpy()
         n, p, m = self._circulant._arr.shape
-        x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
+        x = np.zeros((n*m, U.shape[1]), dtype=U.dtype, order='F')
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
         return self.range.make_array(self._circulant._circular_matvec(x, self.range.dim))
