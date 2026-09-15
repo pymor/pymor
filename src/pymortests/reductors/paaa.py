@@ -2,8 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 import pytest
 
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
 
 pytestmark = pytest.mark.builtin

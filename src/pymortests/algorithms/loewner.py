@@ -7,7 +7,15 @@ import itertools
 import numpy as np
 import pytest
 
-from pymor.algorithms.loewner import loewner_matrices, loewner_matrix, loewner_matrix_nd, loewner_quadruple
+from pymor.algorithms.loewner import (
+    complete_conjugate_pairs,
+    loewner_matrices,
+    loewner_matrix,
+    loewner_matrix_nd,
+    loewner_quadruple,
+    sample_transfer_function,
+)
+from pymor.models.transfer_function import TransferFunction
 
 pytestmark = pytest.mark.builtin
 
@@ -33,6 +41,35 @@ def _loewner_matrix_nd_reference(sampling_values, samples, interpolation_indices
             entries.append((samples[row] - samples[column]) * factor)
         rows.append(entries)
     return np.array(rows)
+
+
+def test_sample_transfer_function_on_parametric_grid():
+    fom = TransferFunction(
+        1,
+        1,
+        lambda s, mu: np.array([[1 / (s + mu['mu'][0])]]),
+        parameters={'mu': 1},
+    )
+    sampling_values = [np.array([1j, 2j]), np.array([1., 3.])]
+
+    samples = sample_transfer_function(sampling_values, fom)
+
+    assert samples.shape == (2, 2, 1, 1)
+    for i, s in enumerate(sampling_values[0]):
+        for j, mu in enumerate(sampling_values[1]):
+            assert np.allclose(samples[i, j], [[1 / (s + mu)]])
+
+
+def test_complete_conjugate_pairs():
+    nodes = np.array([1j, 2j, -1j])
+    samples = np.array([1 + 2j, 3 + 4j, 1 - 2j])
+    weights = np.array([2., 3., 2.])
+
+    nodes, samples, weights = complete_conjugate_pairs(nodes, samples, weights)
+
+    assert np.array_equal(nodes, [1j, 2j, -1j, -2j])
+    assert np.array_equal(samples, [1 + 2j, 3 + 4j, 1 - 2j, 3 - 4j])
+    assert np.array_equal(weights, [2., 3., 2., 3.])
 
 
 def test_loewner_matrix_and_shifted_matrix():
@@ -91,8 +128,7 @@ def test_loewner_quadruple_full_mimo(rng):
     left_values = rng.random((3, 2, 3))
     right_values = rng.random((4, 2, 3))
 
-    quadruple = loewner_quadruple(left_nodes, right_nodes, left_values, right_values)
-    L, Ls, V, W = quadruple
+    L, Ls, V, W = loewner_quadruple(left_nodes, right_nodes, left_values, right_values)
     denominator = left_nodes[:, np.newaxis, np.newaxis, np.newaxis] \
         - right_nodes[np.newaxis, :, np.newaxis, np.newaxis]
     reference_L = (left_values[:, np.newaxis] - right_values[np.newaxis]) / denominator
@@ -101,7 +137,6 @@ def test_loewner_quadruple_full_mimo(rng):
         - (right_nodes[:, np.newaxis, np.newaxis] * right_values)[np.newaxis]
     ) / denominator
 
-    assert quadruple.L is L
     assert L.shape == Ls.shape == (6, 12)
     assert V.shape == (6, 3)
     assert W.shape == (2, 12)
@@ -155,16 +190,15 @@ def test_loewner_quadruple_unitary_realification():
         return np.array([[[1 / (node + 3), 2 / (node + 4)],
                           [3 / (node + 5), 4 / (node + 6)]] for node in nodes])
 
-    complex_quadruple = loewner_quadruple(left_nodes, right_nodes, values(left_nodes), values(right_nodes))
+    L, Ls, *_ = loewner_quadruple(left_nodes, right_nodes, values(left_nodes), values(right_nodes))
     real_quadruple = loewner_quadruple(
         left_nodes, right_nodes, values(left_nodes), values(right_nodes), real=True
     )
+    real_L, real_Ls, *_ = real_quadruple
 
     assert all(not np.iscomplexobj(matrix) for matrix in real_quadruple)
-    assert np.allclose(np.linalg.svd(complex_quadruple.L, compute_uv=False),
-                       np.linalg.svd(real_quadruple.L, compute_uv=False))
-    assert np.allclose(np.linalg.svd(complex_quadruple.Ls, compute_uv=False),
-                       np.linalg.svd(real_quadruple.Ls, compute_uv=False))
+    assert np.allclose(np.linalg.svd(L, compute_uv=False), np.linalg.svd(real_L, compute_uv=False))
+    assert np.allclose(np.linalg.svd(Ls, compute_uv=False), np.linalg.svd(real_Ls, compute_uv=False))
 
 
 def test_loewner_quadruple_rejects_nonreal_transformation():

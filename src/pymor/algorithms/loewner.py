@@ -2,13 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from collections import namedtuple
+from itertools import product
 
 import numpy as np
 
-LoewnerQuadruple = namedtuple('LoewnerQuadruple', 'L Ls V W')
-LoewnerQuadruple.__doc__ = 'Loewner and shifted Loewner matrices with left and right interpolation data.'
-
+from pymor.models.transfer_function import TransferFunction
+from pymor.tools.random import new_rng
 
 def _nodes(nodes, name):
     nodes = np.asarray(nodes)
@@ -17,6 +16,113 @@ def _nodes(nodes, name):
     if len(nodes) == 0:
         raise ValueError(f'{name} must not be empty.')
     return nodes
+
+
+def sample_transfer_function(sampling_values, samples_or_fom):
+    """Sample a transfer function on a Cartesian grid when needed.
+
+    Parameters
+    ----------
+    sampling_values
+        A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
+        Laplace-variable values; subsequent arrays contain parameter values.
+    samples_or_fom
+        Sample data, a |TransferFunction|, or a model with a `transfer_function` attribute.
+
+    Returns
+    -------
+    samples
+        Sample data. For transfer-function input, the shape is
+        ``tuple(map(len, sampling_values)) + (dim_output, dim_input)``.
+    """
+    fom = samples_or_fom.transfer_function if hasattr(samples_or_fom, 'transfer_function') else samples_or_fom
+    if not isinstance(fom, TransferFunction):
+        return np.asarray(samples_or_fom)
+
+    if isinstance(sampling_values, np.ndarray):
+        sampling_values = (sampling_values,)
+    else:
+        sampling_values = tuple(sampling_values)
+    if len(sampling_values) != fom.parameters.dim + 1:
+        raise ValueError('sampling_values must contain the Laplace variable and one array per parameter.')
+    if any(values.ndim != 1 or len(values) == 0 for values in sampling_values):
+        raise ValueError('sampling_values must contain non-empty one-dimensional arrays.')
+
+    sample_shape = tuple(map(len, sampling_values))
+    samples = [
+        fom.eval_tf(values[0], mu=fom.parameters.parse(values[1:]))
+        for values in product(*sampling_values)
+    ]
+    return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
+
+
+def complete_conjugate_pairs(nodes, samples, *data):
+    """Append missing conjugate nodes and their conjugate-aligned data."""
+    nodes = _nodes(nodes, 'nodes')
+    data = (np.asarray(samples), *(np.asarray(values) for values in data))
+    if any(values.shape[:1] != (len(nodes),) for values in data):
+        raise ValueError('Data must be aligned with nodes.')
+
+    for i, node in enumerate(nodes):
+        if node.conj() not in nodes:
+            nodes = np.append(nodes, node.conj())
+            data = tuple(np.concatenate((values, values[i:i + 1].conj())) for values in data)
+
+    return nodes, *data
+
+
+def partition_frequencies(nodes, samples, partitioning='even-odd', ordering='regular', conjugate=True):
+    """Partition frequency samples into left and right Loewner data sets.
+
+    Complex-conjugate nodes are assigned to the same set when `conjugate` is `True`. In that
+    case, `nodes` must already contain the corresponding conjugate samples.
+    """
+    if not isinstance(partitioning, str):
+        return tuple(np.asarray(indices) for indices in partitioning)
+
+    if conjugate:
+        positive_imaginary = np.flatnonzero(nodes.imag > 0)
+        real = np.flatnonzero(nodes.imag == 0)
+        if ordering == 'magnitude':
+            positive_imaginary = positive_imaginary[np.argsort([np.linalg.norm(samples[i])
+                                                                for i in positive_imaginary])]
+            real = real[np.argsort([np.linalg.norm(samples[i]) for i in real])]
+        elif ordering == 'random':
+            rng = new_rng(0)
+            rng.shuffle(positive_imaginary)
+            rng.shuffle(real)
+
+        if partitioning == 'even-odd':
+            left = np.concatenate((real[::2], positive_imaginary[::2]))
+            right = np.concatenate((real[1::2], positive_imaginary[1::2]))
+        elif partitioning == 'half-half':
+            real = np.array_split(real, 2)
+            positive_imaginary = np.array_split(positive_imaginary, 2)
+            left = np.concatenate((real[0], positive_imaginary[0]))
+            right = np.concatenate((real[1], positive_imaginary[1]))
+        else:
+            raise ValueError(f'Unknown partitioning: {partitioning}.')
+
+        left_conjugates = np.concatenate([np.flatnonzero(nodes == nodes[i].conj()) for i in left if nodes[i].imag]) \
+            if np.any(nodes[left].imag) else np.array([], dtype=int)
+        right_conjugates = np.concatenate([np.flatnonzero(nodes == nodes[i].conj()) for i in right if nodes[i].imag]) \
+            if np.any(nodes[right].imag) else np.array([], dtype=int)
+        return np.concatenate((left, left_conjugates)), np.concatenate((right, right_conjugates))
+
+    if ordering == 'magnitude':
+        indices = np.argsort([np.linalg.norm(sample) for sample in samples])
+    elif ordering == 'random':
+        indices = new_rng(0).permutation(len(nodes))
+    elif ordering == 'regular':
+        indices = np.arange(len(nodes))
+    else:
+        raise ValueError(f'Unknown ordering: {ordering}.')
+
+    if partitioning == 'even-odd':
+        return indices[::2], indices[1::2]
+    if partitioning == 'half-half':
+        return tuple(np.array_split(indices, 2))
+    raise ValueError(f'Unknown partitioning: {partitioning}.')
 
 
 def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=None):
@@ -267,8 +373,14 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
 
     Returns
     -------
-    quadruple
-        :class:`LoewnerQuadruple` containing two-dimensional `L`, `Ls`, `V` and `W` arrays.
+    L
+        Loewner matrix.
+    Ls
+        Shifted Loewner matrix.
+    V
+        Left interpolation data.
+    W
+        Right interpolation data.
     """
     left_nodes = _nodes(left_nodes, 'left_nodes')
     right_nodes = _nodes(right_nodes, 'right_nodes')
@@ -348,4 +460,4 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
         V = V[:, 0].reshape(len(left_nodes) * dim_output, dim_input)
         W = np.transpose(W[0], (1, 0, 2)).reshape(dim_output, len(right_nodes) * dim_input)
 
-    return LoewnerQuadruple(L, Ls, V, W)
+    return L, Ls, V, W

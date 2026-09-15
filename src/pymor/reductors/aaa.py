@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import loewner_matrix_nd
+from pymor.algorithms.loewner import complete_conjugate_pairs, loewner_matrix_nd, sample_transfer_function
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
@@ -74,24 +74,15 @@ class PAAAReductor(BasicObject):
             sampling_values = [sampling_values]
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
-        if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
-            fom = samples_or_fom
-            if not isinstance(samples_or_fom, TransferFunction):
-                fom = fom.transfer_function
+        fom = samples_or_fom.transfer_function if hasattr(samples_or_fom, 'transfer_function') else samples_or_fom
+        self.samples = sample_transfer_function(sampling_values, samples_or_fom)
+        if isinstance(fom, TransferFunction):
             self.num_vars = 1 + fom.parameters.dim
-
             assert len(sampling_values) == self.num_vars
             self._parameters = fom.parameters
-            self.samples = np.empty([len(sv) for sv in sampling_values] + [fom.dim_output, fom.dim_input],
-                                    dtype=sampling_values[0].dtype)
-            for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
-                                 itertools.product(*sampling_values), strict=True):
-                params = fom.parameters.parse(vals[1:])
-                self.samples[idx] = fom.eval_tf(vals[0], mu=params)
             if fom.dim_input == fom.dim_output == 1:
                 self.samples = self.samples.reshape(self.samples.shape[:-2])
         else:
-            self.samples = samples_or_fom
             # SISO case requires reshape
             if self.samples.shape[-2:] == (1, 1):
                 self.samples = self.samples.reshape(self.samples.shape[:-2])
@@ -100,18 +91,7 @@ class PAAAReductor(BasicObject):
 
         # add complex conjugate samples
         if conjugate:
-            s_conj_list = []
-            samples_conj_list = None
-            for i, s in enumerate(sampling_values[0]):
-                if s.conj() not in sampling_values[0]:
-                    s_conj_list.append(s.conj())
-                    if samples_conj_list is None:
-                        samples_conj_list = self.samples[i, None].conj()
-                    else:
-                        samples_conj_list = np.concatenate((samples_conj_list, self.samples[i, None].conj()))
-            if s_conj_list:
-                sampling_values[0] = np.append(sampling_values[0], s_conj_list)
-                self.samples = np.concatenate((self.samples, samples_conj_list))
+            sampling_values[0], self.samples = complete_conjugate_pairs(sampling_values[0], self.samples)
 
         # Transform samples for MIMO case
         if len(self.samples.shape) != len(sampling_values):

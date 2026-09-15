@@ -7,9 +7,20 @@ import pytest
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.iosys import LTIModel
-from pymor.reductors.h2 import IRKAReductor, TFIRKAReductor
+from pymor.models.transfer_function import TransferFunction
+from pymor.reductors.h2 import IRKAReductor, TFIRKAReductor, VectorFittingReductor
 
 pytestmark = pytest.mark.builtin
+
+
+def test_vector_fitting_transfer_function_input():
+    fom = TransferFunction(1, 1, lambda s: np.array([[1 / (s + 1)]]))
+
+    reductor = VectorFittingReductor(1j * np.arange(1, 3), fom, weights=np.array([2., 3.]))
+
+    assert np.array_equal(reductor.s, [1j, 2j, -1j, -2j])
+    assert np.allclose(reductor.Hs, [1 / (1 + 1j), 1 / (1 + 2j), 1 / (1 - 1j), 1 / (1 - 2j)])
+    assert np.allclose(reductor.weights_sqrt**2, [2., 3., 2., 3.])
 
 
 def test_irka():

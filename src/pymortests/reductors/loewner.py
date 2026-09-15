@@ -5,6 +5,7 @@
 import numpy as np
 import pytest
 
+from pymor.algorithms.loewner import partition_frequencies
 from pymor.models.examples import penzl_mimo_example
 from pymor.reductors.loewner import LoewnerReductor
 
@@ -96,12 +97,12 @@ def test_loewner_unitary_realification():
         assert np.allclose(np.linalg.norm(complex_matrix), np.linalg.norm(real_matrix))
 
 
-def test_loewner_magnitude_ordering_without_conjugates():
+def test_partition_frequencies_magnitude_ordering_without_conjugates():
     s = 1j * np.arange(1, 5)
     Hs = np.array([4., 1., 3., 2.])
-    loewner = LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False)
 
-    left, right = loewner._partition_frequencies()
+    left, right = partition_frequencies(s, Hs, ordering='magnitude', conjugate=False)
     assert np.array_equal(left, [1, 2])
     assert np.array_equal(right, [3, 0])
-    assert all(np.all(np.isfinite(matrix)) for matrix in loewner.loewner_quadruple())
+    assert all(np.all(np.isfinite(matrix))
+               for matrix in LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False).loewner_quadruple())

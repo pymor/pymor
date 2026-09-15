@@ -5,10 +5,14 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import loewner_quadruple
+from pymor.algorithms.loewner import (
+    complete_conjugate_pairs,
+    loewner_quadruple,
+    partition_frequencies,
+    sample_transfer_function,
+)
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
-from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
@@ -49,53 +53,35 @@ class LoewnerReductor(CacheableObject):
 
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='full'):
         assert isinstance(s, np.ndarray)
-        if hasattr(Hs, 'transfer_function'):
-            Hs = Hs.transfer_function
-        assert isinstance(Hs, TransferFunction | np.ndarray | list)
-
         assert partitioning in ('even-odd', 'half-half') \
             or len(partitioning) == 2 \
             and len(partitioning[0]) + len(partitioning[1]) == len(s)
         assert ordering in ('magnitude', 'random', 'regular')
 
-        if isinstance(Hs, TransferFunction):
-            Hss = np.empty((len(s), Hs.dim_output, Hs.dim_input), dtype=s[0].dtype)
-            for i, ss in enumerate(s):
-                Hss[i] = Hs.eval_tf(ss)
-            Hs = Hss
-        else:
-            assert Hs.shape[0] == len(s)
+        Hs = sample_transfer_function(s, Hs)
+        assert Hs.shape[0] == len(s)
 
         common_dtype = np.promote_types(s.dtype, Hs.dtype)
         Hs = Hs.astype(common_dtype, copy=False)
 
         # ensure that complex sampling values appear in complex conjugate pairs
         if conjugate:
-            # if user provides partitioning sizes, make sure they are adjusted
+            old_s = s
+            s, Hs = complete_conjugate_pairs(s, Hs)
             if isinstance(partitioning, tuple):
-                p0 = partitioning[0]
-                p1 = partitioning[1]
-                for i, ss in enumerate(s):
-                    if np.conj(ss) not in s:
-                        s = np.append(s, np.conj(ss))
-                        Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
-                        if i in p0:
-                            p0 = np.append(p0, len(s)-1)
-                        else:
-                            p1 = np.append(p1, len(s)-1)
+                p0, p1 = partitioning
+                for i in range(len(old_s), len(s)):
+                    source = np.flatnonzero(old_s == s[i].conj())[0]
+                    if source in p0:
+                        p0 = np.append(p0, i)
+                    else:
+                        p1 = np.append(p1, i)
                 if len(p0) != len(partitioning[0]) or len(p1) != len(partitioning[1]):
                     self.logger.info('Added complex conjugates to partitionings. '
                                      f'New partitioning sizes are ({len(p0)}, {len(p1)}).')
                 partitioning = (p0, p1)
-            else:
-                s_new = s
-                for i, ss in enumerate(s):
-                    if np.conj(ss) not in s:
-                        s_new = np.append(s_new, np.conj(ss))
-                        Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
-                if len(s) != len(s_new):
-                    self.logger.info(f'Added {len(s_new) - len(s)} complex conjugates to the data.')
-                s = s_new
+            elif len(s) != len(old_s):
+                self.logger.info(f'Added {len(s) - len(old_s)} complex conjugates to the data.')
 
         if len(Hs.shape) > 1:
             self.dim_output = Hs.shape[1]
@@ -153,68 +139,6 @@ class LoewnerReductor(CacheableObject):
         return LTIModel.from_matrices(A, B, C, D=None, E=E)
 
 
-    def _partition_frequencies(self):
-        """Create a frequency partitioning."""
-        # must keep complex conjugate frequencies in the same partitioning
-        if self.conjugate:
-            # partition frequencies corresponding to positive imaginary part
-            pimidx = np.where(self.s.imag > 0)[0]
-
-            # treat real-valued samples separately in order to ensure balanced partitioning
-            ridx = np.where(self.s.imag == 0)[0]
-
-            if self.ordering == 'magnitude':
-                pimidx_sort = np.argsort([np.linalg.norm(self.Hs[i]) for i in pimidx])
-                pimidx_ordered = pimidx[pimidx_sort]
-                ridx_sort = np.argsort([np.linalg.norm(self.Hs[i]) for i in ridx])
-                ridx_ordered = ridx[ridx_sort]
-            elif self.ordering == 'random':
-                rng = new_rng(0)
-                rng.shuffle(pimidx)
-                pimidx_ordered = pimidx
-                rng.shuffle(ridx)
-                ridx_ordered = ridx
-            elif self.ordering == 'regular':
-                pimidx_ordered = pimidx
-                ridx_ordered = ridx
-
-            if self.partitioning == 'even-odd':
-                left = np.concatenate((ridx_ordered[::2], pimidx_ordered[::2]))
-                right = np.concatenate((ridx_ordered[1::2], pimidx_ordered[1::2]))
-            elif self.partitioning == 'half-half':
-                pim_split = np.array_split(pimidx_ordered, 2)
-                r_split = np.array_split(ridx_ordered, 2)
-                left = np.concatenate((r_split[0], pim_split[0]))
-                right = np.concatenate((r_split[1], pim_split[1]))
-
-            l_cc = np.array([], dtype=int)
-            for le in left:
-                if self.s[le].imag != 0:
-                    l_cc = np.concatenate((l_cc, np.where(self.s == self.s[le].conj())[0]))
-            left = np.concatenate((left, l_cc))
-
-            r_cc = np.array([], dtype=int)
-            for ri in right:
-                if self.s[ri].imag != 0:
-                    r_cc = np.concatenate((r_cc, np.where(self.s == self.s[ri].conj())[0]))
-            right = np.concatenate((right, r_cc))
-
-            return (left, right)
-        else:
-            if self.ordering == 'magnitude':
-                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in range(len(self.Hs))])
-            elif self.ordering == 'random':
-                rng = new_rng(0)
-                idx = rng.permutation(self.s.shape[0])
-            elif self.ordering == 'regular':
-                idx = np.arange(self.s.shape[0])
-
-            if self.partitioning == 'even-odd':
-                return (idx[::2], idx[1::2])
-            elif self.partitioning == 'half-half':
-                idx_split = np.array_split(idx, 2)
-                return (idx_split[0], idx_split[1])
-
     @cached
     def loewner_quadruple(self):
         r"""Construct a Loewner quadruple as |NumPy arrays|.
@@ -228,7 +152,7 @@ class LoewnerReductor(CacheableObject):
         :math:`\mathbb{L}_s`, left interpolation data :math:`V` and right interpolation
         data :math:`W`.
         """
-        ip, jp = self._partition_frequencies() if isinstance(self.partitioning, str) else self.partitioning
+        ip, jp = partition_frequencies(self.s, self.Hs, self.partitioning, self.ordering, self.conjugate)
         left_directions = right_directions = None
         if self.dim_input != 1 or self.dim_output != 1:
             if self.mimo_handling == 'random':
