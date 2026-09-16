@@ -60,17 +60,14 @@ class QuadBTReductor(CacheableObject):
     feedthrough
         Known feedthrough matrix of shape `(dim_output, dim_input)`, or a scalar for SISO
         data. Subtracted from the samples and restored in the ROM. `None` means zero.
-    real
-        If `True`, use unitary conjugate-pair transformations to obtain a real ROM.
-        Each completed node set must be conjugate-closed, with conjugate sample data and
-        equal weights within every pair. The feedthrough must be real. Roundoff-sized
-        discrepancies in conjugate nodes and discrete-time endpoints are canonicalised.
-    conjugate
-        If `True`, append missing conjugate nodes and conjugated samples, derivatives and
-        supplied weights. This assumes a real underlying system. Supplied weights are
-        per-node weights for the full contour; they are copied, not halved. Conjugate nodes
-        and discrete-time endpoints are canonicalised as for `real=True`.
-        Defaults to `False`; without completion, supply the full contour yourself.
+    force_real
+        If `True`, assume a real underlying system, append missing conjugate nodes and
+        conjugated samples, derivatives and supplied weights, and use unitary pair
+        transformations to obtain a real ROM. Supplied weights are per-node weights for
+        the full contour; they are copied, not halved, and must agree within every pair.
+        The feedthrough must be real. Roundoff-sized discrepancies in conjugate nodes and
+        discrete-time endpoints are canonicalised. If `False`, neither conjugate completion
+        nor realification is performed.
 
     Notes
     -----
@@ -88,15 +85,15 @@ class QuadBTReductor(CacheableObject):
     generate_samples = staticmethod(_sample_transfer_function)
 
     def __init__(self, left_nodes, right_nodes, left_values, right_values, left_weights=None, right_weights=None,
-                 *, derivatives=None, sampling_time=0, feedthrough=None, real=True, conjugate=False):
+                 *, derivatives=None, sampling_time=0, feedthrough=None, force_real=True):
         sampling_time = float(sampling_time)
         if not np.isfinite(sampling_time) or sampling_time < 0:
             raise ValueError('sampling_time must be finite and nonnegative.')
         left_nodes, left_values, left_weights, derivatives = self._prepare_data(
-            left_nodes, left_values, left_weights, derivatives, 'left', sampling_time, conjugate, real,
+            left_nodes, left_values, left_weights, derivatives, 'left', sampling_time, force_real,
         )
         right_nodes, right_values, right_weights, _ = self._prepare_data(
-            right_nodes, right_values, right_weights, None, 'right', sampling_time, conjugate, real,
+            right_nodes, right_values, right_weights, None, 'right', sampling_time, force_real,
         )
         if left_values.shape[1:] != right_values.shape[1:]:
             raise ValueError('Left and right samples must have matching input and output dimensions.')
@@ -107,9 +104,9 @@ class QuadBTReductor(CacheableObject):
                 feedthrough = feedthrough.reshape(1, 1)
             if feedthrough.shape != (self.dim_output, self.dim_input) or not np.all(np.isfinite(feedthrough)):
                 raise ValueError('feedthrough must be a finite matrix of shape (dim_output, dim_input).')
-            if real:
+            if force_real:
                 if np.any(feedthrough.imag != 0):
-                    raise ValueError('feedthrough must be real when real=True.')
+                    raise ValueError('feedthrough must be real when force_real=True.')
                 feedthrough = feedthrough.real
         self.__auto_init(locals())
 
@@ -131,8 +128,8 @@ class QuadBTReductor(CacheableObject):
         return nodes
 
     @classmethod
-    def _prepare_data(cls, nodes, values, weights, derivatives, name, sampling_time, conjugate, real):
-        nodes = cls._nodes(nodes, name, sampling_time, conjugate or real)
+    def _prepare_data(cls, nodes, values, weights, derivatives, name, sampling_time, force_real):
+        nodes = cls._nodes(nodes, name, sampling_time, force_real)
         values = cls._samples(values, len(nodes), f'{name}_values')
         if derivatives is not None:
             derivatives = cls._samples(derivatives, len(nodes), 'derivatives')
@@ -141,13 +138,13 @@ class QuadBTReductor(CacheableObject):
         automatic_weights = weights is None
         weights = np.ones(len(nodes)) if automatic_weights else weights
         nodes, weights = cls._quadrature_rule(nodes, weights, name, False)
-        if conjugate:
+        if force_real:
             extra = () if derivatives is None else (derivatives,)
             nodes, values, weights, *extra = complete_conjugate_pairs(nodes, values, weights, *extra)
             derivatives = extra[0] if extra else None
         if automatic_weights:
             weights = cls._trapezoidal_weights(nodes, sampling_time)
-        nodes, weights = cls._quadrature_rule(nodes, weights, name, real)
+        nodes, weights = cls._quadrature_rule(nodes, weights, name, force_real)
         return nodes, values, weights, derivatives
 
     @staticmethod
@@ -172,18 +169,18 @@ class QuadBTReductor(CacheableObject):
         return weights
 
     @staticmethod
-    def _quadrature_rule(nodes, weights, name, real):
+    def _quadrature_rule(nodes, weights, name, force_real):
         weights = np.array(weights, copy=True)
         if weights.shape != nodes.shape or not np.isrealobj(weights) \
                 or not np.all(np.isfinite(weights)) or np.any(weights < 0):
             raise ValueError(f'{name}_weights must be finite, real, nonnegative and aligned with nodes.')
         weights = weights.astype(float)
-        if real:
+        if force_real:
             transformation = _real_transformation(nodes)
             # Weighting commutes with realification only for equal conjugate-pair weights.
             if not np.allclose(transformation * weights, weights[:, np.newaxis] * transformation,
                                rtol=1e-12, atol=0):
-                raise ValueError(f'{name}_weights must be equal at conjugate nodes when real=True.')
+                raise ValueError(f'{name}_weights must be equal at conjugate nodes when force_real=True.')
         return nodes, weights
 
     @staticmethod
@@ -202,13 +199,13 @@ class QuadBTReductor(CacheableObject):
 
         For weighted resolvent factors :math:`O` and :math:`R`, these matrices equal
         :math:`OER`, :math:`OAR`, :math:`OB` and :math:`CR`, respectively. They are
-        constructed without accessing the underlying system matrices. When `real=True`,
+        constructed without accessing the underlying system matrices. When `force_real=True`,
         unitary transformations give their real counterparts.
         """
         D = 0 if self.feedthrough is None else self.feedthrough
         L, Ls, V, W = loewner_quadruple(
             self.left_nodes, self.right_nodes, self.left_values - D, self.right_values - D,
-            derivatives=self.derivatives, force_real=self.real,
+            derivatives=self.derivatives, force_real=self.force_real,
         )
         wl = np.repeat(np.sqrt(self.left_weights), self.dim_output)[:, np.newaxis]
         wr = np.repeat(np.sqrt(self.right_weights), self.dim_input)[np.newaxis, :]

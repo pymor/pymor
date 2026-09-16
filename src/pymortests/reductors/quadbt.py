@@ -17,8 +17,8 @@ pytestmark = pytest.mark.builtin
 @pytest.mark.parametrize('sampling_time', [0, .1])
 @pytest.mark.parametrize('shape', ['siso', 'matrix_siso', 'mimo'])
 @pytest.mark.parametrize('shared_nodes', [False, True])
-@pytest.mark.parametrize('real', [False, True])
-def test_quadbt_resolvent_factors(rng, sampling_time, shape, shared_nodes, real):
+@pytest.mark.parametrize('force_real', [False, True])
+def test_quadbt_resolvent_factors(rng, sampling_time, shape, shared_nodes, force_real):
     n = 3
     p, m = (2, 3) if shape == 'mimo' else (1, 1)
     E = np.array([[2., .1, 0], [0, 1., .2], [.1, 0, 3.]])
@@ -46,7 +46,7 @@ def test_quadbt_resolvent_factors(rng, sampling_time, shape, shared_nodes, real)
         if derivatives is not None:
             derivatives = derivatives[:, 0, 0]
     reductor = QuadBTReductor(left, right, lv, rv, wl, wr, derivatives=derivatives,
-                             feedthrough=D, sampling_time=sampling_time, real=real)
+                             feedthrough=D, sampling_time=sampling_time, force_real=force_real)
     K, M, Bd, Cd = reductor.quadrature_matrices()
     assert K.shape == M.shape == (len(left) * p, len(right) * m)
     assert Bd.shape == (len(left) * p, m)
@@ -55,7 +55,7 @@ def test_quadbt_resolvent_factors(rng, sampling_time, shape, shared_nodes, real)
     O = np.vstack([np.sqrt(w) * C @ resolvent(z) for z, w in zip(left, wl, strict=True)])
     R = np.hstack([np.sqrt(w) * resolvent(z) @ B for z, w in zip(right, wr, strict=True)])
     reference = (O @ E @ R, O @ A @ R, O @ B, C @ R)
-    if real:
+    if force_real:
         assert all(np.isrealobj(matrix) for matrix in (K, M, Bd, Cd))
         for actual, expected in zip((K, M, Bd, Cd), reference, strict=True):
             assert np.allclose(spla.svdvals(actual), spla.svdvals(expected))
@@ -76,7 +76,7 @@ def test_quadbt_resolvent_factors(rng, sampling_time, shape, shared_nodes, real)
         assert np.allclose(reduced.transfer_function.eval_tf(z), expected)
         assert np.allclose(recovered.transfer_function.eval_tf(z), transfer_function(z))
     assert np.allclose(recovered.D.matrix, D)
-    if real:
+    if force_real:
         assert all(np.isrealobj(op.matrix) for op in (reduced.A, reduced.B, reduced.C))
     with pytest.raises(ValueError, match='exceeds the numerical rank 3'):
         reductor.reduce(n + 1)
@@ -165,7 +165,7 @@ def test_quadbt_scalar_feedthrough_and_complex_rom():
     left, right = np.array([1j, -1j]), np.array([2j, -2j])
     D = 2 + 3j
     reductor = _siso_reductor(left_values=1 / (left + 1) + D, right_values=1 / (right + 1) + D,
-                             left_weights=[1, 2], right_weights=[3, 4], feedthrough=D, real=False)
+                             left_weights=[1, 2], right_weights=[3, 4], feedthrough=D, force_real=False)
     rom = reductor.reduce(np.int64(1))
     assert np.allclose(rom.transfer_function.eval_tf(3j), 1 / (3j + 1) + D)
 
@@ -191,7 +191,7 @@ def test_quadbt_sampled_model(rng, sampling_time, mimo, model_input, shared_node
     right_values = QuadBTReductor.generate_samples(right, source)
     derivatives = QuadBTReductor.generate_samples(left, source, derivative=True) if shared_nodes else None
     reductor = QuadBTReductor(left, right, left_values, right_values, derivatives=derivatives,
-                             sampling_time=sampling_time, feedthrough=D, conjugate=True)
+                             sampling_time=sampling_time, feedthrough=D)
     assert reductor.sampling_time == sampling_time
     assert np.array_equal(reductor.feedthrough, D)
     assert len(reductor.left_nodes) == len(reductor.right_nodes) == 6
@@ -199,7 +199,7 @@ def test_quadbt_sampled_model(rng, sampling_time, mimo, model_input, shared_node
     derivatives = np.array([tf.eval_dtf(z) for z in left]) if shared_nodes else None
     reference = QuadBTReductor(left, right, np.array([tf.eval_tf(z) for z in left]),
                                np.array([tf.eval_tf(z) for z in right]), derivatives=derivatives,
-                               sampling_time=sampling_time, feedthrough=D, real=True, conjugate=True)
+                               sampling_time=sampling_time, feedthrough=D, force_real=True)
     for actual, expected in zip(reductor.quadrature_matrices(), reference.quadrature_matrices(), strict=True):
         assert np.allclose(actual, expected)
     rom = reductor.reduce(3)
@@ -222,7 +222,7 @@ def test_quadbt_continuous_trapezoid_ordering():
 
 def test_quadbt_continuous_trapezoid_completion():
     left, right = 1j * np.array([10, 1]), 1j * np.array([20, 2])
-    reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1), real=True, conjugate=True)
+    reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1), force_real=True)
     assert np.array_equal(reductor.left_nodes, [10j, 1j, -10j, -1j])
     assert np.allclose(reductor.left_weights, np.array([4.5, 5.5, 4.5, 5.5]) / (2 * np.pi))
     assert np.allclose(reductor.right_weights, 2 * reductor.left_weights)
@@ -257,7 +257,7 @@ def test_quadbt_nonuniform_periodic_trapezoid():
     nodes = np.exp(1j * np.array([0, np.pi / 3, np.pi, -np.pi / 3]))
     values = 1 / (nodes - .5)
     reductor = QuadBTReductor(nodes, nodes, values, values, derivatives=-values**2,
-                             sampling_time=.1, real=True)
+                             sampling_time=.1, force_real=True)
     assert len(reductor.left_nodes) == 4
     assert np.allclose(reductor.left_weights, [1 / 6, 1 / 4, 1 / 3, 1 / 4])
     assert np.allclose(reductor.right_weights, reductor.left_weights)
@@ -267,7 +267,7 @@ def test_quadbt_nonuniform_periodic_trapezoid():
 def test_quadbt_completion_preserves_supplied_data():
     left, right = np.array([1j, 2j]), np.array([-1j, -3j])
     reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1),
-                             [.2, .5], [.8, .4], derivatives=-1 / (left + 1)**2, real=True, conjugate=True)
+                             [.2, .5], [.8, .4], derivatives=-1 / (left + 1)**2, force_real=True)
     assert np.array_equal(reductor.left_weights, [.2, .5, .2, .5])
     assert np.array_equal(reductor.right_weights, [.8, .4, .8, .4])
     assert np.allclose(reductor.left_values[:, 0, 0], 1 / (reductor.left_nodes + 1))
@@ -294,7 +294,7 @@ def test_quadbt_sampling_before_construction():
     derivatives = QuadBTReductor.generate_samples(left, tf, derivative=True)
     assert calls == [1j, 2j, -1j, 3j, 1j, 2j]
     calls.clear()
-    reductor = QuadBTReductor(left, right, left_values, right_values, derivatives=derivatives, conjugate=True)
+    reductor = QuadBTReductor(left, right, left_values, right_values, derivatives=derivatives)
     assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
     assert calls == []
 
@@ -305,7 +305,7 @@ def test_quadbt_sampled_data_explicit_weights():
     left_values = QuadBTReductor.generate_samples(left, tf)
     right_values = QuadBTReductor.generate_samples(right, tf)
     reductor = QuadBTReductor(left, right, left_values, right_values,
-                             left_weights=[.2, .5], right_weights=[.8, .4], conjugate=True)
+                             left_weights=[.2, .5], right_weights=[.8, .4])
     assert np.array_equal(reductor.left_weights, [.2, .5, .2, .5])
     assert np.array_equal(reductor.right_weights, [.8, .4, .8, .4])
     assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
@@ -319,22 +319,22 @@ def test_quadbt_sampled_data_missing_derivatives():
     with pytest.raises(ValueError, match='derivative was not given'):
         QuadBTReductor.generate_samples(left, tf, derivative=True)
     with pytest.raises(ValueError, match='require derivative_terms'):
-        QuadBTReductor(left, right, left_values, right_values, conjugate=True).reduce(1)
-    reductor = QuadBTReductor(left, right, left_values, right_values, derivatives=-1 / (left + 1)**2, conjugate=True)
+        QuadBTReductor(left, right, left_values, right_values).reduce(1)
+    reductor = QuadBTReductor(left, right, left_values, right_values, derivatives=-1 / (left + 1)**2)
     assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
 
 
-@pytest.mark.parametrize(('nodes', 'sampling_time', 'real', 'message'), [
+@pytest.mark.parametrize(('nodes', 'sampling_time', 'force_real', 'message'), [
     ([1j], 0, False, 'at least two imaginary-axis nodes'),
     ([1 + 1j, 1 - 1j], 0, False, 'imaginary-axis nodes'),
     ([2j, -2j], .1, False, 'unit-circle nodes'),
     ([1, np.exp(2j * np.pi)], .1, True, 'distinct'),
     ([1, np.exp(2j * np.pi)], .1, False, 'do not repeat the endpoint'),
 ])
-def test_quadbt_invalid_trapezoid_nodes(nodes, sampling_time, real, message):
+def test_quadbt_invalid_trapezoid_nodes(nodes, sampling_time, force_real, message):
     with pytest.raises(ValueError, match=message):
         QuadBTReductor(nodes, nodes, np.ones(len(nodes)), np.ones(len(nodes)),
-                       sampling_time=sampling_time, real=real)
+                       sampling_time=sampling_time, force_real=force_real)
 
 
 def test_quadbt_sampled_complex_system():
@@ -342,7 +342,7 @@ def test_quadbt_sampled_complex_system():
     left, right = np.array([1j, 2j]), np.array([3j, 4j])
     left_values = QuadBTReductor.generate_samples(left, tf)
     right_values = QuadBTReductor.generate_samples(right, tf)
-    reductor = QuadBTReductor(left, right, left_values, right_values, real=False, feedthrough=2j)
+    reductor = QuadBTReductor(left, right, left_values, right_values, force_real=False, feedthrough=2j)
     assert len(reductor.left_nodes) == 2
     assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), tf.eval_tf(0))
 
