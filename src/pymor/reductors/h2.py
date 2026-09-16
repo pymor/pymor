@@ -850,13 +850,13 @@ class VectorFittingReductor(BasicObject):
     weights
         Weights in the weighted least squares error as a 1D |NumPy array|.
         If not given, it is set to a vector of ones.
-    conjugate
+    force_real
         Whether to include conjugated data to enforce realness.
     """
 
     generate_samples = staticmethod(_sample_transfer_function)
 
-    def __init__(self, s, Hs, weights=None, conjugate=True):
+    def __init__(self, s, Hs, weights=None, force_real=True):
         assert isinstance(s, np.ndarray)
         assert s.ndim == 1
 
@@ -876,7 +876,7 @@ class VectorFittingReductor(BasicObject):
         assert np.all(weights > 0)
 
         # add complex conjugate samples
-        if conjugate:
+        if force_real:
             s, Hs, weights = complete_conjugate_pairs(s, Hs, weights)
 
         self.s = s

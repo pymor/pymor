@@ -33,11 +33,11 @@ def custom_partitioning(rng):
         lambda rng: ({'tol': 1e-12}, {'ordering': 'magnitude'}, [10, 2, 3]),
         lambda rng: ({'tol': 1e-12}, {'ordering': 'random'}, [10, 2, 3]),
         lambda rng: ({'tol': 1e-12}, {'ordering': 'regular'}, [10, 2, 3]),
-        lambda rng: ({'tol': 1e-12}, {'conjugate': False}, [10, 2, 3]),
+        lambda rng: ({'tol': 1e-12}, {'force_real': False}, [10, 2, 3]),
         lambda rng: ({'tol': 1e-12}, {'mimo_handling': 'full'}, [10, 2, 3]),
         lambda rng: ({'tol': 1e-12}, {'mimo_handling': 'random'}, [10, 2, 3]),
         lambda rng: ({'tol': 1e-12}, {'mimo_handling': (rng.random((20, 3)), rng.random((2, 20))),
-                                      'conjugate': False}, [10, 2, 3])
+                                      'force_real': False}, [10, 2, 3])
     ])
 def reduce_kwargs_and_loewner_kwargs_and_model_args(rng, request):
     return request.param(rng)
@@ -94,8 +94,8 @@ def test_loewner_unitary_realification():
     partitioning = (np.array([0, 2, 3]), np.array([1, 4, 5]))
 
     complex_quadruple = LoewnerReductor(s, Hs, partitioning=partitioning,
-                                        conjugate=False).loewner_quadruple()
-    real_quadruple = LoewnerReductor(s, Hs, conjugate=True).loewner_quadruple()
+                                        force_real=False).loewner_quadruple()
+    real_quadruple = LoewnerReductor(s, Hs, force_real=True).loewner_quadruple()
 
     assert all(not np.iscomplexobj(matrix) for matrix in real_quadruple)
     for complex_matrix, real_matrix in zip(complex_quadruple, real_quadruple, strict=True):
@@ -106,11 +106,11 @@ def test_partition_frequencies_magnitude_ordering_without_conjugates():
     s = 1j * np.arange(1, 5)
     Hs = np.array([4., 1., 3., 2.])
 
-    left, right = partition_frequencies(s, Hs, ordering='magnitude', conjugate=False)
+    left, right = partition_frequencies(s, Hs, ordering='magnitude', force_real=False)
     assert np.array_equal(left, [1, 2])
     assert np.array_equal(right, [3, 0])
     assert all(np.all(np.isfinite(matrix))
-               for matrix in LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False).loewner_quadruple())
+               for matrix in LoewnerReductor(s, Hs, ordering='magnitude', force_real=False).loewner_quadruple())
 
 
 @pytest.mark.parametrize('reductor_cls', [LoewnerReductor, PAAAReductor, VectorFittingReductor])
@@ -127,7 +127,7 @@ def test_data_driven_reductor_sampling_api(reductor_cls, model_input):
     derivatives = reductor_cls.generate_samples(nodes, source, derivative=True)
     assert np.allclose(samples[:, 0, 0], 1 / (nodes + 1))
     assert np.allclose(derivatives[:, 0, 0], -1 / (nodes + 1)**2)
-    reductor = reductor_cls(nodes, samples, conjugate=False)
+    reductor = reductor_cls(nodes, samples, force_real=False)
     assert np.array_equal(reductor.generate_samples(nodes, source), samples)
     with pytest.raises(TypeError, match='fom must be'):
         reductor_cls.generate_samples(nodes, samples)

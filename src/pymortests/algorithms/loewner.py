@@ -195,7 +195,7 @@ def test_loewner_quadruple_unitary_realification():
 
     L, Ls, *_ = loewner_quadruple(left_nodes, right_nodes, values(left_nodes), values(right_nodes))
     real_quadruple = loewner_quadruple(
-        left_nodes, right_nodes, values(left_nodes), values(right_nodes), real=True
+        left_nodes, right_nodes, values(left_nodes), values(right_nodes), force_real=True
     )
     real_L, real_Ls, *_ = real_quadruple
 
@@ -208,4 +208,4 @@ def test_loewner_quadruple_rejects_nonreal_transformation():
     left_nodes = np.array([1j, -1j])
     right_nodes = np.array([2j, -2j])
     with pytest.raises(ValueError, match='not real'):
-        loewner_quadruple(left_nodes, right_nodes, np.array([1, 2j]), np.array([3, 4j]), real=True)
+        loewner_quadruple(left_nodes, right_nodes, np.array([1, 2j]), np.array([3, 4j]), force_real=True)

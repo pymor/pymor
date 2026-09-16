@@ -351,7 +351,7 @@ class TFBHIReductor(BasicObject):
         dHs = np.array([self.fom.eval_dtf(s, mu=self.mu) for s in sigma])
         L, Ls, Br, Cr = loewner_quadruple(
             sigma, sigma, Hs, Hs,
-            left_directions=c, right_directions=b, derivatives=dHs, real=True,
+            left_directions=c, right_directions=b, derivatives=dHs, force_real=True,
         )
         Er = -L
         Ar = -Ls

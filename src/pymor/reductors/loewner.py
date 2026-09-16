@@ -36,7 +36,7 @@ class LoewnerReductor(CacheableObject):
     ordering
         The ordering with respect to which the partitioning rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
-    conjugate
+    force_real
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
         same partitioning or not. If `True` will automatically generate conjugate data if necessary.
     mimo_handling
@@ -45,14 +45,14 @@ class LoewnerReductor(CacheableObject):
         - `'random'` for using random tangential directions.
         - `'full'` for fully interpolating all input-output pairs.
         - Tuple `(ltd, rtd)` where `ltd` corresponds to left and `rtd` to right tangential
-          directions. If `conjugate=True`, directions at conjugate nodes must be conjugates.
+          directions. If `force_real=True`, directions at conjugate nodes must be conjugates.
     """
 
     cache_region = 'memory'
 
     generate_samples = staticmethod(_sample_transfer_function)
 
-    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='full'):
+    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', force_real=True, mimo_handling='full'):
         assert isinstance(s, np.ndarray)
         assert partitioning in ('even-odd', 'half-half') \
             or len(partitioning) == 2 \
@@ -68,7 +68,7 @@ class LoewnerReductor(CacheableObject):
         Hs = Hs.astype(common_dtype, copy=False)
 
         # ensure that complex sampling values appear in complex conjugate pairs
-        if conjugate:
+        if force_real:
             old_s = s
             s, Hs = complete_conjugate_pairs(s, Hs)
             if isinstance(partitioning, tuple):
@@ -136,7 +136,7 @@ class LoewnerReductor(CacheableObject):
         E = -Yhr @ L @ Xr
         A = -Yhr @ Ls @ Xr
 
-        if self.conjugate:
+        if self.force_real:
             A, B, C, E = A.real, B.real, C.real, E.real
 
         return LTIModel.from_matrices(A, B, C, D=None, E=E)
@@ -155,7 +155,7 @@ class LoewnerReductor(CacheableObject):
         :math:`\mathbb{L}_s`, left interpolation data :math:`V` and right interpolation
         data :math:`W`.
         """
-        ip, jp = partition_frequencies(self.s, self.Hs, self.partitioning, self.ordering, self.conjugate)
+        ip, jp = partition_frequencies(self.s, self.Hs, self.partitioning, self.ordering, self.force_real)
         left_directions = right_directions = None
         if self.dim_input != 1 or self.dim_output != 1:
             if self.mimo_handling == 'random':
@@ -171,7 +171,7 @@ class LoewnerReductor(CacheableObject):
 
         return loewner_quadruple(
             self.s[ip], self.s[jp], self.Hs[ip], self.Hs[jp],
-            left_directions=left_directions, right_directions=right_directions, real=self.conjugate,
+            left_directions=left_directions, right_directions=right_directions, force_real=self.force_real,
         )
 
     @cached

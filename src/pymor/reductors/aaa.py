@@ -46,7 +46,7 @@ class PAAAReductor(BasicObject):
         sampled value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`.
         The samples (i.e., `S[i,j,k]`) can be scalars or 2-dimensional |NumPy arrays|. E.g.,
         in the MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
-    conjugate
+    force_real
         Whether to compute complex conjugates of first sampling variables and enforce
         interpolation in complex conjugate pairs (allows for constructing real system matrices).
     nsp_tol
@@ -74,7 +74,7 @@ class PAAAReductor(BasicObject):
 
     generate_samples = staticmethod(_sample_transfer_function)
 
-    def __init__(self, sampling_values, samples, conjugate=True, nsp_tol=1e-16, post_process=True,
+    def __init__(self, sampling_values, samples, force_real=True, nsp_tol=1e-16, post_process=True,
                  L_rk_tol=1e-8, parameters=None):
         if isinstance(sampling_values, np.ndarray):
             sampling_values = [sampling_values]
@@ -93,7 +93,7 @@ class PAAAReductor(BasicObject):
             raise ValueError('parameters must match the number of parameter sampling axes.')
 
         # add complex conjugate samples
-        if conjugate:
+        if force_real:
             sampling_values[0], self.samples = complete_conjugate_pairs(sampling_values[0], self.samples)
 
         # Transform samples for MIMO case
@@ -200,7 +200,7 @@ class PAAAReductor(BasicObject):
                     self.itpl_part[i].append(greedy_idx[i])
 
                     # perform double interpolation step to allow real state-space representation
-                    if i == 0 and self.conjugate and np.imag(svs[i][greedy_idx[i]]) != 0:
+                    if i == 0 and self.force_real and np.imag(svs[i][greedy_idx[i]]) != 0:
                         conj_sample = np.conj(svs[i][greedy_idx[i]])
                         conj_idx = np.where(svs[0] == conj_sample)[0]
                         self.itpl_part[i].append(conj_idx[0])

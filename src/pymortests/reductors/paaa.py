@@ -44,7 +44,7 @@ def test_paaa_sampled_named_parameters():
     fom = TransferFunction(1, 1, lambda s, mu: np.array([[1 / (s + mu['a'][0])]]), parameters={'a': 1})
     grid = [np.array([1., 2., 3., 4.]), np.array([1., 2., 3.])]
     samples = PAAAReductor.generate_samples(grid, fom)
-    rom = PAAAReductor(grid, samples, parameters=fom.parameters, conjugate=False).reduce(tol=1e-10)
+    rom = PAAAReductor(grid, samples, parameters=fom.parameters, force_real=False).reduce(tol=1e-10)
     assert rom.parameters == fom.parameters
     for i, s in enumerate(grid[0]):
         for j, a in enumerate(grid[1]):
