@@ -24,7 +24,9 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import (
+    NumpyHankelOperator,
     NumpyMatrixOperator,
+    NumpyToeplitzOperator,
 )
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.solvers.least_squares import QRLeastSquaresSolver
@@ -34,6 +36,31 @@ from pymortests.base import assert_all_almost_equal
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.fixtures.operator import MonomOperator
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
+
+
+@pytest.mark.builtin
+@pytest.mark.parametrize(
+    ('operator', 'matrix'),
+    [
+        (NumpyToeplitzOperator(np.array([1., 2., 3.]), np.array([1., 4.])),
+         np.array([[1., 4.], [2., 1.], [3., 2.]])),
+        (NumpyHankelOperator(np.array([1., 2., 3.]), np.array([3., 4.])),
+         np.array([[1., 2.], [2., 3.], [3., 4.]])),
+    ],
+)
+def test_structured_operators_use_compact_fortran_matvec(operator, matrix, monkeypatch):
+    circular_matvec = operator._circulant._circular_matvec
+
+    def checked_circular_matvec(vec, output_dim=None):
+        assert vec.flags.f_contiguous
+        assert output_dim == operator.range.dim
+        return circular_matvec(vec, output_dim)
+
+    monkeypatch.setattr(operator._circulant, '_circular_matvec', checked_circular_matvec)
+    U = operator.source.random(3)
+    result = operator.apply(U).to_numpy()
+    assert result.flags.f_contiguous
+    assert np.allclose(result, matrix @ U.to_numpy())
 
 
 @pytest.mark.builtin
