@@ -401,7 +401,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
             d_zero = d[np.abs(d) < removable_singularity_tol]
             if len(d_zero) > 0:
                 d_min_idx = np.argmin(np.abs(d))
-                d = np.eye(1, len(d), d_min_idx)
+                d = np.eye(len(d))[d_min_idx]
             else:
                 d = 1 / d
             pd = np.kron(pd, d)
