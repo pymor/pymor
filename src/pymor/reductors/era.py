@@ -422,7 +422,7 @@ class RandomizedERAReductor(ERAReductorBase):
         self.randomized_svd.range_finder.logger.info(f'Taking {num} samples ...')
         V = np.zeros((self._H._circulant.source.dim, num))
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy()
-        return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:self._H.range.dim])
+        return self._H.range.make_array(self._H._circulant._circular_matvec(V, self._H.range.dim))
 
     def reduce(self, r=None, tol=None):
         r"""Construct a reduced realization with randomized methods.
