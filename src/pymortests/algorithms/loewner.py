@@ -8,12 +8,12 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.loewner import (
+    _sample_transfer_function,
     complete_conjugate_pairs,
     loewner_matrices,
     loewner_matrix,
     loewner_matrix_nd,
     loewner_quadruple,
-    sample_transfer_function,
 )
 from pymor.models.transfer_function import TransferFunction
 
@@ -43,21 +43,24 @@ def _loewner_matrix_nd_reference(sampling_values, samples, interpolation_indices
     return np.array(rows)
 
 
-def test_sample_transfer_function_on_parametric_grid():
+@pytest.mark.parametrize('derivative', [False, True])
+def test_sample_transfer_function_on_parametric_grid(derivative):
     fom = TransferFunction(
         1,
         1,
         lambda s, mu: np.array([[1 / (s + mu['mu'][0])]]),
+        dtf=lambda s, mu: np.array([[-1 / (s + mu['mu'][0])**2]]),
         parameters={'mu': 1},
     )
     sampling_values = [np.array([1j, 2j]), np.array([1., 3.])]
 
-    samples = sample_transfer_function(sampling_values, fom)
+    samples = _sample_transfer_function(sampling_values, fom, derivative=derivative)
 
     assert samples.shape == (2, 2, 1, 1)
     for i, s in enumerate(sampling_values[0]):
         for j, mu in enumerate(sampling_values[1]):
-            assert np.allclose(samples[i, j], [[1 / (s + mu)]])
+            expected = -1 / (s + mu)**2 if derivative else 1 / (s + mu)
+            assert np.allclose(samples[i, j], [[expected]])
 
 
 def test_complete_conjugate_pairs():

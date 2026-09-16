@@ -34,7 +34,8 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, reductor_kwarg
     reduce_kwargs
         Optional keyword arguments for the reduce method.
     """
-    rom = reductor_cls(ss * 1j, fom, **reductor_kwargs).reduce(*reduce_args, **reduce_kwargs)
+    samples = reductor_cls.generate_samples(ss * 1j, fom)
+    rom = reductor_cls(ss * 1j, samples, **reductor_kwargs).reduce(*reduce_args, **reduce_kwargs)
     err = fom - rom
 
     n_w = 50

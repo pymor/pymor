@@ -9,6 +9,7 @@ import numpy as np
 from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
+
 def _nodes(nodes, name):
     nodes = np.asarray(nodes)
     if nodes.ndim != 1:
@@ -18,26 +19,29 @@ def _nodes(nodes, name):
     return nodes
 
 
-def sample_transfer_function(sampling_values, samples_or_fom):
-    """Sample a transfer function on a Cartesian grid when needed.
+def _sample_transfer_function(sampling_values, fom, *, derivative=False):
+    """Sample a transfer function or its derivative on a Cartesian grid.
 
     Parameters
     ----------
     sampling_values
         A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
         Laplace-variable values; subsequent arrays contain parameter values.
-    samples_or_fom
-        Sample data, a |TransferFunction|, or a model with a `transfer_function` attribute.
+    fom
+        A |TransferFunction| or a model with a `transfer_function` attribute.
+    derivative
+        If `True`, sample the derivative with respect to the complex frequency argument.
 
     Returns
     -------
     samples
-        Sample data. For transfer-function input, the shape is
-        ``tuple(map(len, sampling_values)) + (dim_output, dim_input)``.
+        Sample data of shape ``tuple(map(len, sampling_values)) + (dim_output, dim_input)``.
+        A single frequency array produces shape `(n, dim_output, dim_input)`. Model metadata
+        such as sampling time, feedthrough and parameter names are not included.
     """
-    fom = samples_or_fom.transfer_function if hasattr(samples_or_fom, 'transfer_function') else samples_or_fom
+    fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
     if not isinstance(fom, TransferFunction):
-        return np.asarray(samples_or_fom)
+        raise TypeError('fom must be a TransferFunction or a model with a transfer_function.')
 
     if isinstance(sampling_values, np.ndarray):
         sampling_values = (sampling_values,)
@@ -49,8 +53,9 @@ def sample_transfer_function(sampling_values, samples_or_fom):
         raise ValueError('sampling_values must contain non-empty one-dimensional arrays.')
 
     sample_shape = tuple(map(len, sampling_values))
+    evaluate = fom.eval_dtf if derivative else fom.eval_tf
     samples = [
-        fom.eval_tf(values[0], mu=fom.parameters.parse(values[1:]))
+        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
         for values in product(*sampling_values)
     ]
     return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))

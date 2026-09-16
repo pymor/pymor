@@ -7,19 +7,20 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import complete_conjugate_pairs, loewner_matrix_nd, sample_transfer_function
+from pymor.algorithms.loewner import _sample_transfer_function, complete_conjugate_pairs, loewner_matrix_nd
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
+from pymor.parameters.base import Parameters
 from pymor.tools.random import new_rng
 
 
 class PAAAReductor(BasicObject):
     """Reductor implementing the parametric AAA algorithm.
 
-    The reductor implements the parametric AAA algorithm and can be used either with
-    data or a given full-order model, which can be a |TransferFunction| or any model which
-    has a `transfer_function` attribute. MIMO and non-parametric data is accepted. See
+    The reductor implements the parametric AAA algorithm using sampled data. Use
+    :meth:`generate_samples` to generate data from a model beforehand.
+    MIMO and non-parametric data is accepted. See
     :cite:`NST18` for the non-parametric and :cite:`CRBG23` for the parametric version of
     the algorithm. The reductor computes approximations based on the multivariate barycentric
     form :math:`H(s,p,...)` (see :func:`~pymor.reductors.aaa.make_bary_func`), where
@@ -34,17 +35,16 @@ class PAAAReductor(BasicObject):
     Parameters
     ----------
     sampling_values
-        Values where sample data has been evaluated or the full-order model should be evaluated.
+        Values where sample data has been evaluated.
         Sampling values are represented as a list of |NumPy arrays| such that `sampling_values[i]`
         corresponds to sampling values of the `i`-th variable given as a |NumPy array|. The first
         variable is the Laplace variable. In the non-parametric case (i.e., the only variable is
         the Laplace variable) this can also be a |NumPy array| representing the sampling values.
-    samples_or_fom
-        Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
-        attribute) or data sampled at the values specified in `sampling_values` as a |NumPy array|.
+    samples
+        Data sampled at the values specified in `sampling_values` as a |NumPy array|.
         Samples are represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]` corresponds to the
         sampled value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`.
-        The samples (i.e., `S[i,j,k]`) need to be provided as 2-dimensional |NumPy arrays|. E.g.,
+        The samples (i.e., `S[i,j,k]`) can be scalars or 2-dimensional |NumPy arrays|. E.g.,
         in the MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
     conjugate
         Whether to compute complex conjugates of first sampling variables and enforce
@@ -59,6 +59,10 @@ class PAAAReductor(BasicObject):
         the post-processing procedure computes an interpolant of minimal order.
     L_rk_tol
         Tolerance for ranks of 1-D Loewner matrices computed in post-processing.
+    parameters
+        Optional |Parameters| or parameter-dimension mapping for the resulting transfer function.
+        Defaults to a single vector parameter named `p`. Parameter sampling axes follow the
+        order used by :meth:`~pymor.parameters.base.Mu.to_numpy`.
 
     Attributes
     ----------
@@ -68,26 +72,25 @@ class PAAAReductor(BasicObject):
         represents a list of all interpolated samples of the `i`-th variable.
     """
 
-    def __init__(self, sampling_values, samples_or_fom, conjugate=True, nsp_tol=1e-16, post_process=True,
-                 L_rk_tol=1e-8):
+    generate_samples = staticmethod(_sample_transfer_function)
+
+    def __init__(self, sampling_values, samples, conjugate=True, nsp_tol=1e-16, post_process=True,
+                 L_rk_tol=1e-8, parameters=None):
         if isinstance(sampling_values, np.ndarray):
             sampling_values = [sampling_values]
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
-        fom = samples_or_fom.transfer_function if hasattr(samples_or_fom, 'transfer_function') else samples_or_fom
-        self.samples = sample_transfer_function(sampling_values, samples_or_fom)
-        if isinstance(fom, TransferFunction):
-            self.num_vars = 1 + fom.parameters.dim
-            assert len(sampling_values) == self.num_vars
-            self._parameters = fom.parameters
-            if fom.dim_input == fom.dim_output == 1:
-                self.samples = self.samples.reshape(self.samples.shape[:-2])
-        else:
-            # SISO case requires reshape
-            if self.samples.shape[-2:] == (1, 1):
-                self.samples = self.samples.reshape(self.samples.shape[:-2])
-            self.num_vars = len(sampling_values)
-            self._parameters = {'p': self.num_vars-1}
+        sampling_values = list(sampling_values)
+        self.num_vars = len(sampling_values)
+        self.samples = np.asarray(samples)
+        if self.samples.ndim not in (self.num_vars, self.num_vars + 2) \
+                or self.samples.shape[:self.num_vars] != tuple(map(len, sampling_values)):
+            raise ValueError('samples must contain data on the sampling grid; use generate_samples for models.')
+        if self.samples.ndim == self.num_vars + 2 and self.samples.shape[-2:] == (1, 1):
+            self.samples = self.samples.reshape(self.samples.shape[:-2])
+        self._parameters = Parameters({'p': self.num_vars - 1} if parameters is None else parameters)
+        if self._parameters.dim != self.num_vars - 1:
+            raise ValueError('parameters must match the number of parameter sampling axes.')
 
         # add complex conjugate samples
         if conjugate:

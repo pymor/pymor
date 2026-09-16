@@ -5,8 +5,11 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.loewner import partition_frequencies
+from pymor.algorithms.loewner import _sample_transfer_function, partition_frequencies
 from pymor.models.examples import penzl_mimo_example
+from pymor.models.iosys import LTIModel
+from pymor.reductors.aaa import PAAAReductor
+from pymor.reductors.h2 import VectorFittingReductor
 from pymor.reductors.loewner import LoewnerReductor
 
 pytestmark = pytest.mark.builtin
@@ -55,7 +58,8 @@ def model_args(reduce_kwargs_and_loewner_kwargs_and_model_args):
 def test_loewner_lti(reduce_kwargs, loewner_kwargs, model_args):
     fom = penzl_mimo_example(*model_args)
     s = np.logspace(1, 3, 40)*1j
-    loewner = LoewnerReductor(s, fom, **loewner_kwargs)
+    Hs = LoewnerReductor.generate_samples(s, fom)
+    loewner = LoewnerReductor(s, Hs, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
     assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
@@ -65,7 +69,8 @@ def test_loewner_lti(reduce_kwargs, loewner_kwargs, model_args):
 def test_loewner_tf(reduce_kwargs, loewner_kwargs, model_args):
     fom = penzl_mimo_example(*model_args)
     s = np.logspace(1, 3, 40)*1j
-    loewner = LoewnerReductor(s, fom.transfer_function, **loewner_kwargs)
+    Hs = LoewnerReductor.generate_samples(s, fom.transfer_function)
+    loewner = LoewnerReductor(s, Hs, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
     assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
@@ -106,3 +111,23 @@ def test_partition_frequencies_magnitude_ordering_without_conjugates():
     assert np.array_equal(right, [3, 0])
     assert all(np.all(np.isfinite(matrix))
                for matrix in LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False).loewner_quadruple())
+
+
+@pytest.mark.parametrize('reductor_cls', [LoewnerReductor, PAAAReductor, VectorFittingReductor])
+@pytest.mark.parametrize('model_input', [False, True])
+def test_data_driven_reductor_sampling_api(reductor_cls, model_input):
+    fom = LTIModel.from_matrices(np.array([[-1.]]), np.ones((1, 1)), np.ones((1, 1)))
+    source = fom if model_input else fom.transfer_function
+    nodes = np.array([1j, 2j])
+    with pytest.raises(ValueError, match='generate_samples'):
+        reductor_cls(nodes, source)
+
+    assert reductor_cls.generate_samples is _sample_transfer_function
+    samples = reductor_cls.generate_samples(nodes, source)
+    derivatives = reductor_cls.generate_samples(nodes, source, derivative=True)
+    assert np.allclose(samples[:, 0, 0], 1 / (nodes + 1))
+    assert np.allclose(derivatives[:, 0, 0], -1 / (nodes + 1)**2)
+    reductor = reductor_cls(nodes, samples, conjugate=False)
+    assert np.array_equal(reductor.generate_samples(nodes, source), samples)
+    with pytest.raises(TypeError, match='fom must be'):
+        reductor_cls.generate_samples(nodes, samples)

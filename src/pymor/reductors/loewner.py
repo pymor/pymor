@@ -6,10 +6,10 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.loewner import (
+    _sample_transfer_function,
     complete_conjugate_pairs,
     loewner_quadruple,
     partition_frequencies,
-    sample_transfer_function,
 )
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
@@ -28,8 +28,7 @@ class LoewnerReductor(CacheableObject):
     Hs
         |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
         |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
-        function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
-        attribute.
+        function samples. Use :meth:`generate_samples` to generate data beforehand.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
         the partitioning rule. A user-defined partitioning can be defined by passing a tuple of the
@@ -51,6 +50,8 @@ class LoewnerReductor(CacheableObject):
 
     cache_region = 'memory'
 
+    generate_samples = staticmethod(_sample_transfer_function)
+
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='full'):
         assert isinstance(s, np.ndarray)
         assert partitioning in ('even-odd', 'half-half') \
@@ -58,7 +59,9 @@ class LoewnerReductor(CacheableObject):
             and len(partitioning[0]) + len(partitioning[1]) == len(s)
         assert ordering in ('magnitude', 'random', 'regular')
 
-        Hs = sample_transfer_function(s, Hs)
+        Hs = np.asarray(Hs)
+        if Hs.ndim not in (1, 3):
+            raise ValueError('Hs must contain sample data; use generate_samples to sample a model.')
         assert Hs.shape[0] == len(s)
 
         common_dtype = np.promote_types(s.dtype, Hs.dtype)
@@ -87,7 +90,7 @@ class LoewnerReductor(CacheableObject):
             self.dim_output = Hs.shape[1]
             self.dim_input = Hs.shape[2]
             if self.dim_output == self.dim_input == 1:
-                Hs = np.squeeze(Hs)
+                Hs = Hs[:, 0, 0]
         else:
             self.dim_output = 1
             self.dim_input = 1

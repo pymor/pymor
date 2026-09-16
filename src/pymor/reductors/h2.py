@@ -11,7 +11,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
-from pymor.algorithms.loewner import complete_conjugate_pairs, sample_transfer_function
+from pymor.algorithms.loewner import _sample_transfer_function, complete_conjugate_pairs
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
@@ -846,19 +846,23 @@ class VectorFittingReductor(BasicObject):
         Sampling points in the complex plane as a 1D |NumPy array|.
     Hs
         Transfer function values at the sampling points `s` as a 1D |NumPy array|.
-        Alternatively, |TransferFunction| or `Model` with `transfer_function` attribute.
+        Use :meth:`generate_samples` to generate data beforehand.
     weights
         Weights in the weighted least squares error as a 1D |NumPy array|.
         If not given, it is set to a vector of ones.
     conjugate
-        Whether to include conjugated data.
+        Whether to include conjugated data to enforce realness.
     """
+
+    generate_samples = staticmethod(_sample_transfer_function)
 
     def __init__(self, s, Hs, weights=None, conjugate=True):
         assert isinstance(s, np.ndarray)
         assert s.ndim == 1
 
-        Hs = sample_transfer_function(s, Hs)
+        Hs = np.asarray(Hs)
+        if Hs.ndim not in (1, 3):
+            raise ValueError('Hs must contain sample data; use generate_samples to sample a model.')
         if Hs.ndim == 3 and Hs.shape[1:] == (1, 1):
             Hs = Hs[:, 0, 0]
         assert Hs.ndim == 1
