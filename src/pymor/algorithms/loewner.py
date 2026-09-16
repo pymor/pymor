@@ -62,7 +62,44 @@ def _sample_transfer_function(sampling_values, fom, *, derivative=False):
 
 
 def complete_conjugate_pairs(nodes, samples, *data):
-    """Append missing conjugate nodes and their conjugate-aligned data."""
+    """Complete sample data with complex conjugate pairs.
+
+    For each node whose complex conjugate is missing, append its conjugate and the
+    elementwise conjugates of the corresponding entries in `samples` and `data`.
+    Existing entries retain their order; new entries are appended in input-node order.
+
+    Parameters
+    ----------
+    nodes
+        Nonempty one-dimensional |NumPy array| of sampling nodes.
+    samples
+        |NumPy array| of sampled values with shape `(len(nodes), ...)`. The first axis
+        corresponds to `nodes`; trailing axes may represent outputs, inputs or parameters.
+    data
+        Additional |NumPy arrays| to complete, e.g. derivatives, quadrature weights or
+        tangential directions. Each array must have first dimension `len(nodes)`.
+
+    Returns
+    -------
+    completed_nodes
+        One-dimensional |NumPy array| containing the original and appended nodes.
+    completed_samples
+        |NumPy array| of samples aligned with `completed_nodes`, retaining the original
+        trailing dimensions.
+    completed_data
+        The completed additional |NumPy arrays| in input order. Each array is returned
+        as a separate tuple entry after `completed_samples`, not as a nested tuple.
+
+    Raises
+    ------
+    ValueError
+        If `nodes` is empty or not one-dimensional, or a data array is not aligned with `nodes`.
+
+    Notes
+    -----
+    Nodes are compared using exact equality. Already supplied conjugate samples are not
+    checked for consistency. Real nodes are not duplicated, and input arrays are not modified.
+    """
     nodes = _nodes(nodes, 'nodes')
     data = (np.asarray(samples), *(np.asarray(values) for values in data))
     if any(values.shape[:1] != (len(nodes),) for values in data):
@@ -79,8 +116,49 @@ def complete_conjugate_pairs(nodes, samples, *data):
 def partition_frequencies(nodes, samples, partitioning='even-odd', ordering='regular', force_real=True):
     """Partition frequency samples into left and right Loewner data sets.
 
-    Complex-conjugate nodes are assigned to the same set when `force_real` is `True`. In that
-    case, `nodes` must already contain the corresponding conjugate samples.
+    Parameters
+    ----------
+    nodes
+        One-dimensional |NumPy array| of complex sampling nodes of shape `(n,)`.
+    samples
+        |NumPy array| of sampled values of shape `(n, ...)`, aligned with `nodes`.
+        Used to determine sample norms when `ordering` is `'magnitude'`.
+    partitioning
+        Partitioning rule or a tuple `(left_indices, right_indices)` of index arrays.
+        Available rules are:
+
+        - `'even-odd'`: assign alternating entries to the left and right sets.
+        - `'half-half'`: assign the first half to the left set and the remainder to the
+          right set. For an odd number of entries, the left set receives one extra entry.
+
+        Explicit index arrays are returned without validation or reordering; `ordering`
+        and `force_real` are ignored in this case.
+    ordering
+        Ordering applied before a partitioning rule:
+
+        - `'regular'`: preserve the input order; no sorting by frequency is performed.
+        - `'magnitude'`: order by increasing sample norm.
+        - `'random'`: use a reproducible random ordering with seed zero.
+    force_real
+        If `True`, keep complex conjugate nodes in the same set. The nodes and samples
+        must already be closed under conjugation. Real nodes and nodes in the upper
+        half-plane are ordered and partitioned separately; the corresponding lower
+        half-plane nodes are then appended to each set. If `False`, all nodes are
+        ordered and partitioned together.
+
+    Returns
+    -------
+    left_indices
+        One-dimensional |NumPy array| of indices into `nodes` and `samples` for the left set.
+    right_indices
+        One-dimensional |NumPy array| of indices into `nodes` and `samples` for the right set.
+
+    See Also
+    --------
+    complete_conjugate_pairs
+        Complete nodes and data before partitioning with `force_real=True`.
+    loewner_quadruple
+        Construct Loewner matrices from the partitioned data.
     """
     if not isinstance(partitioning, str):
         return tuple(np.asarray(indices) for indices in partitioning)
@@ -133,33 +211,59 @@ def partition_frequencies(nodes, samples, partitioning='even-odd', ordering='reg
 def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=None):
     r"""Construct a Loewner matrix from pairwise terms.
 
-    The returned matrix contains the divided differences
+    The returned array contains the divided differences
 
     .. math::
         \mathbb{L}_{ij} = \frac{A_{ij} - B_{ij}}{\mu_i - \lambda_j}.
 
-    `left_terms` and `right_terms` must broadcast to an array whose first two dimensions
-    are `(len(left_nodes), len(right_nodes))`. This permits scalar, matrix-valued and
-    tangentially projected data without additional construction modes.
+    Scalar, matrix-valued and tangentially projected terms are supported through broadcasting.
+    Use :func:`loewner_quadruple` to assemble pairwise terms directly from transfer function data.
 
     Parameters
     ----------
     left_nodes
-        One-dimensional array of left interpolation nodes :math:`\mu_i`.
+        Nonempty one-dimensional |NumPy array| of left interpolation nodes :math:`\mu_i`,
+        of shape `(n_left,)`.
     right_nodes
-        One-dimensional array of right interpolation nodes :math:`\lambda_j`.
+        Nonempty one-dimensional |NumPy array| of right interpolation nodes :math:`\lambda_j`,
+        of shape `(n_right,)`.
     left_terms
-        Array containing :math:`A_{ij}` or values broadcastable to it.
+        |NumPy array| containing :math:`A_{ij}`. Together with `right_terms`, must broadcast
+        to shape `(n_left, n_right, ...)`. For scalar function samples, a column of left
+        values of shape `(n_left, 1)` can be supplied.
     right_terms
-        Array containing :math:`B_{ij}` or values broadcastable to it.
+        |NumPy array| containing :math:`B_{ij}`, broadcastable with `left_terms` as above.
+        For scalar function samples, a row of right values of shape `(1, n_right)` can be
+        supplied.
     derivative_terms
-        Optional array of derivatives, broadcastable to the pairwise term shape. At entries
-        with identical left and right nodes, these values replace the undefined divided differences.
+        Optional |NumPy array| of derivative terms with respect to the complex argument,
+        broadcastable to the pairwise term shape. Required when a left and right node
+        coincide. At these entries, the left and right terms must agree and the supplied
+        derivative replaces the divided difference. Other derivative entries are ignored.
 
     Returns
     -------
     L
-        Loewner matrix. Trailing dimensions of the broadcast pair terms are retained.
+        |NumPy array| of shape `(n_left, n_right, ...)` containing the Loewner matrix.
+        Trailing dimensions of the broadcast terms are retained, not flattened into blocks.
+
+    Raises
+    ------
+    ValueError
+        If node or term shapes are incompatible, or coincident nodes have inconsistent
+        terms or missing or incompatible derivative data.
+
+    See Also
+    --------
+    loewner_matrices
+        Construct both the Loewner and shifted Loewner matrices.
+    loewner_quadruple
+        Assemble SISO, full-block MIMO or tangential Loewner data.
+
+    Notes
+    -----
+    Coincident nodes are detected using exact equality. Nearly coincident nodes are treated
+    by divided differences and may suffer from cancellation.
     """
     left_nodes = _nodes(left_nodes, 'left_nodes')
     right_nodes = _nodes(right_nodes, 'right_nodes')
@@ -199,18 +303,56 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
 
 
 def loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=None):
-    r"""Construct Loewner and shifted Loewner matrices in one pass.
+    r"""Construct Loewner and shifted Loewner matrices from pairwise terms.
 
-    Parameters are the same as for :func:`loewner_matrix`. The shifted matrix is computed
-    from :math:`\mathbb{L}_s = \operatorname{diag}(\mu)\mathbb{L} + B`, which also gives
-    the correct Hermite limit at coincident nodes.
+    For distinct left and right nodes, the entries are
+
+    .. math::
+        \mathbb{L}_{ij} = \frac{A_{ij} - B_{ij}}{\mu_i - \lambda_j},
+        \qquad
+        (\mathbb{L}_s)_{ij} =
+            \frac{\mu_i A_{ij} - \lambda_j B_{ij}}{\mu_i - \lambda_j}.
+
+    The shifted matrix is computed as
+    :math:`(\mathbb{L}_s)_{ij} = \mu_i\mathbb{L}_{ij} + B_{ij}`. At coincident nodes,
+    this gives the Hermite value :math:`\mu_i D_{ij} + B_{ij}`, where :math:`D_{ij}`
+    is the supplied derivative term.
+
+    Parameters
+    ----------
+    left_nodes
+        Nonempty one-dimensional |NumPy array| of left interpolation nodes :math:`\mu_i`,
+        of shape `(n_left,)`.
+    right_nodes
+        Nonempty one-dimensional |NumPy array| of right interpolation nodes :math:`\lambda_j`,
+        of shape `(n_right,)`.
+    left_terms
+        |NumPy array| containing :math:`A_{ij}`. Together with `right_terms`, must broadcast
+        to shape `(n_left, n_right, ...)`.
+    right_terms
+        |NumPy array| containing :math:`B_{ij}`, broadcastable with `left_terms` as above.
+    derivative_terms
+        Optional |NumPy array| containing :math:`D_{ij}`, broadcastable to the pairwise
+        term shape. Required at coincident nodes, where the left and right terms must agree.
+        See :func:`loewner_matrix` for the derivative and coincidence conventions.
 
     Returns
     -------
     L
-        Loewner matrix.
+        Loewner matrix as a |NumPy array| of shape `(n_left, n_right, ...)`.
     Ls
-        Shifted Loewner matrix.
+        Shifted Loewner matrix as a |NumPy array| of the same shape as `L`.
+
+    Raises
+    ------
+    ValueError
+        If node or term shapes are incompatible, or coincident nodes have inconsistent
+        terms or missing or incompatible derivative data.
+
+    See Also
+    --------
+    loewner_matrix
+        Construct only the Loewner matrix.
     """
     L = loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms)
     left_nodes = np.asarray(left_nodes)
@@ -252,20 +394,48 @@ def _modified_cauchy_matrix(nodes, interpolation_indices, dtype):
 def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
     """Construct a higher-dimensional Loewner matrix for Cartesian scalar data.
 
+    Assemble the Loewner matrix used in the parametric AAA algorithm of :cite:`CRBG23`.
+    The interpolation nodes form a Cartesian subgrid of the sampling grid. For one variable,
+    this reduces to :func:`loewner_matrix` with interpolation nodes on the right and all
+    remaining nodes on the left.
+
     Parameters
     ----------
     sampling_values
-        Sequence of one-dimensional sampling-node arrays, one per variable.
+        Nonempty list or tuple of nonempty one-dimensional |NumPy arrays|, one per variable.
+        The first variable is typically the complex frequency; subsequent variables are
+        parameters. Interpolation and non-interpolation node values must not coincide in
+        any variable.
     samples
-        Scalar sample tensor with shape ``tuple(map(len, sampling_values))``.
+        |NumPy array| of scalar samples with shape ``tuple(map(len, sampling_values))``.
+        `samples[i, j, ...]` corresponds to the nodes
+        `(sampling_values[0][i], sampling_values[1][j], ...)`. Matrix-valued samples must
+        be projected to scalar data before calling this function.
     interpolation_indices
-        Sequence of index arrays selecting interpolation nodes for each variable.
+        List or tuple of nonempty one-dimensional integer |NumPy arrays|, one per variable.
+        Each array selects interpolation nodes from the corresponding `sampling_values`
+        array and must contain distinct, valid indices. For one variable, at least one
+        sampling node must remain outside the interpolation set.
 
     Returns
     -------
     L
-        Two-dimensional higher-dimensional Loewner matrix. Columns correspond to the
-        Cartesian interpolation grid. Rows correspond to all other sampled grid points.
+        Two-dimensional |NumPy array| of shape `(N - K, K)`, where `N` and `K` are the
+        numbers of points in the full sampling grid and the Cartesian interpolation grid,
+        respectively. Columns follow the supplied interpolation-index order. Rows correspond
+        to all sampling-grid points outside the Cartesian interpolation grid. Both grids are
+        flattened in NumPy C order, with the last variable varying fastest.
+
+    Raises
+    ------
+    ValueError
+        If the grid, sample tensor or interpolation indices are incompatible, or an
+        interpolation node coincides with a non-interpolation node in any variable.
+
+    See Also
+    --------
+    loewner_matrix
+        Construct divided differences for one variable.
     """
     if not isinstance(sampling_values, (list, tuple)) or len(sampling_values) == 0:
         raise ValueError('sampling_values must be a non-empty sequence.')
@@ -352,40 +522,88 @@ def _real_array(array, name):
 
 def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
                        left_directions=None, right_directions=None, derivatives=None, force_real=False):
-    """Construct a Loewner quadruple from already partitioned sample data.
+    r"""Construct a Loewner quadruple from partitioned transfer function samples.
+
+    Assemble the Loewner matrix, shifted Loewner matrix and left and right interpolation
+    data as in :cite:`ALI17`. Supports SISO data, full-block MIMO data and tangential MIMO
+    data. No sampling, partitioning or conjugate completion is performed.
 
     Parameters
     ----------
     left_nodes
-        One-dimensional array of left interpolation nodes.
+        Nonempty one-dimensional |NumPy array| of left interpolation nodes :math:`\mu_i`,
+        of shape `(n_left,)`.
     right_nodes
-        One-dimensional array of right interpolation nodes.
+        Nonempty one-dimensional |NumPy array| of right interpolation nodes :math:`\lambda_j`,
+        of shape `(n_right,)`.
     left_values
-        SISO values of shape `(n_left,)` or MIMO values of shape `(n_left, dim_output, dim_input)`.
+        |NumPy array| containing transfer function values at `left_nodes`. Shape `(n_left,)`
+        for SISO data or `(n_left, p, m)` for a system with `p` outputs and `m` inputs.
     right_values
-        SISO values of shape `(n_right,)` or MIMO values of shape
-        `(n_right, dim_output, dim_input)`.
+        |NumPy array| containing transfer function values at `right_nodes`. Shape `(n_right,)`
+        for SISO data or `(n_right, p, m)` for MIMO data. The number of axes and trailing
+        dimensions must match those of `left_values`.
     left_directions
-        Optional left tangential directions of shape `(n_left, dim_output)`.
+        Optional |NumPy array| of left tangential directions of shape `(n_left, p)`.
+        Requires matrix-valued samples and `right_directions`. Each row stores a direction
+        :math:`\ell_i^T`, applied without complex conjugation.
     right_directions
-        Optional right tangential directions of shape `(n_right, dim_input)`.
+        Optional |NumPy array| of right tangential directions of shape `(n_right, m)`.
+        Requires matrix-valued samples and `left_directions`. Each row stores a direction
+        :math:`r_j^T`, used as a column when multiplying a transfer function value.
     derivatives
-        Optional unprojected derivatives at `left_nodes`, with the same shape as `left_values`.
-        Derivatives are required for coincident left and right nodes.
+        Optional |NumPy array| of unprojected transfer function derivatives with respect to
+        the complex argument at `left_nodes`, with the same shape as `left_values`.
+        Required when a left and right node coincide. Entries at other nodes are ignored.
+        Tangential projections of these derivatives are performed internally.
     force_real
-        If `True`, transform conjugate-closed data to real matrices using unitary pair transforms.
-        Values, derivatives and directions at conjugate nodes must be conjugates.
+        If `True`, transform the quadruple to real arrays using unitary conjugate-pair
+        transformations. Each node set must already contain unique complex conjugate pairs,
+        and values, used derivatives and directions at conjugate nodes must be conjugates.
+        Values and directions at real nodes must be real. No conjugate data are appended.
 
     Returns
     -------
     L
-        Loewner matrix.
+        Loewner matrix as a |NumPy array|. Shape `(n_left * p, n_right * m)` for full-block
+        MIMO data, or `(n_left, n_right)` for SISO or tangential data.
     Ls
-        Shifted Loewner matrix.
+        Shifted Loewner matrix as a |NumPy array| of the same shape as `L`.
     V
-        Left interpolation data.
+        Left interpolation data as a |NumPy array|. Shape `(n_left * p, m)` for full-block
+        MIMO data, `(n_left, m)` for tangential data, or `(n_left, 1)` for SISO data.
     W
-        Right interpolation data.
+        Right interpolation data as a |NumPy array|. Shape `(p, n_right * m)` for full-block
+        MIMO data, `(p, n_right)` for tangential data, or `(1, n_right)` for SISO data.
+
+    Raises
+    ------
+    ValueError
+        If data shapes or directions are incompatible, coincident nodes lack consistent
+        values or derivatives, or `force_real=True` cannot produce real matrices up to roundoff.
+
+    See Also
+    --------
+    complete_conjugate_pairs
+        Complete conjugate nodes and their associated data.
+    partition_frequencies
+        Partition a sample set into left and right data.
+    loewner_matrices
+        Construct Loewner matrices directly from pairwise terms.
+
+    Notes
+    -----
+    In the tangential case, before realification,
+
+    .. math::
+        V_i = \ell_i^T H(\mu_i), \qquad W_j = H(\lambda_j)r_j,
+        \qquad \mathbb{L}_{ij} =
+        \frac{V_i r_j - \ell_i^T W_j}{\mu_i - \lambda_j}.
+
+    Directions are neither normalised nor conjugated internally. For full-block MIMO data,
+    rows are ordered by left node then output, and columns by right node then input.
+    For a square quadruple, the descriptor-system sign convention is :math:`E=-L`,
+    :math:`A=-L_s`, :math:`B=V` and :math:`C=W`.
     """
     left_nodes = _nodes(left_nodes, 'left_nodes')
     right_nodes = _nodes(right_nodes, 'right_nodes')
