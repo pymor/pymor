@@ -80,3 +80,28 @@ def test_loewner_data(reduce_kwargs, loewner_kwargs, model_args):
     assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
     assert rom.order <= model_args[0]
+
+
+def test_loewner_unitary_realification():
+    s = np.array([0, 2, 1j, -1j, 2 + 2j, 2 - 2j])
+    Hs = np.array([sum((i + 1) / (ss + i + 1) for i in range(5)) for ss in s])
+    partitioning = (np.array([0, 2, 3]), np.array([1, 4, 5]))
+
+    complex_quadruple = LoewnerReductor(s, Hs, partitioning=partitioning,
+                                        conjugate=False).loewner_quadruple()
+    real_quadruple = LoewnerReductor(s, Hs, conjugate=True).loewner_quadruple()
+
+    assert all(not np.iscomplexobj(matrix) for matrix in real_quadruple)
+    for complex_matrix, real_matrix in zip(complex_quadruple, real_quadruple, strict=True):
+        assert np.allclose(np.linalg.norm(complex_matrix), np.linalg.norm(real_matrix))
+
+
+def test_loewner_magnitude_ordering_without_conjugates():
+    s = 1j * np.arange(1, 5)
+    Hs = np.array([4., 1., 3., 2.])
+    loewner = LoewnerReductor(s, Hs, ordering='magnitude', conjugate=False)
+
+    left, right = loewner._partition_frequencies()
+    assert np.array_equal(left, [1, 2])
+    assert np.array_equal(right, [3, 0])
+    assert all(np.all(np.isfinite(matrix)) for matrix in loewner.loewner_quadruple())
