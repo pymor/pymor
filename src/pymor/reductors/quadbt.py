@@ -7,14 +7,12 @@ import scipy.linalg as spla
 
 from pymor.algorithms.loewner import (
     _real_transformation,
+    _sample_transfer_function,
     complete_conjugate_pairs,
     loewner_quadruple,
-    sample_transfer_function,
 )
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
-from pymor.models.transfer_function import TransferFunction
 
 
 class QuadBTReductor(CacheableObject):
@@ -26,8 +24,9 @@ class QuadBTReductor(CacheableObject):
 
     The left and right quadratures approximate the observability and reachability
     Gramians, respectively. Supply explicit weights or omit them to use trapezoidal
-    quadrature on each node set independently. Use :meth:`from_model` to sample a model
-    or transfer function. No automatic partitioning is performed.
+    quadrature on each node set independently. Use :meth:`generate_samples` to
+    generate data from a model or transfer function beforehand. No automatic sampling,
+    metadata inference or partitioning is performed.
 
     Parameters
     ----------
@@ -53,7 +52,8 @@ class QuadBTReductor(CacheableObject):
     derivatives
         Optional transfer function derivatives with respect to the complex argument at
         `left_nodes`, with the same shape as `left_values`. Required at coincident
-        left and right nodes; entries at other nodes are ignored.
+        left and right nodes after conjugate completion; entries at other nodes are ignored.
+        Use :meth:`generate_samples` with `derivative=True` to generate these data.
     sampling_time
         Zero for continuous-time systems, otherwise the positive sampling time in seconds.
         Discrete-time nodes are :math:`z=e^{i\theta}`, with `theta` in radians per sample.
@@ -85,6 +85,8 @@ class QuadBTReductor(CacheableObject):
 
     cache_region = 'memory'
 
+    generate_samples = staticmethod(_sample_transfer_function)
+
     def __init__(self, left_nodes, right_nodes, left_values, right_values, left_weights=None, right_weights=None,
                  *, derivatives=None, sampling_time=0, feedthrough=None, real=True, conjugate=False):
         sampling_time = float(sampling_time)
@@ -110,67 +112,6 @@ class QuadBTReductor(CacheableObject):
                     raise ValueError('feedthrough must be real when real=True.')
                 feedthrough = feedthrough.real
         self.__auto_init(locals())
-
-    @classmethod
-    def from_model(cls, fom, left_nodes, right_nodes, *, left_weights=None, right_weights=None,
-                   derivatives=None, feedthrough=None, real=True, conjugate=True):
-        """Sample a model or transfer function and construct a QuadBT reductor.
-
-        Parameters
-        ----------
-        fom
-            Nonparametric |TransferFunction| or model with a `transfer_function` attribute.
-            The sampling time is taken from this transfer function. For an |LTIModel|,
-            the feedthrough is inferred from its `D` operator unless explicitly supplied.
-            For other inputs, unknown feedthrough is assumed to be zero; supply it explicitly
-            when the transfer function is not strictly proper.
-        left_nodes, right_nodes
-            Complex sampling nodes, as in the constructor, not angular frequencies.
-        left_weights, right_weights
-            Optional explicit quadrature weights, as in the constructor. If omitted,
-            trapezoidal rules appropriate to the model's sampling time are used.
-        derivatives
-            Optional derivatives at the supplied left nodes. If omitted, evaluate the
-            transfer function derivative only at nodes that overlap the right grid after
-            conjugate completion. Overlapping grids require derivative access or explicit data.
-        feedthrough
-            Optional known feedthrough, as in the constructor.
-        real
-            Whether to construct a real ROM, as in the constructor.
-        conjugate
-            Whether to complete conjugate data. Defaults to `True`, assuming a real system.
-            Set both `conjugate=False` and `real=False` for complex systems.
-
-        Returns
-        -------
-        reductor
-            The sampled :class:`QuadBTReductor`.
-        """
-        tf = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
-        if not isinstance(tf, TransferFunction):
-            raise TypeError('fom must be a TransferFunction or a model with a transfer_function.')
-        if tf.parametric:
-            raise ValueError('from_model requires a nonparametric transfer function.')
-        sampling_time = tf.sampling_time
-        left_nodes = cls._nodes(left_nodes, 'left', sampling_time, conjugate or real)
-        right_nodes = cls._nodes(right_nodes, 'right', sampling_time, conjugate or real)
-        left_values = sample_transfer_function(left_nodes, tf)
-        right_values = sample_transfer_function(right_nodes, tf)
-        if derivatives is None:
-            overlap = np.isin(left_nodes, right_nodes)
-            if conjugate:
-                overlap |= np.isin(left_nodes.conj(), right_nodes)
-            if np.any(overlap):
-                if tf.dtf is None:
-                    raise ValueError('Overlapping quadrature nodes require transfer function derivatives.')
-                derivatives = np.zeros(left_values.shape, dtype=complex)
-                for i in np.flatnonzero(overlap):
-                    derivatives[i] = tf.eval_dtf(left_nodes[i])
-        if feedthrough is None and isinstance(fom, LTIModel):
-            feedthrough = to_matrix(fom.D, format='dense')
-        return cls(left_nodes, right_nodes, left_values, right_values, left_weights, right_weights,
-                   derivatives=derivatives, sampling_time=sampling_time, feedthrough=feedthrough,
-                   real=real, conjugate=conjugate)
 
     @staticmethod
     def _nodes(nodes, name, sampling_time, canonicalize):
@@ -267,7 +208,7 @@ class QuadBTReductor(CacheableObject):
         D = 0 if self.feedthrough is None else self.feedthrough
         L, Ls, V, W = loewner_quadruple(
             self.left_nodes, self.right_nodes, self.left_values - D, self.right_values - D,
-            derivatives=self.derivatives, real=self.real,
+            derivatives=self.derivatives, force_real=self.real,
         )
         wl = np.repeat(np.sqrt(self.left_weights), self.dim_output)[:, np.newaxis]
         wr = np.repeat(np.sqrt(self.right_weights), self.dim_input)[np.newaxis, :]
