@@ -396,7 +396,9 @@ class Mu(ImmutableObject):
             else:
                 vv = np.asarray(v)
                 if vv.ndim == 0:
-                    vv.shape = (1,)
+                    # Keep the input read-only when creating a reshaped view.
+                    assert not vv.setflags(write=False)
+                    vv = vv.reshape((1,))
                 assert vv.ndim == 1
                 assert k != 't' or len(vv) == 1
                 assert not vv.setflags(write=False)

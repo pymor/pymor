@@ -97,3 +97,20 @@ def test_random_bitmap_function():
             assert (f([i/10., j/10.]) != f([(i+1)/10., (j+1)/10.]))
             # values in same cell are equal
             assert (f([i/10., j/10.]) == f([(i+0.3)/10., (j+0.3)/10.]))
+
+
+@pytest.mark.filterwarnings('error:Setting the shape:DeprecationWarning')
+@pytest.mark.parametrize('function', [ConstantFunction(6.), GenericFunction(lambda x: 2 * x[..., 0])])
+@pytest.mark.parametrize('input_type', ['python', 'numpy', 'array', 'readonly'])
+def test_evaluate_scalar(function, input_type):
+    x = 3. if input_type == 'python' else np.float64(3.)
+    if input_type in ('array', 'readonly'):
+        x = np.array(x)
+        if input_type == 'readonly':
+            x.setflags(write=False)
+    result = function(x)
+    assert result.shape == ()
+    assert result == 6.
+    if isinstance(x, np.ndarray):
+        assert x.shape == ()
+        assert x.flags.writeable == (input_type != 'readonly')
