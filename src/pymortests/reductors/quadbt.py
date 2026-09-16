@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
+from pymor.models.iosys import LTIModel
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.quadbt import QuadBTReductor
 
 pytestmark = pytest.mark.builtin
@@ -165,3 +167,162 @@ def test_quadbt_scalar_feedthrough_and_complex_rom():
                              left_weights=[1, 2], right_weights=[3, 4], feedthrough=D, real=False)
     rom = reductor.reduce(np.int64(1))
     assert np.allclose(rom.transfer_function.eval_tf(3j), 1 / (3j + 1) + D)
+
+
+@pytest.mark.parametrize('sampling_time', [0, .1])
+@pytest.mark.parametrize('mimo', [False, True])
+@pytest.mark.parametrize('model_input', [False, True])
+@pytest.mark.parametrize('shared_nodes', [False, True])
+def test_quadbt_from_model(rng, sampling_time, mimo, model_input, shared_nodes):
+    p, m = (2, 3) if mimo else (1, 1)
+    E = np.diag([1., 2., 3.])
+    A = E @ np.diag([.2, .5, .7] if sampling_time else [-.5, -2., -5.])
+    B, C, D = rng.normal(size=(3, m)), rng.normal(size=(p, 3)), rng.normal(size=(p, m))
+    fom = LTIModel.from_matrices(A, B, C, D=D, E=E, sampling_time=sampling_time)
+    left, right = 1j * np.array([2., .2, .7]), 1j * np.array([1.5, .4, 2.5])
+    if sampling_time:
+        left, right = np.exp(left), np.exp(right)
+    if shared_nodes:
+        right = left.conj()[::-1]
+    reductor = QuadBTReductor.from_model(fom if model_input else fom.transfer_function, left, right,
+                                        feedthrough=None if model_input else D)
+    assert reductor.sampling_time == sampling_time
+    assert np.array_equal(reductor.feedthrough, D)
+    assert len(reductor.left_nodes) == len(reductor.right_nodes) == 6
+    tf = fom.transfer_function
+    derivatives = np.array([tf.eval_dtf(z) for z in left]) if shared_nodes else None
+    reference = QuadBTReductor(left, right, np.array([tf.eval_tf(z) for z in left]),
+                               np.array([tf.eval_tf(z) for z in right]), derivatives=derivatives,
+                               sampling_time=sampling_time, feedthrough=D, conjugate=True)
+    for actual, expected in zip(reductor.quadrature_matrices(), reference.quadrature_matrices(), strict=True):
+        assert np.allclose(actual, expected)
+    rom = reductor.reduce(3)
+    assert rom.sampling_time == sampling_time
+    for z in [0, 1.2 + .3j, 2j]:
+        assert np.allclose(rom.transfer_function.eval_tf(z), tf.eval_tf(z))
+
+
+def test_quadbt_continuous_trapezoid_ordering():
+    left = 1j * np.array([2, -1, -2, 1, 0])
+    right = 1j * np.array([3, -.5, -3, .5])
+    reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1))
+    assert np.array_equal(reductor.left_nodes, left)
+    assert np.array_equal(reductor.right_nodes, right)
+    assert np.allclose(reductor.left_weights, np.array([.5, 1, .5, 1, 1]) / (2 * np.pi))
+    assert np.allclose(reductor.right_weights, np.array([1.25, 1.75, 1.25, 1.75]) / (2 * np.pi))
+    rom = reductor.reduce(1)
+    assert np.allclose(rom.transfer_function.eval_tf(3j), 1 / (3j + 1))
+
+
+def test_quadbt_continuous_trapezoid_completion():
+    left, right = 1j * np.array([10, 1]), 1j * np.array([20, 2])
+    reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1), conjugate=True)
+    assert np.array_equal(reductor.left_nodes, [10j, 1j, -10j, -1j])
+    assert np.allclose(reductor.left_weights, np.array([4.5, 5.5, 4.5, 5.5]) / (2 * np.pi))
+    assert np.allclose(reductor.right_weights, 2 * reductor.left_weights)
+
+
+@pytest.mark.parametrize('sampling_time', [.01, .8])
+def test_quadbt_periodic_trapezoid(sampling_time):
+    tf = TransferFunction(1, 1, lambda z: np.array([[1 / (z - .5)]]), sampling_time=sampling_time)
+    left = np.exp(2j * np.pi * np.arange(8) / 8)
+    right = np.exp(2j * np.pi * (np.arange(16) + .5) / 16)
+    reductor = QuadBTReductor.from_model(tf, left, right)
+    assert len(reductor.left_nodes) == 8
+    assert len(reductor.right_nodes) == 16
+    assert reductor.left_nodes[0] == 1
+    assert reductor.left_nodes[4] == -1
+    assert np.allclose(reductor.left_weights, 1 / 8)
+    assert np.allclose(reductor.right_weights, 1 / 16)
+    # An already complete grid also works without requesting conjugate completion.
+    raw = QuadBTReductor(left, right, 1 / (left - .5), 1 / (right - .5), sampling_time=sampling_time)
+    assert np.array_equal(raw.left_nodes, reductor.left_nodes)
+    assert np.array_equal(raw.right_nodes, reductor.right_nodes)
+    for actual, expected in zip(raw.quadrature_matrices(), reductor.quadrature_matrices(), strict=True):
+        assert np.allclose(actual, expected)
+    rom = reductor.reduce(1)
+    assert rom.sampling_time == sampling_time
+    assert np.allclose(rom.transfer_function.eval_tf(1j), tf.eval_tf(1j))
+
+
+def test_quadbt_nonuniform_periodic_trapezoid():
+    nodes = np.exp(1j * np.array([0, np.pi / 3, np.pi, -np.pi / 3]))
+    values = 1 / (nodes - .5)
+    reductor = QuadBTReductor(nodes, nodes, values, values, derivatives=-values**2,
+                             sampling_time=.1, conjugate=True)
+    assert len(reductor.left_nodes) == 4
+    assert np.allclose(reductor.left_weights, [1 / 6, 1 / 4, 1 / 3, 1 / 4])
+    assert np.allclose(reductor.right_weights, reductor.left_weights)
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(1j), 1 / (1j - .5))
+
+
+def test_quadbt_completion_preserves_supplied_data():
+    left, right = np.array([1j, 2j]), np.array([-1j, -3j])
+    reductor = QuadBTReductor(left, right, 1 / (left + 1), 1 / (right + 1),
+                             [.2, .5], [.8, .4], derivatives=-1 / (left + 1)**2, conjugate=True)
+    assert np.array_equal(reductor.left_weights, [.2, .5, .2, .5])
+    assert np.array_equal(reductor.right_weights, [.8, .4, .8, .4])
+    assert np.allclose(reductor.left_values[:, 0, 0], 1 / (reductor.left_nodes + 1))
+    assert np.allclose(reductor.right_values[:, 0, 0], 1 / (reductor.right_nodes + 1))
+    assert np.allclose(reductor.derivatives[:, 0, 0], -1 / (reductor.left_nodes + 1)**2)
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
+
+
+def test_quadbt_samples_only_needed_derivatives():
+    calls = []
+
+    def derivative(z):
+        calls.append(z)
+        return np.array([[-1 / (z + 1)**2]])
+
+    tf = TransferFunction(1, 1, lambda z: np.array([[1 / (z + 1)]]), dtf=derivative)
+    reductor = QuadBTReductor.from_model(tf, [1j, 2j], [-1j, 3j])
+    assert calls == [1j]
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
+
+
+def test_quadbt_from_model_explicit_weights():
+    tf = TransferFunction(1, 1, lambda z: np.array([[1 / (z + 1)]]))
+    reductor = QuadBTReductor.from_model(tf, [1j, 2j], [3j, 4j],
+                                        left_weights=[.2, .5], right_weights=[.8, .4])
+    assert np.array_equal(reductor.left_weights, [.2, .5, .2, .5])
+    assert np.array_equal(reductor.right_weights, [.8, .4, .8, .4])
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
+
+
+def test_quadbt_from_model_missing_derivatives():
+    tf = TransferFunction(1, 1, lambda z: np.array([[1 / (z + 1)]]))
+    with pytest.raises(ValueError, match='require transfer function derivatives'):
+        QuadBTReductor.from_model(tf, [1j, 2j], [-1j, 3j])
+    reductor = QuadBTReductor.from_model(tf, [1j, 2j], [-1j, 3j],
+                                        derivatives=-1 / (np.array([1j, 2j]) + 1)**2)
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), 1)
+
+
+@pytest.mark.parametrize(('nodes', 'sampling_time', 'conjugate', 'message'), [
+    ([1j], 0, False, 'at least two imaginary-axis nodes'),
+    ([1 + 1j, 1 - 1j], 0, False, 'imaginary-axis nodes'),
+    ([2j, -2j], .1, False, 'unit-circle nodes'),
+    ([1, np.exp(2j * np.pi)], .1, True, 'distinct'),
+    ([1, np.exp(2j * np.pi)], .1, False, 'do not repeat the endpoint'),
+])
+def test_quadbt_invalid_trapezoid_nodes(nodes, sampling_time, conjugate, message):
+    with pytest.raises(ValueError, match=message):
+        QuadBTReductor(nodes, nodes, np.ones(len(nodes)), np.ones(len(nodes)),
+                       sampling_time=sampling_time, conjugate=conjugate, real=False)
+
+
+def test_quadbt_from_model_complex_system():
+    tf = TransferFunction(1, 1, lambda z: np.array([[1 / (z + 1 + 1j) + 2j]]))
+    reductor = QuadBTReductor.from_model(tf, [1j, 2j], [3j, 4j],
+                                        conjugate=False, real=False, feedthrough=2j)
+    assert len(reductor.left_nodes) == 2
+    assert np.allclose(reductor.reduce(1).transfer_function.eval_tf(0), tf.eval_tf(0))
+
+
+def test_quadbt_from_model_invalid_input():
+    with pytest.raises(TypeError, match='fom must be'):
+        QuadBTReductor.from_model(np.ones(2), [1j], [2j])
+    tf = TransferFunction(1, 1, lambda z, mu: np.array([[1 / (z + mu['a'][0])]]), parameters={'a': 1})
+    with pytest.raises(ValueError, match='nonparametric'):
+        QuadBTReductor.from_model(tf, [1j], [2j])
