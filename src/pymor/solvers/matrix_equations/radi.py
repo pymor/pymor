@@ -53,7 +53,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         self.hamiltonian_shifts_subspace_columns = hamiltonian_shifts_subspace_columns
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S
+        A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
         trans = equation.trans
 
         if S is not None:
@@ -80,6 +80,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
         if not trans:
             B, C = C, B
+            R, Q = Q, R
 
         Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
@@ -91,7 +92,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         j_shift = 0
         shifts = init_shifts(A, E, B, C)
 
-        res = np.linalg.norm(RF.gramian(), ord=2)
+        res = np.linalg.norm(RF.gramian(product=Q), ord=2)
         init_res = res
         Ctol = res * self.radi_tol
 

@@ -85,14 +85,14 @@ class SlycotRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.to_matrices()
+        A, E, B, C, R, S, Q = equation.to_matrices()
         trans = equation.trans
 
         dico = 'C'
         n = A.shape[0]
         if E is not None:
             jobb = 'B'
-            fact = 'C'
+            fact = 'N'
             uplo = 'U'
             jobl = 'Z' if S is None else 'N'
             scal = 'N'
@@ -102,6 +102,8 @@ class SlycotRiccatiSolver(RiccatiSolver):
             p = B.shape[1] if not trans else C.shape[0]
             if R is None:
                 R = np.eye(m)
+            if Q is None:
+                Q = np.eye(p)
             if S is None:
                 S = np.empty((n, m))
             elif not trans:
@@ -110,9 +112,13 @@ class SlycotRiccatiSolver(RiccatiSolver):
                 A = A.T
                 E = E.T
                 B, C = C.T, B.T
+                R, Q = Q, R
+                Q_ = B @ Q @ B.T
+            else:
+                Q_ = C.T @ Q @ C
             out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
                                 n, m, p,
-                                A, E, B, C, R, S)
+                                A, E, B, Q_, R, S)
             X = out[1]
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
@@ -123,13 +129,19 @@ class SlycotRiccatiSolver(RiccatiSolver):
                 R = np.eye(m)
             else:
                 R = R.copy()  # fix overwrite issue (#2200)
+            if Q is None:
+                Q = np.eye(p)
+            else:
+                Q = Q.copy()  # fix overwrite issue (#2200)
             S = S.copy()  # fix overwrite issue (#2200)
             if trans:
                 C = C.copy()  # fix overwrite issue (#2200)
-                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
+                Q_ = C.T @ Q @ C
+                X, rcond = slycot.sb02od(n, m, A, B, Q_, R, dico, p=p, L=S, fact='N')[:2]
             else:
                 B = B.copy()  # fix overwrite issue (#2200)
-                X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S.T, fact='C')[:2]
+                Q_ = B @ R @ B.T
+                X, rcond = slycot.sb02od(n, m, A.T, C.T, Q_, Q, dico, p=p, L=S.T, fact='N')[:2]
             _ricc_rcond_check('slycot.sb02od', rcond)
         else:
             if trans:
@@ -137,15 +149,21 @@ class SlycotRiccatiSolver(RiccatiSolver):
                     G = B @ B.T
                 else:
                     G = B @ spla.solve(R, B.T)
-                Q = C.T @ C
-                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+                if Q is None:
+                    Q = np.eye(C.shape[0])
+
+                Q_ = C.T @ Q @ C
+                X, rcond = slycot.sb02md(n, A, G, Q_, dico)[:2]
             else:
-                if R is None:
+                if Q is None:
                     G = C.T @ C
                 else:
-                    G = C.T @ spla.solve(R, C)
-                Q = B @ B.T
-                X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
+                    G = C.T @ spla.solve(Q, C)
+                if R is None:
+                    Q = np.eye(B.shape[1])
+
+                Q_ = B @ R @ B.T
+                X, rcond = slycot.sb02md(n, A.T, G, Q_, dico)[:2]
             _ricc_rcond_check('slycot.sb02md', rcond)
 
         return X

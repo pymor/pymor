@@ -446,19 +446,23 @@ class ScipyRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.to_matrices()
+        A, E, B, C, R, S, Q = equation.to_matrices()
         trans = equation.trans
 
         if R is None:
             R = np.eye(C.shape[0] if not trans else B.shape[1])
+        if Q is None:
+            Q = np.eye(B.shape[1] if not trans else C.shape[0])
         if not trans:
             if E is not None:
                 E = E.T
             if S is not None:
                 S = S.T
-            return solve_continuous_are(A.T, C.T, B.dot(B.T), R, e=E, s=S)
+            Q_ = B @ R @ B.T
+            return solve_continuous_are(A.T, C.T, Q_, Q, e=E, s=S)
         else:
-            return solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
+            Q_ = C.T @ Q @ C
+            return solve_continuous_are(A, B, Q_, R, e=E, s=S)
 
 
 class ScipyRiccatiSolverLR(RiccatiSolverLR):
