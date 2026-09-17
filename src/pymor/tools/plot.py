@@ -72,7 +72,17 @@ class _Adaptive(BasicObject):
         assert yscale in ('linear', 'log')
 
         angle_tol *= np.pi / 180
-        self.__auto_init(locals())
+
+        self.f = f
+        self.a = a
+        self.b = b
+        self.initial_num = initial_num
+        self.max_num = max_num
+        self.angle_tol = angle_tol
+        self.min_rel_dist = min_rel_dist
+        self.aspect_ratio = aspect_ratio
+        self.xscale = xscale
+        self.yscale = yscale
 
         if xscale == 'linear':
             self.points = list(np.linspace(a, b, initial_num))

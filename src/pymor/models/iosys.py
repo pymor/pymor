@@ -221,7 +221,21 @@ class LTIModel(Model):
 
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+        self.T = T
+        self.initial_data = initial_data
+        self.time_stepper = time_stepper
+        self.num_values = num_values
+        self.presets = presets
+        self.matrix_equation_solvers = matrix_equation_solvers
+        self.shifted_system_solver = shifted_system_solver
+        self.ast_pole_data = ast_pole_data
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
@@ -1740,7 +1754,13 @@ class PHLTIModel(LTIModel):
                          shifted_system_solver=shifted_system_solver,
                          error_estimator=error_estimator, visualizer=visualizer,
                          name=name)
-        self.__auto_init(locals())
+        self.J = J
+        self.R = R
+        self.G = G
+        self.P = P
+        self.S = S
+        self.N = N
+        self.Q = Q
 
     def to_berlin_form(self):
         """Convert the |PHLTIModel| into its Berlin form.
@@ -2110,7 +2130,16 @@ class SecondOrderModel(Model):
         assert matrix_equation_solvers is None or isinstance(matrix_equation_solvers, MatrixEquationSolvers)
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.M = M
+        self.E = E
+        self.K = K
+        self.B = B
+        self.Cp = Cp
+        self.Cv = Cv
+        self.D = D
+        self.sampling_time = sampling_time
+        self.matrix_equation_solvers = matrix_equation_solvers
+
         self.solution_space = M.source
         self.dim_output = Cp.range.dim
 
@@ -2819,7 +2848,15 @@ class LinearDelayModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.Ad = Ad
+        self.tau = tau
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.q = len(Ad)
@@ -3106,7 +3143,14 @@ class LinearStochasticModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.As = As
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.q = len(As)
@@ -3245,7 +3289,14 @@ class BilinearModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.N = N
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.linear = False
@@ -3352,7 +3403,10 @@ class StepFunction(Function):
 
     def __init__(self, dim_input, component, sampling_time):
         super().__init__()
-        self.__auto_init(locals())
+        self.dim_input = dim_input
+        self.component = component
+        self.sampling_time = sampling_time
+
         self.shape_range = (dim_input,)
 
     def evaluate(self, x, mu=None):
@@ -3370,7 +3424,10 @@ class ImpulseFunction(Function):
 
     def __init__(self, dim_input, component, sampling_time):
         super().__init__()
-        self.__auto_init(locals())
+        self.dim_input = dim_input
+        self.component = component
+        self.sampling_time = sampling_time
+
         self.shape_range = (dim_input,)
 
     def evaluate(self, x, mu=None):

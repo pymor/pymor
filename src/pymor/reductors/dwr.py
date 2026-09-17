@@ -52,9 +52,6 @@ class DWRCoerciveRBReductor(BasicObject):
 
     def __init__(self, fom, dual_foms=None, primal_RB=None, dual_RBs=None, product=None,
                  coercivity_estimator=None, check_orthonormality=None, check_tol=None):
-        self.__auto_init(locals())
-        self._last_rom = None
-
         if dual_RBs is not None:
             assert len(dual_RBs) == fom.dim_output
         assert fom.output_functional is not None, (
@@ -66,6 +63,16 @@ class DWRCoerciveRBReductor(BasicObject):
             'Please use CoerciveRBReductor instead.'
         )
 
+        self.fom = fom
+        self.dual_foms = dual_foms
+        self.primal_RB = primal_RB
+        self.dual_RBs = dual_RBs
+        self.product = product
+        self.coercivity_estimator = coercivity_estimator
+        self.check_orthonormality = check_orthonormality
+        self.check_tol = check_tol
+
+        self._last_rom = None
         self.primal_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
                                                   coercivity_estimator=coercivity_estimator,
                                                   check_orthonormality=check_orthonormality,
@@ -218,7 +225,9 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     """
 
     def __init__(self, primal_estimator, dual_estimators, dual_models):
-        self.__auto_init(locals())
+        self.primal_estimator = primal_estimator
+        self.dual_estimators = dual_estimators
+        self.dual_models = dual_models
 
     def estimate_error(self, U, mu, m):
         return self.primal_estimator.estimate_error(U, mu, m)
@@ -256,7 +265,10 @@ class CorrectedOutputFunctional(Operator):
     linear = False
 
     def __init__(self, output_functional, dual_models, dual_projected_primal_residuals):
-        self.__auto_init(locals())
+        self.output_functional = output_functional
+        self.dual_models = dual_models
+        self.dual_projected_primal_residuals = dual_projected_primal_residuals
+
         self.source = output_functional.source
         self.range = output_functional.range
 

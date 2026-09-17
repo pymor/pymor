@@ -60,8 +60,12 @@ class NeuralNetworkRegressor(BaseRegressor):
 
         assert 0 < validation_ratio < 1
 
-        self.__auto_init(locals())
-        self.neural_network = FullyConnectedNN([30, 30, 30]) if neural_network is None else neural_network
+        if neural_network is None:
+            neural_network = FullyConnectedNN([30, 30, 30])
+
+        self.neural_network = neural_network
+        self.validation_ratio = validation_ratio
+        self.tol = tol
 
     def _get_extra_params(self):
         return dict(self.training_parameters)

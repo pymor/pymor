@@ -64,7 +64,7 @@ class ScipyLinearSolver(Solver):
 
     @defaults('check_finite')
     def __init__(self, check_finite=True):
-        self.__auto_init(locals())
+        self.check_finite = check_finite
 
     def _solve(self, operator, V, mu, initial_guess):
         operator = operator.assemble(mu)
@@ -95,7 +95,8 @@ class ScipyBicgStabSolver(ScipyLinearSolver):
     @defaults('tol', 'maxiter')
     def __init__(self, check_finite=None, tol=1e-15, maxiter=None):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.tol = tol
+        self.maxiter = maxiter
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], V.shape[1]), dtype=promoted_type, order='F')
@@ -120,7 +121,12 @@ class ScipyBicgStabSpILUSolver(ScipyLinearSolver):
     def __init__(self, check_finite=None, tol=1e-15, maxiter=None,
                  spilu_drop_tol=1e-4, spilu_fill_factor=10, spilu_drop_rule=None, spilu_permc_spec='COLAMD'):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.tol = tol
+        self.maxiter = maxiter
+        self.spilu_drop_tol = spilu_drop_tol
+        self.spilu_fill_factor = spilu_fill_factor
+        self.spilu_drop_rule = spilu_drop_rule
+        self.spilu_permc_spec = spilu_permc_spec
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], V.shape[1]), dtype=promoted_type, order='F')
@@ -149,7 +155,9 @@ class ScipySpSolveSolver(ScipyLinearSolver):
     @defaults('permc_spec', 'keep_factorization', 'use_umfpack')
     def __init__(self, check_finite=None, permc_spec='COLAMD', keep_factorization=True, use_umfpack=True):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.permc_spec = permc_spec
+        self.keep_factorization = keep_factorization
+        self.use_umfpack = use_umfpack
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         # cache_key keeps a reference to the ORIGINAL matrix object, which stays alive as long
@@ -212,7 +220,10 @@ class ScipyLGMRESSolver(ScipyLinearSolver):
     @defaults('tol', 'maxiter', 'inner_m', 'outer_k')
     def __init__(self, check_finite=None, tol=1e-5, maxiter=1000, inner_m=39, outer_k=3):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.tol = tol
+        self.maxiter = maxiter
+        self.inner_m = inner_m
+        self.outer_k = outer_k
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], V.shape[1]), dtype=promoted_type, order='F')
@@ -244,7 +255,12 @@ class ScipyLSMRSolver(ScipyLinearSolver):
     @defaults('damp', 'atol', 'btol', 'conlim', 'maxiter', 'show')
     def __init__(self, check_finite=None, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.damp = damp
+        self.atol = atol
+        self.btol = btol
+        self.conlim = conlim
+        self.maxiter = maxiter
+        self.show = show
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         from scipy.sparse.linalg import lsmr
@@ -272,7 +288,12 @@ class ScipyLSQRSolver(ScipyLinearSolver):
     @defaults('damp', 'atol', 'btol', 'conlim', 'iter_lim', 'show')
     def __init__(self, check_finite=None, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, iter_lim=None, show=False):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.damp = damp
+        self.atol = atol
+        self.btol = btol
+        self.conlim = conlim
+        self.iter_lim = iter_lim
+        self.show = show
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], V.shape[1]), dtype=promoted_type, order='F')
@@ -299,7 +320,7 @@ class ScipyLUSolveSolver(ScipyLinearSolver):
     @defaults('check_cond')
     def __init__(self, check_finite=None, check_cond=True):
         super().__init__(check_finite)
-        self.__auto_init(locals())
+        self.check_cond = check_cond
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         try:

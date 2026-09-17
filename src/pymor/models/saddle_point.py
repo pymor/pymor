@@ -116,6 +116,13 @@ class SaddlePointModel(StationaryModel):
         else:
             products = None
 
-        self.__auto_init(locals())
         super().__init__(operator=operator, rhs=rhs, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
+        self.A = A
+        self.B = B
+        self.f = f
+        self.g = g
+        self.C = C
+        self.u_product = u_product
+        self.p_product = p_product
+        self.solver = solver

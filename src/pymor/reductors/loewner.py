@@ -105,7 +105,12 @@ class LoewnerReductor(CacheableObject):
             self.dim_output = 1
             self.dim_input = 1
 
-        self.__auto_init(locals())
+        self.s = s
+        self.Hs = Hs
+        self.partitioning = partitioning
+        self.ordering = ordering
+        self.conjugate = conjugate
+        self.mimo_handling = mimo_handling
 
     def reduce(self, r=None, tol=1e-12):
         """Reduce using Loewner framework.

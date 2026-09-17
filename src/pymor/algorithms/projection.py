@@ -90,7 +90,8 @@ class ProjectRules(RuleTable):
 
     def __init__(self, range_basis, source_basis):
         super().__init__(use_caching=True)
-        self.__auto_init(locals())
+        self.range_basis = range_basis
+        self.source_basis = source_basis
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
@@ -294,7 +295,8 @@ class ProjectToSubbasisRules(RuleTable):
 
     def __init__(self, dim_range, dim_source):
         super().__init__(use_caching=True)
-        self.__auto_init(locals())
+        self.dim_range = dim_range
+        self.dim_source = dim_source
 
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op):

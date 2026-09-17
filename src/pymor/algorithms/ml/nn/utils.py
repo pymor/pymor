@@ -34,7 +34,9 @@ class EarlyStoppingScheduler(BasicObject):
     """
 
     def __init__(self, size_training_validation_parameters, patience=10, delta=0.):
-        self.__auto_init(locals())
+        self.size_training_validation_parameters = size_training_validation_parameters
+        self.patience = patience
+        self.delta = delta
 
         self.best_losses = None
         self.best_neural_network = None

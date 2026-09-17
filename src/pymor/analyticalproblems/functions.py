@@ -173,7 +173,11 @@ class ConstantFunction(Function):
         assert dim_domain > 0
         assert isinstance(value, Number | np.ndarray)
         value = np.array(value)
-        self.__auto_init(locals())
+
+        self.value = value
+        self.dim_domain = dim_domain
+        self.name = name
+
         self.shape_range = value.shape
 
     def __str__(self):
@@ -230,7 +234,12 @@ class GenericFunction(Function):
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
         self.parameters_own = parameters
-        self.__auto_init(locals())
+
+        self.mapping = mapping
+        self.dim_domain = dim_domain
+        self.shape_range = shape_range
+        self.parameters = parameters
+        self.name = name
 
     def __str__(self):
         return f'{self.name}: x -> {self.mapping}'
@@ -274,7 +283,8 @@ class SymbolicExpressionFunction(GenericFunction):
         assert variable not in expression_obj.parameters or expression_obj.parameters[variable] == dim_domain
         params = {k: v for k, v in expression_obj.parameters.items() if k != variable}
         super().__init__(expression_obj.to_numpy([variable]), dim_domain, expression_obj.shape, params, name)
-        self.__auto_init(locals())
+        self.expression_obj = expression_obj
+        self.variable = variable
 
     def to_fenics(self, mesh):
         return self.expression_obj.to_fenics(mesh)
@@ -323,7 +333,10 @@ class ExpressionFunction(SymbolicExpressionFunction):
         params[variable] = dim_domain
         expression_obj = parse_expression(expression, parameters=params, values=values)
         super().__init__(expression_obj, dim_domain, variable, name)
-        self.__auto_init(locals())
+
+        self.expression = expression
+        self.parameters = parameters
+        self.values = values
 
     def __reduce__(self):
         return (ExpressionFunction,
@@ -366,7 +379,10 @@ class LincombFunction(Function):
         functions = tuple(functions)
         coefficients = tuple(coefficients)
 
-        self.__auto_init(locals())
+        self.functions = functions
+        self.coefficients = coefficients
+        self.name = name
+
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
@@ -401,7 +417,10 @@ class ProductFunction(Function):
         assert all(isinstance(f, Function) for f in functions)
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
-        self.__auto_init(locals())
+
+        self.functions = functions
+        self.name = name
+
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
@@ -427,7 +446,10 @@ class BitmapFunction(Function):
     def __init__(self, bitmap, bounding_box=None):
         assert isinstance(bitmap, np.ndarray)
         bounding_box = bounding_box or [[0., 0.], [1., 1.]]
-        self.__auto_init(locals())
+
+        self.bitmap = bitmap
+        self.bounding_box = bounding_box
+
         self.lower_left = np.array(bounding_box[0])
         self.size = np.array(bounding_box[1] - self.lower_left)
 
@@ -544,7 +566,16 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         assert basis_evaluations is None or isinstance(basis_evaluations, np.ndarray) and \
             basis_evaluations.shape == (len(evaluation_points), len(interpolation_points))
 
-        self.__auto_init(locals())
+        self.function = function
+        self.interpolation_points = interpolation_points
+        self.interpolation_matrix = interpolation_matrix
+        self.triangular = triangular
+        self.snapshot_mus = snapshot_mus
+        self.snapshot_coefficients = snapshot_coefficients
+        self.evaluation_points = evaluation_points
+        self.basis_evaluations = basis_evaluations
+        self.name = name
+
         functions = [EmpiricalInterpolatedFunctionBasisFunction(self, i) for i in range(len(interpolation_points))]
         coefficients = [EmpiricalInterpolatedFunctionFunctional(self, i) for i in range(len(interpolation_points))]
         super().__init__(functions, coefficients)
@@ -581,7 +612,8 @@ class EmpiricalInterpolatedFunction(LincombFunction):
 class EmpiricalInterpolatedFunctionFunctional(ParameterFunctional):
 
     def __init__(self, interpolated_function, index):
-        self.__auto_init(locals())
+        self.interpolated_function = interpolated_function
+        self.index = index
         # we explicitly have to set the parameters since interpolation_points isn't initialized yet
         self.parameters = interpolated_function.function.parameters
 
@@ -593,7 +625,9 @@ class EmpiricalInterpolatedFunctionFunctional(ParameterFunctional):
 class EmpiricalInterpolatedFunctionBasisFunction(Function):
 
     def __init__(self, interpolated_function, index):
-        self.__auto_init(locals())
+        self.interpolated_function = interpolated_function
+        self.index = index
+
         self.dim_domain = interpolated_function.function.dim_domain
         self.shape_range = interpolated_function.function.shape_range
         self.parameters = {}

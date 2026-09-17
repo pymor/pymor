@@ -96,28 +96,7 @@ class UberMeta(abc.ABCMeta):
             if attr in classdict:
                 raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
 
-        def __auto_init(self, locals_):
-            """Automatically assign __init__ arguments.
-
-            This method is used in __init__ to automatically assign __init__ arguments to equally
-            named object attributes. The values are provided by the `locals_` dict. Usually,
-            `__auto_init` is called as::
-
-                self.__auto_init(locals())
-
-            where `locals()` returns a dictionary of all local variables in the current scope.
-            Only attributes which have not already been set by the user are initialized by
-            `__auto_init`.
-            """
-            for arg in c._init_arguments:
-                if arg not in self.__dict__:
-                    setattr(self, arg, locals_[arg])
-
-        auto_init_name = f"_{classname.lstrip('_')}__auto_init"
-        classdict[auto_init_name] = __auto_init
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
-        # by updating the qualified name we make filtering in sphinx possible
-        getattr(c, auto_init_name).__qualname__ = auto_init_name
 
         init_sig = inspect.signature(c.__init__)
         init_args = []

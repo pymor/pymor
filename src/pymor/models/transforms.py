@@ -45,7 +45,9 @@ class MoebiusTransformation(ImmutableObject):
             else:
                 coefficients /= np.sqrt(np.abs(kappa)) / np.exp(-1j * np.angle(coefficients[0]))
 
-        self.__auto_init(locals())
+        self.coefficients = coefficients
+        self.normalize = normalize
+        self.name = name
 
     @classmethod
     def from_points(cls, z, w=(0, 1, np.inf), name=None):
@@ -155,7 +157,7 @@ class BilinearTransformation(MoebiusTransformation):
         assert isinstance(x, Number)
         assert x > 0
         super().__init__([x, -x, 1, 1], name=name)
-        self.__auto_init(locals())
+        self.x = x
 
 
 class CayleyTransformation(MoebiusTransformation):
@@ -174,4 +176,3 @@ class CayleyTransformation(MoebiusTransformation):
 
     def __init__(self, name=None):
         super().__init__([1, -1j, 1, 1j], name=name)
-        self.__auto_init(locals())

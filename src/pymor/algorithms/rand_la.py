@@ -86,7 +86,20 @@ class RandomizedRangeFinder(BasicObject):
         if A_adj is None:
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
-        self.__auto_init(locals())
+        self.A = A
+        self.range_product = range_product
+        self.source_product = source_product
+        self.A_adj = A_adj
+        self.power_iterations = power_iterations
+        self.block_size = block_size
+        self.failure_tolerance = failure_tolerance
+        self.num_testvecs = num_testvecs
+        self.lambda_min = lambda_min
+        self.iscomplex = iscomplex
+        self.qr_method = qr_method
+        self.error_estimator = error_estimator
+        self.qr_opts = qr_opts
+
         self.estimate_error = self._bs18_estimator if error_estimator == 'bs18' else self._loo_estimator
         self.Omega = A.range.empty()  # the test vectors for 'bs18' or the drawn samples for 'loo'.
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
@@ -298,7 +311,14 @@ class RandomizedSVD(BasicObject):
     def __init__(self, A, range_product=None, source_product=None, power_iterations=0,
                  low_rank_svd_method='qr_svd', rrf_args=None):
         assert low_rank_svd_method in SVD_VA_METHODS
-        self.__auto_init(locals())
+
+        self.A = A
+        self.range_product = range_product
+        self.source_product = source_product
+        self.power_iterations = power_iterations
+        self.low_rank_svd_method = low_rank_svd_method
+        self.rrf_args = rrf_args
+
         self.range_finder = RandomizedRangeFinder(A, range_product=range_product, source_product=source_product,
                                                   power_iterations=power_iterations, **(rrf_args or {}))
         self.B = A.source.empty()

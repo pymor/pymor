@@ -60,7 +60,10 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
                          output_functional=output_functional,
                          visualizer=visualizer,
                          name=name)
-        self.__auto_init(locals())
+        self.J = J
+        self.H_op = H_op
+        self.h = h
+        self.nt = nt
 
     def eval_hamiltonian(self, u, mu=None):
         """Evaluate a quadratic Hamiltonian function.

@@ -51,7 +51,11 @@ class LincombOperator(Operator):
         operators = tuple(operators)
         coefficients = tuple(coefficients)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.coefficients = coefficients
+        self.solver = solver
+        self.name = name
+
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -232,7 +236,10 @@ class ConcatenationOperator(Operator):
         assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
         operators = tuple(operators)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.solver = solver
+        self.name = name
+
         self.source = operators[-1].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -356,7 +363,14 @@ class ProjectedOperator(Operator):
             source_basis = source_basis.copy()
         if range_basis is not None:
             range_basis = range_basis.copy()
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.range_basis = range_basis
+        self.source_basis = source_basis
+        self.product = product
+        self.solver = solver
+        self.name = name
+
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.linear = operator.linear
@@ -459,7 +473,13 @@ class LowRankOperator(Operator):
         assert core.ndim == 2
         assert core.shape[0] == core.shape[1] == len(left)
 
-        self.__auto_init(locals())
+        self.left = left
+        self.core = core
+        self.right = right
+        self.inverted = inverted
+        self.solver = solver
+        self.name = name
+
         self.source = right.space
         self.range = left.space
 
@@ -533,7 +553,10 @@ class LowRankUpdatedOperator(LincombOperator):
         assert isinstance(lr_operator, LowRankOperator)
         super().__init__([operator, lr_operator], [coeff, lr_coeff],
                          solver=solver, name=name)
-        self.__auto_init(locals())
+        self.operator = operator
+        self.lr_operator = lr_operator
+        self.coeff = coeff
+        self.lr_coeff = lr_coeff
 
     def _apply_inverse(self, V, mu, initial_guess):
         A, LR = self.operators
@@ -591,7 +614,11 @@ class ComponentProjectionOperator(Operator):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
-        self.__auto_init(locals())
+        self.components = components
+        self.source = source
+        self.solver = solver
+        self.name = name
+
         self.range = NumpyVectorSpace(len(components))
 
     def apply(self, U, mu=None):
@@ -625,7 +652,11 @@ class IdentityOperator(Operator):
 
     def __init__(self, space, solver=None, name=None):
         assert isinstance(space, VectorSpace)
-        self.__auto_init(locals())
+
+        self.space = space
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = space
 
     @property
@@ -678,7 +709,11 @@ class ConstantOperator(Operator):
         assert len(value) == 1
         value = value.copy()
 
-        self.__auto_init(locals())
+        self.value = value
+        self.source = source
+        self.solver = solver
+        self.name = name
+
         self.range = value.space
 
     def apply(self, U, mu=None):
@@ -716,7 +751,11 @@ class ZeroOperator(Operator):
     def __init__(self, range, source, solver=None, name=None):
         assert isinstance(range, VectorSpace)
         assert isinstance(source, VectorSpace)
-        self.__auto_init(locals())
+
+        self.range = range
+        self.source = source
+        self.solver = solver
+        self.name = name
 
     @property
     def H(self):
@@ -762,7 +801,12 @@ class VectorArrayOperator(Operator):
 
     def __init__(self, array, adjoint=False, solver=None, name=None):
         array = array.copy()
-        self.__auto_init(locals())
+
+        self.array = array
+        self.adjoint = adjoint
+        self.solver = solver
+        self.name = name
+
         if adjoint:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array))
@@ -906,7 +950,11 @@ class ProxyOperator(Operator):
 
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
@@ -1021,7 +1069,10 @@ class InverseOperator(Operator):
         assert isinstance(operator, Operator)
         name or operator.name + '_inverse'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.range
         self.range = operator.source
         self.linear = operator.linear
@@ -1067,7 +1118,10 @@ class InverseAdjointOperator(Operator):
         assert operator.linear
         name = name or operator.name + '_inverse_adjoint'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
 
@@ -1137,7 +1191,13 @@ class AdjointOperator(Operator):
         assert operator.linear
         name or operator.name + '_adjoint'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.source_product = source_product
+        self.range_product = range_product
+        self.with_apply_inverse = with_apply_inverse
+        self.solver = solver
+        self.name = name
+
         self.source = operator.range
         self.range = operator.source
 
@@ -1226,7 +1286,12 @@ class SelectionOperator(Operator):
         operators = tuple(operators)
         boundaries = tuple(boundaries)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.parameter_functional = parameter_functional
+        self.boundaries = boundaries
+        self.solver = solver
+        self.name = name
+
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -1369,7 +1434,11 @@ class InducedNorm(ParametricObject):
 
     def __init__(self, product, raise_negative, tol, name):
         name = name or product.name
-        self.__auto_init(locals())
+
+        self.product = product
+        self.raise_negative = raise_negative
+        self.tol = tol
+        self.name = name
 
     def __call__(self, U, mu=None):
         norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real
@@ -1411,7 +1480,12 @@ class NumpyConversionOperator(Operator):
 
     def __init__(self, space, direction='to_numpy', solver=None, name=None):
         assert direction in ('to_numpy', 'from_numpy')
-        self.__auto_init(locals())
+
+        self.space = space
+        self.direction = direction
+        self.solver = solver
+        self.name = name
+
         if direction == 'to_numpy':
             self.source = space
             self.range = NumpyVectorSpace(space.dim)
@@ -1491,7 +1565,11 @@ class QuadraticFunctional(Operator):
     def __init__(self, operator, solver=None, name=None):
         assert operator.linear
         assert operator.source == operator.range
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
 
     def apply(self, U, mu=None):
@@ -1538,9 +1616,13 @@ class QuadraticProductFunctional(QuadraticFunctional):
         assert product is None or (
             isinstance(product, Operator) and product.source == right.range
             and product.range == left.range)
-        self.__auto_init(locals())
-        self.source = left.source
+
         if product is None:
-            super().__init__(left.H @ right, name=name)
+            super().__init__(left.H @ right, solver=solver, name=name)
         else:
-            super().__init__(left.H @ product @ right, name=name)
+            super().__init__(left.H @ product @ right, solver=solver, name=name)
+        self.left = left
+        self.right = right
+        self.product = product
+
+        self.source = left.source

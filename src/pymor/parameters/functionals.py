@@ -149,7 +149,11 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert isinstance(index, Number)
         assert 0 <= index < size
 
-        self.__auto_init(locals())
+        self.parameter = parameter
+        self.size = size
+        self.index = index
+        self.name = name
+
         self.parameters_own = {parameter: size}
 
     def evaluate(self, mu=None):
@@ -190,8 +194,13 @@ class GenericParameterFunctional(ParameterFunctional):
     """
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
-        self.__auto_init(locals())
         self.parameters_own = parameters
+
+        self.mapping = mapping
+        self.parameters = parameters
+        self.name = name
+        self.derivative_mappings = derivative_mappings
+        self.second_derivative_mappings = second_derivative_mappings
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -297,7 +306,9 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         else:
             second_derivative_mappings = None
         super().__init__(exp_mapping, parameters, name, derivative_mappings, second_derivative_mappings)
-        self.__auto_init(locals())
+        self.expression = expression
+        self.derivative_expressions = derivative_expressions
+        self.second_derivative_expressions = second_derivative_expressions
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,
@@ -320,7 +331,9 @@ class ProductParameterFunctional(ParameterFunctional):
         assert len(factors) > 0
         assert all(isinstance(f, ParameterFunctional | Number) for f in factors)
         factors = tuple(factors)
-        self.__auto_init(locals())
+
+        self.factors = factors
+        self.name = name
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -387,7 +400,7 @@ class ConstantParameterFunctional(ParameterFunctional):
 
     def __init__(self, constant_value, name=None):
         self.constant_value = constant_value
-        self.__auto_init(locals())
+        self.name = name
 
     def evaluate(self, mu=None):
         return self.constant_value
@@ -423,7 +436,10 @@ class LincombParameterFunctional(ParameterFunctional):
         assert all(isinstance(c, Number) for c in coefficients)
         functionals = tuple(functionals)
         coefficients = tuple(coefficients)
-        self.__auto_init(locals())
+
+        self.functionals = functionals
+        self.coefficients = coefficients
+        self.name = name
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -485,7 +501,12 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert np.all(thetas_mu_bar > 0)
         assert isinstance(alpha_mu_bar, Number)
         assert alpha_mu_bar > 0
-        self.__auto_init(locals())
+
+        self.thetas = thetas
+        self.mu_bar = mu_bar
+        self.alpha_mu_bar = alpha_mu_bar
+        self.name = name
+
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
@@ -576,7 +597,13 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)
         assert gamma_mu_bar > 0
-        self.__auto_init(locals())
+
+        self.thetas_prime = thetas_prime
+        self.thetas = thetas
+        self.mu_bar = mu_bar
+        self.gamma_mu_bar = gamma_mu_bar
+        self.name = name
+
         self.thetas_mu_bar = thetas_mu_bar
         self.theta_mu_bar_has_negative = np.any(thetas_mu_bar < 0)
         if self.theta_mu_bar_has_negative:

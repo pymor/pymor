@@ -168,7 +168,14 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
 
         name = name or f'{restricted_operator.name}_projected'
 
-        self.__auto_init(locals())
+        self.restricted_operator = restricted_operator
+        self.interpolation_matrix = interpolation_matrix
+        self.source_basis_dofs = source_basis_dofs
+        self.projected_collateral_basis = projected_collateral_basis
+        self.triangular = triangular
+        self.solver = solver
+        self.name = name
+
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear

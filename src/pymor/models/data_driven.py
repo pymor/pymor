@@ -70,7 +70,14 @@ class DataDrivenModel(Model):
 
         assert target_quantity == 'solution' or output_functional is None
 
-        self.__auto_init(locals())
+        self.regressor = regressor
+        self.target_quantity = target_quantity
+        self.parameters = parameters
+        self.dim_solution_space = dim_solution_space
+        self.input_scaler = input_scaler
+        self.output_scaler = output_scaler
+        self.output_functional = output_functional
+
         if self.target_quantity == 'solution':
             assert self.dim_solution_space
             self.solution_space = NumpyVectorSpace(self.dim_solution_space)
@@ -171,8 +178,9 @@ class DataDrivenInstationaryModel(DataDrivenModel):
                          dim_solution_space=dim_solution_space, input_scaler=input_scaler, output_scaler=output_scaler,
                          output_functional=output_functional, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
-
-        self.__auto_init(locals())
+        self.T = T
+        self.nt = nt
+        self.time_vectorized = time_vectorized
 
     def _perform_prediction(self, mu):
         """Performs the prediction with correct scaling."""
@@ -226,7 +234,9 @@ class ModelOfDataDrivenModels(Model):
         assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
         assert all(isinstance(m, DataDrivenModel) for m in models)
         super().__init__(error_estimator=error_estimator)
-        self.__auto_init(locals())
+        self.models = models
+        self.output_functional = output_functional
+
         self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
 
     def _compute(self, quantities, data, mu):

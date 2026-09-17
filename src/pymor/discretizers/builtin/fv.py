@@ -86,7 +86,8 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
     """
 
     def __init__(self, flux, lxf_lambda=1.0):
-        self.__auto_init(locals())
+        self.flux = flux
+        self.lxf_lambda = lxf_lambda
 
     def evaluate_stage1(self, U, mu=None):
         return U, self.flux(U[..., np.newaxis], mu)
@@ -113,7 +114,8 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
     """
 
     def __init__(self, flux, flux_derivative):
-        self.__auto_init(locals())
+        self.flux = flux
+        self.flux_derivative = flux_derivative
 
     def evaluate_stage1(self, U, mu=None):
         return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
@@ -160,7 +162,11 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
     """
 
     def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
-        self.__auto_init(locals())
+        self.flux = flux
+        self.flux_derivative = flux_derivative
+        self.gausspoints = gausspoints
+        self.intervals = intervals
+
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
         points = ((np.arange(self.intervals, dtype=np.float64)[:, np.newaxis] * (1 / intervals))
@@ -215,7 +221,14 @@ class NonlinearAdvectionOperator(Operator):
                  solver=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, Function)
 
-        self.__auto_init(locals())
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.numerical_flux = numerical_flux
+        self.dirichlet_data = dirichlet_data
+        self.jacobian_delta = jacobian_delta
+        self.solver = solver
+        self.name = name
+
         if (isinstance(dirichlet_data, Function) and boundary_info.has_dirichlet
                 and not dirichlet_data.parametric):
             self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
@@ -468,7 +481,13 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
     """
 
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver=None, name=None):
-        self.__auto_init(locals())
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.velocity_field = velocity_field
+        self.lxf_lambda = lxf_lambda
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -529,7 +548,10 @@ class L2Product(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, solver=None, name=None):
-        self.__auto_init(locals())
+        self.grid = grid
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -563,7 +585,12 @@ class ReactionOperator(NumpyMatrixBasedOperator):
     def __init__(self, grid, reaction_coefficient, solver=None, name=None):
         assert reaction_coefficient.dim_domain == grid.dim
         assert reaction_coefficient.shape_range == ()
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.reaction_coefficient = reaction_coefficient
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -592,7 +619,11 @@ class NonlinearReactionOperator(Operator):
     linear = False
 
     def __init__(self, grid, reaction_function, reaction_function_derivative=None, name=None):
-        self.__auto_init(locals())
+        self.grid = grid
+        self.reaction_function = reaction_function
+        self.reaction_function_derivative = reaction_function_derivative
+        self.name = name
+
         self.source = self.range = FVVectorSpace(grid)
 
     def apply(self, U, ind=None, mu=None):
@@ -653,7 +684,17 @@ class L2Functional(NumpyMatrixBasedOperator):
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
         assert function is None or function.shape_range == ()
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.function = function
+        self.boundary_info = boundary_info
+        self.dirichlet_data = dirichlet_data
+        self.diffusion_function = diffusion_function
+        self.diffusion_constant = diffusion_constant
+        self.neumann_data = neumann_data
+        self.order = order
+        self.name = name
+
         self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -734,7 +775,13 @@ class BoundaryL2Functional(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not boundary_type or boundary_info
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.function = function
+        self.boundary_type = boundary_type
+        self.boundary_info = boundary_info
+        self.name = name
+
         self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -786,7 +833,14 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
                 or (isinstance(diffusion_function, Function)
                     and diffusion_function.dim_domain == grid.dim
                     and diffusion_function.shape_range == ()))
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.diffusion_function = diffusion_function
+        self.diffusion_constant = diffusion_constant
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
@@ -885,7 +939,11 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         assert function.shape_range == ()
         if order != 0:
             raise NotImplementedError('Higher orders not implemented yet!')
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.function = function
+        self.order = order
+
         self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
