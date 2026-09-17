@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
-from pymor.operators.block import BlockDiagonalOperator, BlockOperator
+from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
 from pymor.operators.constructions import ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -218,3 +218,40 @@ def test_raises_if_operator_spaces_mismatch_provided_spaces():
 
     with pytest.raises(AssertionError):
         BlockOperator(blocks, range_spaces=[wrong_R0, correct_R1], source_spaces=[correct_S0, correct_S1])
+
+
+@pytest.mark.filterwarnings('error:Setting the shape:DeprecationWarning')
+@pytest.mark.parametrize('operator_type', [BlockRowOperator, BlockColumnOperator])
+@pytest.mark.parametrize('array_input', [False, True])
+def test_block_row_column_shape(operator_type, array_input):
+    first = NumpyMatrixOperator(np.array([[2.]]))
+    second = NumpyMatrixOperator(np.array([[3.]]))
+    blocks = [first, second]
+    if array_input:
+        blocks = np.array(blocks)
+    op = operator_type(blocks)
+    row = operator_type is BlockRowOperator
+    assert op.blocks.shape == ((1, 2) if row else (2, 1))
+    assert op.blocks.flat[0] is first
+    assert op.blocks.flat[1] is second
+    assert op.source.dim == (2 if row else 1)
+    assert op.range.dim == (1 if row else 2)
+    np.testing.assert_allclose(op.apply(op.source.ones()).to_numpy(), [[5.]] if row else [[2.], [3.]])
+    np.testing.assert_allclose(op.apply_adjoint(op.range.ones()).to_numpy(), [[2.], [3.]] if row else [[5.]])
+    if array_input:
+        assert blocks.shape == (2,)
+
+
+@pytest.mark.filterwarnings('error:Setting the shape:DeprecationWarning')
+@pytest.mark.parametrize('operator_type', [BlockRowOperator, BlockColumnOperator])
+def test_block_row_column_none_with_explicit_spaces(operator_type):
+    first = NumpyMatrixOperator(np.array([[2.]]))
+    row = operator_type is BlockRowOperator
+    op = operator_type([first, None],
+                       range_spaces=[first.range] * (1 if row else 2),
+                       source_spaces=[first.source] * (2 if row else 1))
+    assert op.blocks.shape == ((1, 2) if row else (2, 1))
+    assert op.blocks.flat[0] is first
+    assert isinstance(op.blocks.flat[1], ZeroOperator)
+    np.testing.assert_allclose(op.apply(op.source.ones()).to_numpy(), [[2.]] if row else [[2.], [0.]])
+    np.testing.assert_allclose(op.apply_adjoint(op.range.ones()).to_numpy(), [[2.], [0.]] if row else [[2.]])
