@@ -40,7 +40,7 @@ def penzl_example():
     A1 = np.array([[-1, 100], [-100, -1]])
     A2 = np.array([[-1, 200], [-200, -1]])
     A3 = np.array([[-1, 400], [-400, -1]])
-    A4 = sps.diags(np.arange(-1, -n + 5, -1), dtype=None)
+    A4 = sps.diags(np.arange(-1., -n + 5, -1.))
     A = sps.block_diag((A1, A2, A3, A4))
     B = np.ones((n, 1))
     B[:6] = 10
