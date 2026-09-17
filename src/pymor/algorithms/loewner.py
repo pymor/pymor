@@ -469,8 +469,6 @@ def _real_transformation(nodes):
 
 
 def _real_array(array, name):
-    if not np.iscomplexobj(array):
-        return array
     tolerance = 1000 * np.finfo(array.real.dtype).eps * max(1, np.max(np.abs(array)))
     if np.max(np.abs(array.imag)) > tolerance:
         raise AccuracyError(f'{name} is not real after conjugate transformation.')

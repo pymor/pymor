@@ -14,6 +14,7 @@ from pymor.algorithms.loewner import (
     loewner_matrix,
     loewner_matrix_nd,
     loewner_quadruple,
+    partition_frequencies,
 )
 from pymor.core.exceptions import AccuracyError
 from pymor.models.transfer_function import TransferFunction
@@ -74,6 +75,24 @@ def test_complete_conjugate_pairs():
     assert np.array_equal(nodes, [1j, 2j, -1j, -2j])
     assert np.array_equal(samples, [1 + 2j, 3 + 4j, 1 - 2j, 3 - 4j])
     assert np.array_equal(weights, [2., 3., 2., 3.])
+
+
+@pytest.mark.parametrize(('ordering', 'partitioning', 'left', 'right'), [
+    ('regular', 'even-odd', [0, 2, 4], [1, 3]),
+    ('regular', 'half-half', [0, 1, 2], [3, 4]),
+    ('random', 'even-odd', [2, 3, 1], [4, 0]),
+    ('random', 'half-half', [2, 4, 3], [0, 1]),
+])
+def test_partition_frequencies_without_conjugates(ordering, partitioning, left, right):
+    nodes = 1j * np.arange(1, 6)
+    samples = 1 / (nodes + 1)
+
+    left_indices, right_indices = partition_frequencies(
+        nodes, samples, partitioning=partitioning, ordering=ordering, force_real=False,
+    )
+
+    assert np.array_equal(left_indices, left)
+    assert np.array_equal(right_indices, right)
 
 
 def test_loewner_input_validation():
