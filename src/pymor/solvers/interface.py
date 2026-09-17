@@ -39,15 +39,6 @@ class Solver(ImmutableObject):
 
     Attributes
     ----------
-    least_squares
-        If `True`, the solver solves least-squares problems as defined above.
-    jacobian_solver
-        If not `None`, a |Solver| for solving linearized equations.
-
-        Used by :class:`~pymor.solvers.newton.NewtonSolver`.
-        If `op` is an |Operator| with `op.solver` not `None`, then
-        `op.jacobian(U, mu)` will inhert the `jacobian_solver` of
-        `op.solver`.
     adjoint_solver
         'Adjoint' solver with `solve` and `solve_adjoint` swapped.
 
@@ -58,8 +49,16 @@ class Solver(ImmutableObject):
     """
 
     least_squares = False
+    """If `True`, the solver solves least-squares problems as defined above."""
 
     jacobian_solver = None
+    """If not `None`, a |Solver| for solving linearized equations.
+
+    Used by :class:`~pymor.solvers.newton.NewtonSolver`.
+    If `op` is an |Operator| with `op.solver` not `None`, then
+    `op.jacobian(U, mu)` will inhert the `jacobian_solver` of
+    `op.solver`.
+    """
 
     @property
     def adjoint_solver(self):
