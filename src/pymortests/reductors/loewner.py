@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.loewner import _sample_transfer_function, partition_frequencies
+from pymor.algorithms.loewner import sample_transfer_function, partition_frequencies
 from pymor.models.examples import penzl_mimo_example
 from pymor.models.iosys import LTIModel
 from pymor.reductors.aaa import PAAAReductor
@@ -138,7 +138,7 @@ def test_data_driven_reductor_sampling_api(reductor_cls, model_input):
     with pytest.raises(AssertionError, match='generate_samples'):
         reductor_cls(nodes, source)
 
-    assert reductor_cls.generate_samples is _sample_transfer_function
+    assert reductor_cls.generate_samples is sample_transfer_function
     samples = reductor_cls.generate_samples(nodes, source)
     derivatives = reductor_cls.generate_samples(nodes, source, derivative=True)
     assert np.allclose(samples[:, 0, 0], 1 / (nodes + 1))

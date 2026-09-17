@@ -11,6 +11,46 @@ from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
+def sample_transfer_function(sampling_values, fom, *, derivative=False):
+    """Sample a |TransferFunction| or its derivative on a Cartesian grid.
+
+    Parameters
+    ----------
+    sampling_values
+        A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
+        Laplace-variable values; subsequent arrays contain parameter values.
+    fom
+        A |TransferFunction| or a model with a `transfer_function` attribute.
+    derivative
+        If `True`, sample the derivative with respect to the complex frequency argument.
+
+    Returns
+    -------
+    samples
+        Sample data of shape `tuple(map(len, sampling_values)) + (dim_output, dim_input)`.
+        A single frequency array produces shape `(n, dim_output, dim_input)`.
+    """
+    fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
+    assert isinstance(fom, TransferFunction), 'fom must be a TransferFunction or a model with a transfer_function.'
+
+    if isinstance(sampling_values, np.ndarray):
+        sampling_values = (sampling_values,)
+    else:
+        sampling_values = tuple(sampling_values)
+    assert len(sampling_values) == fom.parameters.dim + 1, \
+        'sampling_values must contain the Laplace variable and one array per parameter.'
+    assert all(values.ndim == 1 for values in sampling_values), 'sampling_values must contain one-dimensional arrays.'
+    assert all(len(values) > 0 for values in sampling_values), 'sampling_values must contain non-empty arrays.'
+
+    sample_shape = tuple(len(s) for s in sampling_values)
+    evaluate = fom.eval_dtf if derivative else fom.eval_tf
+    samples = [
+        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
+        for values in product(*sampling_values)
+    ]
+    return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
+
+
 def complete_conjugate_pairs(nodes, *data):
     """Complete nodes and associated data with complex conjugate pairs.
 
@@ -495,46 +535,6 @@ def _as_nodes(nodes, name):
     assert nodes.ndim == 1, f'{name} must be one-dimensional.'
     assert len(nodes) > 0, f'{name} must not be empty.'
     return nodes
-
-
-def _sample_transfer_function(sampling_values, fom, *, derivative=False):
-    """Sample a |TransferFunction| or its derivative on a Cartesian grid.
-
-    Parameters
-    ----------
-    sampling_values
-        A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
-        Laplace-variable values; subsequent arrays contain parameter values.
-    fom
-        A |TransferFunction| or a model with a `transfer_function` attribute.
-    derivative
-        If `True`, sample the derivative with respect to the complex frequency argument.
-
-    Returns
-    -------
-    samples
-        Sample data of shape `tuple(map(len, sampling_values)) + (dim_output, dim_input)`.
-        A single frequency array produces shape `(n, dim_output, dim_input)`.
-    """
-    fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
-    assert isinstance(fom, TransferFunction), 'fom must be a TransferFunction or a model with a transfer_function.'
-
-    if isinstance(sampling_values, np.ndarray):
-        sampling_values = (sampling_values,)
-    else:
-        sampling_values = tuple(sampling_values)
-    assert len(sampling_values) == fom.parameters.dim + 1, \
-        'sampling_values must contain the Laplace variable and one array per parameter.'
-    assert all(values.ndim == 1 for values in sampling_values), 'sampling_values must contain one-dimensional arrays.'
-    assert all(len(values) > 0 for values in sampling_values), 'sampling_values must contain non-empty arrays.'
-
-    sample_shape = tuple(len(s) for s in sampling_values)
-    evaluate = fom.eval_dtf if derivative else fom.eval_tf
-    samples = [
-        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
-        for values in product(*sampling_values)
-    ]
-    return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
 
 
 def _interpolation_indices(indices, size, dimension):

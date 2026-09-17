@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import _sample_transfer_function, complete_conjugate_pairs, loewner_matrix_nd
+from pymor.algorithms.loewner import sample_transfer_function, complete_conjugate_pairs, loewner_matrix_nd
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
@@ -72,7 +72,7 @@ class PAAAReductor(BasicObject):
         represents a list of all interpolated samples of the `i`-th variable.
     """
 
-    generate_samples = staticmethod(_sample_transfer_function)
+    generate_samples = staticmethod(sample_transfer_function)
 
     def __init__(self, sampling_values, samples, force_real=True, nsp_tol=1e-16, post_process=True,
                  L_rk_tol=1e-8, parameters=None):

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.loewner import (
-    _sample_transfer_function,
+    sample_transfer_function,
     complete_conjugate_pairs,
     loewner_matrices,
     loewner_matrix,
@@ -56,7 +56,7 @@ def test_sample_transfer_function_on_parametric_grid(derivative):
     )
     sampling_values = [np.array([1j, 2j]), np.array([1., 3.])]
 
-    samples = _sample_transfer_function(sampling_values, fom, derivative=derivative)
+    samples = sample_transfer_function(sampling_values, fom, derivative=derivative)
 
     assert samples.shape == (2, 2, 1, 1)
     for i, s in enumerate(sampling_values[0]):

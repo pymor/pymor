@@ -11,7 +11,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
-from pymor.algorithms.loewner import _sample_transfer_function, complete_conjugate_pairs
+from pymor.algorithms.loewner import sample_transfer_function, complete_conjugate_pairs
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
@@ -854,7 +854,7 @@ class VectorFittingReductor(BasicObject):
         Whether to include conjugated data to enforce realness.
     """
 
-    generate_samples = staticmethod(_sample_transfer_function)
+    generate_samples = staticmethod(sample_transfer_function)
 
     def __init__(self, s, Hs, weights=None, force_real=True):
         assert isinstance(s, np.ndarray)

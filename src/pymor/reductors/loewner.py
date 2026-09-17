@@ -6,7 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.loewner import (
-    _sample_transfer_function,
+    sample_transfer_function,
     complete_conjugate_pairs,
     loewner_quadruple,
     partition_frequencies,
@@ -50,7 +50,7 @@ class LoewnerReductor(CacheableObject):
 
     cache_region = 'memory'
 
-    generate_samples = staticmethod(_sample_transfer_function)
+    generate_samples = staticmethod(sample_transfer_function)
 
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', force_real=True, mimo_handling='full'):
         assert isinstance(s, np.ndarray)
