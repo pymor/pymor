@@ -65,6 +65,10 @@ def complete_conjugate_pairs(nodes, samples, *data):
     elementwise conjugates of the corresponding entries in `samples` and `data`.
     Existing entries retain their order; new entries are appended in input-node order.
 
+    .. note::
+        Nodes are compared using exact equality. Already supplied conjugate samples are not
+        checked for consistency. Real nodes are not duplicated, and input arrays are not modified.
+
     Parameters
     ----------
     nodes
@@ -87,10 +91,6 @@ def complete_conjugate_pairs(nodes, samples, *data):
         The completed additional |NumPy arrays| in input order. Each array is returned
         as a separate tuple entry after `completed_samples`, not as a nested tuple.
 
-    Notes
-    -----
-    Nodes are compared using exact equality. Already supplied conjugate samples are not
-    checked for consistency. Real nodes are not duplicated, and input arrays are not modified.
     """
     nodes = _as_nodes(nodes, 'nodes')
     data = (np.asarray(samples), *(np.asarray(values) for values in data))
@@ -201,6 +201,10 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
     Scalar, matrix-valued and tangentially projected terms are supported through broadcasting.
     Use :func:`loewner_quadruple` to assemble pairwise terms directly from transfer function data.
 
+    .. note::
+        Coincident nodes are detected using exact equality. Nearly coincident nodes are treated
+        by divided differences and may suffer from cancellation.
+
     Parameters
     ----------
     left_nodes
@@ -234,10 +238,6 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
     ValueError
         If the pairwise terms or derivative terms cannot be broadcast to compatible shapes.
 
-    Notes
-    -----
-    Coincident nodes are detected using exact equality. Nearly coincident nodes are treated
-    by divided differences and may suffer from cancellation.
     """
     left_nodes = _as_nodes(left_nodes, 'left_nodes')
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
@@ -314,10 +314,6 @@ def loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivativ
     ValueError
         If the pairwise terms or derivative terms cannot be broadcast to compatible shapes.
 
-    See Also
-    --------
-    loewner_matrix
-        Construct only the Loewner matrix.
     """
     L = loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=derivative_terms)
     left_nodes = np.asarray(left_nodes)
@@ -385,10 +381,6 @@ def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
         to all sampling-grid points outside the Cartesian interpolation grid. Both grids are
         flattened in NumPy C order, with the last variable varying fastest.
 
-    See Also
-    --------
-    loewner_matrix
-        Construct divided differences for one variable.
     """
     assert isinstance(sampling_values, (list, tuple)), 'sampling_values must be a list or tuple.'
     assert len(sampling_values) > 0, 'sampling_values must not be empty.'
@@ -476,6 +468,19 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
     data as in :cite:`ALI17`. Supports SISO data, full-block MIMO data and tangential MIMO
     data. No sampling, partitioning or conjugate completion is performed.
 
+    .. note::
+        In the tangential case, before realification,
+
+        .. math::
+            V_i = \ell_i^T H(\mu_i), \qquad W_j = H(\lambda_j)r_j,
+            \qquad \mathbb{L}_{ij} =
+            \frac{V_i r_j - \ell_i^T W_j}{\mu_i - \lambda_j}.
+
+        Directions are neither normalised nor conjugated internally. For full-block MIMO data,
+        rows are ordered by left node then output, and columns by right node then input.
+        For a square quadruple, the descriptor-system sign convention is :math:`E=-L`,
+        :math:`A=-L_s`, :math:`B=V` and :math:`C=W`.
+
     Parameters
     ----------
     left_nodes
@@ -529,28 +534,6 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
     AccuracyError
         If `force_real=True` cannot produce real matrices up to roundoff.
 
-    See Also
-    --------
-    complete_conjugate_pairs
-        Complete conjugate nodes and their associated data.
-    partition_frequencies
-        Partition a sample set into left and right data.
-    loewner_matrices
-        Construct Loewner matrices directly from pairwise terms.
-
-    Notes
-    -----
-    In the tangential case, before realification,
-
-    .. math::
-        V_i = \ell_i^T H(\mu_i), \qquad W_j = H(\lambda_j)r_j,
-        \qquad \mathbb{L}_{ij} =
-        \frac{V_i r_j - \ell_i^T W_j}{\mu_i - \lambda_j}.
-
-    Directions are neither normalised nor conjugated internally. For full-block MIMO data,
-    rows are ordered by left node then output, and columns by right node then input.
-    For a square quadruple, the descriptor-system sign convention is :math:`E=-L`,
-    :math:`A=-L_s`, :math:`B=V` and :math:`C=W`.
     """
     left_nodes = _as_nodes(left_nodes, 'left_nodes')
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
