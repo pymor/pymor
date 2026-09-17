@@ -90,9 +90,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     if S is None:
         if trans:
-            Z_cf = lrradi(A, E, B, C, R, None, S, trans, options)
+            Z_cf = lrradi(A, E, B, C, R, None, trans, options)
         else:
-            Z_cf = lrradi(A, E, B, C, None, R, S, trans, options)
+            Z_cf = lrradi(A, E, B, C, None, R, trans, options)
         return Z_cf
     else:
         if R is not None:
@@ -109,7 +109,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
             Z_cf = lrradi(tA, E, B, tC, R, tQ, trans, options)
         else:
-            CRinvSt = LowRankOperator(C, Rinv, S)
+            CRinvSt = LowRankOperator(S, Rinv, C)
 
             tA = A - CRinvSt
             tB = cat_arrays([B, S])
@@ -157,8 +157,35 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
     if R is None:
-        R = np.eye(len(C) if not trans else len(B))
-    return lrradi(A, E, B, C, -R, None, trans, options)
+        R = np.eye(len(B) if trans else len(C))
+
+    if S is None:
+        if trans:
+            Z_cf = lrradi(A, E, B, C, -R, None, trans, options)
+        else:
+            Z_cf = lrradi(A, E, B, C, None, -R, trans, options)
+
+    else:
+        Rinv = spla.solve(R, np.eye(R.shape[0]))
+
+        if trans:
+            BRinvSt = LowRankOperator(B, Rinv, S)
+
+            tA = A + BRinvSt
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(np.eye(len(C)), Rinv)
+
+            Z_cf = lrradi(tA, E, B, tC, -R, tQ, trans, options)
+        else:
+            CRinvSt = LowRankOperator(S, Rinv, C)
+
+            tA = A + CRinvSt
+            tB = cat_arrays([B, S])
+            tR = spla.block_diag(np.eye(len(B)), Rinv)
+
+            Z_cf = lrradi(tA, E, tB, C, tR, -R, trans, options)
+
+    return Z_cf
 
 
 def lrradi(A, E, B, C, R=None, Q=None, trans=False, options=None):
@@ -272,7 +299,9 @@ def lrradi(A, E, B, C, R=None, Q=None, trans=False, options=None):
         else:
             AsE = A + np.conj(s) * E
 
-        BRiK = LowRankOperator(B, Rinv, K)
+        Im = np.eye(len(B))
+        BRiK = LowRankOperator(B, Im, K) if trans else LowRankOperator(K, Im, B)
+
         AsEBRiK = (AsE - BRiK).assemble() # assemble combines the two low-rank
                                           # updates into a single one if A came
                                           # in as a LowRankUpdatedOperator already
@@ -299,7 +328,8 @@ def lrradi(A, E, B, C, R=None, Q=None, trans=False, options=None):
                 EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt))
             RF.axpy(-2.0 * sr, EVYt)
 
-            K += EVYt.lincomb(Rinv @ VB.T)
+            K += (-2.0 * sr) * EVYt.lincomb(Rinv @ VB.T)
+            #K += (-2.0 * sr) * EVYt.lincomb(VB.T)
             j += 1
         else:
             V1 = alpha * V.real
@@ -331,6 +361,7 @@ def lrradi(A, E, B, C, R=None, Q=None, trans=False, options=None):
                 EVYt = E.apply_adjoint(cat_arrays([V1, V2])).lincomb(spla.inv(Yt))
             RF.axpy(alpha, EVYt[:len(C)])
             K += EVYt.lincomb(Rinv @ F2.T)
+            #K += EVYt.lincomb(F2.T)
             j += 2
         j_shift += 1
         res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
@@ -463,7 +494,8 @@ def hamiltonian_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options):
 
     U = gram_schmidt(Z[-l:], atol=0, rtol=0)
     Ap = A.apply2(U, U)
-    BKp = U.inner(B) @ (Rinv @ U.inner(K).T)
+    #BKp = U.inner(B) @ (Rinv @ U.inner(K).T)
+    BKp = U.inner(B) @ (U.inner(K).T)
     AAp = Ap - BKp
     UB = U.inner(B)
     Gp = UB.dot(Rinv @ UB.T)
