@@ -8,13 +8,13 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.loewner import (
-    sample_transfer_function,
     complete_conjugate_pairs,
     loewner_matrices,
     loewner_matrix,
     loewner_matrix_nd,
     loewner_quadruple,
     partition_frequencies,
+    sample_transfer_function,
 )
 from pymor.core.exceptions import AccuracyError
 from pymor.models.transfer_function import TransferFunction

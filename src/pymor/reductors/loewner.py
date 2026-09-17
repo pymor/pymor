@@ -6,10 +6,10 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.loewner import (
-    sample_transfer_function,
     complete_conjugate_pairs,
     loewner_quadruple,
     partition_frequencies,
+    sample_transfer_function,
 )
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel

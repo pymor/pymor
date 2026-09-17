@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.loewner import sample_transfer_function, partition_frequencies
+from pymor.algorithms.loewner import partition_frequencies, sample_transfer_function
 from pymor.models.examples import penzl_mimo_example
 from pymor.models.iosys import LTIModel
 from pymor.reductors.aaa import PAAAReductor

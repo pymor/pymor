@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import sample_transfer_function, complete_conjugate_pairs, loewner_matrix_nd
+from pymor.algorithms.loewner import complete_conjugate_pairs, loewner_matrix_nd, sample_transfer_function
 from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
