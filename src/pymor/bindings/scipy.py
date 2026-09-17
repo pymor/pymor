@@ -450,9 +450,9 @@ class ScipyRiccatiSolver(RiccatiSolver):
         trans = equation.trans
 
         if R is None:
-            R = np.eye(C.shape[0] if not trans else B.shape[1])
+            R = np.eye(B.shape[1])
         if Q is None:
-            Q = np.eye(B.shape[1] if not trans else C.shape[0])
+            Q = np.eye(C.shape[0])
         if not trans:
             if E is not None:
                 E = E.T
@@ -491,10 +491,17 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
 
     def _solve(self, equation):
         R = equation.R
+        Q = equation.Q
         if R is None:
-            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
+            R = np.eye(len(equation.B))
+        if Q is None:
+            Q = np.eye(len(equation.C))
 
-        temp_equation = equation.with_(R=-R if R is not None else None)
+        if equation.trans:
+            temp_equation = equation.with_(R=-R)
+        else:
+            temp_equation = equation.with_(Q=-Q)
+
         return ScipyRiccatiSolver()._solve(temp_equation)
 
 

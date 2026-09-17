@@ -268,11 +268,6 @@ class RiccatiData(ImmutableObject):
         C = A.source.from_numpy(C.T)
         if S is not None:
             S = A.source.from_numpy(S.T if not trans else S)
-        if Q is not None:
-            if not trans:
-                Q = B.source.from_numpy(Q)
-            else:
-                Q = C.range.from_numpy(Q)
 
         return cls(A, E, B, C, R=R, S=S, Q=Q, trans=trans, name=name)
 
