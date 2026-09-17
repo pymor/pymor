@@ -11,53 +11,6 @@ from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
-def _as_nodes(nodes, name):
-    nodes = np.asarray(nodes)
-    assert nodes.ndim == 1, f'{name} must be one-dimensional.'
-    assert len(nodes) > 0, f'{name} must not be empty.'
-    return nodes
-
-
-def _sample_transfer_function(sampling_values, fom, *, derivative=False):
-    """Sample a |TransferFunction| or its derivative on a Cartesian grid.
-
-    Parameters
-    ----------
-    sampling_values
-        A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
-        Laplace-variable values; subsequent arrays contain parameter values.
-    fom
-        A |TransferFunction| or a model with a `transfer_function` attribute.
-    derivative
-        If `True`, sample the derivative with respect to the complex frequency argument.
-
-    Returns
-    -------
-    samples
-        Sample data of shape `tuple(map(len, sampling_values)) + (dim_output, dim_input)`.
-        A single frequency array produces shape `(n, dim_output, dim_input)`.
-    """
-    fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
-    assert isinstance(fom, TransferFunction), 'fom must be a TransferFunction or a model with a transfer_function.'
-
-    if isinstance(sampling_values, np.ndarray):
-        sampling_values = (sampling_values,)
-    else:
-        sampling_values = tuple(sampling_values)
-    assert len(sampling_values) == fom.parameters.dim + 1, \
-        'sampling_values must contain the Laplace variable and one array per parameter.'
-    assert all(values.ndim == 1 for values in sampling_values), 'sampling_values must contain one-dimensional arrays.'
-    assert all(len(values) > 0 for values in sampling_values), 'sampling_values must contain non-empty arrays.'
-
-    sample_shape = tuple(len(s) for s in sampling_values)
-    evaluate = fom.eval_dtf if derivative else fom.eval_tf
-    samples = [
-        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
-        for values in product(*sampling_values)
-    ]
-    return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
-
-
 def complete_conjugate_pairs(nodes, samples, *data):
     """Complete sample data with complex conjugate pairs.
 
@@ -232,12 +185,6 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
     L
         |NumPy array| of shape `(n_left, n_right, ...)` containing the Loewner matrix.
         Trailing dimensions of the broadcast terms are retained, not flattened into blocks.
-
-    Raises
-    ------
-    ValueError
-        If the pairwise terms or derivative terms cannot be broadcast to compatible shapes.
-
     """
     left_nodes = _as_nodes(left_nodes, 'left_nodes')
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
@@ -308,12 +255,6 @@ def loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivativ
         Loewner matrix as a |NumPy array| of shape `(n_left, n_right, ...)`.
     Ls
         Shifted Loewner matrix as a |NumPy array| of the same shape as `L`.
-
-    Raises
-    ------
-    ValueError
-        If the pairwise terms or derivative terms cannot be broadcast to compatible shapes.
-
     """
     L = loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=derivative_terms)
     left_nodes = np.asarray(left_nodes)
@@ -321,29 +262,6 @@ def loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivativ
     Ls = left_nodes * L
     Ls += right_terms
     return L, Ls
-
-
-def _interpolation_indices(indices, size, dimension):
-    indices = np.asarray(indices)
-    assert indices.ndim == 1, f'interpolation_indices[{dimension}] must be one-dimensional.'
-    assert np.issubdtype(indices.dtype, np.integer), f'interpolation_indices[{dimension}] must contain integers.'
-    assert len(indices) > 0, f'interpolation_indices[{dimension}] must not be empty.'
-    assert np.all(indices >= 0), f'interpolation_indices[{dimension}] contains a negative index.'
-    assert np.all(indices < size), f'interpolation_indices[{dimension}] contains an out-of-bounds index.'
-    assert len(np.unique(indices)) == len(indices), f'interpolation_indices[{dimension}] contains duplicate indices.'
-    return indices
-
-
-def _modified_cauchy_matrix(nodes, interpolation_indices, dtype):
-    least_squares = np.ones(len(nodes), dtype=bool)
-    least_squares[interpolation_indices] = False
-    denominator = nodes[least_squares, np.newaxis] - nodes[interpolation_indices]
-    assert np.all(denominator != 0), 'Interpolation and least-squares nodes must have distinct values.'
-
-    C = np.zeros((len(nodes), len(interpolation_indices)), dtype=dtype)
-    C[interpolation_indices] = np.eye(len(interpolation_indices))
-    C[least_squares] = 1 / denominator
-    return C
 
 
 def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
@@ -426,40 +344,6 @@ def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
     return L
 
 
-def _real_transformation(nodes):
-    transformation = np.zeros((len(nodes), len(nodes)), dtype=np.complex128)
-    visited = np.zeros(len(nodes), dtype=bool)
-    dtype = nodes.real.dtype
-    precision = np.finfo(dtype).eps if np.issubdtype(dtype, np.inexact) else np.finfo(float).eps
-    tolerance = 100 * precision
-    for i, node in enumerate(nodes):
-        if visited[i]:
-            continue
-        if np.imag(node) == 0:
-            transformation[i, i] = 1
-            visited[i] = True
-            continue
-        matches = np.flatnonzero(np.isclose(nodes, np.conj(node), rtol=tolerance, atol=tolerance))
-        matches = matches[matches != i]
-        assert len(matches) == 1, 'Nodes must contain unique complex conjugate pairs when force_real=True.'
-        j = matches[0]
-        assert not visited[j], 'Nodes must contain unique complex conjugate pairs when force_real=True.'
-        scale = 1 / np.sqrt(2)
-        transformation[i, i] = scale
-        transformation[i, j] = scale
-        transformation[j, i] = -1j * scale
-        transformation[j, j] = 1j * scale
-        visited[i] = visited[j] = True
-    return transformation
-
-
-def _real_array(array, name):
-    tolerance = 1000 * np.finfo(array.real.dtype).eps * max(1, np.max(np.abs(array)))
-    if np.max(np.abs(array.imag)) > tolerance:
-        raise AccuracyError(f'{name} is not real after conjugate transformation.')
-    return array.real
-
-
 def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
                       left_directions=None, right_directions=None, derivatives=None, force_real=False):
     r"""Construct a Loewner quadruple from partitioned transfer function samples.
@@ -533,7 +417,6 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
     ------
     AccuracyError
         If `force_real=True` cannot produce real matrices up to roundoff.
-
     """
     left_nodes = _as_nodes(left_nodes, 'left_nodes')
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
@@ -607,3 +490,107 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
         W = np.transpose(W[0], (1, 0, 2)).reshape(dim_output, len(right_nodes) * dim_input)
 
     return L, Ls, V, W
+
+
+def _as_nodes(nodes, name):
+    nodes = np.asarray(nodes)
+    assert nodes.ndim == 1, f'{name} must be one-dimensional.'
+    assert len(nodes) > 0, f'{name} must not be empty.'
+    return nodes
+
+
+def _sample_transfer_function(sampling_values, fom, *, derivative=False):
+    """Sample a |TransferFunction| or its derivative on a Cartesian grid.
+
+    Parameters
+    ----------
+    sampling_values
+        A one-dimensional |NumPy array| or a sequence of such arrays. The first array contains
+        Laplace-variable values; subsequent arrays contain parameter values.
+    fom
+        A |TransferFunction| or a model with a `transfer_function` attribute.
+    derivative
+        If `True`, sample the derivative with respect to the complex frequency argument.
+
+    Returns
+    -------
+    samples
+        Sample data of shape `tuple(map(len, sampling_values)) + (dim_output, dim_input)`.
+        A single frequency array produces shape `(n, dim_output, dim_input)`.
+    """
+    fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
+    assert isinstance(fom, TransferFunction), 'fom must be a TransferFunction or a model with a transfer_function.'
+
+    if isinstance(sampling_values, np.ndarray):
+        sampling_values = (sampling_values,)
+    else:
+        sampling_values = tuple(sampling_values)
+    assert len(sampling_values) == fom.parameters.dim + 1, \
+        'sampling_values must contain the Laplace variable and one array per parameter.'
+    assert all(values.ndim == 1 for values in sampling_values), 'sampling_values must contain one-dimensional arrays.'
+    assert all(len(values) > 0 for values in sampling_values), 'sampling_values must contain non-empty arrays.'
+
+    sample_shape = tuple(len(s) for s in sampling_values)
+    evaluate = fom.eval_dtf if derivative else fom.eval_tf
+    samples = [
+        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
+        for values in product(*sampling_values)
+    ]
+    return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
+
+
+def _interpolation_indices(indices, size, dimension):
+    indices = np.asarray(indices)
+    assert indices.ndim == 1, f'interpolation_indices[{dimension}] must be one-dimensional.'
+    assert np.issubdtype(indices.dtype, np.integer), f'interpolation_indices[{dimension}] must contain integers.'
+    assert len(indices) > 0, f'interpolation_indices[{dimension}] must not be empty.'
+    assert np.all(indices >= 0), f'interpolation_indices[{dimension}] contains a negative index.'
+    assert np.all(indices < size), f'interpolation_indices[{dimension}] contains an out-of-bounds index.'
+    assert len(np.unique(indices)) == len(indices), f'interpolation_indices[{dimension}] contains duplicate indices.'
+    return indices
+
+
+def _modified_cauchy_matrix(nodes, interpolation_indices, dtype):
+    least_squares = np.ones(len(nodes), dtype=bool)
+    least_squares[interpolation_indices] = False
+    denominator = nodes[least_squares, np.newaxis] - nodes[interpolation_indices]
+    assert np.all(denominator != 0), 'Interpolation and least-squares nodes must have distinct values.'
+
+    C = np.zeros((len(nodes), len(interpolation_indices)), dtype=dtype)
+    C[interpolation_indices] = np.eye(len(interpolation_indices))
+    C[least_squares] = 1 / denominator
+    return C
+
+
+def _real_transformation(nodes):
+    transformation = np.zeros((len(nodes), len(nodes)), dtype=np.complex128)
+    visited = np.zeros(len(nodes), dtype=bool)
+    dtype = nodes.real.dtype
+    precision = np.finfo(dtype).eps if np.issubdtype(dtype, np.inexact) else np.finfo(float).eps
+    tolerance = 100 * precision
+    for i, node in enumerate(nodes):
+        if visited[i]:
+            continue
+        if np.imag(node) == 0:
+            transformation[i, i] = 1
+            visited[i] = True
+            continue
+        matches = np.flatnonzero(np.isclose(nodes, np.conj(node), rtol=tolerance, atol=tolerance))
+        matches = matches[matches != i]
+        assert len(matches) == 1, 'Nodes must contain unique complex conjugate pairs when force_real=True.'
+        j = matches[0]
+        assert not visited[j], 'Nodes must contain unique complex conjugate pairs when force_real=True.'
+        scale = 1 / np.sqrt(2)
+        transformation[i, i] = scale
+        transformation[i, j] = scale
+        transformation[j, i] = -1j * scale
+        transformation[j, j] = 1j * scale
+        visited[i] = visited[j] = True
+    return transformation
+
+
+def _real_array(array, name):
+    tolerance = 1000 * np.finfo(array.real.dtype).eps * max(1, np.max(np.abs(array)))
+    if np.max(np.abs(array.imag)) > tolerance:
+        raise AccuracyError(f'{name} is not real after conjugate transformation.')
+    return array.real
