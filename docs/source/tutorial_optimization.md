@@ -20,7 +20,7 @@ kernelspec:
 
 # Tutorial: Model order reduction for PDE-constrained optimization problems
 
-A typical application of model order reduction for PDEs are
+A typical application of model order reduction for PDEs is
 PDE-constrained parameter optimization problems. These problems aim to
 find a local minimizer of an objective functional depending on an
 underlying PDE which has to be solved for all evaluations.
@@ -196,7 +196,7 @@ print(data['grid'])
 ```
 
 We can see that our FOM model has 20201 DoFs which just about suffices
-to resolve the data structure in the diffusion. This suggests to use an
+to resolve the data structure in the diffusion. This suggests using an
 even finer mesh. However, for enabling a faster runtime for this
 tutorial, we stick with this mesh and remark that refining the mesh does
 not change the interpretation of the methods that are discussed below.
@@ -304,7 +304,7 @@ def report(result, data, reference_mu=None):
 
 ## Optimizing with the FOM using finite differences
 
-There exist plenty optimization methods, and this tutorial is not meant
+There exist plenty of optimization methods, and this tutorial is not meant
 to discuss the design and implementation of optimization methods. We
 simply use the {func}`~scipy.optimize.minimize` function
 from `scipy.optimize` and use the
@@ -481,7 +481,7 @@ As a simple idea to circumvent the costly solutions of the FOM, one could build 
 offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained
 optimization, it is not meaningful to ignore the offline time required to build the RB surrogate since
 it can happen that FOM optimization methods would already converge before the surrogate model is even
-ready. Building a RB model that is accurate in the whole parameter space is thus usually too expensive.
+ready. Building an RB model that is accurate in the whole parameter space is thus usually too expensive.
 Thinking about this issue again, it is important to notice that
 we are solving an optimization problem which will eventually converge to
 a certain parameter. Thus, it only matters that the surrogate is good in
@@ -607,7 +607,7 @@ in the respective {ref}`cyclopts-pymor-demo-trust_region` demo script.
 
 ## Conclusion and some general words about MOR methods for optimization
 
-In this tutorial we have seen how pyMOR can be used to speedup the optimizer
+In this tutorial we have seen how pyMOR can be used to speed up the optimizer
 for PDE-constrained optimization problems.
 The trust-region algorithm shown here is able to efficiently use local surrogate
 models to reduce the number of FOM evaluations required during optimization.

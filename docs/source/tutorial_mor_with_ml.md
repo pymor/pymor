@@ -112,7 +112,7 @@ for {math}`x\in\mathbb{R}^d` with coefficients
 {math}`\alpha_1,\ldots,\alpha_n\in\mathbb{R}` and centers
 {math}`x_1,\ldots,x_n\in\mathbb{R}^d`.
 
-For simplicty, we restrict the description given here to the case of an
+For simplicity, we restrict the description given here to the case of an
 interpolation problem for given data points
 {math}`S=\{(\mu_i,h(\mu_i))\in\mathbb{R}^d\times\mathbb{R}: i=1,\ldots,N\}`. For our
 application later on, we will assume that {math}`\mu_1,\ldots,\mu_N\in\mathcal{P}`.
@@ -216,7 +216,7 @@ or absolute tolerance (in the singular values) that should not be exceeded on
 the training parameters. Further, one can preset the size of the reduced basis.
 The construction of the reduced basis is independent of the machine learning
 surrogate and is therefore not part of the reductor. The reduced basis has to be
-computed beforehand and provided (together with the reduced coeffcients, for
+computed beforehand and provided (together with the reduced coefficients, for
 instance the coefficients with respect to the reduced basis of the orthogonal
 projection onto the reduced space) to the reductor. Within the reductor, mainly
 the training of the regressor using the correct data formats is performed and
@@ -476,7 +476,7 @@ To solve instationary problems using machine learning, we have extended the
 where time is treated either as an additional parameter (see {cite}`WHR19`) or the whole time
 trajectory can be predicted at once. In the first case, the input, together
 with the current time instance, is passed to the machine learning surrogate in each time step
-to obtain reduced coefficients. In the second case, the parameter is used as input and the of
+to obtain reduced coefficients. In the second case, the parameter is used as input and the output of
 the machine learning surrogate is the complete time trajectory of reduced coefficients.
 In the same fashion, setting `target_quantity='output'` yields a reduced model for prediction
 of output trajectories without requiring information about the solution states.

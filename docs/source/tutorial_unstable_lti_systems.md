@@ -158,8 +158,8 @@ In order to perform a Bernoulli stabilization, knowledge about the anti-stable
 subset of system poles is required. Therefore,
 {class}`~pymor.reductors.bt.FDBTReductor` internally calls
 `fom.get_ast_spectrum` using the `ast_pole_data` attribute, which can be a list
-of anti-stable eigenvalues (with or without corresponding eigenvectors) or
-specifying how eigenvalues should be computed (`None` for computing all
+of anti-stable eigenvalues (with or without corresponding eigenvectors) or a
+dict specifying how eigenvalues should be computed (`None` for computing all
 eigenvalues using dense methods or arguments for pyMOR's iterative eigensolver
 like in the code above).
 
@@ -233,7 +233,7 @@ interpolation points, `conv_crit='htwogap'` the relative change in
 {math}`\mathcal{H}_2`-gap distance of the reduced-order models and `conv_crit='ltwo'` the
 relative change of {math}`\mathcal{L}_2` distances of the reduced-order models are
 used as a stopping criterion. The `tol` argument sets the tolerance for
-any of the chosen stopping criterion.
+any of the chosen stopping criteria.
 
 Again, we can compute the relative {math}`\mathcal{L}_\infty` error.
 
