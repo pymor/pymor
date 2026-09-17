@@ -32,5 +32,7 @@ def test_paaa(m,p,is_parametric, rng):
     rom = paaa.reduce(tol=1e-3)
     if is_parametric:
         assert rom.eval_tf(0, mu=0).shape == (p, m)
+        assert rom.eval_tf(sampling_values[0][0], mu=0).shape == (p, m)
     else:
         assert rom.eval_tf(0).shape == (p, m)
+        assert rom.eval_tf(sampling_values[0]).shape == (p, m)

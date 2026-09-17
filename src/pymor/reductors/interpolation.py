@@ -369,16 +369,17 @@ class TFBHIReductor(BasicObject):
 
         # transform the system to have real matrices
         T = np.zeros((r, r), dtype=np.complex128)
+        scale = 1 / np.sqrt(2)
         for i in range(r):
             if sigma[i].imag == 0:
                 T[i, i] = 1
             else:
                 j = np.argmin(np.abs(sigma - sigma[i].conjugate()))
                 if i < j:
-                    T[i, i] = 1
-                    T[i, j] = 1
-                    T[j, i] = -1j
-                    T[j, j] = 1j
+                    T[i, i] = scale
+                    T[i, j] = scale
+                    T[j, i] = -1j * scale
+                    T[j, j] = 1j * scale
         Er = (T @ Er @ T.conj().T).real
         Ar = (T @ Ar @ T.conj().T).real
         Br = (T @ Br).real
