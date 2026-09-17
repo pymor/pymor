@@ -163,6 +163,10 @@ def test_loewner_matrix_nd_one_dimensional(rng):
     reference = loewner_matrix(nodes[left], nodes[right], samples[left, np.newaxis], samples[np.newaxis, right])
     assert np.allclose(L, reference)
 
+    # check if non-broadcastable scalar samples are reshaped correctly
+    casting = loewner_matrix(nodes[left], nodes[right], samples[left], samples[right])
+    assert np.allclose(casting, reference)
+
 
 def test_loewner_quadruple_full_mimo(rng):
     left_nodes = 1j * np.arange(1, 4)

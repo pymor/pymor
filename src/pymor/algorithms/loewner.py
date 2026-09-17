@@ -231,6 +231,9 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
         dtype_args += (derivative_terms,)
     dtype = np.result_type(*dtype_args)
 
+    if left_terms.shape == (len(left_nodes),) and right_terms.shape == (len(right_nodes),):
+        left_terms, right_terms = left_terms[:, np.newaxis], right_terms[np.newaxis]
+
     L = np.asarray(left_terms, dtype=dtype) - np.asarray(right_terms, dtype=dtype)
     assert L.shape[:2] == (len(left_nodes), len(right_nodes)), \
         'Pair terms must broadcast to shape (len(left_nodes), len(right_nodes), ...).'
