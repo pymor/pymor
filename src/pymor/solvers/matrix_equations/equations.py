@@ -149,7 +149,7 @@ class RiccatiData(ImmutableObject):
     Not intended to be used directly.
     """
 
-    def __init__(self, A, E, B, C, R=None, S=None, trans=False, name=None):
+    def __init__(self, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
         assert isinstance(A, Operator)
         assert A.linear
         assert not A.parametric
@@ -169,6 +169,14 @@ class RiccatiData(ImmutableObject):
         if S is not None:
             assert S in A.source
             assert len(S) == (len(C) if not trans else len(B))
+        if Q is not None:
+            if not trans:
+                assert Q in B.source
+                assert len(Q) == len(B)
+            else:
+                assert Q in C.range
+                assert len(Q) == len(C)
+
         self.__auto_init(locals())
 
     @property
@@ -193,6 +201,8 @@ class RiccatiData(ImmutableObject):
             The |NumPy array| R or `None`.
         S
             The |NumPy array| S or `None`.
+        Q
+            The |NumPy array| Q or `None`.
         """
         from pymor.algorithms.to_matrix import to_matrix
         A = to_matrix(self.A, format='dense')
@@ -200,12 +210,13 @@ class RiccatiData(ImmutableObject):
         B = self.B.to_numpy()
         C = self.C.to_numpy().T
         S = self.S.to_numpy() if self.S is not None else None
+        Q = self.Q.to_numpy() if self.Q is not None else None
         if S is not None and not self.trans:
             S = S.T
-        return A, E, B, C, self.R, S
+        return A, E, B, C, self.R, S, Q
 
     @classmethod
-    def from_matrices(cls, A, E, B, C, R=None, S=None, trans=False, name=None):
+    def from_matrices(cls, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
         """Create the |RiccatiEquation| or |PositiveRiccatiEquation| from matrices.
 
         Parameters
@@ -222,6 +233,8 @@ class RiccatiData(ImmutableObject):
             The |NumPy array| R or `None`.
         S
             The |NumPy array| S or `None`.
+        Q
+            The |NumPy array| Q or `None`.
         trans
             Whether the first matrix in the equation is transposed.
         name
@@ -236,6 +249,7 @@ class RiccatiData(ImmutableObject):
         assert isinstance(C, np.ndarray)
         assert isinstance(R, np.ndarray | type(None))
         assert isinstance(S, np.ndarray | type(None))
+        assert isinstance(Q, np.ndarray | type(None))
 
         A = NumpyMatrixOperator(A)
         E = NumpyMatrixOperator(E) if E is not None else None
@@ -243,8 +257,13 @@ class RiccatiData(ImmutableObject):
         C = A.source.from_numpy(C.T)
         if S is not None:
             S = A.source.from_numpy(S.T if not trans else S)
+        if Q is not None:
+            if not trans:
+                Q = B.source.from_numpy(Q)
+            else:
+                Q = C.range.from_numpy(Q)
 
-        return cls(A, E, B, C, R=R, S=S, trans=trans, name=name)
+        return cls(A, E, B, C, R=R, S=S, Q=Q, trans=trans, name=name)
 
 
 class RiccatiEquation(RiccatiData):
@@ -257,15 +276,15 @@ class RiccatiEquation(RiccatiData):
 
       .. math::
           A X E^T + E X A^T
-          - (E X C^T + S^T) R^{-1} (C X E^T + S)
-          + B B^T = 0,
+          - (E X C^T + S^T) Q^{-1} (C X E^T + S)
+          + B R B^T = 0,
 
     - if `trans` is `True`:
 
       .. math::
           A^T X E + E^T X A
           - (E^T X B + S) R^{-1} (B^T X E + S^T)
-          + C^T C = 0.
+          + C^T Q C = 0.
 
     Only the continuous-time equation is supported.
 
@@ -283,6 +302,8 @@ class RiccatiEquation(RiccatiData):
         The matrix R as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
+    Q
+        The operator Q as a |VectorArray| from #TODO
     trans
         Whether the first |Operator| in the equation is transposed.
     name
@@ -316,14 +337,14 @@ class PositiveRiccatiEquation(RiccatiData):
       .. math::
           A X E^T + E X A^T
           + (E X C^T + S^T) R^{-1} (C X E^T + S)
-          + B B^T = 0,
+          + B Q B^T = 0,
 
     - if `trans` is `True`:
 
       .. math::
           A^T X E + E^T X A
           + (E^T X B + S) R^{-1} (B^T X E + S^T)
-          + C^T C = 0.
+          + C^T Q C = 0.
 
     Parameters
     ----------
@@ -339,6 +360,8 @@ class PositiveRiccatiEquation(RiccatiData):
         The matrix R as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
+    Q
+        The operator Q as a |VectorArray| #TODO
     trans
         Whether the first |Operator| in the equation is transposed.
     name
