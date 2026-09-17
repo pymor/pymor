@@ -32,7 +32,10 @@ def run_mor_method_dd_param(fom, ss, pp, reductor_cls, reductor_short_name, **re
         Optional keyword arguments for the reductor class.
     """
     # Reduction
-    rom = reductor_cls([ss * 1j, pp], fom, **reductor_kwargs).reduce()
+    sampling_values = [ss * 1j, pp]
+    samples = reductor_cls.generate_samples(sampling_values, fom)
+    reductor_kwargs.setdefault('parameters', fom.parameters)
+    rom = reductor_cls(sampling_values, samples, **reductor_kwargs).reduce()
     err = fom - rom
 
     n_w = 50

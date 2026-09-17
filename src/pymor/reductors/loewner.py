@@ -5,9 +5,14 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.loewner import (
+    _sample_transfer_function,
+    complete_conjugate_pairs,
+    loewner_quadruple,
+    partition_frequencies,
+)
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
-from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
@@ -23,8 +28,7 @@ class LoewnerReductor(CacheableObject):
     Hs
         |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
         |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
-        function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
-        attribute.
+        function samples. Use :meth:`generate_samples` to generate data beforehand.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
         the partitioning rule. A user-defined partitioning can be defined by passing a tuple of the
@@ -32,7 +36,7 @@ class LoewnerReductor(CacheableObject):
     ordering
         The ordering with respect to which the partitioning rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
-    conjugate
+    force_real
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
         same partitioning or not. If `True` will automatically generate conjugate data if necessary.
     mimo_handling
@@ -41,66 +45,52 @@ class LoewnerReductor(CacheableObject):
         - `'random'` for using random tangential directions.
         - `'full'` for fully interpolating all input-output pairs.
         - Tuple `(ltd, rtd)` where `ltd` corresponds to left and `rtd` to right tangential
-          directions.
+          directions. If `force_real=True`, directions at conjugate nodes must be conjugates.
     """
 
     cache_region = 'memory'
 
-    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='full'):
-        assert isinstance(s, np.ndarray)
-        if hasattr(Hs, 'transfer_function'):
-            Hs = Hs.transfer_function
-        assert isinstance(Hs, TransferFunction | np.ndarray | list)
+    generate_samples = staticmethod(_sample_transfer_function)
 
+    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', force_real=True, mimo_handling='full'):
+        assert isinstance(s, np.ndarray)
         assert partitioning in ('even-odd', 'half-half') \
             or len(partitioning) == 2 \
             and len(partitioning[0]) + len(partitioning[1]) == len(s)
         assert ordering in ('magnitude', 'random', 'regular')
 
-        if isinstance(Hs, TransferFunction):
-            Hss = np.empty((len(s), Hs.dim_output, Hs.dim_input), dtype=s[0].dtype)
-            for i, ss in enumerate(s):
-                Hss[i] = Hs.eval_tf(ss)
-            Hs = Hss
-        else:
-            assert Hs.shape[0] == len(s)
+        Hs = np.asarray(Hs)
+        if Hs.ndim not in (1, 3):
+            raise ValueError('Hs must contain sample data; use generate_samples to sample a model.')
+        assert Hs.shape[0] == len(s)
 
         common_dtype = np.promote_types(s.dtype, Hs.dtype)
         Hs = Hs.astype(common_dtype, copy=False)
 
         # ensure that complex sampling values appear in complex conjugate pairs
-        if conjugate:
-            # if user provides partitioning sizes, make sure they are adjusted
+        if force_real:
+            old_s = s
+            s, Hs = complete_conjugate_pairs(s, Hs)
             if isinstance(partitioning, tuple):
-                p0 = partitioning[0]
-                p1 = partitioning[1]
-                for i, ss in enumerate(s):
-                    if np.conj(ss) not in s:
-                        s = np.append(s, np.conj(ss))
-                        Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
-                        if i in p0:
-                            p0 = np.append(p0, len(s)-1)
-                        else:
-                            p1 = np.append(p1, len(s)-1)
+                p0, p1 = partitioning
+                for i in range(len(old_s), len(s)):
+                    source = np.flatnonzero(old_s == s[i].conj())[0]
+                    if source in p0:
+                        p0 = np.append(p0, i)
+                    else:
+                        p1 = np.append(p1, i)
                 if len(p0) != len(partitioning[0]) or len(p1) != len(partitioning[1]):
                     self.logger.info('Added complex conjugates to partitionings. '
                                      f'New partitioning sizes are ({len(p0)}, {len(p1)}).')
                 partitioning = (p0, p1)
-            else:
-                s_new = s
-                for i, ss in enumerate(s):
-                    if np.conj(ss) not in s:
-                        s_new = np.append(s_new, np.conj(ss))
-                        Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
-                if len(s) != len(s_new):
-                    self.logger.info(f'Added {len(s_new) - len(s)} complex conjugates to the data.')
-                s = s_new
+            elif len(s) != len(old_s):
+                self.logger.info(f'Added {len(s) - len(old_s)} complex conjugates to the data.')
 
         if len(Hs.shape) > 1:
             self.dim_output = Hs.shape[1]
             self.dim_input = Hs.shape[2]
             if self.dim_output == self.dim_input == 1:
-                Hs = np.squeeze(Hs)
+                Hs = Hs[:, 0, 0]
         else:
             self.dim_output = 1
             self.dim_input = 1
@@ -146,77 +136,15 @@ class LoewnerReductor(CacheableObject):
         E = -Yhr @ L @ Xr
         A = -Yhr @ Ls @ Xr
 
-        if self.conjugate:
+        if self.force_real:
             A, B, C, E = A.real, B.real, C.real, E.real
 
         return LTIModel.from_matrices(A, B, C, D=None, E=E)
 
 
-    def _partition_frequencies(self):
-        """Create a frequency partitioning."""
-        # must keep complex conjugate frequencies in the same partitioning
-        if self.conjugate:
-            # partition frequencies corresponding to positive imaginary part
-            pimidx = np.where(self.s.imag > 0)[0]
-
-            # treat real-valued samples separately in order to ensure balanced partitioning
-            ridx = np.where(self.s.imag == 0)[0]
-
-            if self.ordering == 'magnitude':
-                pimidx_sort = np.argsort([np.linalg.norm(self.Hs[i]) for i in pimidx])
-                pimidx_ordered = pimidx[pimidx_sort]
-                ridx_sort = np.argsort([np.linalg.norm(self.Hs[i]) for i in ridx])
-                ridx_ordered = ridx[ridx_sort]
-            elif self.ordering == 'random':
-                rng = new_rng(0)
-                rng.shuffle(pimidx)
-                pimidx_ordered = pimidx
-                rng.shuffle(ridx)
-                ridx_ordered = ridx
-            elif self.ordering == 'regular':
-                pimidx_ordered = pimidx
-                ridx_ordered = ridx
-
-            if self.partitioning == 'even-odd':
-                left = np.concatenate((ridx_ordered[::2], pimidx_ordered[::2]))
-                right = np.concatenate((ridx_ordered[1::2], pimidx_ordered[1::2]))
-            elif self.partitioning == 'half-half':
-                pim_split = np.array_split(pimidx_ordered, 2)
-                r_split = np.array_split(ridx_ordered, 2)
-                left = np.concatenate((r_split[0], pim_split[0]))
-                right = np.concatenate((r_split[1], pim_split[1]))
-
-            l_cc = np.array([], dtype=int)
-            for le in left:
-                if self.s[le].imag != 0:
-                    l_cc = np.concatenate((l_cc, np.where(self.s == self.s[le].conj())[0]))
-            left = np.concatenate((left, l_cc))
-
-            r_cc = np.array([], dtype=int)
-            for ri in right:
-                if self.s[ri].imag != 0:
-                    r_cc = np.concatenate((r_cc, np.where(self.s == self.s[ri].conj())[0]))
-            right = np.concatenate((right, r_cc))
-
-            return (left, right)
-        else:
-            if self.ordering == 'magnitude':
-                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in range(len(self.Hs))])
-            elif self.ordering == 'random':
-                rng = new_rng(0)
-                idx = rng.permutation(self.s.shape[0])
-            elif self.ordering == 'regular':
-                idx = np.arange(self.s.shape[0])
-
-            if self.partitioning == 'even-odd':
-                return (idx[::2], idx[1::2])
-            elif self.partitioning == 'half-half':
-                idx_split = np.array_split(idx, 2)
-                return (idx_split[0], idx_split[1])
-
     @cached
     def loewner_quadruple(self):
-        r"""Constructs a Loewner quadruple as |NumPy arrays|.
+        r"""Construct a Loewner quadruple as |NumPy arrays|.
 
         The Loewner quadruple :cite:`ALI17`
 
@@ -226,114 +154,25 @@ class LoewnerReductor(CacheableObject):
         consists of the Loewner matrix :math:`\mathbb{L}`, the shifted Loewner matrix
         :math:`\mathbb{L}_s`, left interpolation data :math:`V` and right interpolation
         data :math:`W`.
-
-        Returns
-        -------
-        L
-            Loewner matrix as a |NumPy array|.
-        Ls
-            Shifted Loewner matrix as a |NumPy array|.
-        V
-            Left interpolation data as a |NumPy array|.
-        W
-            Right interpolation data as a |NumPy array|.
         """
-        ip, jp = self._partition_frequencies() if isinstance(self.partitioning, str) else self.partitioning
+        ip, jp = partition_frequencies(self.s, self.Hs, self.partitioning, self.ordering, self.force_real)
+        left_directions = right_directions = None
+        if self.dim_input != 1 or self.dim_output != 1:
+            if self.mimo_handling == 'random':
+                rng = new_rng(0)
+                # Use the same directions at all nodes to preserve conjugate symmetry.
+                left_directions = np.tile(rng.normal(size=(1, self.dim_output)), (len(ip), 1))
+                right_directions = np.tile(rng.normal(size=(1, self.dim_input)), (len(jp), 1))
+            elif self.mimo_handling != 'full':
+                left_directions, right_directions = self.mimo_handling
+                assert left_directions.shape == (len(ip), self.dim_output)
+                assert right_directions.shape == (self.dim_input, len(jp))
+                right_directions = right_directions.T
 
-        if self.dim_input == self.dim_output == 1:
-            L = self.Hs[ip][:, np.newaxis] - self.Hs[jp]
-            L /= self.s[ip][:, np.newaxis] - self.s[jp]
-            Ls = (self.s[ip] * self.Hs[ip])[:, np.newaxis] - self.s[jp] * self.Hs[jp]
-            Ls /= self.s[ip][:, np.newaxis] - self.s[jp]
-            V = self.Hs[ip][:, np.newaxis]
-            W = self.Hs[jp][np.newaxis]
-        else:
-            if self.mimo_handling == 'full':
-                L = self.Hs[ip][:, np.newaxis] - self.Hs[jp][np.newaxis]
-                L /= (self.s[ip][:, np.newaxis] - self.s[jp][np.newaxis])[:, :, np.newaxis, np.newaxis]
-                Ls = (self.s[ip, np.newaxis, np.newaxis] * self.Hs[ip])[:, np.newaxis] \
-                    - (self.s[jp, np.newaxis, np.newaxis] * self.Hs[jp])[np.newaxis]
-                Ls /= (self.s[ip][:, np.newaxis] - self.s[jp][np.newaxis])[:, :, np.newaxis, np.newaxis]
-                V = self.Hs[ip][:, np.newaxis]
-                W = self.Hs[jp][np.newaxis]
-            else:
-                if self.mimo_handling == 'random':
-                    rng = new_rng(0)
-                    # use same tangential directions in order to make conjugate=True option work
-                    ltd = np.tile(rng.normal(size=(1, self.dim_output)), (len(ip), 1))
-                    rtd = np.tile(rng.normal(size=(self.dim_input, 1)), (1, len(jp)))
-                elif len(self.mimo_handling) == 2:
-                    ltd = self.mimo_handling[0]
-                    rtd = self.mimo_handling[1]
-                    assert ltd.shape == (len(ip), self.dim_output)
-                    assert rtd.shape == (self.dim_input, len(jp))
-                L = np.empty((len(ip), len(jp)), dtype=np.complex128)
-                Ls = np.empty((len(ip), len(jp)), dtype=np.complex128)
-                V = np.empty((len(ip), self.dim_input), dtype=np.complex128)
-                W = np.empty((self.dim_output, len(jp)), dtype=np.complex128)
-                for i, si in enumerate(ip):
-                    for j, sj in enumerate(jp):
-                        L[i, j] = (ltd[i] @ (self.Hs[si] - self.Hs[sj]) @ rtd[:, j]) / (self.s[si] - self.s[sj])
-                        Ls[i, j] = (ltd[i] @ (self.s[si] * self.Hs[si] - self.s[sj] * self.Hs[sj]) @ rtd[:, j]) \
-                            / (self.s[si] - self.s[sj])
-                    V[i, :] = self.Hs[si].T @ ltd[i]
-                for j, sj in enumerate(jp):
-                    W[:, j] = self.Hs[sj] @ rtd[:, j]
-
-        # transform the system to have real matrices
-        if self.conjugate:
-            scale = 1 / np.sqrt(2)
-            TL = np.zeros((len(ip), len(ip)), dtype=np.complex128)
-            for i, si in enumerate(ip):
-                if self.s[si].imag == 0:
-                    TL[i, i] = 1
-                else:
-                    j = np.argmin(np.abs(self.s[ip] - self.s[si].conjugate()))
-                    if i < j:
-                        TL[i, i] = scale
-                        TL[i, j] = scale
-                        TL[j, i] = -1j * scale
-                        TL[j, j] = 1j * scale
-
-            TR = np.zeros((len(jp), len(jp)), dtype=np.complex128)
-            for i, si in enumerate(jp):
-                if self.s[si].imag == 0:
-                    TR[i, i] = 1
-                else:
-                    j = np.argmin(np.abs(self.s[jp] - self.s[si].conjugate()))
-                    if i < j:
-                        TR[i, i] = scale
-                        TR[i, j] = scale
-                        TR[j, i] = -1j * scale
-                        TR[j, j] = 1j * scale
-
-            if self.mimo_handling == 'full' and not self.dim_input == self.dim_output == 1:
-                L = np.tensordot(TL, L, axes=(1, 0))
-                L = np.tensordot(L, TR.conj().T, axes=(1, 0))
-                L = L.real
-                L = np.transpose(L, (0, 3, 1, 2))
-
-                Ls = np.tensordot(TL, Ls, axes=(1, 0))
-                Ls = np.tensordot(Ls, TR.conj().T, axes=(1, 0))
-                Ls = Ls.real
-                Ls = np.transpose(Ls, (0, 3, 1, 2))
-
-                V = np.tensordot(TL, V, axes=(1, 0)).real
-                W = np.tensordot(W, TR.conj().T, axes=(1, 0)).real
-                W = np.transpose(W, (0, 3, 1, 2))
-            else:
-                L = (TL @ L @ TR.conj().T).real
-                Ls = (TL @ Ls @ TR.conj().T).real
-                V = (TL @ V).real
-                W = (W @ TR.conj().T).real
-
-        if self.mimo_handling == 'full' and not self.dim_input == self.dim_output == 1:
-            L = np.concatenate(np.concatenate(L, axis=1), axis=1)
-            Ls = np.concatenate(np.concatenate(Ls, axis=1), axis=1)
-            V = np.concatenate(np.concatenate(V, axis=1), axis=1)
-            W = np.concatenate(np.concatenate(W, axis=0), axis=1)
-
-        return L, Ls, V, W
+        return loewner_quadruple(
+            self.s[ip], self.s[jp], self.Hs[ip], self.Hs[jp],
+            left_directions=left_directions, right_directions=right_directions, force_real=self.force_real,
+        )
 
     @cached
     def _loewner_svds(self, L, Ls):

@@ -8,6 +8,7 @@ import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import rational_arnoldi
+from pymor.algorithms.loewner import loewner_quadruple
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
@@ -327,10 +328,10 @@ class TFBHIReductor(BasicObject):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(r, fom.dim_input)`.
+            `(r, fom.dim_input)`. Directions at conjugate points must be conjugates.
         c
             Left tangential directions, |NumPy array| of shape
-            `(r, fom.dim_output)`.
+            `(r, fom.dim_output)`. Directions at conjugate points must be conjugates.
 
         Returns
         -------
@@ -346,44 +347,14 @@ class TFBHIReductor(BasicObject):
         b = b * (1 / np.linalg.norm(b)) if b.shape[1] > 1 else np.ones((r, 1))
         c = c * (1 / np.linalg.norm(c)) if c.shape[1] > 1 else np.ones((r, 1))
 
-        # matrices of the interpolatory LTI system
-        Er = np.empty((r, r), dtype=np.complex128)
-        Ar = np.empty((r, r), dtype=np.complex128)
-        Br = np.empty((r, self.fom.dim_input), dtype=np.complex128)
-        Cr = np.empty((self.fom.dim_output, r), dtype=np.complex128)
-
-        Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
-        dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]
-
-        for i in range(r):
-            for j in range(r):
-                if i != j:
-                    Er[i, j] = -c[i] @ (Hs[i] - Hs[j]) @ b[j] / (sigma[i] - sigma[j])
-                    Ar[i, j] = (-c[i] @ (sigma[i] * Hs[i] - sigma[j] * Hs[j]) @ b[j]
-                                / (sigma[i] - sigma[j]))
-                else:
-                    Er[i, i] = -c[i] @ dHs[i] @ b[i]
-                    Ar[i, i] = -c[i] @ (Hs[i] + sigma[i] * dHs[i]) @ b[i]
-            Br[i, :] = Hs[i].T @ c[i]
-            Cr[:, i] = Hs[i] @ b[i]
-
-        # transform the system to have real matrices
-        T = np.zeros((r, r), dtype=np.complex128)
-        scale = 1 / np.sqrt(2)
-        for i in range(r):
-            if sigma[i].imag == 0:
-                T[i, i] = 1
-            else:
-                j = np.argmin(np.abs(sigma - sigma[i].conjugate()))
-                if i < j:
-                    T[i, i] = scale
-                    T[i, j] = scale
-                    T[j, i] = -1j * scale
-                    T[j, j] = 1j * scale
-        Er = (T @ Er @ T.conj().T).real
-        Ar = (T @ Ar @ T.conj().T).real
-        Br = (T @ Br).real
-        Cr = (Cr @ T.conj().T).real
+        Hs = np.array([self.fom.eval_tf(s, mu=self.mu) for s in sigma])
+        dHs = np.array([self.fom.eval_dtf(s, mu=self.mu) for s in sigma])
+        L, Ls, Br, Cr = loewner_quadruple(
+            sigma, sigma, Hs, Hs,
+            left_directions=c, right_directions=b, derivatives=dHs, force_real=True,
+        )
+        Er = -L
+        Ar = -Ls
 
         return LTIModel.from_matrices(Ar, Br, Cr, None, Er, sampling_time=self.fom.sampling_time)
 

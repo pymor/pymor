@@ -11,6 +11,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
+from pymor.algorithms.loewner import _sample_transfer_function, complete_conjugate_pairs
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
@@ -845,23 +846,25 @@ class VectorFittingReductor(BasicObject):
         Sampling points in the complex plane as a 1D |NumPy array|.
     Hs
         Transfer function values at the sampling points `s` as a 1D |NumPy array|.
-        Alternatively, |TransferFunction| or `Model` with `transfer_function` attribute.
+        Use :meth:`generate_samples` to generate data beforehand.
     weights
         Weights in the weighted least squares error as a 1D |NumPy array|.
         If not given, it is set to a vector of ones.
-    conjugate
-        Whether to include conjugated data.
+    force_real
+        Whether to include conjugated data to enforce realness.
     """
 
-    def __init__(self, s, Hs, weights=None, conjugate=True):
+    generate_samples = staticmethod(_sample_transfer_function)
+
+    def __init__(self, s, Hs, weights=None, force_real=True):
         assert isinstance(s, np.ndarray)
         assert s.ndim == 1
 
-        if hasattr(Hs, 'transfer_function'):
-            Hs = Hs.transfer_function
-        if isinstance(Hs, TransferFunction):
-            Hs = np.array([Hs.eval_tf(si).squeeze() for si in s])
-        assert isinstance(Hs, np.ndarray)
+        Hs = np.asarray(Hs)
+        if Hs.ndim not in (1, 3):
+            raise ValueError('Hs must contain sample data; use generate_samples to sample a model.')
+        if Hs.ndim == 3 and Hs.shape[1:] == (1, 1):
+            Hs = Hs[:, 0, 0]
         assert Hs.ndim == 1
         assert len(Hs) == len(s)
 
@@ -873,19 +876,8 @@ class VectorFittingReductor(BasicObject):
         assert np.all(weights > 0)
 
         # add complex conjugate samples
-        if conjugate:
-            points_conj_list = []
-            data_conj_list = []
-            weights_list = []
-            for i, si in enumerate(s):
-                if si.conjugate() not in s:
-                    points_conj_list.append(si.conjugate())
-                    data_conj_list.append(Hs[i].conjugate())
-                    weights_list.append(weights[i])
-            if points_conj_list:
-                s = np.concatenate((s, points_conj_list))
-                Hs = np.concatenate((Hs, data_conj_list))
-                weights = np.concatenate((weights, weights_list))
+        if force_real:
+            s, Hs, weights = complete_conjugate_pairs(s, Hs, weights)
 
         self.s = s
         self.Hs = Hs
