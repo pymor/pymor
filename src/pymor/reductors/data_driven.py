@@ -309,6 +309,8 @@ class DataDrivenPODReductor(DataDrivenReductor):
         self.product = product
         self.pod_params = pod_params
 
+        self.reduced_basis = None
+
     def reduce(self, **kwargs):
         if self.reduced_basis is None:
             self.reduced_basis = self._compute_reduced_basis()
