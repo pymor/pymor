@@ -36,29 +36,33 @@ class Solver(ImmutableObject):
     :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
     methods of |Operators|. If an |Operator| has no associated solver,
     :class:`~pymor.solvers.default.DefaultSolver` is used.
-    """
 
-    least_squares = False
-    """If `True`, the solver solves least-squares problems as defined above."""
+    Attributes
+    ----------
+    least_squares
+        If `True`, the solver solves least-squares problems as defined above.
+    jacobian_solver
+        If not `None`, a |Solver| for solving linearized equations.
 
-    jacobian_solver = None
-    """If not `None`, a |Solver| for solving linearized equations.
-
-    Used by :class:`~pymor.solvers.newton.NewtonSolver`.
-    If `op` is an |Operator| with `op.solver` not `None`, then
-    `op.jacobian(U, mu)` will inhert the `jacobian_solver` of
-    `op.solver`.
-    """
-
-    @property
-    def adjoint_solver(self):
-        """'Adjoint' solver with `solve` and `solve_adjoint` swapped.
+        Used by :class:`~pymor.solvers.newton.NewtonSolver`.
+        If `op` is an |Operator| with `op.solver` not `None`, then
+        `op.jacobian(U, mu)` will inhert the `jacobian_solver` of
+        `op.solver`.
+    adjoint_solver
+        'Adjoint' solver with `solve` and `solve_adjoint` swapped.
 
         If `op` is an |Operator| with `op.solver` not `None`, then
         `op.H` will have `op.solver.adjoint_solver` as solver to ensure
         that `op.apply_inverse_adjoint` and `op.H.apply_inverse` are the
         same algorithms.
-        """
+    """
+
+    least_squares = False
+
+    jacobian_solver = None
+
+    @property
+    def adjoint_solver(self):
         return self if type(self)._solve_adjoint is Solver._solve_adjoint else AdjointSolver(self)
 
     def solve(self, operator, V, mu=None, initial_guess=None, return_info=False):
