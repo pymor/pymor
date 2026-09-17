@@ -34,7 +34,7 @@ def _sample_transfer_function(sampling_values, fom, *, derivative=False):
     Returns
     -------
     samples
-        Sample data of shape ``tuple(map(len, sampling_values)) + (dim_output, dim_input)``.
+        Sample data of shape `tuple(map(len, sampling_values)) + (dim_output, dim_input)`.
         A single frequency array produces shape `(n, dim_output, dim_input)`.
     """
     fom = fom.transfer_function if hasattr(fom, 'transfer_function') else fom
@@ -49,7 +49,7 @@ def _sample_transfer_function(sampling_values, fom, *, derivative=False):
     assert all(values.ndim == 1 for values in sampling_values), 'sampling_values must contain one-dimensional arrays.'
     assert all(len(values) > 0 for values in sampling_values), 'sampling_values must contain non-empty arrays.'
 
-    sample_shape = tuple(map(len, sampling_values))
+    sample_shape = tuple(len(s) for s in sampling_values)
     evaluate = fom.eval_dtf if derivative else fom.eval_tf
     samples = [
         evaluate(values[0], mu=fom.parameters.parse(values[1:]))
@@ -233,13 +233,6 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
     ------
     ValueError
         If the pairwise terms or derivative terms cannot be broadcast to compatible shapes.
-
-    See Also
-    --------
-    loewner_matrices
-        Construct both the Loewner and shifted Loewner matrices.
-    loewner_quadruple
-        Assemble SISO, full-block MIMO or tangential Loewner data.
 
     Notes
     -----
