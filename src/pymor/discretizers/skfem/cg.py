@@ -31,8 +31,13 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None, name=None):
+        self.basis = basis
+        self.dirichlet_dofs = dirichlet_dofs
+        self.dirichlet_clear_diag = dirichlet_clear_diag
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = NumpyVectorSpace(basis.N)
-        self.__auto_init(locals())
 
     def build_form(self, mu):
         pass
@@ -64,8 +69,11 @@ class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
     source = NumpyVectorSpace(1)
 
     def __init__(self, basis, dirichlet_dofs=None, name=None):
+        self.basis = basis
+        self.dirichlet_dofs = dirichlet_dofs
+        self.name = name
+
         self.range = NumpyVectorSpace(basis.N)
-        self.__auto_init(locals())
 
     def _assemble(self, mu):
         form = LinearForm(self.build_form(mu))
@@ -81,7 +89,7 @@ class DiffusionOperator(SKFemBilinearFormOperator):
                  name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
                          solver=solver, name=name)
-        self.__auto_init(locals())
+        self.diffusion_function = diffusion_function
 
     def build_form(self, mu):
         def bf(u, v, w):
@@ -96,7 +104,7 @@ class L2ProductOperator(SKFemBilinearFormOperator):
                  solver=None, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
                          solver=solver, name=name)
-        self.__auto_init(locals())
+        self.coefficient_function = coefficient_function
 
     def build_form(self, mu):
         def bf(u, v, w):
@@ -114,7 +122,7 @@ class AdvectionOperator(SKFemBilinearFormOperator):
                  name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=solver,
                          name=name)
-        self.__auto_init(locals())
+        self.advection_function = advection_function
 
     def build_form(self, mu):
         def bf(u, v, w):
@@ -127,7 +135,8 @@ class L2Functional(SKFemLinearFormOperator):
 
     def __init__(self, basis, function, dirichlet_dofs=None, dirichlet_data=None, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, name=name)
-        self.__auto_init(locals())
+        self.function = function
+        self.dirichlet_data = dirichlet_data
 
     def build_form(self, mu):
         def lf(u, w):
@@ -141,7 +150,7 @@ class VectorL2Functional(SKFemLinearFormOperator):
     def __init__(self, basis, function, dirichlet_dofs=None, name=None):
         super().__init__(basis, dirichlet_dofs=dirichlet_dofs, name=name)
         assert function.shape_range[0] > 1
-        self.__auto_init(locals())
+        self.function = function
 
     def build_form(self, mu):
         def lf(u, w):
@@ -156,7 +165,12 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, basis, dirichlet_data, dirichlet_dofs=None, name=None):
         assert dirichlet_data.shape_range == ()
-        self.__auto_init(locals())
+
+        self.basis = basis
+        self.dirichlet_data = dirichlet_data
+        self.dirichlet_dofs = dirichlet_dofs
+        self.name = name
+
         self.range = NumpyVectorSpace(basis.N)
 
     def _assemble(self, mu=None):
@@ -169,7 +183,8 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
 class SKFemVisualizer(ImmutableObject):
     def __init__(self, space, basis):
-        self.__auto_init(locals())
+        self.space = space
+        self.basis = basis
 
     def visualize(self, U, **kwargs):
         if not isinstance(U, VectorArray):

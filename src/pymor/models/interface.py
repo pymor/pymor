@@ -50,9 +50,13 @@ class Model(CacheableObject, ParametricObject):
                 setattr(self, f'{k}_product', v)
                 setattr(self, f'{k}_norm', induced_norm(v))
 
-        self.parameters_internal = {'input': dim_input}
+        self.dim_input = dim_input
+        self.products = products
+        self.error_estimator = error_estimator
+        self.visualizer = visualizer
+        self.name = name
 
-        self.__auto_init(locals())
+        self.parameters_internal = {'input': dim_input}
 
     @property
     def order(self):

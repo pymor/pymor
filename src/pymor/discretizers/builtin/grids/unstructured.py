@@ -19,7 +19,10 @@ class UnstructuredTriangleGrid(Grid):
     reference_element = triangle
 
     def __init__(self, sizes, subentity_data, embedding_data):
-        self.__auto_init(locals())
+        self.sizes = sizes
+        self.subentity_data = subentity_data
+        self.embedding_data = embedding_data
+
         vertices = self.centers(2)
         self.domain = np.array([[np.min(vertices[:, 0]), np.min(vertices[:, 1])],
                                 [np.max(vertices[:, 0]), np.max(vertices[:, 1])]])

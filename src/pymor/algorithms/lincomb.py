@@ -79,7 +79,8 @@ class AssembleLincombRules(RuleTable):
 
     def __init__(self, coefficients, name):
         super().__init__(use_caching=False)
-        self.__auto_init(locals())
+        self.coefficients = coefficients
+        self.name = name
 
     @match_always
     def action_zero_coeff(self, ops):

@@ -244,7 +244,13 @@ class RBSurrogate(WeakGreedySurrogate):
     """
 
     def __init__(self, fom, reductor, use_error_estimator, error_norm, extension_params, pool):
-        self.__auto_init(locals())
+        self.fom = fom
+        self.reductor = reductor
+        self.use_error_estimator = use_error_estimator
+        self.error_norm = error_norm
+        self.extension_params = extension_params
+        self.pool = pool
+
         if use_error_estimator:
             self.remote_fom, self.remote_error_norm, self.remote_reductor = None, None, None
         else:

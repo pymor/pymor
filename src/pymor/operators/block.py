@@ -18,7 +18,7 @@ class BlockOperatorBase(Operator):
             yield self.blocks[i, j]
 
     def __init__(self, blocks, range_spaces=None, source_spaces=None, solver=None, name=None):
-        self.blocks = blocks = np.array(blocks)
+        blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
             assert blocks.ndim == 2
@@ -28,7 +28,7 @@ class BlockOperatorBase(Operator):
         else:
             if blocks.ndim == 1:
                 blocks.shape = (len(blocks), 1)
-        assert all(isinstance(op, Operator) or op is None for op in self._operators())
+        assert all(isinstance(op, Operator) or op is None for op in blocks.ravel())
 
         # check if every row/column contains at least one operator
         # find source/range spaces for every column/row if its not passed as an argument
@@ -60,9 +60,13 @@ class BlockOperatorBase(Operator):
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
             if blocks[i, j] is None:
-                self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
+                blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
-        self.__auto_init(locals())
+        self.blocks = blocks
+        self.range_spaces = range_spaces
+        self.source_spaces = source_spaces
+        self.solver = solver
+        self.name = name
 
         # if self.source_spaces and self.range_spaces are not set to None,
         # op.with_(blocks=...) will fail when some spaces change.
@@ -323,7 +327,12 @@ class SecondOrderModelOperator(BlockOperator):
         super().__init__([[alpha * eye, beta * eye],
                           [B, A]],
                           solver=solver, name=name)
-        self.__auto_init(locals())
+        self.alpha = alpha
+        self.beta = beta
+        self.A = A
+        self.B = B
+        self.solver = solver
+        self.name = name
 
     def apply(self, U, mu=None):
         assert U in self.source

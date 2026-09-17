@@ -655,7 +655,10 @@ class ParameterSpace(ParametricObject):
                    and ranges[k][0] <= ranges[k][1]
                    for k in parameters)
         assert constraints is None or callable(constraints)
-        self.__auto_init(locals())
+
+        self.parameters = parameters
+        self.constraints = constraints
+
         self.ranges = SortedFrozenDict((k, tuple(v)) for k, v in ranges.items())
 
     def sample_uniformly(self, counts):

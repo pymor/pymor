@@ -178,7 +178,10 @@ class ShiftedCholQRKernel(BasicObject):
     """Abstract base class for shifted_chol_qr kernels."""
 
     def __init__(self, dim, product=None, product_norm=None, check_finite=True):
-        self.__auto_init(locals())
+        self.dim = dim
+        self.product = product
+        self.product_norm = product_norm
+        self.check_finite = check_finite
 
     @abstractmethod
     def apply(self, X): ...

@@ -68,10 +68,19 @@ class NumpyGenericOperator(Operator):
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
                  solver=None, name=None):
-        self.__auto_init(locals())
+        self.parameters_own = parameters
+
+        self.mapping = mapping
+        self.adjoint_mapping = adjoint_mapping
+        self.dim_source = dim_source
+        self.dim_range = dim_range
+        self.linear = linear
+        self.parameters = parameters
+        self.solver = solver
+        self.name = name
+
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
-        self.parameters_own = parameters
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -192,7 +201,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         sparse = sps.issparse(matrix)
         solver = solver or (default_sparse_solver() if sparse else default_dense_solver())
 
-        self.__auto_init(locals())
+        self.matrix = matrix
+        self.solver = solver
+        self.name = name
+        self.default_dense_solver = default_dense_solver
+        self.default_sparse_solver = default_sparse_solver
+
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
         self.sparse = sparse
@@ -334,7 +348,10 @@ class NumpyCirculantOperator(Operator, CacheableObject):
         assert c.ndim == 3
         c.setflags(write=False)  # make numpy arrays read-only
 
-        self.__auto_init(locals())
+        self.c = c
+        self.solver = solver
+        self.name = name
+
         n, p, m = c.shape
         self._arr = c
         self.linear = True
@@ -443,7 +460,11 @@ class NumpyToeplitzOperator(Operator):
         c.setflags(write=False)
         r.setflags(write=False)
 
-        self.__auto_init(locals())
+        self.c = c
+        self.r = r
+        self.solver = solver
+        self.name = name
+
         self._circulant = NumpyCirculantOperator(
             np.concatenate([c, r[:0:-1]]),
             name=self.name + ' (implicit circulant)')
@@ -523,7 +544,12 @@ class NumpyHankelOperator(Operator):
             assert np.allclose(r[0], c[-1])
         c.setflags(write=False)
         r.setflags(write=False)
-        self.__auto_init(locals())
+
+        self.c = c
+        self.r = r
+        self.solver = solver
+        self.name = name
+
         k, l = c.shape[0], r.shape[0]
         n = k + l - 1
         # zero pad to even length if real to avoid slow irfft

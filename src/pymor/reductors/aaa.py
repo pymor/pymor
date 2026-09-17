@@ -73,6 +73,14 @@ class PAAAReductor(BasicObject):
             sampling_values = [sampling_values]
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
+
+        self.sampling_values = sampling_values
+        self.samples_or_fom = samples_or_fom
+        self.conjugate = conjugate
+        self.nsp_tol = nsp_tol
+        self.post_process = post_process
+        self.L_rk_tol = L_rk_tol
+
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
             if not isinstance(samples_or_fom, TransferFunction):
@@ -135,8 +143,6 @@ class PAAAReductor(BasicObject):
         else:
             self._dim_input = 1
             self._dim_output = 1
-
-        self.__auto_init(locals())
 
     def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
         """Reduce using p-AAA.

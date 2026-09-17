@@ -69,7 +69,13 @@ class LyapunovEquation(ImmutableObject):
             assert E.source == E.range
             assert E.source == A.source
         assert B in A.source
-        self.__auto_init(locals())
+
+        self.A = A
+        self.E = E
+        self.B = B
+        self.trans = trans
+        self.cont_time = cont_time
+        self.name = name
 
     @property
     def dim(self):
@@ -169,7 +175,15 @@ class RiccatiData(ImmutableObject):
         if S is not None:
             assert S in A.source
             assert len(S) == (len(C) if not trans else len(B))
-        self.__auto_init(locals())
+
+        self.A = A
+        self.E = E
+        self.B = B
+        self.C = C
+        self.R = R
+        self.S = S
+        self.trans = trans
+        self.name = name
 
     @property
     def dim(self):
@@ -425,7 +439,15 @@ class SylvesterEquation(ImmutableObject):
 
         assert not (B is None and C is None)
 
-        self.__auto_init(locals())
+        self.A = A
+        self.Ar = Ar
+        self.E = E
+        self.Er = Er
+        self.B = B
+        self.Br = Br
+        self.C = C
+        self.Cr = Cr
+        self.name = name
 
     @property
     def dim(self):

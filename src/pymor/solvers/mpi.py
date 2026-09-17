@@ -21,7 +21,7 @@ class MPISolver(Solver):
     """
 
     def __init__(self, obj_id=None):
-        self.__auto_init(locals())
+        self.obj_id = obj_id
 
     def _solve(self, operator, V, mu, initial_guess):
         op = operator.assemble(mu)

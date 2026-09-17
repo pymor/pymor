@@ -54,7 +54,7 @@ class MPIModel:
 class MPIVisualizer(ImmutableObject):
 
     def __init__(self, m_obj_id):
-        self.__auto_init(locals())
+        self.m_obj_id = m_obj_id
 
     def visualize(self, U, **kwargs):
         if isinstance(U, tuple):

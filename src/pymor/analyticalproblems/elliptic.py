@@ -131,7 +131,21 @@ class StationaryProblem(ParametricObject):
             FrozenDict((k, tuple(v)) for k, v in parameter_ranges.items())
         )
 
-        self.__auto_init(locals())
+        self.domain = domain
+        self.rhs = rhs
+        self.diffusion = diffusion
+        self.advection = advection
+        self.nonlinear_advection = nonlinear_advection
+        self.nonlinear_advection_derivative = nonlinear_advection_derivative
+        self.reaction = reaction
+        self.nonlinear_reaction = nonlinear_reaction
+        self.nonlinear_reaction_derivative = nonlinear_reaction_derivative
+        self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
+        self.robin_data = robin_data
+        self.outputs = outputs
+        self.parameter_ranges = parameter_ranges
+        self.name = name
 
     @property
     def parameter_space(self):

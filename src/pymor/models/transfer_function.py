@@ -60,16 +60,22 @@ class TransferFunction(CacheableObject, ParametricObject):
     def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
-
-        self.parameters_own = parameters
-
         assert presets is None or presets.keys() <= {'h2_norm'}
         if presets:
             assert parameters == {}
         else:
             presets = {}
 
-        self.__auto_init(locals())
+        self.parameters_own = parameters
+
+        self.dim_input = dim_input
+        self.dim_output = dim_output
+        self.tf = tf
+        self.dtf = dtf
+        self.parameters = parameters
+        self.sampling_time = sampling_time
+        self.presets = presets
+        self.name = name
 
     def __str__(self):
         string = (
@@ -621,7 +627,14 @@ class FactorizedTransferFunction(TransferFunction):
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
                          sampling_time=sampling_time, name=name)
-        self.__auto_init(locals())
+        self.K = K
+        self.B = B
+        self.C = C
+        self.D = D
+        self.dK = dK
+        self.dB = dB
+        self.dC = dC
+        self.dD = dD
 
     def __add__(self, other):
         if (type(other) is not FactorizedTransferFunction

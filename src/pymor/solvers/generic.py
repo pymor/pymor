@@ -16,7 +16,11 @@ class LGMRESSolver(Solver):
 
     @defaults('tol', 'maxiter', 'inner_m', 'outer_k', 'check_finite')
     def __init__(self, tol=1e-5, maxiter=1000, inner_m=39, outer_k=3, check_finite=True):
-        self.__auto_init(locals())
+        self.tol = tol
+        self.maxiter = maxiter
+        self.inner_m = inner_m
+        self.outer_k = outer_k
+        self.check_finite = check_finite
 
     def _solve(self, operator, V, mu, initial_guess):
         op = operator.assemble(mu)
@@ -42,7 +46,13 @@ class LSMRSolver(Solver):
 
     @defaults('damp', 'atol', 'btol', 'conlim', 'maxiter', 'show', 'check_finite')
     def __init__(self, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False, check_finite=True):
-        self.__auto_init(locals())
+        self.damp = damp
+        self.atol = atol
+        self.btol = btol
+        self.conlim = conlim
+        self.maxiter = maxiter
+        self.show = show
+        self.check_finite = check_finite
 
     def _solve(self, operator, V, mu, initial_guess):
         op = operator.assemble(mu)
@@ -70,7 +80,13 @@ class LSQRSolver(Solver):
 
     @defaults('damp', 'atol', 'btol', 'conlim', 'iter_lim', 'show', 'check_finite')
     def __init__(self, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, iter_lim=None, show=False, check_finite=True):
-        self.__auto_init(locals())
+        self.damp = damp
+        self.atol = atol
+        self.btol = btol
+        self.conlim = conlim
+        self.iter_lim = iter_lim
+        self.show = show
+        self.check_finite = check_finite
 
     def _solve(self, operator, V, mu, initial_guess):
         op = operator.assemble(mu)

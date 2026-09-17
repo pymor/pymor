@@ -29,7 +29,7 @@ class QRLeastSquaresSolver(Solver):
 
     def __init__(self, space='range'):
         assert space in {'range', 'source'}
-        self.__auto_init(locals())
+        self.space = space
 
     def _solve(self, operator, V, mu, initial_guess):
         if self.space == 'range':

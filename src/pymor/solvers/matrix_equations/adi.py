@@ -58,8 +58,16 @@ class ADILyapunovSolver(LyapunovSolverLR):
                  shifted_system_solver=None, projection_shifts_init_maxiter=20, projection_shifts_subspace_columns=6,
                  wachspress_large_ritz_num=50, wachspress_small_ritz_num=25, wachspress_tol=1e-10):
 
-        self.__auto_init(locals())
         super().__init__()
+        self.adi_tol = adi_tol
+        self.adi_maxiter = adi_maxiter
+        self.adi_shifts = adi_shifts
+        self.shifted_system_solver = shifted_system_solver
+        self.projection_shifts_init_maxiter = projection_shifts_init_maxiter
+        self.projection_shifts_subspace_columns = projection_shifts_subspace_columns
+        self.wachspress_large_ritz_num = wachspress_large_ritz_num
+        self.wachspress_small_ritz_num = wachspress_small_ritz_num
+        self.wachspress_tol = wachspress_tol
 
     def _solve(self, equation):
         A, E, B, = equation.A , equation.E, equation.B

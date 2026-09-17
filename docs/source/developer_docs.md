@@ -104,8 +104,13 @@ Further guidelines:
 - It is generally ok to use builtin names as function parameters
   (e.g. `type`) when there is no other adequate name. There is no need
   to add underscores before or after the name.
-- Use the `self.__auto_init(locals())` idiom to initialize instance
-  attributes from `__init__` args of the same name.
+- Structure `__init__` methods as follows:
+    1. Check `__init__` arguments.
+    2. Transform `__init__` arguments if needed.
+    3. Call `super().__init__`.
+    4. Initialize instance arguments from `__init__` arguments
+       if not already initialized by parent class.
+    5. Initialize further instance attributes.
 
 :::{note}
 If you are a first-time contributor, do not worry too much about code

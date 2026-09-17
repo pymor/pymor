@@ -60,7 +60,11 @@ class ERAReductorBase(CacheableObject):
         if isinstance(feedthrough, Operator):
             assert feedthrough.range.dim == data.shape[1]
             assert feedthrough.source.dim == data.shape[2]
-        self.__auto_init(locals())
+
+        self.data = data
+        self.sampling_time = sampling_time
+        self.force_stability = force_stability
+        self.feedthrough = feedthrough
 
     @cached
     def _s1_W1(self):
@@ -357,9 +361,14 @@ class RandomizedERAReductor(ERAReductorBase):
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,
                  power_iterations=2, rrf_args=None, num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability=force_stability, feedthrough=feedthrough)
-        self.__auto_init(locals())
         if rrf_args is not None and 'error_estimator' in rrf_args:
             assert rrf_args['error_estimator'] == 'loo', 'Only the leave-one-out error estimator is supported.'
+
+        self.allow_transpose = allow_transpose
+        self.power_iterations = power_iterations
+        self.rrf_args = rrf_args
+        self.num_left = num_left
+        self.num_right = num_right
 
         if num_left is not None or num_right is not None:
             self.logger.info('Computing the projected Markov parameters ...')

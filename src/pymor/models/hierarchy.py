@@ -74,11 +74,15 @@ class ModelHierarchy(Model):
         reference_model = models[0]
         super().__init__(dim_input=reference_model.dim_input, products=reference_model.products,
                          visualizer=reference_model.visualizer)
+        self.fom = fom
+        self.reductor_factories = reductor_factories
+        self.tol = tol
+        self.time_reduction = time_reduction
+
         self.solution_space = reference_model.solution_space
         self.dim_output = reference_model.dim_output
         self.models = models
         self.reductors = reductors
-        self.__auto_init(locals())
 
     def _select_model_and_compute(self, mu, quantities):
         base_quantities = quantities & {'solution', 'output'}
