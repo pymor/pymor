@@ -2,8 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 import pytest
 
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
 
 pytestmark = pytest.mark.builtin
@@ -36,3 +38,16 @@ def test_paaa(m,p,is_parametric, rng):
     else:
         assert rom.eval_tf(0).shape == (p, m)
         assert rom.eval_tf(sampling_values[0]).shape == (p, m)
+
+
+def test_paaa_sampled_named_parameters():
+    fom = TransferFunction(1, 1, lambda s, mu: np.array([[1 / (s + mu['a'][0])]]), parameters={'a': 1})
+    grid = [np.array([1., 2., 3., 4.]), np.array([1., 2., 3.])]
+    samples = PAAAReductor.generate_samples(grid, fom)
+    rom = PAAAReductor(grid, samples, parameters=fom.parameters, force_real=False).reduce(tol=1e-10)
+    assert rom.parameters == fom.parameters
+    for i, s in enumerate(grid[0]):
+        for j, a in enumerate(grid[1]):
+            assert np.allclose(rom.eval_tf(s, mu={'a': a}), samples[i, j])
+    with pytest.raises(AssertionError, match='number of parameter sampling axes'):
+        PAAAReductor(grid, samples, parameters={'a': 2})
