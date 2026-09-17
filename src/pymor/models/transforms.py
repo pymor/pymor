@@ -16,7 +16,7 @@ class MoebiusTransformation(ImmutableObject):
     A Moebius transformation
 
     .. math::
-        M(s) = \frac{as+b}{cs+b}
+        M(s) = \frac{as+b}{cs+d}
 
     is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
     a group under composition, therefore the `__matmul__` operator is defined to yield a
@@ -59,8 +59,8 @@ class MoebiusTransformation(ImmutableObject):
         z
             A tuple, list or |NumPy array| of three complex numbers that are transformed.
         w
-            A tuple, list or |NumPy array| of three complex numbers represent the images of `z`.
-            Defaults to `(0, 1, np.inf)`.
+            A tuple, list or |NumPy array| of three complex numbers that represent the images of
+            `z`. Defaults to `(0, 1, np.inf)`.
         name
             Name of the transformation.
 

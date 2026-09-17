@@ -4,7 +4,7 @@
 
 """Generic time-stepping algorithms for the solution of instationary problems.
 
-The algorithms are generic in the sense that each algorithms operates exclusively
+The algorithms are generic in the sense that each algorithm operates exclusively
 on |Operators| and |VectorArrays|. In particular, the algorithms
 can also be used to turn an arbitrary stationary |Model| provided
 by an external library into an instationary |Model|.

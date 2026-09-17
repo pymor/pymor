@@ -35,7 +35,7 @@ class DataDrivenModel(Model):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
@@ -104,7 +104,7 @@ class DataDrivenModel(Model):
 class DataDrivenInstationaryModel(DataDrivenModel):
     """Class for models of instationary problems that use regressors for prediction.
 
-    This class implements a |Model| that uses an regressor for solution
+    This class implements a |Model| that uses a regressor for solution
     or output approximation.
 
     Parameters
@@ -131,7 +131,7 @@ class DataDrivenInstationaryModel(DataDrivenModel):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     time_vectorized
         In the instationary case, determines whether to predict the whole time

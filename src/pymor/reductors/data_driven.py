@@ -69,7 +69,7 @@ class DataDrivenReductor(BasicObject):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     input_scaler_fitted
         If `True`, the `input_scaler` is assumed to be already fitted and will

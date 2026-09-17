@@ -26,7 +26,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
     of the approximation basis to the training set. This is achieved by
     estimating the approximation error on an additional validation set of
     parameters. If the ratio between the estimated errors on the validation
-    set and the validation set is larger than `rho`, the training set
+    set and the training set is larger than `rho`, the training set
     is refined using standard grid refinement techniques.
 
     Parameters

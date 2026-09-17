@@ -937,12 +937,12 @@ class LTIModel(Model):
         """Compute system poles.
 
         .. note::
-            Assumes the systems is small enough to use a dense eigenvalue solver.
+            Assumes the system is small enough to use a dense eigenvalue solver.
 
         Parameters
         ----------
         mu
-            |Parameter values| for which to compute the systems poles.
+            |Parameter values| for which to compute the system's poles.
 
         Returns
         -------
@@ -1210,7 +1210,7 @@ class LTIModel(Model):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm of the |LTIModel|.
 
         .. note::
-            Assumes the system is asymptotically stable. Under this is assumption the
+            Assumes the system is asymptotically stable. Under this assumption, the
             :math:`\mathcal{H}_\infty`-norm is equal to the :math:`\mathcal{L}_\infty`-norm.
             Accordingly, this method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
 
@@ -2484,7 +2484,7 @@ class SecondOrderModel(Model):
         """Compute system poles.
 
         .. note::
-            Assumes the systems is small enough to use a dense eigenvalue solver.
+            Assumes the system is small enough to use a dense eigenvalue solver.
 
         Parameters
         ----------
@@ -2653,7 +2653,7 @@ class SecondOrderModel(Model):
         mu
             |Parameter values|.
         return_fpeak
-            Should the frequency at which the maximum is achieved should be returned.
+            Should the frequency at which the maximum is achieved be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
         tol
@@ -3017,7 +3017,7 @@ class LinearStochasticModel(Model):
         y(k)
         & =
             C x(k)
-            + D u(t),
+            + D u(k),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators and :math:`\omega_i` are stochastic processes.
@@ -3158,7 +3158,7 @@ class BilinearModel(Model):
         y(k)
         & =
             C x(k)
-            + D u(t),
+            + D u(k),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators and :math:`m` is the number of inputs.

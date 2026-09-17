@@ -473,7 +473,9 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
 
 def esr(E, F, J=None):
-    """Elementary SR factorization. Transforms E and F such that.
+    """Elementary SR factorization.
+
+    Transforms E and F such that
 
         [E, F] = S * diag(r11, r22)
 

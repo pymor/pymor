@@ -127,7 +127,7 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide a bounds on the
+        |LincombOperator| for which to provide bounds on the
         coercivity constant.
     initial_parameter
         |Parameter| used to initialize the surrogate for the greedy algorithm.
@@ -190,7 +190,7 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide a bounds on the
+        |LincombOperator| for which to provide bounds on the
         coercivity constant.
     training_set
         |Parameters| used as training set for the greedy algorithm.
