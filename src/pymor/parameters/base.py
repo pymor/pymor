@@ -711,6 +711,7 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
+        rng = get_rng()
         constraints = self.constraints
         if distributions is None:
             def make_uniform_distribution(k, size):
@@ -730,8 +731,6 @@ class ParameterSpace(ParametricObject):
                 constraints = (lambda mu: constraints(mu) and range_check(mu))
             else:
                 constraints = (lambda mu: range_check(mu))
-
-        rng = get_rng()
 
         def get_param():
             while True:
