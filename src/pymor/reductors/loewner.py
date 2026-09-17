@@ -5,6 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.loewner import loewner_quadruple
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
@@ -41,7 +42,7 @@ class LoewnerReductor(CacheableObject):
         - `'random'` for using random tangential directions.
         - `'full'` for fully interpolating all input-output pairs.
         - Tuple `(ltd, rtd)` where `ltd` corresponds to left and `rtd` to right tangential
-          directions.
+          directions. If `conjugate=True`, directions at conjugate nodes must be conjugates.
     """
 
     cache_region = 'memory'
@@ -221,7 +222,7 @@ class LoewnerReductor(CacheableObject):
 
     @cached
     def loewner_quadruple(self):
-        r"""Constructs a Loewner quadruple as |NumPy arrays|.
+        r"""Construct a Loewner quadruple as |NumPy arrays|.
 
         The Loewner quadruple :cite:`ALI17`
 
@@ -231,114 +232,25 @@ class LoewnerReductor(CacheableObject):
         consists of the Loewner matrix :math:`\mathbb{L}`, the shifted Loewner matrix
         :math:`\mathbb{L}_s`, left interpolation data :math:`V` and right interpolation
         data :math:`W`.
-
-        Returns
-        -------
-        L
-            Loewner matrix as a |NumPy array|.
-        Ls
-            Shifted Loewner matrix as a |NumPy array|.
-        V
-            Left interpolation data as a |NumPy array|.
-        W
-            Right interpolation data as a |NumPy array|.
         """
         ip, jp = self._partition_frequencies() if isinstance(self.partitioning, str) else self.partitioning
+        left_directions = right_directions = None
+        if self.dim_input != 1 or self.dim_output != 1:
+            if self.mimo_handling == 'random':
+                rng = new_rng(0)
+                # Use the same directions at all nodes to preserve conjugate symmetry.
+                left_directions = np.tile(rng.normal(size=(1, self.dim_output)), (len(ip), 1))
+                right_directions = np.tile(rng.normal(size=(1, self.dim_input)), (len(jp), 1))
+            elif self.mimo_handling != 'full':
+                left_directions, right_directions = self.mimo_handling
+                assert left_directions.shape == (len(ip), self.dim_output)
+                assert right_directions.shape == (self.dim_input, len(jp))
+                right_directions = right_directions.T
 
-        if self.dim_input == self.dim_output == 1:
-            L = self.Hs[ip][:, np.newaxis] - self.Hs[jp]
-            L /= self.s[ip][:, np.newaxis] - self.s[jp]
-            Ls = (self.s[ip] * self.Hs[ip])[:, np.newaxis] - self.s[jp] * self.Hs[jp]
-            Ls /= self.s[ip][:, np.newaxis] - self.s[jp]
-            V = self.Hs[ip][:, np.newaxis]
-            W = self.Hs[jp][np.newaxis]
-        else:
-            if self.mimo_handling == 'full':
-                L = self.Hs[ip][:, np.newaxis] - self.Hs[jp][np.newaxis]
-                L /= (self.s[ip][:, np.newaxis] - self.s[jp][np.newaxis])[:, :, np.newaxis, np.newaxis]
-                Ls = (self.s[ip, np.newaxis, np.newaxis] * self.Hs[ip])[:, np.newaxis] \
-                    - (self.s[jp, np.newaxis, np.newaxis] * self.Hs[jp])[np.newaxis]
-                Ls /= (self.s[ip][:, np.newaxis] - self.s[jp][np.newaxis])[:, :, np.newaxis, np.newaxis]
-                V = self.Hs[ip][:, np.newaxis]
-                W = self.Hs[jp][np.newaxis]
-            else:
-                if self.mimo_handling == 'random':
-                    rng = new_rng(0)
-                    # use same tangential directions in order to make conjugate=True option work
-                    ltd = np.tile(rng.normal(size=(1, self.dim_output)), (len(ip), 1))
-                    rtd = np.tile(rng.normal(size=(self.dim_input, 1)), (1, len(jp)))
-                elif len(self.mimo_handling) == 2:
-                    ltd = self.mimo_handling[0]
-                    rtd = self.mimo_handling[1]
-                    assert ltd.shape == (len(ip), self.dim_output)
-                    assert rtd.shape == (self.dim_input, len(jp))
-                L = np.empty((len(ip), len(jp)), dtype=np.complex128)
-                Ls = np.empty((len(ip), len(jp)), dtype=np.complex128)
-                V = np.empty((len(ip), self.dim_input), dtype=np.complex128)
-                W = np.empty((self.dim_output, len(jp)), dtype=np.complex128)
-                for i, si in enumerate(ip):
-                    for j, sj in enumerate(jp):
-                        L[i, j] = (ltd[i] @ (self.Hs[si] - self.Hs[sj]) @ rtd[:, j]) / (self.s[si] - self.s[sj])
-                        Ls[i, j] = (ltd[i] @ (self.s[si] * self.Hs[si] - self.s[sj] * self.Hs[sj]) @ rtd[:, j]) \
-                            / (self.s[si] - self.s[sj])
-                    V[i, :] = self.Hs[si].T @ ltd[i]
-                for j, sj in enumerate(jp):
-                    W[:, j] = self.Hs[sj] @ rtd[:, j]
-
-        # transform the system to have real matrices
-        if self.conjugate:
-            scale = 1 / np.sqrt(2)
-            TL = np.zeros((len(ip), len(ip)), dtype=np.complex128)
-            for i, si in enumerate(ip):
-                if self.s[si].imag == 0:
-                    TL[i, i] = 1
-                else:
-                    j = np.argmin(np.abs(self.s[ip] - self.s[si].conjugate()))
-                    if i < j:
-                        TL[i, i] = scale
-                        TL[i, j] = scale
-                        TL[j, i] = -1j * scale
-                        TL[j, j] = 1j * scale
-
-            TR = np.zeros((len(jp), len(jp)), dtype=np.complex128)
-            for i, si in enumerate(jp):
-                if self.s[si].imag == 0:
-                    TR[i, i] = 1
-                else:
-                    j = np.argmin(np.abs(self.s[jp] - self.s[si].conjugate()))
-                    if i < j:
-                        TR[i, i] = scale
-                        TR[i, j] = scale
-                        TR[j, i] = -1j * scale
-                        TR[j, j] = 1j * scale
-
-            if self.mimo_handling == 'full' and not self.dim_input == self.dim_output == 1:
-                L = np.tensordot(TL, L, axes=(1, 0))
-                L = np.tensordot(L, TR.conj().T, axes=(1, 0))
-                L = L.real
-                L = np.transpose(L, (0, 3, 1, 2))
-
-                Ls = np.tensordot(TL, Ls, axes=(1, 0))
-                Ls = np.tensordot(Ls, TR.conj().T, axes=(1, 0))
-                Ls = Ls.real
-                Ls = np.transpose(Ls, (0, 3, 1, 2))
-
-                V = np.tensordot(TL, V, axes=(1, 0)).real
-                W = np.tensordot(W, TR.conj().T, axes=(1, 0)).real
-                W = np.transpose(W, (0, 3, 1, 2))
-            else:
-                L = (TL @ L @ TR.conj().T).real
-                Ls = (TL @ Ls @ TR.conj().T).real
-                V = (TL @ V).real
-                W = (W @ TR.conj().T).real
-
-        if self.mimo_handling == 'full' and not self.dim_input == self.dim_output == 1:
-            L = np.concatenate(np.concatenate(L, axis=1), axis=1)
-            Ls = np.concatenate(np.concatenate(Ls, axis=1), axis=1)
-            V = np.concatenate(np.concatenate(V, axis=1), axis=1)
-            W = np.concatenate(np.concatenate(W, axis=0), axis=1)
-
-        return L, Ls, V, W
+        return loewner_quadruple(
+            self.s[ip], self.s[jp], self.Hs[ip], self.Hs[jp],
+            left_directions=left_directions, right_directions=right_directions, force_real=self.conjugate,
+        )
 
     @cached
     def _loewner_svds(self, L, Ls):
