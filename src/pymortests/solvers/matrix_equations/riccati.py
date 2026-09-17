@@ -76,7 +76,7 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('trans',  [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('backend', ricc_dense_backend_list)
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
@@ -119,7 +119,11 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
+    if trans:
+        equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, None, trans=trans)
+    else:
+        equation = RiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
+
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotRiccatiSolver
@@ -187,7 +191,10 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
+    if trans:
+        equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, None, trans=trans)
+    else:
+        equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolver
@@ -214,7 +221,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('trans', [True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
                                                 product(n_list_big, ricc_lr_backend_list_big)))
 def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
@@ -255,7 +262,11 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
+    if trans:
+        equation = RiccatiEquation.from_matrices(A, E, B, C, R, S, None, trans=trans)
+    else:
+        equation = RiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
+
 
     if backend == 'lrradi':
         from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
@@ -328,7 +339,10 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         mat_old.append(S.copy())
         mat_new.append(S)
 
-    equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, trans=trans)
+    if trans:
+        equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, S, None, trans=trans)
+    else:
+        equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
 
     if backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR

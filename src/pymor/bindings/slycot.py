@@ -98,33 +98,34 @@ class SlycotRiccatiSolver(RiccatiSolver):
             scal = 'N'
             sort = 'S'
             acc = 'R'
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
+            m = B.shape[1]
+            p = C.shape[0]
             if R is None:
                 R = np.eye(m)
             if Q is None:
                 Q = np.eye(p)
             if S is None:
-                S = np.empty((n, m))
+                S = np.empty((n, m if trans else p))
             elif not trans:
                 S = S.T
             if not trans:
                 A = A.T
                 E = E.T
-                B, C = C.T, B.T
-                R, Q = Q, R
-                Q_ = B @ Q @ B.T
+                Q_ = B @ R @ B.T
+                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                    n, p, m,
+                                    A, E, C.T, Q_, Q, S)
             else:
                 Q_ = C.T @ Q @ C
-            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                n, m, p,
-                                A, E, B, Q_, R, S)
+                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                    n, m, p,
+                                    A, E, B, Q_, R, S)
             X = out[1]
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
         elif S is not None:
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
+            m = B.shape[1]
+            p = C.shape[0]
             if R is None:
                 R = np.eye(m)
             else:
@@ -141,7 +142,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
             else:
                 B = B.copy()  # fix overwrite issue (#2200)
                 Q_ = B @ R @ B.T
-                X, rcond = slycot.sb02od(n, m, A.T, C.T, Q_, Q, dico, p=p, L=S.T, fact='N')[:2]
+                X, rcond = slycot.sb02od(n, p, A.T, C.T, Q_, Q, dico, p=p, L=S.T, fact='N')[:2]
             _ricc_rcond_check('slycot.sb02od', rcond)
         else:
             if trans:
@@ -160,7 +161,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
                 else:
                     G = C.T @ spla.solve(Q, C)
                 if R is None:
-                    Q = np.eye(B.shape[1])
+                    R = np.eye(B.shape[1])
 
                 Q_ = B @ R @ B.T
                 X, rcond = slycot.sb02md(n, A.T, G, Q_, dico)[:2]
@@ -196,9 +197,17 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
 
     def _solve(self, equation):
         R = equation.R
+        Q = equation.Q
+
         if R is None:
-            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
-        temp_equation = equation.with_(R=-R)
+            R = np.eye(len(equation.B))
+        if Q is None:
+            Q = np.eye(len(equation.C))
+
+        if equation.trans:
+            temp_equation = equation.with_(R=-R)
+        else:
+            temp_equation = equation.with_(Q=-Q)
         return SlycotRiccatiSolver()._solve(temp_equation)
 
 

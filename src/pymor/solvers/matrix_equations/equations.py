@@ -165,17 +165,15 @@ class RiccatiData(ImmutableObject):
             assert isinstance(R, np.ndarray)
             assert R.ndim == 2
             assert R.shape[0] == R.shape[1]
-            assert R.shape[0] == (len(C) if not trans else len(B))
+            assert R.shape[0] == len(B)
         if S is not None:
             assert S in A.source
             assert len(S) == (len(C) if not trans else len(B))
         if Q is not None:
-            if not trans:
-                assert Q in B.source
-                assert len(Q) == len(B)
-            else:
-                assert Q in C.range
-                assert len(Q) == len(C)
+            assert isinstance(Q, np.ndarray)
+            assert Q.ndim == 2
+            assert Q.shape[0] == Q.shape[1]
+            assert Q.shape[0] == len(C)
 
         self.__auto_init(locals())
 
@@ -210,10 +208,10 @@ class RiccatiData(ImmutableObject):
         B = self.B.to_numpy()
         C = self.C.to_numpy().T
         S = self.S.to_numpy() if self.S is not None else None
-        Q = self.Q.to_numpy() if self.Q is not None else None
+
         if S is not None and not self.trans:
             S = S.T
-        return A, E, B, C, self.R, S, Q
+        return A, E, B, C, self.R, S, self.Q
 
     @classmethod
     def from_matrices(cls, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
@@ -257,11 +255,6 @@ class RiccatiData(ImmutableObject):
         C = A.source.from_numpy(C.T)
         if S is not None:
             S = A.source.from_numpy(S.T if not trans else S)
-        if Q is not None:
-            if not trans:
-                Q = B.source.from_numpy(Q)
-            else:
-                Q = C.range.from_numpy(Q)
 
         return cls(A, E, B, C, R=R, S=S, Q=Q, trans=trans, name=name)
 
@@ -303,7 +296,7 @@ class RiccatiEquation(RiccatiData):
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     Q
-        The operator Q as a |VectorArray| from #TODO
+        The matrix Q as a |NumPy array| from #TODO
     trans
         Whether the first |Operator| in the equation is transposed.
     name
