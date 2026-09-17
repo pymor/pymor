@@ -34,6 +34,17 @@ class Operator(ParametricObject):
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
+    H
+        Adjoint |Operator|.
+
+        It holds that ::
+
+            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
+
+        for all `V`, `mu`.
+
+        If the operator has a |Solver|, the adjoint operator will be equipped
+        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
     """
 
     # override NumPy binary operations and ufuncs
@@ -45,17 +56,6 @@ class Operator(ParametricObject):
 
     @property
     def H(self):
-        """Adjoint |Operator|.
-
-        It holds that ::
-
-            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
-
-        for all `V`, `mu`.
-
-        If the operator has a |Solver|, the adjoint operator will be equipped
-        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
-        """
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self, solver=self._adjoint_solver)
 
