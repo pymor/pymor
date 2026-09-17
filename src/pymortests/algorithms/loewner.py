@@ -65,16 +65,19 @@ def test_sample_transfer_function_on_parametric_grid(derivative):
             assert np.allclose(samples[i, j], [[expected]])
 
 
-def test_complete_conjugate_pairs():
+@pytest.mark.parametrize('num_data', [0, 1, 2])
+def test_complete_conjugate_pairs(num_data):
     nodes = np.array([1j, 2j, -1j])
     samples = np.array([1 + 2j, 3 + 4j, 1 - 2j])
     weights = np.array([2., 3., 2.])
+    data = (samples, weights)[:num_data]
 
-    nodes, samples, weights = complete_conjugate_pairs(nodes, samples, weights)
+    nodes, *completed_data = complete_conjugate_pairs(nodes, *data)
 
     assert np.array_equal(nodes, [1j, 2j, -1j, -2j])
-    assert np.array_equal(samples, [1 + 2j, 3 + 4j, 1 - 2j, 3 - 4j])
-    assert np.array_equal(weights, [2., 3., 2., 3.])
+    expected_data = ([1 + 2j, 3 + 4j, 1 - 2j, 3 - 4j], [2., 3., 2., 3.])[:num_data]
+    for values, expected in zip(completed_data, expected_data, strict=True):
+        assert np.array_equal(values, expected)
 
 
 @pytest.mark.parametrize(('ordering', 'partitioning', 'left', 'right'), [

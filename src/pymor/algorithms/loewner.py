@@ -11,42 +11,40 @@ from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
-def complete_conjugate_pairs(nodes, samples, *data):
-    """Complete sample data with complex conjugate pairs.
+def complete_conjugate_pairs(nodes, *data):
+    """Complete nodes and associated data with complex conjugate pairs.
 
     For each node whose complex conjugate is missing, append its conjugate and the
-    elementwise conjugates of the corresponding entries in `samples` and `data`.
+    elementwise conjugates of the corresponding entries in each array in `data`.
     Existing entries retain their order; new entries are appended in input-node order.
+    For example, complete samples and weights together with::
+
+        nodes, samples, weights = complete_conjugate_pairs(nodes, samples, weights)
 
     .. note::
-        Nodes are compared using exact equality. Already supplied conjugate samples are not
+        Nodes are compared using exact equality. Already supplied conjugate data are not
         checked for consistency. Real nodes are not duplicated, and input arrays are not modified.
 
     Parameters
     ----------
     nodes
         Nonempty one-dimensional |NumPy array| of sampling nodes.
-    samples
-        |NumPy array| of sampled values with shape `(len(nodes), ...)`. The first axis
-        corresponds to `nodes`; trailing axes may represent outputs, inputs or parameters.
     data
-        Additional |NumPy arrays| to complete, e.g. derivatives, quadrature weights or
-        tangential directions. Each array must have first dimension `len(nodes)`.
+        Zero or more |NumPy arrays| passed as positional arguments, e.g. samples, derivatives,
+        quadrature weights or tangential directions. Each array must have shape `(len(nodes), ...)`;
+        trailing dimensions are preserved.
 
     Returns
     -------
     completed_nodes
         One-dimensional |NumPy array| containing the original and appended nodes.
-    completed_samples
-        |NumPy array| of samples aligned with `completed_nodes`, retaining the original
-        trailing dimensions.
     completed_data
-        The completed additional |NumPy arrays| in input order. Each array is returned
-        as a separate tuple entry after `completed_samples`, not as a nested tuple.
-
+        Completed |NumPy arrays| in input order, returned as separate entries in
+        `(completed_nodes, *completed_data)`, not a nested tuple. With no data arguments,
+        the return value is `(completed_nodes,)`.
     """
     nodes = _as_nodes(nodes, 'nodes')
-    data = (np.asarray(samples), *(np.asarray(values) for values in data))
+    data = tuple(np.asarray(values) for values in data)
     assert all(values.shape[:1] == (len(nodes),) for values in data), 'Data must be aligned with nodes.'
 
     for i, node in enumerate(nodes):
