@@ -1026,14 +1026,14 @@ class LTIModel(Model):
         elif typ == 'pr_c_lr' or typ == 'pr_c_dense':
             solver = self.matrix_equation_solvers.positive_riccati_lr if typ == 'pr_c_lr' \
                 else self.matrix_equation_solvers.positive_riccati
-            return solver.solve(PositiveRiccatiEquation(A, E, Z, -C, R=DDH, S=B, trans=False))
+            return solver.solve(PositiveRiccatiEquation(A, E, Z, -C, S=B, Q=DDH, trans=False))
         elif typ == 'pr_o_lr' or typ == 'pr_o_dense':
             solver = self.matrix_equation_solvers.positive_riccati_lr if typ == 'pr_o_lr' \
                 else self.matrix_equation_solvers.positive_riccati
             return solver.solve(PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True))
         elif typ[0] == 'br_c_lr':
-            R = typ[1] ** 2 * np.eye(self.dim_output) if typ[1] != 1 else None
-            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=False).solve_lr(
+            Q = typ[1] ** 2 * np.eye(self.dim_output) if typ[1] != 1 else None
+            return PositiveRiccatiEquation(A, E, B, C, Q=Q, trans=False).solve_lr(
                 solver=self.matrix_equation_solvers.positive_riccati_lr
             )
         elif typ[0] == 'br_o_lr':

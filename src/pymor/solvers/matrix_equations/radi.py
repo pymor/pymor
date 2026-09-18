@@ -56,6 +56,11 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
         trans = equation.trans
 
+        if R is None:
+            R = np.eye(len(B))
+        if Q is None:
+            Q = np.eye(len(C))
+
         if S is None:
             if trans:
                 Z_lr = self._solve_impl(A, E, B, C, R, Q, trans)
@@ -63,12 +68,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
                 Z_lr = self._solve_impl(A, E, B, C, Q, R, trans)
 
         else:
-            if R is not None:
-                Rinv = spla.solve(R, np.eye(R.shape[0]))
-            else:
-                R = Rinv = np.eye(len(B) if trans else len(C))
-
             if trans:
+                Rinv = spla.solve(R, np.eye(R.shape[0]))
                 BRinvSt = LowRankOperator(B, Rinv, S)
                 tA = A - BRinvSt
                 tC = cat_arrays([C, S])
@@ -76,17 +77,18 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
                 Z_lr = self._solve_impl(tA, E, B, tC, R, tQ, trans)
             else:
-                SRinvCt = LowRankOperator(S, Rinv, C)
-                tA = A - SRinvCt
+                Qinv = spla.solve(Q, np.eye(Q.shape[0]))
+                SQinvCt = LowRankOperator(S, Qinv, C)
+                tA = A - SQinvCt
                 tB = cat_arrays([B, S])
-                tR = spla.block_diag(Q, -Rinv)
+                tR = spla.block_diag(R, -Qinv)
 
-                Z_lr = self._solve_impl(tA, E, tB, C, tR, R, trans)
+                Z_lr = self._solve_impl(tA, E, tB, C, Q, tR, trans)
 
         return Z_lr
 
 
-    def _solve_impl(self, A, E, B, C, R=None, Q=None, trans=False):
+    def _solve_impl(self, A, E, B, C, R, Q, trans):
 
         if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
@@ -101,7 +103,6 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
         if not trans:
             B, C = C, B
-            R, Q = Q, R
 
         if R is not None:
             Rinv = spla.solve(R, np.eye(R.shape[0]))
@@ -206,9 +207,58 @@ class RADIRiccatiSolver(RiccatiSolverLR):
                 shifts = iteration_shifts(A, E, B, Rinv, RF, RC, K, Z)
                 j_shift = 0
         # transform solution to low-rank factor
-        cf = spla.cholesky(Y)
-        Z_lr = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
+        Yinv = spla.inv(Y)
+        Yinv = (Yinv + Yinv.T) / 2.0
+        Z_lr, S = self.LDL_T_rank_truncation(Z, Yinv)
+        S = np.diag(np.sqrt(np.diag(S)))
+        Z_lr = Z_lr.lincomb(S)
         return Z_lr
+
+    def LDL_T_rank_truncation(self, L, D, tol=np.finfo(float).eps):
+        """Compute a rank-truncated :math:'LDL^T' factorization.
+
+        Computes the QR factorization :math:'Q R = L' of L followed by an
+        eigendecomposition of :math:'RDR^T' and a rank decision on the absolute
+        values of the computed eigenvalues. The truncated eigenpairs are dropped.
+        The resulting core matrix (replacing D) is the diagonal matrix of preserved
+        eigenvalues and the updated |VectorArray| is :math:'Q' times the
+        preserved (left) eingenvectors.
+
+        Parameters
+        ----------
+        L
+            The |VectorArray| L from representing the left factor in the
+            :math:'LDL^T' facorization.
+        D
+            The |NumPy array| representing the core factor.
+        tol
+            A float representing the desired relative truncation tolerance
+            on the absolute values of the eigenvalues.
+            Defaults to double precision machine epsilon
+
+        Returns
+        -------
+        hL
+            The |VectorArray| hL representing the left factor in the
+            :math:'LDL^T' rank-truncated facorization.
+        hD
+            The |NumPy array| representing the core factor.
+        """
+        # QR decomposition of left factor
+        Q, R = gram_schmidt(L, return_R=True)
+        # Solve symmetric eigenvalue problem
+        RDRT = R @ D @ R.T
+        # ensure numerical symmetry
+        RDRT = (RDRT+RDRT.T)/2.0
+        S, U = spla.eigh(RDRT)
+
+        # Thresholding based on tolerance
+        r = np.abs(S) > tol * np.max(np.abs(S))
+
+        # Filtering columns of V and elements of S based on r
+        hL = Q.lincomb(U[:, r])
+        hD = np.diag(S[r])
+        return hL, hD
 
 
     def hamiltonian_shifts_init(self, A, E, B, C, Rinv, Q):
@@ -368,31 +418,34 @@ class RADIPositiveRealRiccatiSolver(PositiveRiccatiSolverLR):
         A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
         trans = equation.trans
 
+        if R is None:
+            R = np.eye(len(B))
+
+        if Q is None:
+            Q = np.eye(len(C))
+
         if S is None:
             if trans:
-                Z_lr = RADIRiccatiSolver._solve_impl(A, E, B, C, -R, Q, trans)
+                Z_lr = RADIRiccatiSolver()._solve_impl(A, E, B, C, -R, Q, trans)
             else:
-                Z_lr = RADIRiccatiSolver._solve_impl(A, E, B, C, Q, -R, trans)
+                Z_lr = RADIRiccatiSolver()._solve_impl(A, E, B, C, -Q, R, trans)
 
         else:
-            if R is not None:
-                Rinv = spla.solve(R, np.eye(R.shape[0]))
-            else:
-                R = Rinv = np.eye(len(B) if trans else len(C))
-
             if trans:
+                Rinv = spla.solve(R, np.eye(R.shape[0]))
                 BRinvSt = LowRankOperator(B, Rinv, S)
                 tA = A + BRinvSt
                 tC = cat_arrays([C, S])
                 tQ = spla.block_diag(Q, Rinv)
 
-                Z_lr = RADIRiccatiSolver._solve_impl(tA, E, B, tC, -R, tQ, trans)
+                Z_lr = RADIRiccatiSolver()._solve_impl(tA, E, B, tC, -R, tQ, trans)
             else:
-                SRinvCt = LowRankOperator(S, Rinv, C)
-                tA = A + SRinvCt
+                Qinv = spla.solve(Q, np.eye(Q.shape[0]))
+                SQinvCt = LowRankOperator(S, Qinv, C)
+                tA = A + SQinvCt
                 tB = cat_arrays([B, S])
-                tR = spla.block_diag(Q, Rinv)
+                tR = spla.block_diag(R, Qinv)
 
-                Z_lr = RADIRiccatiSolver._solve_impl(tA, E, tB, C, tR, -R, trans)
+                Z_lr = RADIRiccatiSolver()._solve_impl(tA, E, tB, C, -Q, tR, trans)
 
         return Z_lr

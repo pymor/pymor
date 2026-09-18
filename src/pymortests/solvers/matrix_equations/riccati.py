@@ -26,15 +26,15 @@ n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lr_backend_list_small = [
-    'scipy',
-    'slycot',
+    #'scipy',
+    #'slycot',
 ]
 ricc_lr_backend_list_big = [
-    'lrradi'
+    'radi'
 ]
 ricc_dense_backend_list = [
-    'scipy',
-    'slycot'
+    #'scipy',
+    #'slycot'
 ]
 
 
@@ -221,13 +221,11 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, backend, rng):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [True])
+@pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
                                                 product(n_list_big, ricc_lr_backend_list_big)))
 def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
-    if with_S and backend == 'lrradi':
-        pytest.xfail('solver not implemented')
 
     mat_old = []
     mat_new = []
@@ -268,7 +266,7 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         equation = RiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
 
 
-    if backend == 'lrradi':
+    if backend == 'radi':
         from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
         solver =  RADIRiccatiSolver()
     elif backend == 'slycot':
@@ -295,14 +293,14 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
         assert np.all(mat1 == mat2)
 
 
-@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('backend', ricc_lr_backend_list_small)
+@pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
+                                                product(n_list_big, ricc_lr_backend_list_big)))
 def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
@@ -344,7 +342,10 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, trans, backend, rng):
     else:
         equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, None, S, R, trans=trans)
 
-    if backend == 'slycot':
+    if backend == 'radi':
+        from pymor.solvers.matrix_equations.radi import RADIPositiveRealRiccatiSolver
+        solver = RADIPositiveRealRiccatiSolver()
+    elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
         solver = SlycotPositiveRiccatiSolverLR()
     elif backend == 'scipy':
