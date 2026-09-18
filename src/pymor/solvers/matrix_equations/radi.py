@@ -299,7 +299,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             Ep = E.apply2(U, U)
             EEp = spla.block_diag(Ep, Ep.T)
             eigvals, eigvecs = spla.eig(Hp, EEp)
-            eigpairs = zip(eigvals, eigvecs, strict=True)
+            eigpairs = zip(eigvals, eigvecs.T, strict=True)
             # filter stable eigenvalues
             eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
             if len(eigpairs) == 0:
@@ -385,7 +385,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         Ep = E.apply2(U, U)
         EEp = spla.block_diag(Ep, Ep.T)
         eigvals, eigvecs = spla.eig(Hp, EEp)
-        eigpairs = zip(eigvals, eigvecs, strict=True)
+        eigpairs = zip(eigvals, eigvecs.T, strict=True)
         # filter stable eigenvalues
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         # find shift with most impact on convergence
