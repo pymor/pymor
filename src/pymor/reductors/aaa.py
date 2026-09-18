@@ -120,7 +120,12 @@ class PAAAReductor(BasicObject):
             self._dim_input = 1
             self._dim_output = 1
 
-        self.__auto_init(locals())
+        self.sampling_values = sampling_values
+        self.force_real = force_real
+        self.nsp_tol = nsp_tol
+        self.post_process = post_process
+        self.L_rk_tol = L_rk_tol
+        self.parameters = parameters
 
     def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
         """Reduce using p-AAA.

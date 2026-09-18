@@ -91,7 +91,7 @@ class LoewnerReductor(CacheableObject):
         self.Hs = Hs
         self.partitioning = partitioning
         self.ordering = ordering
-        self.conjugate = conjugate
+        self.force_real = force_real
         self.mimo_handling = mimo_handling
 
     def reduce(self, r=None, tol=1e-12):
