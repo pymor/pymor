@@ -329,8 +329,8 @@ class PositiveRiccatiEquation(RiccatiData):
 
       .. math::
           A X E^T + E X A^T
-          + (E X C^T + S^T) R^{-1} (C X E^T + S)
-          + B Q B^T = 0,
+          + (E X C^T + S^T) Q^{-1} (C X E^T + S)
+          + B R B^T = 0,
 
     - if `trans` is `True`:
 

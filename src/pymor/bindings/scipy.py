@@ -437,8 +437,8 @@ class ScipyRiccatiSolver(RiccatiSolver):
                 E = E.T
             if S is not None:
                 S = S.T
-            Q_ = B @ R @ B.T
-            return solve_continuous_are(A.T, C.T, Q_, Q, e=E, s=S)
+            R_ = B @ R @ B.T
+            return solve_continuous_are(A.T, C.T, R_, Q, e=E, s=S)
         else:
             Q_ = C.T @ Q @ C
             return solve_continuous_are(A, B, Q_, R, e=E, s=S)

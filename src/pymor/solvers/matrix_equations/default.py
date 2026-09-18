@@ -99,7 +99,7 @@ class DefaultRiccatiSolverLR(RiccatiSolverLR):
     - for sparse problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-        1. `lrradi` (see :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver`),
+        1. `radi` (see :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
@@ -109,8 +109,8 @@ class DefaultRiccatiSolverLR(RiccatiSolverLR):
     """
 
     def _solve(self, equation):
-        backend = 'lrradi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
-        if backend == 'lrradi':
+        backend = 'radi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
+        if backend == 'radi':
             from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
             solver = RADIRiccatiSolver()
         else:
@@ -150,19 +150,31 @@ class DefaultPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
 
     A solver backend is chosen based on availability in the following order:
 
-    1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLR`),
-    2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLR`).
+    - for sparse problems (minimum size specified by
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
-    Currently, only dense solvers are supported.
+        1. `radi` (see :class:`pymor.solvers.matrix_equations.radi.RADIPositiveRiccatiSolver`),
+
+    - for dense problems (smaller than
+        :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+
+        1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLR`),
+        2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLR`).
     """
 
     def _solve(self, equation):
-        if _dense_backend() == 'slycot':
-            from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
-            solver = SlycotPositiveRiccatiSolverLR()
+        backend = 'radi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
+        if backend == 'radi':
+            from pymor.solvers.matrix_equations.radi import RADIPositiveRiccatiSolver
+            solver = RADIPositiveRiccatiSolver()
         else:
-            from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLR
-            solver = ScipyPositiveRiccatiSolverLR()
+            _warn_dense_fallback(self, equation, backend)
+            if _dense_backend() == 'slycot':
+                from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
+                solver = SlycotPositiveRiccatiSolverLR()
+            else:
+                from pymor.bindings.scipy import ScipyPositiveRiccatiSolverLR
+                solver = ScipyPositiveRiccatiSolverLR()
 
         return solver.solve(equation)
 
