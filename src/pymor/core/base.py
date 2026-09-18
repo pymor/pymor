@@ -128,22 +128,12 @@ class BasicObject(metaclass=UberMeta):
         name as prefix.
     logging_disabled
         `True` if logging has been disabled.
-    name
-        The name of the instance. If not set by the user, the name is
-        set to the class name.
     uid
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
     """
 
-    @property
-    def name(self):
-        n = getattr(self, '_name', None)
-        return n or type(self).__name__
-
-    @name.setter
-    def name(self, n):
-        self._name = n
+    name = None
 
     @property
     def logging_disabled(self):
@@ -173,8 +163,6 @@ class BasicObject(metaclass=UberMeta):
         return self._uid.uid
 
     def _format_repr(self, max_width, verbosity, override={}):
-        if verbosity < 3 and self.name == type(self).__name__ and 'name' not in override:
-            override = dict(override, name=None)
         return _format_generic(self, max_width, verbosity, override=override)
 
     def __repr__(self):

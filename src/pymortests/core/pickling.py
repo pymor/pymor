@@ -19,8 +19,8 @@ is_equal_ignored_attributes = \
      (ScipySpSolveSolver, {'_factorizations'}),
      (SubGrid, {'_uid', '_CacheableObject__cache_region', '_SubGrid__parent_grid'}),
      (NumpyMatrixBasedOperator, {'_uid', '_CacheableObject__cache_region', '_parameters', '_assembled_operator'}),
-     (ParametricObject, {'_name', '_uid', '_CacheableObject__cache_region', '_parameters'}),
-     (BasicObject, {'_name', '_uid', '_CacheableObject__cache_region'}),)
+     (ParametricObject, {'_uid', '_CacheableObject__cache_region', '_parameters'}),
+     (BasicObject, {'_uid', '_CacheableObject__cache_region'}),)
 
 is_equal_dispatch_table = {}
 
