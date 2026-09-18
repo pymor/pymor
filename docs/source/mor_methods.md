@@ -277,10 +277,11 @@ fom = penzl_example()
 s = np.logspace(1, 3, 100) * 1j
 
 from pymor.reductors.aaa import PAAAReductor
-rom_aaa = PAAAReductor(s, fom).reduce()
+samples = PAAAReductor.generate_samples(s, fom)
+rom_aaa = PAAAReductor(s, samples).reduce()
 
 from pymor.reductors.loewner import LoewnerReductor
-rom_loewner = LoewnerReductor(s, fom).reduce()
+rom_loewner = LoewnerReductor(s, samples).reduce()
 ```
 
 Download the code:
