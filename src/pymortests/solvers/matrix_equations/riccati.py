@@ -38,7 +38,7 @@ ricc_dense_backend_list = [
 ]
 
 
-def relative_residual(A, E, B, C, R, S, Q, Z, trans, positive=False):
+def relative_residual(A, E, B, C, R, Q, S, Z, trans, positive=False):
     if not trans:
         if E is None:
             linear = A @ Z @ Z.T
@@ -77,12 +77,12 @@ def relative_residual(A, E, B, C, R, S, Q, Z, trans, positive=False):
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('with_Q', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans',  [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('backend', ricc_dense_backend_list)
-def test_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
+def test_ricc_dense(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -118,12 +118,12 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng
     if with_R:
         mat_old.append(R.copy())
         mat_new.append(R)
-    if with_S:
-        mat_old.append(S.copy())
-        mat_new.append(S)
     if with_Q:
         mat_old.append(Q.copy())
         mat_new.append(Q)
+    if with_S:
+        mat_old.append(S.copy())
+        mat_new.append(S)
 
     equation = RiccatiEquation.from_matrices(A, E, B, C, R, Q, S, trans=trans)
 
@@ -139,7 +139,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng
 
     X = equation.solve(solver=solver)
 
-    assert relative_residual(A, E, B, C, R, S, Q, chol(X), trans) < 1e-8
+    assert relative_residual(A, E, B, C, R, Q, S, chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -150,12 +150,12 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('with_Q', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('backend', ricc_dense_backend_list)
-def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
+def test_pos_ricc_dense(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -191,12 +191,12 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend,
     if with_R:
         mat_old.append(R.copy())
         mat_new.append(R)
-    if with_S:
-        mat_old.append(S.copy())
-        mat_new.append(S)
     if with_Q:
         mat_old.append(Q.copy())
         mat_new.append(Q)
+    if with_S:
+        mat_old.append(S.copy())
+        mat_new.append(S)
 
     equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, Q, S, trans=trans)
 
@@ -211,7 +211,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend,
 
     X = equation.solve(solver=solver)
 
-    assert relative_residual(A, E, B, C, R, S, Q, chol(X), trans, positive=True) < 1e-8
+    assert relative_residual(A, E, B, C, R, Q, S, chol(X), trans, positive=True) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -222,12 +222,12 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, with_Q, trans, backend,
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('with_Q', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
                                                 product(n_list_big, ricc_lr_backend_list_big)))
-def test_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
+def test_ricc_lr(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -259,12 +259,12 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
     if with_R:
         mat_old.append(R.copy())
         mat_new.append(R)
-    if with_S:
-        mat_old.append(S.copy())
-        mat_new.append(S)
     if with_Q:
         mat_old.append(Q.copy())
         mat_new.append(Q)
+    if with_S:
+        mat_old.append(S.copy())
+        mat_new.append(S)
 
     equation = RiccatiEquation.from_matrices(A, E, B, C, R, Q, S, trans=trans)
 
@@ -286,7 +286,7 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
     assert len(Zva) <= n
 
     Z = Zva.to_numpy()
-    assert relative_residual(A, E, B, C, R, S, Q, Z, trans) < 1e-8
+    assert relative_residual(A, E, B, C, R, Q, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
@@ -300,12 +300,12 @@ def test_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('with_Q', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
                                                 product(n_list_big, ricc_lr_backend_list_big)))
-def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rng):
+def test_pos_ricc_lr(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rng):
     skip_if_missing_solver(backend)
 
     mat_old = []
@@ -341,12 +341,12 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rn
     if with_R:
         mat_old.append(R.copy())
         mat_new.append(R)
-    if with_S:
-        mat_old.append(S.copy())
-        mat_new.append(S)
     if with_Q:
         mat_old.append(Q.copy())
         mat_new.append(Q)
+    if with_S:
+        mat_old.append(S.copy())
+        mat_new.append(S)
 
     equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, Q, S, trans=trans)
 
@@ -367,7 +367,7 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_S, with_Q, trans, backend, rn
     assert len(Zva) <= n
 
     Z = Zva.to_numpy()
-    assert relative_residual(A, E, B, C, R, S, Q, Z, trans, positive=True) < 1e-8
+    assert relative_residual(A, E, B, C, R, Q, S, Z, trans, positive=True) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new, strict=True):
         assert type(mat1) is type(mat2)
