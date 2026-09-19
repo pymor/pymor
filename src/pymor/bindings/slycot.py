@@ -106,65 +106,54 @@ class SlycotRiccatiSolver(RiccatiSolver):
                 R = np.eye(m)
             if Q is None:
                 Q = np.eye(p)
-            if S is None:
-                S = np.empty((n, m if trans else p))
-            elif not trans:
-                S = S.T
             if not trans:
                 A = A.T
                 E = E.T
-                Q_ = B @ R @ B.T
-                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                    n, p, m,
-                                    A, E, C.T, Q_, Q, S)
-            else:
-                Q_ = C.T @ Q @ C
-                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                    n, m, p,
-                                    A, E, B, Q_, R, S)
+                B, C = C.T, B.T
+                R, Q = Q, R
+                m, p = p, m
+                if S is not None:
+                    S = S.T
+            if S is None:
+                S = np.empty((n, m))
+
+            CTQC = C.T @ Q @ C
+            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                n, m, p,
+                                A, E, B, CTQC, R, S)
             X = out[1]
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
         elif S is not None:
             if R is None:
                 R = np.eye(m)
-            else:
-                R = R.copy()  # fix overwrite issue (#2200)
             if Q is None:
                 Q = np.eye(p)
-            else:
-                Q = Q.copy()  # fix overwrite issue (#2200)
-            S = S.copy()  # fix overwrite issue (#2200)
-            if trans:
-                C = C.copy()  # fix overwrite issue (#2200)
-                Q_ = C.T @ Q @ C
-                X, rcond = slycot.sb02od(n, m, A, B, Q_, R, dico, p=p, L=S, fact='N')[:2]
-            else:
-                B = B.copy()  # fix overwrite issue (#2200)
-                Q_ = B @ R @ B.T
-                X, rcond = slycot.sb02od(n, p, A.T, C.T, Q_, Q, dico, p=p, L=S.T, fact='N')[:2]
+            if not trans:
+                A = A.T
+                B, C = C.T, B.T
+                R, Q = Q, R
+                m, p = p, m
+                S = S.T
+
+            R, S, C = R.copy(), S.copy(), C.copy()  # fix overwrite issue (#2200)
+            CTQC = C.T @ Q @ C
+            X, rcond = slycot.sb02od(n, m, A, B, CTQC, R, dico, L=S, fact='N')[:2]
             _ricc_rcond_check('slycot.sb02od', rcond)
         else:
-            if trans:
-                if R is None:
-                    G = B @ B.T
-                else:
-                    G = B @ spla.solve(R, B.T)
-                if Q is None:
-                    Q = np.eye(C.shape[0])
-
-                Q_ = C.T @ Q @ C
-                X, rcond = slycot.sb02md(n, A, G, Q_, dico)[:2]
+            if not trans:
+                A = A.T
+                B, C = C.T, B.T
+                R, Q = Q, R
+            if R is None:
+                G = B @ B.T
             else:
-                if Q is None:
-                    G = C.T @ C
-                else:
-                    G = C.T @ spla.solve(Q, C)
-                if R is None:
-                    R = np.eye(B.shape[1])
+                G = B @ spla.solve(R, B.T)
+            if Q is None:
+                Q = np.eye(C.shape[0])
 
-                Q_ = B @ R @ B.T
-                X, rcond = slycot.sb02md(n, A.T, G, Q_, dico)[:2]
+            CTQC = C.T @ Q @ C
+            X, rcond = slycot.sb02md(n, A, G, CTQC, dico)[:2]
             _ricc_rcond_check('slycot.sb02md', rcond)
 
         return X

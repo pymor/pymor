@@ -454,15 +454,16 @@ class ScipyRiccatiSolver(RiccatiSolver):
         if Q is None:
             Q = np.eye(C.shape[0])
         if not trans:
+            A = A.T
+            B, C = C.T, B.T
+            R, Q = Q, R
             if E is not None:
                 E = E.T
             if S is not None:
                 S = S.T
-            R_ = B @ R @ B.T
-            return solve_continuous_are(A.T, C.T, R_, Q, e=E, s=S)
-        else:
-            Q_ = C.T @ Q @ C
-            return solve_continuous_are(A, B, Q_, R, e=E, s=S)
+
+        CTQC = C.T @ Q @ C
+        return solve_continuous_are(A, B, CTQC, R, e=E, s=S)
 
 
 class ScipyRiccatiSolverLR(RiccatiSolverLR):
@@ -492,14 +493,14 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
     def _solve(self, equation):
         R = equation.R
         Q = equation.Q
-        if R is None:
-            R = np.eye(len(equation.B))
-        if Q is None:
-            Q = np.eye(len(equation.C))
 
         if equation.trans:
+            if R is None:
+                R = np.eye(len(equation.B))
             temp_equation = equation.with_(R=-R)
         else:
+            if Q is None:
+                Q = np.eye(len(equation.C))
             temp_equation = equation.with_(Q=-Q)
 
         return ScipyRiccatiSolver()._solve(temp_equation)
