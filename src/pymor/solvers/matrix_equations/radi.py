@@ -402,7 +402,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         return np.array([shift])
 
 
-class RADIPositiveRealRiccatiSolver(PositiveRiccatiSolverLR):
+class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
     r"""Compute an approximate low-rank factor of the solution of a |PositiveRiccatiEquation|.
 
     Calls :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver` with flipped signs in

@@ -351,8 +351,8 @@ def test_pos_ricc_lr(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rn
     equation = PositiveRiccatiEquation.from_matrices(A, E, B, C, R, Q, S, trans=trans)
 
     if backend == 'radi':
-        from pymor.solvers.matrix_equations.radi import RADIPositiveRealRiccatiSolver
-        solver = RADIPositiveRealRiccatiSolver()
+        from pymor.solvers.matrix_equations.radi import RADIPositiveRiccatiSolver
+        solver = RADIPositiveRiccatiSolver()
     elif backend == 'slycot':
         from pymor.bindings.slycot import SlycotPositiveRiccatiSolverLR
         solver = SlycotPositiveRiccatiSolverLR()
