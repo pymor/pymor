@@ -296,7 +296,7 @@ class RiccatiEquation(RiccatiData):
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     Q
-        The matrix Q as a |NumPy array| from #TODO
+        The matrix Q as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
     name
@@ -354,7 +354,7 @@ class PositiveRiccatiEquation(RiccatiData):
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     Q
-        The operator Q as a |VectorArray| #TODO
+        The matrix Q as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
     name
