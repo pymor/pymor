@@ -269,7 +269,7 @@ class RiccatiData(ImmutableObject):
         if S is not None:
             S = A.source.from_numpy(S.T if not trans else S)
 
-        return cls(A, E, B, C, R=R, S=S, Q=Q, trans=trans, name=name)
+        return cls(A, E, B, C, R=R, Q=Q, S=S, trans=trans, name=name)
 
 
 class RiccatiEquation(RiccatiData):
