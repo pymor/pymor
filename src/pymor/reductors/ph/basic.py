@@ -109,7 +109,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
             time_stepper = time_stepper.with_(solver=None)
         if self.pg_projection == 'ph_preserving':
             return PHLTIModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
-                        error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
+                              error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
         elif self.pg_projection == 'energy_stable':
             return LTIModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
                             error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
