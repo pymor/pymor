@@ -90,6 +90,9 @@ class SlycotRiccatiSolver(RiccatiSolver):
 
         dico = 'C'
         n = A.shape[0]
+        m = B.shape[1]
+        p = C.shape[0]
+
         if E is not None:
             jobb = 'B'
             fact = 'N'
@@ -98,8 +101,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
             scal = 'N'
             sort = 'S'
             acc = 'R'
-            m = B.shape[1]
-            p = C.shape[0]
+
             if R is None:
                 R = np.eye(m)
             if Q is None:
@@ -124,8 +126,6 @@ class SlycotRiccatiSolver(RiccatiSolver):
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
         elif S is not None:
-            m = B.shape[1]
-            p = C.shape[0]
             if R is None:
                 R = np.eye(m)
             else:

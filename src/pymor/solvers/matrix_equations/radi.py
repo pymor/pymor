@@ -65,7 +65,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             if trans:
                 Z_lr = self._solve_impl(A, E, B, C, R, Q, trans)
             else:
-                Z_lr = self._solve_impl(A, E, B, C, Q, R, trans)
+                Z_lr = self._solve_impl(A, E, C, B, Q, R, trans)
 
         else:
             if trans:
@@ -83,13 +83,12 @@ class RADIRiccatiSolver(RiccatiSolverLR):
                 tB = cat_arrays([B, S])
                 tR = spla.block_diag(R, -Qinv)
 
-                Z_lr = self._solve_impl(tA, E, tB, C, Q, tR, trans)
+                Z_lr = self._solve_impl(tA, E, C, tB, Q, tR, trans)
 
         return Z_lr
 
 
     def _solve_impl(self, A, E, B, C, R, Q, trans):
-
         if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
@@ -100,9 +99,6 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
         if E is None:
             E = IdentityOperator(A.source)
-
-        if not trans:
-            B, C = C, B
 
         if R is not None:
             Rinv = spla.solve(R, np.eye(R.shape[0]))
@@ -115,17 +111,13 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
         K = A.source.zeros(len(B))
         RF = C.copy()
-        RC = np.eye(len(C)) if Q is None else Q
+        RC = Q.copy()
 
         j = 0
         j_shift = 0
         shifts = init_shifts(A, E, B, C, Rinv, Q)
 
-        if Q is None:
-            res = np.linalg.norm(RF.gramian(), ord=2)
-        else:
-            res = np.linalg.norm(RF.gramian() @ RC, ord=2)
-
+        res = np.linalg.norm(RF.gramian() @ RC, ord=2)
         init_res = res
         Ctol = res * self.radi_tol
 
@@ -144,10 +136,9 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             Im = np.eye(len(B))
             BRiK = LowRankOperator(B, Im, K) if trans else LowRankOperator(K, Im, B)
 
-            AsEBRiK = (AsE - BRiK).assemble() # assemble combines the two low-rank
-                                              # updates into a single one if A came
-                                              # in as a LowRankUpdatedOperator already
-                                              # (avoids recursive Sherman-Morrison-Woodburry)
+            # assemble combines the two low-rank updates into a single one if A came
+            # in as a LowRankUpdatedOperator already (avoids recursive Sherman-Morrison-Woodburry)
+            AsEBRiK = (AsE - BRiK).assemble()
 
             if not trans:
                 V = AsEBRiK.apply_inverse(RF, solver=solver)
@@ -215,32 +206,29 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         return Z_lr
 
     def LDL_T_rank_truncation(self, L, D, tol=np.finfo(float).eps):
-        """Compute a rank-truncated :math:'LDL^T' factorization.
+        r"""Computes a rank-truncated :math:`LDL^T` factorization.
 
-        Computes the QR factorization :math:'Q R = L' of L followed by an
-        eigendecomposition of :math:'RDR^T' and a rank decision on the absolute
-        values of the computed eigenvalues. The truncated eigenpairs are dropped.
-        The resulting core matrix (replacing D) is the diagonal matrix of preserved
-        eigenvalues and the updated |VectorArray| is :math:'Q' times the
-        preserved (left) eingenvectors.
+        Computes the QR factorization of :math:`L = QR` followed by an
+        eigendecomposition of :math:'RDR^T' and a rank decision based on the absolute
+        values of the computed eigenvalues. The truncated core matrix is the diagonal
+        matrix of preserved eigenvalues and the truncated :math:`L` is computed as
+        :math:`Q` times the preserved (left) eingenvectors.
 
         Parameters
         ----------
         L
-            The |VectorArray| L from representing the left factor in the
-            :math:'LDL^T' facorization.
+            The |VectorArray| representing the left factor in the
+            :math:`LDL^\top` facorization.
         D
             The |NumPy array| representing the core factor.
         tol
-            A float representing the desired relative truncation tolerance
-            on the absolute values of the eigenvalues.
-            Defaults to double precision machine epsilon
+            The relative truncation tolerance.
 
         Returns
         -------
         hL
             The |VectorArray| hL representing the left factor in the
-            :math:'LDL^T' rank-truncated facorization.
+            :math:`LDL^\top` rank-truncated facorization.
         hD
             The |NumPy array| representing the core factor.
         """
@@ -273,16 +261,17 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         Parameters
         ----------
         A
-            The |Operator| A from the corresponding Riccati equation.
+            The |Operator| A from the corresponding |RiccatiEquation|.
         E
-            The |Operator| E from the corresponding Riccati equation.
+            The |Operator| E from the corresponding |RiccatiEquation|.
         B
-            The |VectorArray| B from the corresponding Riccati equation.
+            The |VectorArray| B from the corresponding |RiccatiEquation|.
         C
-            The |VectorArray| C from the corresponding Riccati equation.
+            The |VectorArray| C from the corresponding |RiccatiEquation|.
         Rinv
-
+            The matrix :math:`R^{-1}` as a |NumPy array| from the corresponding |RiccatiEquation|.
         Q
+            The matrix :math:`Q` as a |NumPy array| from the corresponding |RiccatiEquation|.
 
         Returns
         -------
@@ -351,11 +340,11 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         B
             The |VectorArray| B from the corresponding Riccati equation.
         Rinv
-
+            The matrix :math:`R^{-1}` as a |NumPy array| from the corresponding |RiccatiEquation|.
         RF
-
+            A |VectorArray| representing the currently computed residual factor.
         RC
-
+            A |NumPy array| representing the currently computed residual core.
         K
             A |VectorArray| representing the currently computed iterate.
         Z
@@ -414,21 +403,58 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
 
 class RADIPositiveRealRiccatiSolver(PositiveRiccatiSolverLR):
+    r"""Compute an approximate low-rank factor of the solution of a |PositiveRiccatiEquation|.
+
+    Calls :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver` with flipped signs in
+    the `R` or `Q` terms (depending whether the transposed version is solved or not).
+
+    Parameters
+    ----------
+    radi_tol
+        Convergence tolerance for the RADI iteration.
+    radi_maxiter
+        Maximum number of RADI steps. A real shift counts as one step, a
+        complex-conjugate shift pair as two.
+    radi_shifts
+            Strategy for computing the RADI shift parameters. Currently only
+        ``'hamiltonian_shifts'`` is supported.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
+    hamiltonian_shifts_init_maxiter
+        Maximum number of attempts to generate stable initial shifts before an error is raised.
+        See :meth:`hamiltonian_shifts_init`.
+    hamiltonian_shifts_subspace_columns
+        Number of trailing columns of the solution factor :math:`Z` used to span the
+        Galerkin subspace for the subsequent shifts. See :meth:`hamiltonian_shifts`.
+    """
+
+    @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
+                'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
+    def __init__(self, radi_tol=1e-10, radi_maxiter=500, radi_shifts='hamiltonian_shifts',
+                shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
+                hamiltonian_shifts_subspace_columns=6):
+
+        self._radi_solver = RADIRiccatiSolver(radi_tol=radi_tol, radi_maxiter=radi_maxiter, radi_shifts=radi_shifts,
+                                              shifted_system_solver=shifted_system_solver,
+                                              hamiltonian_shifts_init_maxiter=hamiltonian_shifts_init_maxiter,
+                                              hamiltonian_shifts_subspace_columns=hamiltonian_shifts_subspace_columns)
+        self.__auto_init(locals())
+        super().__init__()
+
     def _solve(self, equation):
         A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
         trans = equation.trans
 
         if R is None:
             R = np.eye(len(B))
-
         if Q is None:
             Q = np.eye(len(C))
 
         if S is None:
             if trans:
-                Z_lr = RADIRiccatiSolver()._solve_impl(A, E, B, C, -R, Q, trans)
+                Z_lr = self._radi_solver._solve_impl(A, E, B, C, -R, Q, trans)
             else:
-                Z_lr = RADIRiccatiSolver()._solve_impl(A, E, B, C, -Q, R, trans)
+                Z_lr = self._radi_solver._solve_impl(A, E, C, B, -Q, R, trans)
 
         else:
             if trans:
@@ -438,7 +464,7 @@ class RADIPositiveRealRiccatiSolver(PositiveRiccatiSolverLR):
                 tC = cat_arrays([C, S])
                 tQ = spla.block_diag(Q, Rinv)
 
-                Z_lr = RADIRiccatiSolver()._solve_impl(tA, E, B, tC, -R, tQ, trans)
+                Z_lr = self._radi_solver._solve_impl(tA, E, B, tC, -R, tQ, trans)
             else:
                 Qinv = spla.solve(Q, np.eye(Q.shape[0]))
                 SQinvCt = LowRankOperator(S, Qinv, C)
@@ -446,6 +472,6 @@ class RADIPositiveRealRiccatiSolver(PositiveRiccatiSolverLR):
                 tB = cat_arrays([B, S])
                 tR = spla.block_diag(R, Qinv)
 
-                Z_lr = RADIRiccatiSolver()._solve_impl(tA, E, tB, C, -Q, tR, trans)
+                Z_lr = self._radi_solver._solve_impl(tA, E, C, tB, -Q, tR, trans)
 
         return Z_lr
