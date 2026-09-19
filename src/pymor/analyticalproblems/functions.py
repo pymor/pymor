@@ -84,13 +84,13 @@ class Function(ParametricObject):
                 return self
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
-        if self.name != 'LincombFunction' or not isinstance(self, LincombFunction):
-            if other.name == 'LincombFunction' and isinstance(other, LincombFunction):
+        if self.name is not None or not isinstance(self, LincombFunction):
+            if other.name is None and isinstance(other, LincombFunction):
                 functions = (self,) + other.functions
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functions, coefficients = (self, other), (1., sign)
-        elif other.name == 'LincombFunction' and isinstance(other, LincombFunction):
+        elif other.name is None and isinstance(other, LincombFunction):
             functions = self.functions + other.functions
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
@@ -110,7 +110,7 @@ class Function(ParametricObject):
             return self
         other = ConstantFunction(other, dim_domain=self.dim_domain)
 
-        if self.name != 'LincombFunction' or not isinstance(self, LincombFunction):
+        if self.name is not None or not isinstance(self, LincombFunction):
             functions, coefficients = (other, self), (1., sign)
         else:
             functions = (other,) + self.functions
@@ -135,12 +135,12 @@ class Function(ParametricObject):
             return NotImplemented
         if isinstance(other, Number | ParameterFunctional):
             return LincombFunction([self], [other])
-        if self.name != 'ProductFunction' or not isinstance(self, ProductFunction):
-            if isinstance(other, ProductFunction) and other.name == 'ProductFunction':
+        if self.name is not None or not isinstance(self, ProductFunction):
+            if isinstance(other, ProductFunction) and other.name is None:
                 return other.with_(functions=other.functions + [self])
             else:
                 return ProductFunction([self, other])
-        elif isinstance(other, ProductFunction) and other.name == 'ProductFunction':
+        elif isinstance(other, ProductFunction) and other.name is None:
             functions = self.functions + other.functions
             return ProductFunction(functions)
         else:
@@ -291,7 +291,7 @@ class SymbolicExpressionFunction(GenericFunction):
 
     def __reduce__(self):
         return (SymbolicExpressionFunction,
-                (self.expression_obj, self.dim_domain, self.variable, getattr(self, '_name', None)))
+                (self.expression_obj, self.dim_domain, self.variable, self.name))
 
     def _cache_key_reduce(self):
         return (self.expression_obj, self.dim_domain, self.variable)
@@ -340,8 +340,7 @@ class ExpressionFunction(SymbolicExpressionFunction):
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.parameters, self.values, self.variable,
-                 getattr(self, '_name', None)))
+                (self.expression, self.dim_domain, self.parameters, self.values, self.variable, self.name))
 
     def __str__(self):
         return f'{self.name}: {self.variable} -> {self.expression}'

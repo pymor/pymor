@@ -228,8 +228,7 @@ class FenicsxMatrixBasedOperator(Operator):
         if self.rank == 2:
             mat = assemble_matrix(self.compiled_form, bcs=self.bcs, diag=self.diag)
             mat.assemble()
-            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver,
-                                         name=self.name + '_assembled')
+            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver, name=self.name)
         else:
             vec = assemble_vector(self.compiled_form)
             if self.bcs and self.lifting_form:
@@ -428,8 +427,7 @@ class FenicsxOperator(Operator):
         self._set_source_function(U)
         mat = assemble_matrix(self.compiled_derivative, self.bcs)
         mat.assemble()
-        return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self._jacobian_solver,
-                                     name=self.name + '_jacobian')
+        return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self._jacobian_solver)
 
     def restricted(self, dofs):
         from pymor.tools.mpi import parallel

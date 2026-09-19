@@ -238,8 +238,7 @@ class FenicsMatrixBasedOperator(Operator):
             else:
                 self.bc.apply(mat)
         if len(self.form.arguments()) == 2:
-            return FenicsMatrixOperator(mat, self.source.V, self.range.V, solver=self.solver,
-                                        name=self.name + '_assembled')
+            return FenicsMatrixOperator(mat, self.source.V, self.range.V, solver=self.solver, name=self.name)
         elif self.functional:
             V = self.source.make_array([mat])
             return VectorFunctional(V)
