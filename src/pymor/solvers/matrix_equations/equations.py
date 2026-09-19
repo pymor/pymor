@@ -149,7 +149,7 @@ class RiccatiData(ImmutableObject):
     Not intended to be used directly.
     """
 
-    def __init__(self, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
+    def __init__(self, A, E, B, C, R=None, Q=None, S=None, trans=False, name=None):
         assert isinstance(A, Operator)
         assert A.linear
         assert not A.parametric
@@ -197,10 +197,10 @@ class RiccatiData(ImmutableObject):
             The |NumPy array| C.
         R
             The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
         Q
             The |NumPy array| Q or `None`.
+        S
+            The |NumPy array| S or `None`.
         """
         from pymor.algorithms.to_matrix import to_matrix
         A = to_matrix(self.A, format='dense')
@@ -211,10 +211,10 @@ class RiccatiData(ImmutableObject):
 
         if S is not None and not self.trans:
             S = S.T
-        return A, E, B, C, self.R, S, self.Q
+        return A, E, B, C, self.R, self.Q, S
 
     @classmethod
-    def from_matrices(cls, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
+    def from_matrices(cls, A, E, B, C, R=None, Q=None, S=None, trans=False, name=None):
         """Create the |RiccatiEquation| or |PositiveRiccatiEquation| from matrices.
 
         Parameters
@@ -229,10 +229,10 @@ class RiccatiData(ImmutableObject):
             The |NumPy array| C.
         R
             The |NumPy array| R or `None`.
-        S
-            The |NumPy array| S or `None`.
         Q
             The |NumPy array| Q or `None`.
+        S
+            The |NumPy array| S or `None`.
         trans
             Whether the first matrix in the equation is transposed.
         name
@@ -246,8 +246,8 @@ class RiccatiData(ImmutableObject):
         assert isinstance(B, np.ndarray)
         assert isinstance(C, np.ndarray)
         assert isinstance(R, np.ndarray | type(None))
-        assert isinstance(S, np.ndarray | type(None))
         assert isinstance(Q, np.ndarray | type(None))
+        assert isinstance(S, np.ndarray | type(None))
 
         A = NumpyMatrixOperator(A)
         E = NumpyMatrixOperator(E) if E is not None else None
@@ -293,10 +293,10 @@ class RiccatiEquation(RiccatiData):
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
+    Q
+            The matrix Q as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
-    Q
-        The matrix Q as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
     name
@@ -351,10 +351,10 @@ class PositiveRiccatiEquation(RiccatiData):
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
     Q
         The matrix Q as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
     name

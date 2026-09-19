@@ -48,7 +48,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         super().__init__()
 
     def _solve(self, equation):
-        A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
+        A, E, B, C, R, Q, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.Q, equation.S
         trans = equation.trans
 
         if R is None:
