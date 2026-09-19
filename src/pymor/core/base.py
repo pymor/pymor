@@ -131,6 +131,8 @@ class BasicObject(metaclass=UberMeta):
     uid
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
+    name
+        Name of the object.
     """
 
     name = None
