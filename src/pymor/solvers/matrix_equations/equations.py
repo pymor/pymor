@@ -309,7 +309,7 @@ class RiccatiEquation(RiccatiData):
     Q
         The matrix Q as a 2D |NumPy array| or `None`.
     S
-        The operator S as a |VectorArray| from `A.source` or `None`. 
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
     name
