@@ -446,7 +446,7 @@ class ScipyRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S, Q = equation.to_matrices()
+        A, E, B, C, R, Q, S = equation.to_matrices()
         trans = equation.trans
 
         if R is None:

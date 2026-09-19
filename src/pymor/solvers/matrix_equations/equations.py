@@ -155,7 +155,7 @@ class RiccatiData(ImmutableObject):
     Not intended to be used directly.
     """
 
-    def __init__(self, A, E, B, C, R=None, S=None, Q=None, trans=False, name=None):
+    def __init__(self, A, E, B, C, R=None, Q=None, S=None, trans=False, name=None):
         assert isinstance(A, Operator)
         assert A.linear
         assert not A.parametric
@@ -365,7 +365,7 @@ class PositiveRiccatiEquation(RiccatiData):
     R
         The matrix R as a 2D |NumPy array| or `None`.
     Q
-        The matrix R as a 2D |NumPy array| or `None`.
+        The matrix Q as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
