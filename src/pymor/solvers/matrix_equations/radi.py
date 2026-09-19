@@ -438,8 +438,13 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
                                               shifted_system_solver=shifted_system_solver,
                                               hamiltonian_shifts_init_maxiter=hamiltonian_shifts_init_maxiter,
                                               hamiltonian_shifts_subspace_columns=hamiltonian_shifts_subspace_columns)
-        self.__auto_init(locals())
         super().__init__()
+        self.radi_tol = radi_tol
+        self.radi_maxiter = radi_maxiter
+        self.radi_shifts = radi_shifts
+        self.shifted_system_solver = shifted_system_solver
+        self.hamiltonian_shifts_init_maxiter = hamiltonian_shifts_init_maxiter
+        self.hamiltonian_shifts_subspace_columns = hamiltonian_shifts_subspace_columns
 
     def _solve(self, equation):
         A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
