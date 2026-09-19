@@ -103,10 +103,16 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
+        fom = self.fom
+        # solvers attached to the time stepper will probably be unsuitable for the ROM
+        if (time_stepper := fom.time_stepper) and getattr(time_stepper, 'solver', None):
+            time_stepper = time_stepper.with_(solver=None)
         if self.pg_projection == 'ph_preserving':
-            return PHLTIModel(error_estimator=error_estimator, **projected_operators)
+            return PHLTIModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
+                        error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
         elif self.pg_projection == 'energy_stable':
-            return LTIModel(error_estimator=error_estimator, **projected_operators)
+            return LTIModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
+                            error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
         else:
             raise NotImplementedError
 
