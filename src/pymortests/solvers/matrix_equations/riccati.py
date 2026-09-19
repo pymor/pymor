@@ -26,15 +26,15 @@ n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lr_backend_list_small = [
-    #'scipy',
-    #'slycot',
+    'scipy',
+    'slycot',
 ]
 ricc_lr_backend_list_big = [
     'radi'
 ]
 ricc_dense_backend_list = [
-    #'scipy',
-    #'slycot'
+    'scipy',
+    'slycot'
 ]
 
 
