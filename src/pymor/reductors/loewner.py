@@ -75,9 +75,6 @@ class LoewnerReductor(CacheableObject):
                     np.concatenate((indices, num_samples + np.flatnonzero(np.isin(added_sources, indices))))
                     for indices in partitioning
                 )
-            if len(s) != num_samples:
-                self.logger.info(f'Added {len(s) - num_samples} complex conjugates to the data.')
-
         if Hs.ndim == 3:
             self.dim_output = Hs.shape[1]
             self.dim_input = Hs.shape[2]

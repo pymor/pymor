@@ -7,8 +7,11 @@ from itertools import product
 import numpy as np
 
 from pymor.core.exceptions import AccuracyError
+from pymor.core.logger import getLogger
 from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
+
+logger = getLogger('pymor.algorithms.loewner')
 
 
 def sample_transfer_function(sampling_values, fom, *, derivative=False):
@@ -44,10 +47,11 @@ def sample_transfer_function(sampling_values, fom, *, derivative=False):
 
     sample_shape = tuple(len(s) for s in sampling_values)
     evaluate = fom.eval_dtf if derivative else fom.eval_tf
-    samples = [
-        evaluate(values[0], mu=fom.parameters.parse(values[1:]))
-        for values in product(*sampling_values)
-    ]
+    with logger.block(f'Sampling {"transfer function derivative" if derivative else "transfer function"} ...'):
+        samples = [
+            evaluate(values[0], mu=fom.parameters.parse(values[1:]))
+            for values in product(*sampling_values)
+        ]
     return np.array(samples).reshape(sample_shape + (fom.dim_output, fom.dim_input))
 
 
@@ -87,11 +91,14 @@ def complete_conjugate_pairs(nodes, *data):
     data = tuple(np.asarray(values) for values in data)
     assert all(values.shape[:1] == (len(nodes),) for values in data), 'Data must be aligned with nodes.'
 
+    num_nodes = len(nodes)
     for i, node in enumerate(nodes):
         if node.conj() not in nodes:
             nodes = np.append(nodes, node.conj())
             data = tuple(np.concatenate((values, values[i:i + 1].conj())) for values in data)
 
+    if len(nodes) != num_nodes:
+        logger.info(f'Added {len(nodes) - num_nodes} complex conjugates to the data.')
     return nodes, *data
 
 
@@ -136,11 +143,13 @@ def partition_frequencies(nodes, samples, partitioning='even-odd', ordering='reg
         One-dimensional |NumPy array| of indices into `nodes` and `samples` for the right set.
     """
     if not isinstance(partitioning, str):
+        logger.info('Using supplied frequency partition ...')
         return tuple(np.asarray(indices) for indices in partitioning)
 
     assert partitioning in ('even-odd', 'half-half'), f'Unknown partitioning: {partitioning}.'
     assert ordering in ('magnitude', 'random', 'regular'), f'Unknown ordering: {ordering}.'
 
+    logger.info(f"Partitioning frequency samples using '{partitioning}' ...")
     if force_real:
         positive_imaginary = np.flatnonzero(nodes.imag > 0)
         real = np.flatnonzero(nodes.imag == 0)
@@ -224,6 +233,7 @@ def loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_
         |NumPy array| of shape `(n_left, n_right, ...)` containing the Loewner matrix.
         Trailing dimensions of the broadcast terms are retained, not flattened into blocks.
     """
+    logger.info('Constructing Loewner matrix ...')
     left_nodes = _as_nodes(left_nodes, 'left_nodes')
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
     dtype_args = (left_nodes, right_nodes, left_terms, right_terms, float)
@@ -298,6 +308,7 @@ def loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivativ
         Shifted Loewner matrix as a |NumPy array| of the same shape as `L`.
     """
     L = loewner_matrix(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=derivative_terms)
+    logger.info('Constructing shifted Loewner matrix ...')
     left_nodes = np.asarray(left_nodes)
     left_nodes = left_nodes.reshape((len(left_nodes), 1) + (1,) * (L.ndim - 2))
     Ls = left_nodes * L
@@ -367,6 +378,7 @@ def loewner_matrix_nd(sampling_values, samples, interpolation_indices):
             samples[left, np.newaxis], samples[np.newaxis, right],
         )
 
+    logger.info('Constructing multidimensional Loewner matrix ...')
     dtype = np.result_type(samples, *sampling_values, float)
     samples = samples.astype(dtype, copy=False)
     cauchy = np.ones((1, 1), dtype=dtype)
@@ -480,10 +492,12 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
         if left_values.ndim == right_values.ndim == 2:
             assert left_values.shape == (len(left_nodes), dim_input), 'left_values has the wrong shape.'
             assert right_values.shape == (dim_output, len(right_nodes)), 'right_values has the wrong shape.'
+            logger.info('Using already tangentially sampled data ...')
             V, W = left_values, right_values
         else:
             assert left_values.shape == (len(left_nodes), dim_output, dim_input), 'left_values has the wrong shape.'
             assert right_values.shape == (len(right_nodes), dim_output, dim_input), 'right_values has the wrong shape.'
+            logger.info('Projecting tangential transfer function data ...')
             V = np.einsum('ip,ipm->im', left_directions, left_values)
             W = np.einsum('jpm,jm->pj', right_values, right_directions)
         left_terms = V @ right_directions.T
@@ -507,15 +521,19 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
         right_terms = right_values[np.newaxis, ...]
         derivative_terms = None if derivatives is None else derivatives[:, np.newaxis, ...]
         if left_values.ndim == 1:
+            logger.info('Using SISO transfer function data ...')
             V = left_values[:, np.newaxis]
             W = right_values[np.newaxis, :]
         else:
+            logger.info('Using MIMO transfer function data ...')
             V = left_values[:, np.newaxis, ...]
             W = right_values[np.newaxis, ...]
 
-    L, Ls = loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=derivative_terms)
+    with logger.block('Constructing Loewner matrices ...'):
+        L, Ls = loewner_matrices(left_nodes, right_nodes, left_terms, right_terms, derivative_terms=derivative_terms)
 
     if force_real:
+        logger.info('Keeping it real ...')
         TL = _real_transformation(left_nodes)
         TR = _real_transformation(right_nodes)
         if full_mimo:
