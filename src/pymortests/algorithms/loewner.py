@@ -228,6 +228,29 @@ def test_loewner_quadruple_tangential_hermite(rng):
     assert np.allclose(W, np.einsum('ipm,im->pi', values, right_directions))
 
 
+def test_loewner_quadruple_preprojected_tangential_data(rng):
+    left_nodes = np.array([1., 2., 3.])
+    right_nodes = np.array([4., 5.])
+    left_directions = rng.random((3, 2))
+    right_directions = rng.random((2, 3))
+    V = rng.random((3, 3))
+    W = rng.random((2, 2))
+
+    L, Ls, returned_V, returned_W = loewner_quadruple(
+        left_nodes, right_nodes, V, W,
+        left_directions=left_directions,
+        right_directions=right_directions,
+    )
+    denominator = left_nodes[:, np.newaxis] - right_nodes
+    left_terms = V @ right_directions.T
+    right_terms = left_directions @ W
+
+    assert np.allclose(L, (left_terms - right_terms) / denominator)
+    assert np.allclose(Ls, (left_nodes[:, np.newaxis] * left_terms - right_nodes * right_terms) / denominator)
+    assert np.allclose(returned_V, V)
+    assert np.allclose(returned_W, W)
+
+
 def test_loewner_quadruple_unitary_realification():
     left_nodes = np.array([0, 1j, -1j])
     right_nodes = np.array([2, 2 + 2j, 2 - 2j])

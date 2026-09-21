@@ -416,22 +416,24 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
         of shape `(n_right,)`.
     left_values
         |NumPy array| containing transfer function values at `left_nodes`. Shape `(n_left,)`
-        for SISO data or `(n_left, p, m)` for a system with `p` outputs and `m` inputs.
+        for SISO data or `(n_left, p, m)` for a system with `p` outputs and `m` inputs. With
+        tangential directions, already projected values `V` of shape `(n_left, m)` are also
+        accepted.
     right_values
         |NumPy array| containing transfer function values at `right_nodes`. Shape `(n_right,)`
-        for SISO data or `(n_right, p, m)` for MIMO data. The number of axes and trailing
-        dimensions must match those of `left_values`.
+        for SISO data or `(n_right, p, m)` for MIMO data. With tangential directions, already
+        projected values `W` of shape `(p, n_right)` are also accepted.
     left_directions
         Optional |NumPy array| of left tangential directions of shape `(n_left, p)`.
-        Requires matrix-valued samples and `right_directions`. Each row stores a direction
-        :math:`\ell_i^T`, applied without complex conjugation.
+        Requires `right_directions`. Each row stores a direction :math:`\ell_i^T`, applied
+        without complex conjugation.
     right_directions
         Optional |NumPy array| of right tangential directions of shape `(n_right, m)`.
-        Requires matrix-valued samples and `left_directions`. Each row stores a direction
-        :math:`r_j^T`, used as a column when multiplying a transfer function value.
+        Requires `left_directions`. Each row stores a direction :math:`r_j^T`, used as a
+        column when multiplying a transfer function value.
     derivatives
         Optional |NumPy array| of unprojected transfer function derivatives with respect to
-        the complex argument at `left_nodes`, with the same shape as `left_values`.
+        the complex argument at `left_nodes`, with the shape `(n_left, p, m)` for MIMO data.
         Required when a left and right node coincide. Entries at other nodes are ignored.
         Tangential projections of these derivatives are performed internally.
     force_real
@@ -463,34 +465,44 @@ def loewner_quadruple(left_nodes, right_nodes, left_values, right_values, *,
     right_nodes = _as_nodes(right_nodes, 'right_nodes')
     left_values = np.asarray(left_values)
     right_values = np.asarray(right_values)
-    assert left_values.shape[:1] == (len(left_nodes),), 'left_values must be aligned with left_nodes.'
-    assert right_values.shape[:1] == (len(right_nodes),), 'right_values must be aligned with right_nodes.'
-    assert left_values.shape[1:] == right_values.shape[1:], \
-        'Left and right sample values must have matching trailing dimensions.'
-    assert left_values.ndim in (1, 3), 'Sample values must be SISO arrays or sample-major matrices.'
-    if derivatives is not None:
-        derivatives = np.asarray(derivatives)
-        assert derivatives.shape == left_values.shape, 'derivatives must have the same shape as left_values.'
-
     tangential = left_directions is not None or right_directions is not None
     full_mimo = left_values.ndim == 3 and not tangential
     if tangential:
         assert left_directions is not None, 'left_directions are required when right_directions are given.'
         assert right_directions is not None, 'right_directions are required when left_directions are given.'
-        assert left_values.ndim == 3, 'Tangential directions require matrix-valued samples.'
-        dim_output, dim_input = left_values.shape[1:]
         left_directions = np.asarray(left_directions)
         right_directions = np.asarray(right_directions)
-        assert left_directions.shape == (len(left_nodes), dim_output), 'left_directions has the wrong shape.'
-        assert right_directions.shape == (len(right_nodes), dim_input), 'right_directions has the wrong shape.'
-        V = np.einsum('ip,ipm->im', left_directions, left_values)
-        W = np.einsum('jpm,jm->pj', right_values, right_directions)
+        assert left_directions.ndim == right_directions.ndim == 2, 'Tangential directions must be matrices.'
+        assert left_directions.shape[0] == len(left_nodes), 'left_directions has the wrong shape.'
+        assert right_directions.shape[0] == len(right_nodes), 'right_directions has the wrong shape.'
+        dim_output = left_directions.shape[1]
+        dim_input = right_directions.shape[1]
+        if left_values.ndim == right_values.ndim == 2:
+            assert left_values.shape == (len(left_nodes), dim_input), 'left_values has the wrong shape.'
+            assert right_values.shape == (dim_output, len(right_nodes)), 'right_values has the wrong shape.'
+            V, W = left_values, right_values
+        else:
+            assert left_values.shape == (len(left_nodes), dim_output, dim_input), 'left_values has the wrong shape.'
+            assert right_values.shape == (len(right_nodes), dim_output, dim_input), 'right_values has the wrong shape.'
+            V = np.einsum('ip,ipm->im', left_directions, left_values)
+            W = np.einsum('jpm,jm->pj', right_values, right_directions)
         left_terms = V @ right_directions.T
         right_terms = left_directions @ W
-        derivative_terms = None if derivatives is None else (
-            np.einsum('ip,ipm->im', left_directions, derivatives) @ right_directions.T
-        )
+        if derivatives is not None:
+            derivatives = np.asarray(derivatives)
+            assert derivatives.shape == (len(left_nodes), dim_output, dim_input), 'derivatives has the wrong shape.'
+            derivative_terms = np.einsum('ip,ipm->im', left_directions, derivatives) @ right_directions.T
+        else:
+            derivative_terms = None
     else:
+        assert left_values.shape[:1] == (len(left_nodes),), 'left_values must be aligned with left_nodes.'
+        assert right_values.shape[:1] == (len(right_nodes),), 'right_values must be aligned with right_nodes.'
+        assert left_values.shape[1:] == right_values.shape[1:], \
+            'Left and right sample values must have matching trailing dimensions.'
+        assert left_values.ndim in (1, 3), 'Sample values must be SISO arrays or sample-major matrices.'
+        if derivatives is not None:
+            derivatives = np.asarray(derivatives)
+            assert derivatives.shape == left_values.shape, 'derivatives must have the same shape as left_values.'
         left_terms = left_values[:, np.newaxis, ...]
         right_terms = right_values[np.newaxis, ...]
         derivative_terms = None if derivatives is None else derivatives[:, np.newaxis, ...]
