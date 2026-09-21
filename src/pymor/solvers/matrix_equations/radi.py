@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.operators.constructions import IdentityOperator, LowRankOperator
+from pymor.operators.constructions import IdentityOperator, LowRankOperator, LowRankUpdatedOperator
 from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLR, RiccatiSolverLR
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
@@ -70,25 +70,21 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         else:
             if trans:
                 Rinv = spla.solve(R, np.eye(R.shape[0]))
-                BRinvSt = LowRankOperator(B, Rinv, S)
-                tA = A - BRinvSt
                 tC = cat_arrays([C, S])
                 tQ = spla.block_diag(Q, -Rinv)
 
-                Z_lr = self._solve_impl(tA, E, B, tC, R, tQ, trans)
+                Z_lr = self._solve_impl(A, E, B, tC, R, tQ, trans, S_scaled=S.lincomb(Rinv.conj().T))
             else:
                 Qinv = spla.solve(Q, np.eye(Q.shape[0]))
-                SQinvCt = LowRankOperator(S, Qinv, C)
-                tA = A - SQinvCt
                 tB = cat_arrays([B, S])
                 tR = spla.block_diag(R, -Qinv)
 
-                Z_lr = self._solve_impl(tA, E, C, tB, Q, tR, trans)
+                Z_lr = self._solve_impl(A, E, C, tB, Q, tR, trans, S_scaled=S.lincomb(Qinv))
 
         return Z_lr
 
 
-    def _solve_impl(self, A, E, B, C, R, Q, trans):
+    def _solve_impl(self, A, E, B, C, R, Q, trans, S_scaled=None):
         if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
@@ -105,6 +101,11 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             Rinv = 0.5 * (Rinv + Rinv.T)
         else:
             R = Rinv = np.eye(len(B))
+
+        A_original = A
+        Im = np.eye(len(B))
+        if S_scaled is not None:
+            A = A - (LowRankOperator(B, Im, S_scaled) if trans else LowRankOperator(S_scaled, Im, B))
 
         Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
@@ -129,16 +130,13 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             alpha = np.sqrt(-2.0 * sr)
 
             if not trans:
-                AsE = A + s * E
+                AsE = A_original + s * E
             else:
-                AsE = A + np.conj(s) * E
+                AsE = A_original + np.conj(s) * E
 
-            Im = np.eye(len(B))
-            BRiK = LowRankOperator(B, Im, K) if trans else LowRankOperator(K, Im, B)
-
-            # assemble combines the two low-rank updates into a single one if A came
-            # in as a LowRankUpdatedOperator already (avoids recursive Sherman-Morrison-Woodburry)
-            AsEBRiK = (AsE - BRiK).assemble()
+            K_total = K if S_scaled is None else K + S_scaled
+            BRiK = LowRankOperator(B, Im, K_total) if trans else LowRankOperator(K_total, Im, B)
+            AsEBRiK = LowRankUpdatedOperator(AsE.assemble(), BRiK, 1, -1)
 
             if not trans:
                 V = AsEBRiK.apply_inverse(RF, solver=solver)
@@ -422,11 +420,11 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
         The |Solver| for the shifted systems.
     hamiltonian_shifts_init_maxiter
         Maximum number of attempts to generate stable initial shifts before an error is raised.
-        See :meth:`pymor.solvers.matrix_equations.radi.hamiltonian_shifts_init`.
+        See :meth:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver.hamiltonian_shifts_init`.
     hamiltonian_shifts_subspace_columns
         Number of trailing columns of the solution factor :math:`Z` used to span the
         Galerkin subspace for the subsequent shifts.
-        See :meth:`pymor.solvers.matrix_equations.radi.hamiltonian_shifts`.
+        See :meth:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver.hamiltonian_shifts`.
     """
 
     @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
@@ -465,19 +463,15 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
         else:
             if trans:
                 Rinv = spla.solve(R, np.eye(R.shape[0]))
-                BRinvSt = LowRankOperator(B, Rinv, S)
-                tA = A + BRinvSt
                 tC = cat_arrays([C, S])
                 tQ = spla.block_diag(Q, Rinv)
 
-                Z_lr = self._radi_solver._solve_impl(tA, E, B, tC, -R, tQ, trans)
+                Z_lr = self._radi_solver._solve_impl(A, E, B, tC, -R, tQ, trans, S_scaled=-S.lincomb(Rinv.conj().T))
             else:
                 Qinv = spla.solve(Q, np.eye(Q.shape[0]))
-                SQinvCt = LowRankOperator(S, Qinv, C)
-                tA = A + SQinvCt
                 tB = cat_arrays([B, S])
                 tR = spla.block_diag(R, Qinv)
 
-                Z_lr = self._radi_solver._solve_impl(tA, E, C, tB, -Q, tR, trans)
+                Z_lr = self._radi_solver._solve_impl(A, E, C, tB, -Q, tR, trans, S_scaled=-S.lincomb(Qinv))
 
         return Z_lr

@@ -224,7 +224,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_Q, with_S, trans, backend,
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_Q', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('trans',  [False, True])
 @pytest.mark.parametrize(('n', 'backend'), chain(product(n_list_small, ricc_lr_backend_list_small),
                                                 product(n_list_big, ricc_lr_backend_list_big)))
 def test_ricc_lr(n, m, p, with_E, with_R, with_Q, with_S, trans, backend, rng):

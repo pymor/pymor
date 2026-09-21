@@ -491,16 +491,12 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
     """
 
     def _solve(self, equation):
-        R = equation.R
-        Q = equation.Q
+        R = equation.R if equation.R is not None else np.eye(len(equation.B))
+        Q = equation.Q if equation.Q is not None else np.eye(len(equation.C))
 
         if equation.trans:
-            if R is None:
-                R = np.eye(len(equation.B))
             temp_equation = equation.with_(R=-R)
         else:
-            if Q is None:
-                Q = np.eye(len(equation.C))
             temp_equation = equation.with_(Q=-Q)
 
         return ScipyRiccatiSolver()._solve(temp_equation)
