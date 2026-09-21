@@ -422,10 +422,11 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
         The |Solver| for the shifted systems.
     hamiltonian_shifts_init_maxiter
         Maximum number of attempts to generate stable initial shifts before an error is raised.
-        See :meth:`hamiltonian_shifts_init`.
+        See :meth:`pymor.solvers.matrix_equations.radi.hamiltonian_shifts_init`.
     hamiltonian_shifts_subspace_columns
         Number of trailing columns of the solution factor :math:`Z` used to span the
-        Galerkin subspace for the subsequent shifts. See :meth:`hamiltonian_shifts`.
+        Galerkin subspace for the subsequent shifts.
+        See :meth:`pymor.solvers.matrix_equations.radi.hamiltonian_shifts`.
     """
 
     @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
