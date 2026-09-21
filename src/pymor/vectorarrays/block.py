@@ -239,7 +239,7 @@ class BlockVectorSpace(VectorSpace):
         return cls(tuple(o.space for o in obj)).make_array(obj)
 
     @make_array.instancemethod
-    def make_array(self, obj):
+    def _(self, obj):
         """:noindex:"""  # noqa: D400
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces, strict=True))
