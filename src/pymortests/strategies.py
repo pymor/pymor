@@ -197,7 +197,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
 
     The decorated function will be first wrapped in a |hypothesis.given| (with expanded
     `given_args`) and then in |pytest.mark.parametrize| with selected implementation names.
-    The decorated test function must still draw (which a vector_arrays or similar strategy)
+    The decorated test function must still draw (with a vector_arrays or similar strategy)
     from the `data` argument in the default case.
 
     Parameters
@@ -451,7 +451,7 @@ def invalid_indices(draw, array_strategy):
 
 @hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
-    """Strategy to generate linear independent |VectorArray| inputs for test functions.
+    """Strategy to generate linearly independent |VectorArray| inputs for test functions.
 
     Parameters
     ----------

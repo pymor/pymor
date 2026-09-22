@@ -36,6 +36,16 @@ class Solver(ImmutableObject):
     :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
     methods of |Operators|. If an |Operator| has no associated solver,
     :class:`~pymor.solvers.default.DefaultSolver` is used.
+
+    Attributes
+    ----------
+    adjoint_solver
+        'Adjoint' solver with `solve` and `solve_adjoint` swapped.
+
+        If `op` is an |Operator| with `op.solver` not `None`, then
+        `op.H` will have `op.solver.adjoint_solver` as solver to ensure
+        that `op.apply_inverse_adjoint` and `op.H.apply_inverse` are the
+        same algorithms.
     """
 
     least_squares = False
@@ -52,13 +62,6 @@ class Solver(ImmutableObject):
 
     @property
     def adjoint_solver(self):
-        """'Adjoint' solver with `solve` and `solve_adjoint` swapped.
-
-        If `op` is an |Operator| with `op.solver` not `None`, then
-        `op.H` will have `op.solver.adjoint_solver` as solver to ensure
-        that `op.apply_inverse_adjoint` and `op.H.apply_inverse` are the
-        same algorithms.
-        """
         return self if type(self)._solve_adjoint is Solver._solve_adjoint else AdjointSolver(self)
 
     def solve(self, operator, V, mu=None, initial_guess=None, return_info=False):

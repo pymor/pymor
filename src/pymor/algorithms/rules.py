@@ -375,7 +375,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         attributes `a`, for which one of the following is true:
 
             1. `a` is an |Operator|.
-            2. `a` is a dict` and each of its values is either an |Operator| or `None`.
+            2. `a` is a `dict` and each of its values is either an |Operator| or `None`.
             3. `a` is a `list` or `tuple` and each of its elements is either an |Operator|
                or `None`.
             4. `a` is an 'np.ndarray` of `dtype=object` and each of its elements is either

@@ -1158,7 +1158,7 @@ class AdjointOperator(Operator):
 
     Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
     `op^*v` is simply given by application of the
-    :attr:adjoint <pymor.operators.interface.Operator.H>`
+    :attr:`adjoint <pymor.operators.interface.Operator.H>`
     |Operator|.
 
     Parameters
@@ -1176,7 +1176,7 @@ class AdjointOperator(Operator):
         and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
+        :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
     solver
         The |Solver| for the operator.
     name
