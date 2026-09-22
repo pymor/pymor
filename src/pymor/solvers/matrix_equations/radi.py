@@ -61,30 +61,22 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         if Q is None:
             Q = np.eye(len(C))
 
+        if not trans:
+            B, C = C, B
+            R, Q = Q, R
+
         if S is None:
-            if trans:
-                Z_lr = self._solve_impl(A, E, B, C, R, Q, trans)
-            else:
-                Z_lr = self._solve_impl(A, E, C, B, Q, R, trans)
-
+            Z_lr = self._solve_impl(A, E, B, C, R, Q, trans)
         else:
-            if trans:
-                Rinv = spla.solve(R, np.eye(R.shape[0]))
-                tC = cat_arrays([C, S])
-                tQ = spla.block_diag(Q, -Rinv)
-
-                Z_lr = self._solve_impl(A, E, B, tC, R, tQ, trans, S_scaled=S.lincomb(Rinv.conj().T))
-            else:
-                Qinv = spla.solve(Q, np.eye(Q.shape[0]))
-                tB = cat_arrays([B, S])
-                tR = spla.block_diag(R, -Qinv)
-
-                Z_lr = self._solve_impl(A, E, C, tB, Q, tR, trans, S_scaled=S.lincomb(Qinv))
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(Q, -Rinv)
+            Z_lr = self._solve_impl(A, E, B, tC, R, tQ, trans, S=S)
 
         return Z_lr
 
 
-    def _solve_impl(self, A, E, B, C, R, Q, trans, S_scaled=None):
+    def _solve_impl(self, A, E, B, C, R, Q, trans, S=None):
         if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
@@ -103,9 +95,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             R = Rinv = np.eye(len(B))
 
         A_original = A
-        Im = np.eye(len(B))
-        if S_scaled is not None:
-            A = A - (LowRankOperator(B, Im, S_scaled) if trans else LowRankOperator(S_scaled, Im, B))
+        if S is not None:
+            A = A - (LowRankOperator(B, Rinv, S) if trans else LowRankOperator(S, Rinv, B))
 
         Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
@@ -134,8 +125,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             else:
                 AsE = A_original + np.conj(s) * E
 
-            K_total = K if S_scaled is None else K + S_scaled
-            BRiK = LowRankOperator(B, Im, K_total) if trans else LowRankOperator(K_total, Im, B)
+            K_total = K if S is None else K + S
+            BRiK = LowRankOperator(B, Rinv, K_total) if trans else LowRankOperator(K_total, Rinv, B)
             AsEBRiK = LowRankUpdatedOperator(AsE.assemble(), BRiK, 1, -1)
 
             if not trans:
@@ -156,7 +147,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
                 else:
                     EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt).T)
                 RF.axpy(alpha, EVYt)
-                K += EVYt.lincomb(VB @ Rinv)
+                K += EVYt.lincomb(VB)
                 j += 1
             else:
                 V1 = alpha * V.real
@@ -187,7 +178,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
                 else:
                     EVYt = E.apply_adjoint(cat_arrays([V1, V2])).lincomb(spla.inv(Yt).T)
                 RF.axpy(alpha, EVYt[:len(C)])
-                K += EVYt.lincomb(F2 @ Rinv)
+                K += EVYt.lincomb(F2)
                 j += 2
             j_shift += 1
             res = np.linalg.norm(RF.gramian() @ RC, ord=2)
@@ -344,7 +335,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         RC
             A |NumPy array| representing the currently computed residual core.
         K
-            A |VectorArray| representing the currently computed iterate.
+            A |VectorArray| representing the currently computed iterate before
+            multiplication by :math:`R^{-1}`.
         Z
             A |VectorArray| representing the currently computed solution factor.
 
@@ -364,7 +356,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
 
         U = gram_schmidt(Z[-l:], atol=0, rtol=0)
         Ap = A.apply2(U, U)
-        BKp = U.inner(K) @ (U.inner(B).T)
+        BKp = U.inner(K) @ Rinv @ U.inner(B).T
         AAp = Ap - BKp
         UB = U.inner(B)
         Gp = UB.dot(Rinv @ UB.T)
@@ -454,24 +446,16 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
         if Q is None:
             Q = np.eye(len(C))
 
+        if not trans:
+            B, C = C, B
+            R, Q = Q, R
+
         if S is None:
-            if trans:
-                Z_lr = self._radi_solver._solve_impl(A, E, B, C, -R, Q, trans)
-            else:
-                Z_lr = self._radi_solver._solve_impl(A, E, C, B, -Q, R, trans)
-
+            Z_lr = self._radi_solver._solve_impl(A, E, B, C, -R, Q, trans)
         else:
-            if trans:
-                Rinv = spla.solve(R, np.eye(R.shape[0]))
-                tC = cat_arrays([C, S])
-                tQ = spla.block_diag(Q, Rinv)
-
-                Z_lr = self._radi_solver._solve_impl(A, E, B, tC, -R, tQ, trans, S_scaled=-S.lincomb(Rinv.conj().T))
-            else:
-                Qinv = spla.solve(Q, np.eye(Q.shape[0]))
-                tB = cat_arrays([B, S])
-                tR = spla.block_diag(R, Qinv)
-
-                Z_lr = self._radi_solver._solve_impl(A, E, C, tB, -Q, tR, trans, S_scaled=-S.lincomb(Qinv))
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(Q, Rinv)
+            Z_lr = self._radi_solver._solve_impl(A, E, B, tC, -R, tQ, trans, S=S)
 
         return Z_lr
