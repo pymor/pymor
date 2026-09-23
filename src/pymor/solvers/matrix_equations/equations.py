@@ -468,7 +468,7 @@ class SylvesterEquation(ImmutableObject):
         Returns
         -------
         A
-            The The |NumPy array| or |SciPy spmatrix| A or `None`.
+            The |NumPy array| or |SciPy spmatrix| A or `None`.
         Ar
             The |NumPy array| or |SciPy spmatrix| Ar or `None`.
         E
@@ -518,7 +518,7 @@ class SylvesterEquation(ImmutableObject):
         Br
             The |NumPy array| or |SciPy spmatrix| Br or `None`.
         C
-            The |NumPy array| or |SciPy spmatrix| C `None`.
+            The |NumPy array| or |SciPy spmatrix| C or `None`.
         Cr
             The |NumPy array| or |SciPy spmatrix| Cr or `None`.
         name
