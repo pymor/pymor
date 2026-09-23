@@ -66,14 +66,22 @@ class ScipyLinearSolver(Solver):
     def __init__(self, check_finite=True):
         self.check_finite = check_finite
 
-    def _solve(self, operator, V, mu, initial_guess):
-        operator = operator.assemble(mu)
+    def _assemble_matrix(self, operator, mu):
+        assembled = operator.assemble(mu)
         from pymor.operators.numpy import NumpyMatrixOperator
-        if isinstance(operator, NumpyMatrixOperator):
-            matrix = operator.matrix
-        else:
+        if isinstance(assembled, NumpyMatrixOperator):
+            return assembled.matrix, assembled
+
+        mat_op = getattr(operator, '_mat_op', None)
+        if mat_op is None:
             from pymor.algorithms.to_matrix import to_matrix
-            matrix = to_matrix(operator)
+            mat_op = NumpyMatrixOperator(to_matrix(assembled))
+            if not operator.parametric:
+                operator._mat_op = mat_op
+        return mat_op.matrix, assembled
+
+    def _solve(self, operator, V, mu, initial_guess):
+        matrix, operator = self._assemble_matrix(operator, mu)
         V = V.to_numpy()
         initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
         promoted_type = np.promote_types(matrix.dtype, V.dtype)
