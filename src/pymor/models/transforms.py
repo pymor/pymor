@@ -102,7 +102,7 @@ class MoebiusTransformation(ImmutableObject):
         """
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
-        return MoebiusTransformation(coefficients, normalize=normalize, name=self.name + '_inverse')
+        return MoebiusTransformation(coefficients, normalize=normalize)
 
     def _mapping(self, x):
         a, b, c, d = self.coefficients

@@ -125,14 +125,12 @@ class EmpiricalInterpolatedOperator(Operator):
         if len(self.interpolation_dofs) == 0:
             if isinstance(self.source, NumpyVectorSpace) and isinstance(self.range, NumpyVectorSpace):
                 return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)),
-                                           solver=self._jacobian_solver,
-                                           name=self.name + '_jacobian')
+                                           solver=self._jacobian_solver)
             else:
-                return ZeroOperator(self.range, self.source, solver=self._jacobian_solver, name=self.name + '_jacobian')
+                return ZeroOperator(self.range, self.source, solver=self._jacobian_solver)
         elif hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
-                                                 self.collateral_basis, self.triangular,
-                                                 solver=self._jacobian_solver, name=self.name + '_jacobian')
+                                                 self.collateral_basis, self.triangular, solver=self._jacobian_solver)
         else:
             restricted_source = self.restricted_operator.source
             U_dofs = restricted_source.make_array(U.dofs(self.source_dofs))
@@ -152,7 +150,7 @@ class EmpiricalInterpolatedOperator(Operator):
             else:
                 J = VectorArrayOperator(J)
             return ConcatenationOperator([J, ComponentProjectionOperator(self.source_dofs, self.source)],
-                                         solver=self._jacobian_solver, name=self.name + '_jacobian')
+                                         solver=self._jacobian_solver)
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -201,8 +199,7 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         assert self.parameters.assert_compatible(mu)
 
         if self.interpolation_matrix.shape[0] == 0:
-            return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver=self._jacobian_solver,
-                                       name=self.name + '_jacobian')
+            return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver=self._jacobian_solver)
 
         U_dofs = self.source_basis_dofs.lincomb(U.to_numpy()[:, 0])
         J = self.restricted_operator.jacobian(U_dofs, mu=mu).apply(self.source_basis_dofs)

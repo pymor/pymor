@@ -39,7 +39,6 @@ class InstationaryProblem(ParametricObject):
     """
 
     def __init__(self, stationary_part, initial_data, T=1., parameter_ranges=None, name=None):
-        name = name or ('instationary_' + stationary_part.name)
         assert (initial_data is None
                 or initial_data.dim_domain == stationary_part.domain.dim and initial_data.shape_range == ())
         assert (parameter_ranges is None

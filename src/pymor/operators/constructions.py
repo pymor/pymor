@@ -64,8 +64,7 @@ class LincombOperator(Operator):
     def H(self):
         return self.with_(operators=[op.H for op in self.operators],
                           coefficients=[c.conjugate() for c in self.coefficients],
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for given |parameter values|.
@@ -143,7 +142,7 @@ class LincombOperator(Operator):
         operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         # try to form a linear combination
-        op = assemble_lincomb(operators, coefficients, solver=self.solver, name=self.name + '_assembled')
+        op = assemble_lincomb(operators, coefficients, solver=self.solver, name=self.name)
         # To avoid infinite recursions, only use the result if at least one of the following
         # is true:
         #   - The operator is parametric, so the the result of assemble *must* be a different,
@@ -165,8 +164,7 @@ class LincombOperator(Operator):
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         return LincombOperator(jacobians, self.coefficients,
-                               solver=self._jacobian_solver,
-                               name=self.name + '_jacobian').assemble(mu)
+                               solver=self._jacobian_solver).assemble(mu)
 
     def d_mu(self, parameter, index=0):
         for op in self.operators:
@@ -178,7 +176,7 @@ class LincombOperator(Operator):
                 derivative_coefficients.append(coef.d_mu(parameter, index))
             else:
                 derivative_coefficients.append(0.)
-        return self.with_(coefficients=derivative_coefficients, solver=self.solver, name=self.name + '_d_mu')
+        return self.with_(coefficients=derivative_coefficients, solver=self.solver)
 
     def _apply_inverse(self, V, mu, initial_guess):
         if len(self.operators) != 1:
@@ -247,8 +245,7 @@ class ConcatenationOperator(Operator):
     @property
     def H(self):
         return type(self)(tuple(op.H for op in self.operators[::-1]),
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -269,8 +266,7 @@ class ConcatenationOperator(Operator):
             Us.append(op.apply(Us[-1], mu=mu))
         return ConcatenationOperator(tuple(op.jacobian(U, mu=mu)
                                            for op, U in zip(self.operators, Us[::-1], strict=True)),
-                                     solver=self._jacobian_solver,
-                                     name=self.name + '_jacobian')
+                                     solver=self._jacobian_solver)
 
     def d_mu(self, parameter, index=0):
         summands = []
@@ -296,12 +292,12 @@ class ConcatenationOperator(Operator):
         if not isinstance(other, Operator):
             return NotImplemented
 
-        if self.name != 'ConcatenationOperator':
-            if isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
+        if self.name is not None:
+            if isinstance(other, ConcatenationOperator) and other.name is None:
                 operators = (self,) + other.operators
             else:
                 operators = (self, other)
-        elif isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
+        elif isinstance(other, ConcatenationOperator) and other.name is None:
             operators = self.operators + other.operators
         else:
             operators = self.operators + (other,)
@@ -313,7 +309,7 @@ class ConcatenationOperator(Operator):
             return NotImplemented
 
         # note that 'other' can never be a ConcatenationOperator
-        if self.name != 'ConcatenationOperator':
+        if self.name is not None:
             operators = (other, self)
         else:
             operators = (other,) + self.operators
@@ -489,8 +485,7 @@ class LowRankOperator(Operator):
                           self.core.T.conj(),
                           self.left,
                           inverted=self.inverted,
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -723,7 +718,7 @@ class ConstantOperator(Operator):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.range, self.source, solver=self._jacobian_solver, name=self.name + '_jacobian')
+        return ZeroOperator(self.range, self.source, solver=self._jacobian_solver)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -759,7 +754,7 @@ class ZeroOperator(Operator):
 
     @property
     def H(self):
-        return type(self)(self.source, self.range, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return type(self)(self.source, self.range, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -816,8 +811,7 @@ class VectorArrayOperator(Operator):
 
     @property
     def H(self):
-        return VectorArrayOperator(self.array, not self.adjoint,
-                                   solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return VectorArrayOperator(self.array, not self.adjoint, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -961,7 +955,7 @@ class ProxyOperator(Operator):
 
     @property
     def H(self):
-        return self.with_(operator=self.operator.H, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return self.with_(operator=self.operator.H, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=mu)
@@ -1041,7 +1035,7 @@ class AffineOperator(ProxyOperator):
             raise NotImplementedError
         super().__init__(operator, solver=solver, name=name)
         self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
-        self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
+        self.linear_part = LinearOperator(operator - self.affine_shift)
 
     def jacobian(self, U, mu=None):
         jac = self.linear_part.jacobian(U, mu)
@@ -1067,7 +1061,6 @@ class InverseOperator(Operator):
 
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
-        name or operator.name + '_inverse'
 
         self.operator = operator
         self.solver = solver
@@ -1116,7 +1109,6 @@ class InverseAdjointOperator(Operator):
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
-        name = name or operator.name + '_inverse_adjoint'
 
         self.operator = operator
         self.solver = solver
@@ -1189,7 +1181,6 @@ class AdjointOperator(Operator):
                  solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
-        name or operator.name + '_adjoint'
 
         self.operator = operator
         self.source_product = source_product
@@ -1298,9 +1289,7 @@ class SelectionOperator(Operator):
 
     @property
     def H(self):
-        return self.with_(operators=[op.H for op in self.operators],
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+        return self.with_(operators=[op.H for op in self.operators], solver=self._adjoint_solver)
 
     def _get_operator_number(self, mu):
         value = self.parameter_functional.evaluate(mu)
@@ -1578,11 +1567,11 @@ class QuadraticFunctional(Operator):
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
-        return VectorFunctional(inner_vec, solver=self._jacobian_solver, name=self.name + '_jacobian')
+        return VectorFunctional(inner_vec, solver=self._jacobian_solver)
 
     def d_mu(self, parameter, index=1):
         # the parameter derivative only takes effect on the inner operator
-        return QuadraticFunctional(self.operator.d_mu(parameter, index), solver=self.solver, name=self.name + '_d_mu')
+        return QuadraticFunctional(self.operator.d_mu(parameter, index), solver=self.solver)
 
 
 class QuadraticProductFunctional(QuadraticFunctional):

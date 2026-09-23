@@ -254,7 +254,7 @@ class LTIModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
     def __str__(self):
         string = (
@@ -2159,7 +2159,7 @@ class SecondOrderModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
         self._lti_model = LTIModel(A=SecondOrderModelOperator(0, 1, -self.E, -self.K),
                                    B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
@@ -2171,8 +2171,7 @@ class SecondOrderModel(Model):
                                    sampling_time=self.sampling_time,
                                    matrix_equation_solvers=self.matrix_equation_solvers,
                                    error_estimator=self.error_estimator,
-                                   visualizer=self.visualizer,
-                                   name=self.name + '_first_order')
+                                   visualizer=self.visualizer)
 
     def __str__(self):
         string = (
@@ -2877,7 +2876,7 @@ class LinearDelayModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
     def __str__(self):
         string = (

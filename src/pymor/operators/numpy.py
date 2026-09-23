@@ -225,7 +225,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             adjoint_matrix = self.matrix.T
         else:
             adjoint_matrix = self.matrix.T.conj()
-        return self.with_(matrix=adjoint_matrix, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return self.with_(matrix=adjoint_matrix, solver=self._adjoint_solver)
 
     def _assemble(self, mu=None):
         pass
@@ -401,7 +401,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     @property
     def H(self):
         return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1),
-                          solver=self._adjoint_solver, name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
 
 class NumpyToeplitzOperator(Operator):
@@ -465,9 +465,7 @@ class NumpyToeplitzOperator(Operator):
         self.solver = solver
         self.name = name
 
-        self._circulant = NumpyCirculantOperator(
-            np.concatenate([c, r[:0:-1]]),
-            name=self.name + ' (implicit circulant)')
+        self._circulant = NumpyCirculantOperator(np.concatenate([c, r[:0:-1]]))
         _, p, m = self._circulant._arr.shape
         self.source = NumpyVectorSpace(m*r.shape[0])
         self.range = NumpyVectorSpace(p*c.shape[0])
@@ -487,7 +485,7 @@ class NumpyToeplitzOperator(Operator):
     @property
     def H(self):
         return self.with_(c=self.r.conj().transpose(0, 2, 1), r=self.c.conj().transpose(0, 2, 1),
-                          solver=self._adjoint_solver, name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
 
 class NumpyHankelOperator(Operator):
@@ -556,8 +554,7 @@ class NumpyHankelOperator(Operator):
         z = int(np.isrealobj(c) and np.isrealobj(r) and n % 2)
         h = np.concatenate((c, r[1:], np.zeros([z, *c.shape[1:]])))
         shift = n // 2 + int(np.ceil((k - l) / 2)) + (n % 2) + z # this works
-        self._circulant = NumpyCirculantOperator(
-            np.roll(h, shift, axis=0), name=self.name + ' (implicit circulant)')
+        self._circulant = NumpyCirculantOperator(np.roll(h, shift, axis=0))
         p, m = self._circulant._arr.shape[1:]
         self.source = NumpyVectorSpace(l*m)
         self.range = NumpyVectorSpace(k*p)
@@ -579,4 +576,4 @@ class NumpyHankelOperator(Operator):
     def H(self):
         h = np.concatenate([self.c, self.r[1:]], axis=0).conj().transpose(0, 2, 1)
         return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:],
-                          solver=self._adjoint_solver, name=self.name+'_adjoint')
+                          solver=self._adjoint_solver)
