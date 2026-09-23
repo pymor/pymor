@@ -200,8 +200,7 @@ class DWRCoerciveRBReductor(BasicObject):
             e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
             dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H
-        dual_model = model.with_(operator=dual_operator, rhs=dual_rhs,
-                                 output_functional=None, name=model.name + '_dual')
+        dual_model = model.with_(operator=dual_operator, rhs=dual_rhs, output_functional=None)
         return dual_model
 
     def assemble_error_estimator_for_subbasis(self, dual_roms, primal_dim, dual_dims):

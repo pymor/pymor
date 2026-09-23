@@ -79,7 +79,7 @@ def project(op, range_basis, source_basis, product=None):
     rb = product.apply(range_basis) if product is not None and range_basis is not None else range_basis
 
     try:
-        return ProjectRules(rb, source_basis).apply(op).with_(name=None)
+        return ProjectRules(rb, source_basis).apply(op)
     except NoMatchingRuleError:
         op.logger.warning('Using inefficient generic projection operator')
         return ProjectedOperator(op, range_basis, source_basis, product)

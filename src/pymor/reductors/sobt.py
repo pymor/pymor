@@ -401,7 +401,7 @@ class SOBTReductor(BasicObject):
             'D': self.fom.D.assemble(mu=self.mu),
         })
 
-        rom = SecondOrderModel(name=self.fom.name + '_reduced', **projected_ops)
+        rom = SecondOrderModel(**projected_ops)
         rom.disable_logging()
         return rom
 
