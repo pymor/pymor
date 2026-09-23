@@ -171,12 +171,12 @@ class RiccatiData(ImmutableObject):
             assert isinstance(R, np.ndarray)
             assert R.ndim == 2
             assert R.shape[0] == R.shape[1]
-            assert R.shape[0] == (len(B))
+            assert R.shape[0] == len(B)
         if Q is not None:
             assert isinstance(Q, np.ndarray)
             assert Q.ndim == 2
             assert Q.shape[0] == Q.shape[1]
-            assert Q.shape[0] == (len(C))
+            assert Q.shape[0] == len(C)
         if S is not None:
             assert S in A.source
             assert len(S) == (len(C) if not trans else len(B))
