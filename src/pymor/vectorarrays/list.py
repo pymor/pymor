@@ -585,7 +585,7 @@ class ListVectorSpace(VectorSpace):
         return cls.space_from_vector_obj(obj[0]).make_array(obj)
 
     @make_array.instancemethod
-    def make_array(self, obj):
+    def _(self, obj):
         """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self,
@@ -597,7 +597,7 @@ class ListVectorSpace(VectorSpace):
         return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
-    def from_numpy(self, data, ensure_copy=False):
+    def _(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
         if data.ndim == 1:
             data = data.reshape((-1, 1))

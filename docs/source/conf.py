@@ -135,6 +135,8 @@ nitpick_ignore = [
     ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
     ('py:obj', 'qtpy.QtWidgets.QWidget'),
     ('py:class', 'F'),
+    ('py:class', 'P'),
+    ('py:class', 'R'),
 ]
 nitpick_ignore_regex = [
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
