@@ -26,7 +26,11 @@ class OnedGrid(GridWithOrthogonalCenters):
         domain = np.array(domain)
         assert domain.ndim == 1
         assert domain[0] < domain[1]
-        self.__auto_init(locals())
+
+        self.domain = domain
+        self.num_intervals = num_intervals
+        self.identify_left_right = identify_left_right
+
         self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
         self._width = np.abs(self.domain[1] - self.domain[0]) / self.num_intervals
         self.__subentities = np.vstack((np.arange(self.num_intervals, dtype=np.int32),
@@ -79,7 +83,7 @@ class OnedGrid(GridWithOrthogonalCenters):
         U
             |NumPy array| of the data to visualize. If `U.dim == 2 and U.shape[1] > 1`, the
             data is visualized as a time series of plots. Alternatively, a tuple of
-            |Numpy arrays| can be provided, in which case a subplot is created for
+            |NumPy arrays| can be provided, in which case a subplot is created for
             each entry of the tuple. The number of time points per array must match.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 1).

@@ -68,10 +68,19 @@ class NumpyGenericOperator(Operator):
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
                  solver=None, name=None):
-        self.__auto_init(locals())
+        self.parameters_own = parameters
+
+        self.mapping = mapping
+        self.adjoint_mapping = adjoint_mapping
+        self.dim_source = dim_source
+        self.dim_range = dim_range
+        self.linear = linear
+        self.parameters = parameters
+        self.solver = solver
+        self.name = name
+
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
-        self.parameters_own = parameters
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -192,7 +201,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         sparse = sps.issparse(matrix)
         solver = solver or (default_sparse_solver() if sparse else default_dense_solver())
 
-        self.__auto_init(locals())
+        self.matrix = matrix
+        self.solver = solver
+        self.name = name
+        self.default_dense_solver = default_dense_solver
+        self.default_sparse_solver = default_sparse_solver
+
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
         self.sparse = sparse
@@ -211,7 +225,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             adjoint_matrix = self.matrix.T
         else:
             adjoint_matrix = self.matrix.T.conj()
-        return self.with_(matrix=adjoint_matrix, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return self.with_(matrix=adjoint_matrix, solver=self._adjoint_solver)
 
     def _assemble(self, mu=None):
         pass
@@ -311,7 +325,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 c_n    & \cdots & \cdots  & c_3    & c_2    & c_1
             \end{bmatrix} \in \mathbb{C}^{n*p \times n*m},
 
-    where the so-called circulant vector :math:`c \in \mathbb{C}^{\times n\times p\times m}` denotes
+    where the so-called circulant vector :math:`c \in \mathbb{C}^{n\times p\times m}` denotes
     the first (matrix-valued) column of the matrix. The matrix :math:`C` as seen above is not
     explicitly constructed, only `c` is stored. Efficient matrix-vector multiplications are realized
     with DFT in the class' `apply` method. See :cite:`GVL13` Chapter 4.8.2. for details.
@@ -334,7 +348,10 @@ class NumpyCirculantOperator(Operator, CacheableObject):
         assert c.ndim == 3
         c.setflags(write=False)  # make numpy arrays read-only
 
-        self.__auto_init(locals())
+        self.c = c
+        self.solver = solver
+        self.name = name
+
         n, p, m = c.shape
         self._arr = c
         self.linear = True
@@ -384,7 +401,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     @property
     def H(self):
         return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1),
-                          solver=self._adjoint_solver, name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
 
 class NumpyToeplitzOperator(Operator):
@@ -443,10 +460,12 @@ class NumpyToeplitzOperator(Operator):
         c.setflags(write=False)
         r.setflags(write=False)
 
-        self.__auto_init(locals())
-        self._circulant = NumpyCirculantOperator(
-            np.concatenate([c, r[:0:-1]]),
-            name=self.name + ' (implicit circulant)')
+        self.c = c
+        self.r = r
+        self.solver = solver
+        self.name = name
+
+        self._circulant = NumpyCirculantOperator(np.concatenate([c, r[:0:-1]]))
         _, p, m = self._circulant._arr.shape
         self.source = NumpyVectorSpace(m*r.shape[0])
         self.range = NumpyVectorSpace(p*c.shape[0])
@@ -466,7 +485,7 @@ class NumpyToeplitzOperator(Operator):
     @property
     def H(self):
         return self.with_(c=self.r.conj().transpose(0, 2, 1), r=self.c.conj().transpose(0, 2, 1),
-                          solver=self._adjoint_solver, name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
 
 class NumpyHankelOperator(Operator):
@@ -523,15 +542,19 @@ class NumpyHankelOperator(Operator):
             assert np.allclose(r[0], c[-1])
         c.setflags(write=False)
         r.setflags(write=False)
-        self.__auto_init(locals())
+
+        self.c = c
+        self.r = r
+        self.solver = solver
+        self.name = name
+
         k, l = c.shape[0], r.shape[0]
         n = k + l - 1
         # zero pad to even length if real to avoid slow irfft
         z = int(np.isrealobj(c) and np.isrealobj(r) and n % 2)
         h = np.concatenate((c, r[1:], np.zeros([z, *c.shape[1:]])))
         shift = n // 2 + int(np.ceil((k - l) / 2)) + (n % 2) + z # this works
-        self._circulant = NumpyCirculantOperator(
-            np.roll(h, shift, axis=0), name=self.name + ' (implicit circulant)')
+        self._circulant = NumpyCirculantOperator(np.roll(h, shift, axis=0))
         p, m = self._circulant._arr.shape[1:]
         self.source = NumpyVectorSpace(l*m)
         self.range = NumpyVectorSpace(k*p)
@@ -553,4 +576,4 @@ class NumpyHankelOperator(Operator):
     def H(self):
         h = np.concatenate([self.c, self.r[1:]], axis=0).conj().transpose(0, 2, 1)
         return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:],
-                          solver=self._adjoint_solver, name=self.name+'_adjoint')
+                          solver=self._adjoint_solver)

@@ -45,8 +45,14 @@ class VKOGARegressor(BaseRegressor):
 
     @defaults('kernel', 'criterion', 'max_centers', 'tol', 'reg')
     def __init__(self, kernel=None, criterion='fp', max_centers=20, tol=1e-6, reg=1e-12):
-        self.__auto_init(locals())
-        self.kernel = GaussianKernel() if kernel is None else kernel
+        if kernel is None:
+            kernel = GaussianKernel()
+
+        self.kernel = kernel
+        self.criterion = criterion
+        self.max_centers = max_centers
+        self.tol = tol
+        self.reg = reg
 
     def fit(self, X, Y):
         """Fit VKOGA surrogate using pyMOR's weak greedy algorithm.
@@ -133,7 +139,13 @@ class VKOGASurrogate(WeakGreedySurrogate):
         F_train = np.asarray(F_train)
         if F_train.ndim == 1:
             F_train = F_train.reshape((-1, 1))
-        self.__auto_init(locals())
+
+        self.kernel = kernel
+        self.X_train = X_train
+        self.F_train = F_train
+        self.criterion = criterion
+        self.reg = reg
+
         self.N, self.m = self.F_train.shape
         self.d = self.X_train.shape[1]
 
@@ -248,7 +260,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         Let :math:`K_n` denote the full kernel matrix for the current set of selected
         centers :math:`X_n`. Since :math:`K_n` is a kernel matrix, it is in particular
         positive-definite, so it has a Cholesky decomposition,
-        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Choleksy decomposition
+        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Cholesky decomposition
         :math:`C_n := L_{n}^{-1}` will be used to efficiently compute and update the
         coefficients  of the kernel interpolant. The formula for the computation and update of
         :math:`C_n` can be found below.

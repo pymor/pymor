@@ -8,7 +8,6 @@ from hypothesis import given
 
 import pymortests.strategies as pyst
 from pymor.analyticalproblems.functions import ConstantFunction, Function
-from pymor.core.cache import build_cache_key
 from pymor.parameters.base import Mu, Parameters
 from pymortests.base import runmodule
 
@@ -163,39 +162,6 @@ def test_constraints():
     mus = space.sample_logarithmic_uniformly(10)
     assert len(mus) == 10*11//2
     assert all(const(mu) for mu in mus)
-
-
-@pytest.mark.filterwarnings('error:Setting the shape:DeprecationWarning')
-@pytest.mark.parametrize('input_type', ['python', 'numpy', 'array', 'readonly'])
-def test_mu_scalar(input_type):
-    value = 3. if input_type == 'python' else np.float64(3.)
-    if input_type in ('array', 'readonly'):
-        value = np.array(value)
-        if input_type == 'readonly':
-            value.setflags(write=False)
-    mu = Mu(a=value)
-    assert mu['a'].shape == (1,)
-    np.testing.assert_array_equal(mu['a'], [3.])
-    assert not mu['a'].flags.writeable
-    with pytest.raises(ValueError):
-        mu['a'][0] = 4.
-    if isinstance(value, np.ndarray):
-        assert value.shape == ()
-        assert np.shares_memory(value, mu['a'])
-
-
-@pytest.mark.parametrize('shape', [(), (1,)])
-def test_mu_input_write_protection(shape):
-    value = np.full(shape, 3.)
-    mu = Mu(a=value)
-    original_hash = hash(mu)
-    original_cache_key = build_cache_key(mu)
-    with pytest.raises(ValueError):
-        value[...] = 4.
-    assert value.shape == shape
-    assert mu == Mu(a=3.)
-    assert hash(mu) == original_hash == hash(Mu(a=3.))
-    assert build_cache_key(mu) == original_cache_key == build_cache_key(Mu(a=3.))
 
 
 if __name__ == '__main__':

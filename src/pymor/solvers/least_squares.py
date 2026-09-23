@@ -11,7 +11,7 @@ from pymor.solvers.interface import Solver
 class QRLeastSquaresSolver(Solver):
     """Least-squares solver using QR decomposition.
 
-    Convertes `operator` to a |VectorArray| via
+    Converts `operator` to a |VectorArray| via
     :meth:`~pymor.operators.interface.Operator.as_range_array` or
     :meth:`~pymor.operators.interface.Operator.as_source_array`.
     Then uses :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
@@ -29,7 +29,7 @@ class QRLeastSquaresSolver(Solver):
 
     def __init__(self, space='range'):
         assert space in {'range', 'source'}
-        self.__auto_init(locals())
+        self.space = space
 
     def _solve(self, operator, V, mu, initial_guess):
         if self.space == 'range':

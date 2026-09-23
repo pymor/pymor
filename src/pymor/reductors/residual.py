@@ -65,7 +65,12 @@ class ResidualReductor(BasicObject):
             or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
         assert product is None or product.source == product.range == operator.range
 
-        self.__auto_init(locals())
+        self.RB = RB
+        self.operator = operator
+        self.rhs = rhs
+        self.product = product
+        self.riesz_representatives = riesz_representatives
+
         self.residual_range = operator.range.empty()
         self.residual_range_dims = []
 
@@ -112,7 +117,10 @@ class ResidualOperator(Operator):
     """Instantiated by :class:`ResidualReductor`."""
 
     def __init__(self, operator, rhs, name=None):
-        self.__auto_init(locals())
+        self.operator = operator
+        self.rhs = rhs
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
@@ -142,7 +150,8 @@ class NonProjectedResidualOperator(ResidualOperator):
 
     def __init__(self, operator, rhs, riesz_representatives, product):
         super().__init__(operator, rhs)
-        self.__auto_init(locals())
+        self.riesz_representatives = riesz_representatives
+        self.product = product
 
     def apply(self, U, mu=None):
         R = super().apply(U, mu=mu)
@@ -219,7 +228,13 @@ class ImplicitEulerResidualReductor(BasicObject):
         assert rhs.linear
         assert product is None or product.source == product.range == operator.range
 
-        self.__auto_init(locals())
+        self.RB = RB
+        self.operator = operator
+        self.mass = mass
+        self.dt = dt
+        self.rhs = rhs
+        self.product = product
+
         self.residual_range = operator.range.empty()
         self.residual_range_dims = []
 
@@ -265,7 +280,12 @@ class ImplicitEulerResidualOperator(Operator):
     """Instantiated by :class:`ImplicitEulerResidualReductor`."""
 
     def __init__(self, operator, mass, rhs, dt, name=None):
-        self.__auto_init(locals())
+        self.operator = operator
+        self.mass = mass
+        self.rhs = rhs
+        self.dt = dt
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear

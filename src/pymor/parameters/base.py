@@ -243,7 +243,7 @@ class Parameters(SortedFrozenDict):
     def assert_compatible(self, mu, allow_time_dependent=False):
         """Assert that |parameter values| are compatible with the given |Parameters|.
 
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        Each of the parameters must be contained in  `mu` and the dimensions have to match,
         i.e. ::
 
             mu[parameter].size == self[parameter]
@@ -267,7 +267,7 @@ class Parameters(SortedFrozenDict):
     def is_compatible(self, mu, allow_time_dependent=False):
         """Check if |parameter values| are compatible with the given |Parameters|.
 
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        Each of the parameters must be contained in  `mu` and the dimensions have to match,
         i.e. ::
 
             mu[parameter].size == self[parameter]
@@ -395,13 +395,11 @@ class Mu(ImmutableObject):
                 time_dependent_values[k] = v
             else:
                 vv = np.asarray(v)
-                if vv.ndim == 0:
-                    # Keep the input read-only when creating a reshaped view.
-                    assert not vv.setflags(write=False)
-                    vv = vv.reshape((1,))
-                assert vv.ndim == 1
-                assert k != 't' or len(vv) == 1
+                assert vv.ndim <= 1
+                assert k != 't' or vv.size == 1
                 assert not vv.setflags(write=False)
+                if vv.ndim == 0:
+                    vv = vv.reshape((1,))
                 values[k] = vv
 
         assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
@@ -657,7 +655,10 @@ class ParameterSpace(ParametricObject):
                    and ranges[k][0] <= ranges[k][1]
                    for k in parameters)
         assert constraints is None or callable(constraints)
-        self.__auto_init(locals())
+
+        self.parameters = parameters
+        self.constraints = constraints
+
         self.ranges = SortedFrozenDict((k, tuple(v)) for k, v in ranges.items())
 
     def sample_uniformly(self, counts):

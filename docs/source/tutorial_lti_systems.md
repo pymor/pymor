@@ -58,7 +58,7 @@ Discrete-time LTI systems can be constructed by passing positive values for the
 ## Building a model
 
 We consider the following one-dimensional heat equation over {math}`(0, 1)` with
-two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_2`:
+two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_3`:
 
 ```{math}
 \begin{align}
@@ -388,7 +388,7 @@ system with invertible {math}`E` are respectively
 From this,
 it is clear that {math}`P` and {math}`Q` are symmetric positive semidefinite.
 Furthermore,
-it can be shown that {math}`P` and {math}`Q` are solutions to Lyapunov equation
+it can be shown that {math}`P` and {math}`Q` are solutions to the Lyapunov equation
 
 ```{math}
 \begin{align*}
@@ -403,8 +403,8 @@ it can be shown that {math}`P` and {math}`Q` are solutions to Lyapunov equation
 \end{align*}
 ```
 
-The Gramians can be used to quantify how much does the input influence the state
-(controllability) and state the output (observability).
+The Gramians can be used to quantify how much the input influences the state
+(controllability) and how much the state influences the output (observability).
 This is used to motivate the balanced truncation method
 (see {doc}`tutorial_bt`).
 Also, they can be used to compute the {math}`\mathcal{H}_2` norm (see below).
@@ -412,7 +412,7 @@ Also, they can be used to compute the {math}`\mathcal{H}_2` norm (see below).
 To find the "Gramians" {math}`P` and {math}`Q` of an {{ LTIModel }},
 the {meth}`~pymor.models.iosys.LTIModel.gramian` method can be used.
 Although solutions to Lyapunov equations are generally dense matrices,
-they can be often be very well approximated by a low-rank matrix.
+they can often be very well approximated by a low-rank matrix.
 With {meth}`~pymor.models.iosys.LTIModel.gramian`,
 it is possible to compute the dense solution or only the low-rank
 factor.
@@ -445,7 +445,7 @@ As expected for a heat equation, the Hankel singular values decay rapidly.
 ## System norms
 
 There are various system norms,
-used for quantifying the sensitivity of system's outputs to its inputs.
+used for quantifying the sensitivity of the system's outputs to its inputs.
 pyMOR currently has methods for computing:
 the {math}`\mathcal{H}_2` norm,
 the {math}`\mathcal{H}_\infty` norm, and

@@ -66,7 +66,20 @@ class NewtonSolver(Solver):
                  stagnation_window=3, stagnation_threshold=np.inf, error_measure='update',
                  jacobian_solver=None, return_stages=False, return_residuals=False):
         assert error_measure in ('residual', 'update')
-        self.__auto_init(locals())
+        self.range_product = range_product
+        self.source_product = source_product
+        self.miniter = miniter
+        self.maxiter = maxiter
+        self.atol = atol
+        self.rtol = rtol
+        self.relax = relax
+        self.line_search_params = line_search_params
+        self.stagnation_window = stagnation_window
+        self.stagnation_threshold = stagnation_threshold
+        self.error_measure = error_measure
+        self.jacobian_solver = jacobian_solver
+        self.return_stages = return_stages
+        self.return_residuals = return_residuals
 
     def _solve(self, operator, V, mu, initial_guess):
         info = {'solution_norms': [], 'update_norms': [], 'residual_norms': []}

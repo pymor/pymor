@@ -138,7 +138,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
     vector_type = ComplexifiedFenicsVector
 
     def __init__(self, V):
-        self.__auto_init(locals())
+        self.V = V
 
     @property
     def dim(self):
@@ -203,7 +203,15 @@ class FenicsMatrixBasedOperator(Operator):
     def __init__(self, form, params, bc=None, bc_zero=False, functional=False, solver=None, name=None):
         assert 1 <= len(form.arguments()) <= 2
         assert not functional or len(form.arguments()) == 1
-        self.__auto_init(locals())
+
+        self.form = form
+        self.params = params
+        self.bc = bc
+        self.bc_zero = bc_zero
+        self.functional = functional
+        self.solver = solver
+        self.name = name
+
         if len(form.arguments()) == 2 or not functional:
             range_space = form.arguments()[0].function_space()
             self.range = FenicsVectorSpace(range_space)
@@ -230,8 +238,7 @@ class FenicsMatrixBasedOperator(Operator):
             else:
                 self.bc.apply(mat)
         if len(self.form.arguments()) == 2:
-            return FenicsMatrixOperator(mat, self.source.V, self.range.V, solver=self.solver,
-                                        name=self.name + '_assembled')
+            return FenicsMatrixOperator(mat, self.source.V, self.range.V, solver=self.solver, name=self.name)
         elif self.functional:
             V = self.source.make_array([mat])
             return VectorFunctional(V)
@@ -259,7 +266,10 @@ class FenicsLinearSolver(ComplexifiedListVectorArrayBasedSolver):
 
     @defaults('method', 'preconditioner', 'keep_solver')
     def __init__(self, method=_DEFAULT_SOLVER, preconditioner=None, keep_solver=True):
-        self.__auto_init(locals())
+        self.method = method
+        self.preconditioner = preconditioner
+        self.keep_solver = keep_solver
+
         if keep_solver:  # not thread safe
             self._solver = self._create_solver()
             self._adjoint_solver = self._create_solver()
@@ -321,7 +331,13 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     def __init__(self, matrix, source_space, range_space, solver=None, name=None):
         assert matrix.rank() == 2
         solver = solver or FenicsLinearSolver()
-        self.__auto_init(locals())
+
+        self.matrix = matrix
+        self.source_space = source_space
+        self.range_space = range_space
+        self.solver = solver
+        self.name = name
+
         self.source = FenicsVectorSpace(source_space)
         self.range = FenicsVectorSpace(range_space)
 
@@ -363,10 +379,20 @@ class FenicsOperator(Operator):
     def __init__(self, form, source_space, range_space, source_function, dirichlet_bcs=(),
                  parameter_setter=None, parameters={}, solver=None, name=None):
         assert len(form.arguments()) == 1
-        self.__auto_init(locals())
+        self.parameters_own = parameters
+
+        self.form = form
+        self.source_space = source_space
+        self.range_space = range_space
+        self.source_function = source_function
+        self.dirichlet_bcs = dirichlet_bcs
+        self.parameter_setter = parameter_setter
+        self.parameters = parameters
+        self.solver = solver
+        self.name = name
+
         self.source = source_space
         self.range = range_space
-        self.parameters_own = parameters
 
     def _set_mu(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -531,7 +557,10 @@ class RestrictedFenicsOperator(Operator):
     linear = False
 
     def __init__(self, op, restricted_range_dofs, solver=None):
-        self.__auto_init(locals())
+        self.op = op
+        self.restricted_range_dofs = restricted_range_dofs
+        self.solver = solver
+
         self.source = NumpyVectorSpace(op.source.dim)
         self.range = NumpyVectorSpace(len(restricted_range_dofs))
 

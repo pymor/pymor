@@ -47,7 +47,12 @@ class new_ipcluster_pool(BasicObject):  # noqa: N801
     """
 
     def __init__(self, profile=None, cluster_id=None, num_engines=None, ipython_dir=None, min_wait=1, timeout=60):
-        self.__auto_init(locals())
+        self.profile = profile
+        self.cluster_id = cluster_id
+        self.num_engines = num_engines
+        self.ipython_dir = ipython_dir
+        self.min_wait = min_wait
+        self.timeout = timeout
 
     def __enter__(self):
         args = []

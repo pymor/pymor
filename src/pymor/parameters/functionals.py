@@ -25,7 +25,7 @@ class ParameterFunctional(ParametricObject):
         pass
 
     def d_mu(self, parameter, index=0):
-        """Return the functionals's derivative with respect to a given parameter.
+        """Return the functional's derivative with respect to a given parameter.
 
         Parameters
         ----------
@@ -58,13 +58,13 @@ class ParameterFunctional(ParametricObject):
                 return self
             other = ConstantParameterFunctional(other)
 
-        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
-            if other.name == 'LincombParameterFunctional' and isinstance(other, LincombParameterFunctional):
+        if self.name is not None or not isinstance(self, LincombParameterFunctional):
+            if other.name is None and isinstance(other, LincombParameterFunctional):
                 functionals = (self,) + other.functionals
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functionals, coefficients = (self, other), (1., sign)
-        elif other.name == 'LincombParameterFunctional' and isinstance(other, LincombParameterFunctional):
+        elif other.name is None and isinstance(other, LincombParameterFunctional):
             functionals = self.functionals + other.functionals
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
@@ -82,7 +82,7 @@ class ParameterFunctional(ParametricObject):
             return self
         other = ConstantParameterFunctional(other)
 
-        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
+        if self.name is not None or not isinstance(self, LincombParameterFunctional):
             functionals, coefficients = (other, self), (1., sign)
         else:
             functionals = (other,) + self.functionals
@@ -105,12 +105,12 @@ class ParameterFunctional(ParametricObject):
     def __mul__(self, other):
         if not isinstance(other, Number | ParameterFunctional):
             return NotImplemented
-        if self.name != 'ProductParameterFunctional' or not isinstance(self, ProductParameterFunctional):
-            if isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
+        if self.name is not None or not isinstance(self, ProductParameterFunctional):
+            if isinstance(other, ProductParameterFunctional) and other.name is None:
                 return other.with_(factors=(self,) + other.factors)
             else:
                 return ProductParameterFunctional((self, other))
-        elif isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
+        elif isinstance(other, ProductParameterFunctional) and other.name is None:
             factors = self.factors + other.factors
             return ProductParameterFunctional(factors)
         else:
@@ -149,7 +149,11 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert isinstance(index, Number)
         assert 0 <= index < size
 
-        self.__auto_init(locals())
+        self.parameter = parameter
+        self.size = size
+        self.index = index
+        self.name = name
+
         self.parameters_own = {parameter: size}
 
     def evaluate(self, mu=None):
@@ -190,8 +194,13 @@ class GenericParameterFunctional(ParameterFunctional):
     """
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
-        self.__auto_init(locals())
         self.parameters_own = parameters
+
+        self.mapping = mapping
+        self.parameters = parameters
+        self.name = name
+        self.derivative_mappings = derivative_mappings
+        self.second_derivative_mappings = second_derivative_mappings
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -297,11 +306,13 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         else:
             second_derivative_mappings = None
         super().__init__(exp_mapping, parameters, name, derivative_mappings, second_derivative_mappings)
-        self.__auto_init(locals())
+        self.expression = expression
+        self.derivative_expressions = derivative_expressions
+        self.second_derivative_expressions = second_derivative_expressions
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,
-                (self.expression, self.parameters, getattr(self, '_name', None),
+                (self.expression, self.parameters, self.name,
                  self.derivative_expressions, self.second_derivative_expressions))
 
 
@@ -320,7 +331,9 @@ class ProductParameterFunctional(ParameterFunctional):
         assert len(factors) > 0
         assert all(isinstance(f, ParameterFunctional | Number) for f in factors)
         factors = tuple(factors)
-        self.__auto_init(locals())
+
+        self.factors = factors
+        self.name = name
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -387,7 +400,7 @@ class ConstantParameterFunctional(ParameterFunctional):
 
     def __init__(self, constant_value, name=None):
         self.constant_value = constant_value
-        self.__auto_init(locals())
+        self.name = name
 
     def evaluate(self, mu=None):
         return self.constant_value
@@ -423,7 +436,10 @@ class LincombParameterFunctional(ParameterFunctional):
         assert all(isinstance(c, Number) for c in coefficients)
         functionals = tuple(functionals)
         coefficients = tuple(coefficients)
-        self.__auto_init(locals())
+
+        self.functionals = functionals
+        self.coefficients = coefficients
+        self.name = name
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -445,7 +461,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     for Q positive coefficient |ParameterFunctional| theta_1, ..., theta_Q and positive
     semi-definite component bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a
     parameter with respect to which the coercivity constant
-    of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t. ::
+    of a(., ., mu_bar) is known, i.e. we know alpha_mu_bar > 0, s.t. ::
 
       alpha_mu_bar |u|_V^2 <= a(u, u, mu=mu_bar).
 
@@ -485,7 +501,12 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert np.all(thetas_mu_bar > 0)
         assert isinstance(alpha_mu_bar, Number)
         assert alpha_mu_bar > 0
-        self.__auto_init(locals())
+
+        self.thetas = thetas
+        self.mu_bar = mu_bar
+        self.alpha_mu_bar = alpha_mu_bar
+        self.name = name
+
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
@@ -510,7 +531,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     for Q coefficient |ParameterFunctional| theta_1, ..., theta_Q and continuous bilinear forms
     a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a
     parameter with respect to which the continuity constant of a(., ., mu_bar) or l(., mu_bar)
-    is known, i.e. we known gamma_mu_bar > 0, s.t. ::
+    is known, i.e. we know gamma_mu_bar > 0, s.t. ::
 
       a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V
 
@@ -576,7 +597,13 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)
         assert gamma_mu_bar > 0
-        self.__auto_init(locals())
+
+        self.thetas_prime = thetas_prime
+        self.thetas = thetas
+        self.mu_bar = mu_bar
+        self.gamma_mu_bar = gamma_mu_bar
+        self.name = name
+
         self.thetas_mu_bar = thetas_mu_bar
         self.theta_mu_bar_has_negative = np.any(thetas_mu_bar < 0)
         if self.theta_mu_bar_has_negative:

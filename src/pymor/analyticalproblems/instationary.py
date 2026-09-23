@@ -39,7 +39,6 @@ class InstationaryProblem(ParametricObject):
     """
 
     def __init__(self, stationary_part, initial_data, T=1., parameter_ranges=None, name=None):
-        name = name or ('instationary_' + stationary_part.name)
         assert (initial_data is None
                 or initial_data.dim_domain == stationary_part.domain.dim and initial_data.shape_range == ())
         assert (parameter_ranges is None
@@ -55,7 +54,12 @@ class InstationaryProblem(ParametricObject):
             tuple(parameter_ranges) if isinstance(parameter_ranges, list | tuple) else
             FrozenDict((k, tuple(v)) for k, v in parameter_ranges.items())
         )
-        self.__auto_init(locals())
+
+        self.stationary_part = stationary_part
+        self.initial_data = initial_data
+        self.T = T
+        self.parameter_ranges = parameter_ranges
+        self.name = name
 
     def with_stationary_part(self, **kwargs):
         return self.with_(stationary_part=self.stationary_part.with_(**kwargs))

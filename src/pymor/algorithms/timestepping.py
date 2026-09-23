@@ -4,7 +4,7 @@
 
 """Generic time-stepping algorithms for the solution of instationary problems.
 
-The algorithms are generic in the sense that each algorithms operates exclusively
+The algorithms are generic in the sense that each algorithm operates exclusively
 on |Operators| and |VectorArrays|. In particular, the algorithms
 can also be used to turn an arbitrary stationary |Model| provided
 by an external library into an instationary |Model|.
@@ -163,7 +163,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
     """
 
     def __init__(self, nt, solver=None):
-        self.__auto_init(locals())
+        self.nt = nt
+        self.solver = solver
 
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt
@@ -252,7 +253,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
     """
 
     def __init__(self, nt):
-        self.__auto_init(locals())
+        self.nt = nt
 
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt
@@ -342,7 +343,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     """
 
     def __init__(self, nt, solver=None):
-        self.__auto_init(locals())
+        self.nt = nt
+        self.solver = solver
 
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt

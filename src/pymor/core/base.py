@@ -51,11 +51,18 @@ functionality:
 import abc
 import inspect
 import uuid
-from functools import wraps
+from collections.abc import Callable
+from types import MethodType
+from typing import TYPE_CHECKING, Any, Concatenate, Generic, ParamSpec, TypeVar, overload
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
 from pymor.tools.formatrepr import _format_generic, format_repr
+
+try:
+    from typing import Self
+except ImportError:
+    Self = TypeVar('Self', bound='classinstancemethod')
 
 NoneType = type(None)
 
@@ -96,28 +103,7 @@ class UberMeta(abc.ABCMeta):
             if attr in classdict:
                 raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
 
-        def __auto_init(self, locals_):
-            """Automatically assign __init__ arguments.
-
-            This method is used in __init__ to automatically assign __init__ arguments to equally
-            named object attributes. The values are provided by the `locals_` dict. Usually,
-            `__auto_init` is called as::
-
-                self.__auto_init(locals())
-
-            where `locals()` returns a dictionary of all local variables in the current scope.
-            Only attributes which have not already been set by the user are initialized by
-            `__auto_init`.
-            """
-            for arg in c._init_arguments:
-                if arg not in self.__dict__:
-                    setattr(self, arg, locals_[arg])
-
-        auto_init_name = f"_{classname.lstrip('_')}__auto_init"
-        classdict[auto_init_name] = __auto_init
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
-        # by updating the qualified name we make filtering in sphinx possible
-        getattr(c, auto_init_name).__qualname__ = auto_init_name
 
         init_sig = inspect.signature(c.__init__)
         init_args = []
@@ -149,22 +135,14 @@ class BasicObject(metaclass=UberMeta):
         name as prefix.
     logging_disabled
         `True` if logging has been disabled.
-    name
-        The name of the instance. If not set by the user, the name is
-        set to the class name.
     uid
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
+    name
+        Name of the object.
     """
 
-    @property
-    def name(self):
-        n = getattr(self, '_name', None)
-        return n or type(self).__name__
-
-    @name.setter
-    def name(self, n):
-        self._name = n
+    name = None
 
     @property
     def logging_disabled(self):
@@ -194,8 +172,6 @@ class BasicObject(metaclass=UberMeta):
         return self._uid.uid
 
     def _format_repr(self, max_width, verbosity, override={}):
-        if verbosity < 3 and self.name == type(self).__name__ and 'name' not in override:
-            override = dict(override, name=None)
         return _format_generic(self, max_width, verbosity, override=override)
 
     def __repr__(self):
@@ -208,29 +184,32 @@ abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
 
 
-class classinstancemethod: # noqa: N801
+P = ParamSpec('P')
 
-    def __init__(self, cls_meth):
-        self.cls_meth = cls_meth
+R = TypeVar('R')
 
-    def __get__(self, instance, cls):
+
+class classinstancemethod(Generic[P, R]): # noqa: N801
+
+    def __init__(self, cls_meth: Callable[Concatenate[Any, P], R]):
+        self.cls_meth: Callable[Concatenate[Any, P], R] = cls_meth
+
+    @overload
+    def __get__(self, instance: None, cls: None, /) -> Self: ...
+    @overload
+    def __get__(self, instance: object, cls: type[Any] | None, /) -> Callable[P, R]: ...
+
+    def __get__(self, instance: Any, cls: Any, /) -> Any:
         if cls is None:
             return self
-        if instance is None:
-            @wraps(self.cls_meth)
-            def the_class_method(*args, **kwargs):
-                return self.cls_meth(cls, *args, **kwargs)
-            the_class_method.autoapi_skip = True
-            return the_class_method
+        elif instance is None:
+            return MethodType(self.cls_meth, cls)
         else:
-            @wraps(self.inst_meth)
-            def the_instance_method(*args, **kwargs):
-                return self.inst_meth(instance, *args, **kwargs)
-            return the_instance_method
+            return MethodType(self.inst_meth, instance)
 
-    def instancemethod(self, inst_meth):
+    def instancemethod(self, inst_meth: Callable[Concatenate[Any, P], R]) -> Self:
         inst_meth.__doc__ = inst_meth.__doc__ or self.cls_meth.__doc__
-        self.inst_meth = inst_meth
+        self.inst_meth: Callable[Concatenate[Any, P], R] = inst_meth
         return self
 
 
@@ -257,7 +236,8 @@ class ImmutableMeta(UberMeta):
         instance._locked = True
         return instance
 
-    __call__ = _call
+    if not TYPE_CHECKING:
+        __call__ = _call
 
 
 class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
@@ -298,7 +278,7 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
     def with_(self, new_type=None, **kwargs):
         """Returns a copy with changed attributes.
 
-        A a new class instance is created with the given keyword arguments as
+        A new class instance is created with the given keyword arguments as
         arguments for `__init__`.  Missing arguments are obtained form instance
         attributes with the
         same name.

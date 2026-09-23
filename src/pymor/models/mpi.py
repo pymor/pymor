@@ -54,7 +54,7 @@ class MPIModel:
 class MPIVisualizer(ImmutableObject):
 
     def __init__(self, m_obj_id):
-        self.__auto_init(locals())
+        self.m_obj_id = m_obj_id
 
     def visualize(self, U, **kwargs):
         if isinstance(U, tuple):
@@ -81,7 +81,7 @@ def _MPIVisualizer_visualize(m, U, ind, **kwargs):
 def mpi_wrap_model(local_models, mpi_spaces=None, use_with=True, with_apply2=False,
                    pickle_local_spaces=True, space_type=MPIVectorSpace,
                    base_type=None):
-    """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
+    """Wrap MPI distributed local |Models| as a global |Model| on rank 0.
 
     Given MPI distributed local |Models| referred to by the
     :class:`~pymor.tools.mpi.ObjectId` `local_models`, return a new |Model|

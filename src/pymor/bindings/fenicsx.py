@@ -122,7 +122,7 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
     vector_type = ComplexifiedFenicsxVector
 
     def __init__(self, V):
-        self.__auto_init(locals())
+        self.V = V
 
     @property
     def dim(self):
@@ -195,7 +195,17 @@ class FenicsxMatrixBasedOperator(Operator):
         assert not functional or rank == 1
         if rank == 2 and [arg.number() for arg in ufl_form.arguments()] != [0, 1]:
             raise NotImplementedError
-        self.__auto_init(locals())
+
+        self.ufl_form = ufl_form
+        self.params = params
+        self.bcs = bcs
+        self.diag = diag
+        self.ufl_lifting_form = ufl_lifting_form
+        self.alpha = alpha
+        self.functional = functional
+        self.solver = solver
+        self.name = name
+
         self.compiled_form = form(ufl_form)
         self.compiled_lifting_form = form(ufl_lifting_form)
         self.rank = rank
@@ -218,8 +228,7 @@ class FenicsxMatrixBasedOperator(Operator):
         if self.rank == 2:
             mat = assemble_matrix(self.compiled_form, bcs=self.bcs, diag=self.diag)
             mat.assemble()
-            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver,
-                                         name=self.name + '_assembled')
+            return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self.solver, name=self.name)
         else:
             vec = assemble_vector(self.compiled_form)
             if self.bcs and self.lifting_form:
@@ -251,7 +260,11 @@ class FenicsxLinearSolver(ComplexifiedListVectorArrayBasedSolver):
 
     @defaults('method', 'preconditioner', 'keep_solver')
     def __init__(self, comm, method=PETSc.KSP.Type.PREONLY, preconditioner=PETSc.PC.Type.LU, keep_solver=True):
-        self.__auto_init(locals())
+        self.comm = comm
+        self.method = method
+        self.preconditioner = preconditioner
+        self.keep_solver = keep_solver
+
         if keep_solver:  # not thread safe
             self._solver = self._create_solver()
             self._adjoint_solver = self._create_solver()
@@ -312,7 +325,13 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
     def __init__(self, matrix, range_space, source_space, solver=None, name=None):
         solver = solver or FenicsxLinearSolver(source_space.mesh.comm)
-        self.__auto_init(locals())
+
+        self.matrix = matrix
+        self.range_space = range_space
+        self.source_space = source_space
+        self.solver = solver
+        self.name = name
+
         self.range = FenicsxVectorSpace(range_space)
         self.source = FenicsxVectorSpace(source_space)
 
@@ -356,7 +375,17 @@ class FenicsxOperator(Operator):
         if alpha is None:
             alpha = -1 if apply_lifting_with_jacobian else 1
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
-        self.__auto_init(locals())
+
+        self.ufl_form = ufl_form
+        self.source_function = source_function
+        self.params = params
+        self.bcs = bcs
+        self.alpha = alpha
+        self.linear = linear
+        self.apply_lifting_with_jacobian = apply_lifting_with_jacobian
+        self.solver = solver
+        self.name = name
+
         self.range = FenicsxVectorSpace(ufl_form.arguments()[0].ufl_function_space())
         self.source = FenicsxVectorSpace(source_function.ufl_function_space())
         self.compiled_form = form(ufl_form)
@@ -398,8 +427,7 @@ class FenicsxOperator(Operator):
         self._set_source_function(U)
         mat = assemble_matrix(self.compiled_derivative, self.bcs)
         mat.assemble()
-        return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self._jacobian_solver,
-                                     name=self.name + '_jacobian')
+        return FenicsxMatrixOperator(mat, self.range.V, self.source.V, solver=self._jacobian_solver)
 
     def restricted(self, dofs):
         from pymor.tools.mpi import parallel
@@ -552,7 +580,10 @@ class RestrictedFenicsxOperator(Operator):
     linear = False
 
     def __init__(self, op, restricted_range_dofs, solver=None):
-        self.__auto_init(locals())
+        self.op = op
+        self.restricted_range_dofs = restricted_range_dofs
+        self.solver = solver
+
         self.source = NumpyVectorSpace(op.source.dim)
         self.range = NumpyVectorSpace(len(restricted_range_dofs))
 

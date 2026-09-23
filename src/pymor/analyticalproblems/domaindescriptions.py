@@ -77,7 +77,13 @@ class RectDomain(DomainDescription):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
         domain = np.array(domain)
-        self.__auto_init(locals())
+
+        self.domain = domain
+        self.left = left
+        self.right = right
+        self.top = top
+        self.bottom = bottom
+
         self.boundary_types = frozenset({left, right, top, bottom})
 
     @property
@@ -136,7 +142,11 @@ class CylindricalDomain(DomainDescription):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
         domain = np.array(domain)
-        self.__auto_init(locals())
+
+        self.domain = domain
+        self.top = top
+        self.bottom = bottom
+
         self.boundary_types = frozenset({top, bottom})
 
     @property
@@ -241,7 +251,11 @@ class LineDomain(DomainDescription):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
         domain = np.array(domain)
-        self.__auto_init(locals())
+
+        self.domain = domain
+        self.left = left
+        self.right = right
+
         self.boundary_types = frozenset({left, right})
 
     @property
@@ -328,9 +342,11 @@ class PolygonalDomain(DomainDescription):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
 
-        self.boundary_types = frozenset(boundary_description.keys())
-        self.__auto_init(locals())
+        self.points = points
+        self.boundary_description = boundary_description
+        self.holes = holes
 
+        self.boundary_types = frozenset(boundary_description.keys())
 
 class CircularSectorDomain(PolygonalDomain):
     """Describes a circular sector domain of variable radius.
@@ -378,7 +394,11 @@ class CircularSectorDomain(PolygonalDomain):
             del boundary_description[None]
 
         super().__init__(points, boundary_description)
-        self.__auto_init(locals())
+        self.angle = angle
+        self.radius = radius
+        self.arc = arc
+        self.radii = radii
+        self.num_points = num_points
 
 
 class DiscDomain(PolygonalDomain):
@@ -409,4 +429,6 @@ class DiscDomain(PolygonalDomain):
         boundary_description = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
 
         super().__init__(points, boundary_description)
-        self.__auto_init(locals())
+        self.radius = radius
+        self.boundary = boundary
+        self.num_points = num_points

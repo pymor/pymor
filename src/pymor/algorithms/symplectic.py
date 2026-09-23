@@ -57,7 +57,11 @@ class SymplecticBasis(BasicObject):
         assert isinstance(F, VectorArray)
         assert E.space == F.space == phase_space
         assert len(E) == len(F)
-        self.__auto_init(locals())
+
+        self.E = E
+        self.F = F
+        self.phase_space = phase_space
+        self.check_symplecticity = check_symplecticity
 
         if check_symplecticity and len(E) > 0:
             self._check_symplecticity()
@@ -473,7 +477,9 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
 
 def esr(E, F, J=None):
-    """Elementary SR factorization. Transforms E and F such that.
+    """Elementary SR factorization.
+
+    Transforms E and F such that
 
         [E, F] = S * diag(r11, r22)
 

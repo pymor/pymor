@@ -84,7 +84,7 @@ class RNG(np.random.Generator):
     Parameters
     ----------
     seed_seq
-        A :class:`~numpy.random.SeedSequence` to initialized the RNG with.
+        A :class:`~numpy.random.SeedSequence` to initialize the RNG with.
     """
 
     def __init__(self, seed_seq):

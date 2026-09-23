@@ -73,6 +73,14 @@ class PAAAReductor(BasicObject):
             sampling_values = [sampling_values]
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
+
+        self.sampling_values = sampling_values
+        self.samples_or_fom = samples_or_fom
+        self.conjugate = conjugate
+        self.nsp_tol = nsp_tol
+        self.post_process = post_process
+        self.L_rk_tol = L_rk_tol
+
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
             if not isinstance(samples_or_fom, TransferFunction):
@@ -135,8 +143,6 @@ class PAAAReductor(BasicObject):
         else:
             self._dim_input = 1
             self._dim_output = 1
-
-        self.__auto_init(locals())
 
     def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
         """Reduce using p-AAA.
@@ -352,7 +358,7 @@ def full_nd_loewner(samples, svs, itpl_part):
         # construction of zero rows indices
         zr_idx = np.zeros(len(svs[i]), dtype=bool)
         zr_idx[itpl_part[i]] = 1
-        zr_idc = np.kron(zr_idx,zr_idc)
+        zr_idc = np.kron(zr_idc, zr_idx)
 
     L = samples.reshape(-1,1) * kron_C - (itpl_samples.reshape(-1,1) * kron_C.T).T
 
@@ -401,7 +407,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
             d_zero = d[np.abs(d) < removable_singularity_tol]
             if len(d_zero) > 0:
                 d_min_idx = np.argmin(np.abs(d))
-                d = np.eye(1, len(d), d_min_idx)
+                d = np.eye(len(d))[d_min_idx]
             else:
                 d = 1 / d
             pd = np.kron(pd, d)

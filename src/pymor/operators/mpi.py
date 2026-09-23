@@ -62,7 +62,15 @@ class MPIOperator(Operator):
                  space_type=MPIVectorSpace, solver=None, name=None):
         assert mpi_source or mpi_range
 
-        self.__auto_init(locals())
+        self.obj_id = obj_id
+        self.mpi_range = mpi_range
+        self.mpi_source = mpi_source
+        self.with_apply2 = with_apply2
+        self.pickle_local_spaces = pickle_local_spaces
+        self.space_type = space_type
+        self.solver = solver
+        self.name = name
+
         self.op = op = mpi.get_object(obj_id)
         self.linear = op.linear
         self.parameters = op.parameters
@@ -225,7 +233,7 @@ def _MPIOperator_assemble(self, mu):
 
 def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
                       space_type=MPIVectorSpace):
-    """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
+    """Wrap MPI distributed local |Operators| as a global |Operator| on rank 0.
 
     Given MPI distributed local |Operators| referred to by the
     :class:`~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Operator|

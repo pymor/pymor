@@ -51,7 +51,11 @@ class LincombOperator(Operator):
         operators = tuple(operators)
         coefficients = tuple(coefficients)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.coefficients = coefficients
+        self.solver = solver
+        self.name = name
+
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -60,8 +64,7 @@ class LincombOperator(Operator):
     def H(self):
         return self.with_(operators=[op.H for op in self.operators],
                           coefficients=[c.conjugate() for c in self.coefficients],
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for given |parameter values|.
@@ -139,7 +142,7 @@ class LincombOperator(Operator):
         operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         # try to form a linear combination
-        op = assemble_lincomb(operators, coefficients, solver=self.solver, name=self.name + '_assembled')
+        op = assemble_lincomb(operators, coefficients, solver=self.solver, name=self.name)
         # To avoid infinite recursions, only use the result if at least one of the following
         # is true:
         #   - The operator is parametric, so the the result of assemble *must* be a different,
@@ -161,8 +164,7 @@ class LincombOperator(Operator):
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         return LincombOperator(jacobians, self.coefficients,
-                               solver=self._jacobian_solver,
-                               name=self.name + '_jacobian').assemble(mu)
+                               solver=self._jacobian_solver).assemble(mu)
 
     def d_mu(self, parameter, index=0):
         for op in self.operators:
@@ -174,7 +176,7 @@ class LincombOperator(Operator):
                 derivative_coefficients.append(coef.d_mu(parameter, index))
             else:
                 derivative_coefficients.append(0.)
-        return self.with_(coefficients=derivative_coefficients, solver=self.solver, name=self.name + '_d_mu')
+        return self.with_(coefficients=derivative_coefficients, solver=self.solver)
 
     def _apply_inverse(self, V, mu, initial_guess):
         if len(self.operators) != 1:
@@ -232,7 +234,10 @@ class ConcatenationOperator(Operator):
         assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
         operators = tuple(operators)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.solver = solver
+        self.name = name
+
         self.source = operators[-1].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -240,8 +245,7 @@ class ConcatenationOperator(Operator):
     @property
     def H(self):
         return type(self)(tuple(op.H for op in self.operators[::-1]),
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -262,8 +266,7 @@ class ConcatenationOperator(Operator):
             Us.append(op.apply(Us[-1], mu=mu))
         return ConcatenationOperator(tuple(op.jacobian(U, mu=mu)
                                            for op, U in zip(self.operators, Us[::-1], strict=True)),
-                                     solver=self._jacobian_solver,
-                                     name=self.name + '_jacobian')
+                                     solver=self._jacobian_solver)
 
     def d_mu(self, parameter, index=0):
         summands = []
@@ -289,12 +292,12 @@ class ConcatenationOperator(Operator):
         if not isinstance(other, Operator):
             return NotImplemented
 
-        if self.name != 'ConcatenationOperator':
-            if isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
+        if self.name is not None:
+            if isinstance(other, ConcatenationOperator) and other.name is None:
                 operators = (self,) + other.operators
             else:
                 operators = (self, other)
-        elif isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
+        elif isinstance(other, ConcatenationOperator) and other.name is None:
             operators = self.operators + other.operators
         else:
             operators = self.operators + (other,)
@@ -306,7 +309,7 @@ class ConcatenationOperator(Operator):
             return NotImplemented
 
         # note that 'other' can never be a ConcatenationOperator
-        if self.name != 'ConcatenationOperator':
+        if self.name is not None:
             operators = (other, self)
         else:
             operators = (other,) + self.operators
@@ -356,7 +359,14 @@ class ProjectedOperator(Operator):
             source_basis = source_basis.copy()
         if range_basis is not None:
             range_basis = range_basis.copy()
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.range_basis = range_basis
+        self.source_basis = source_basis
+        self.product = product
+        self.solver = solver
+        self.name = name
+
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.linear = operator.linear
@@ -459,7 +469,13 @@ class LowRankOperator(Operator):
         assert core.ndim == 2
         assert core.shape[0] == core.shape[1] == len(left)
 
-        self.__auto_init(locals())
+        self.left = left
+        self.core = core
+        self.right = right
+        self.inverted = inverted
+        self.solver = solver
+        self.name = name
+
         self.source = right.space
         self.range = left.space
 
@@ -469,8 +485,7 @@ class LowRankOperator(Operator):
                           self.core.T.conj(),
                           self.left,
                           inverted=self.inverted,
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -533,7 +548,10 @@ class LowRankUpdatedOperator(LincombOperator):
         assert isinstance(lr_operator, LowRankOperator)
         super().__init__([operator, lr_operator], [coeff, lr_coeff],
                          solver=solver, name=name)
-        self.__auto_init(locals())
+        self.operator = operator
+        self.lr_operator = lr_operator
+        self.coeff = coeff
+        self.lr_coeff = lr_coeff
 
     def _apply_inverse(self, V, mu, initial_guess):
         A, LR = self.operators
@@ -591,7 +609,11 @@ class ComponentProjectionOperator(Operator):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
-        self.__auto_init(locals())
+        self.components = components
+        self.source = source
+        self.solver = solver
+        self.name = name
+
         self.range = NumpyVectorSpace(len(components))
 
     def apply(self, U, mu=None):
@@ -625,7 +647,11 @@ class IdentityOperator(Operator):
 
     def __init__(self, space, solver=None, name=None):
         assert isinstance(space, VectorSpace)
-        self.__auto_init(locals())
+
+        self.space = space
+        self.solver = solver
+        self.name = name
+
         self.source = self.range = space
 
     @property
@@ -678,7 +704,11 @@ class ConstantOperator(Operator):
         assert len(value) == 1
         value = value.copy()
 
-        self.__auto_init(locals())
+        self.value = value
+        self.source = source
+        self.solver = solver
+        self.name = name
+
         self.range = value.space
 
     def apply(self, U, mu=None):
@@ -688,7 +718,7 @@ class ConstantOperator(Operator):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.range, self.source, solver=self._jacobian_solver, name=self.name + '_jacobian')
+        return ZeroOperator(self.range, self.source, solver=self._jacobian_solver)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -716,11 +746,15 @@ class ZeroOperator(Operator):
     def __init__(self, range, source, solver=None, name=None):
         assert isinstance(range, VectorSpace)
         assert isinstance(source, VectorSpace)
-        self.__auto_init(locals())
+
+        self.range = range
+        self.source = source
+        self.solver = solver
+        self.name = name
 
     @property
     def H(self):
-        return type(self)(self.source, self.range, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return type(self)(self.source, self.range, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -762,7 +796,12 @@ class VectorArrayOperator(Operator):
 
     def __init__(self, array, adjoint=False, solver=None, name=None):
         array = array.copy()
-        self.__auto_init(locals())
+
+        self.array = array
+        self.adjoint = adjoint
+        self.solver = solver
+        self.name = name
+
         if adjoint:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array))
@@ -772,8 +811,7 @@ class VectorArrayOperator(Operator):
 
     @property
     def H(self):
-        return VectorArrayOperator(self.array, not self.adjoint,
-                                   solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return VectorArrayOperator(self.array, not self.adjoint, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -906,14 +944,18 @@ class ProxyOperator(Operator):
 
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
 
     @property
     def H(self):
-        return self.with_(operator=self.operator.H, solver=self._adjoint_solver, name=self.name + '_adjoint')
+        return self.with_(operator=self.operator.H, solver=self._adjoint_solver)
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=mu)
@@ -993,7 +1035,7 @@ class AffineOperator(ProxyOperator):
             raise NotImplementedError
         super().__init__(operator, solver=solver, name=name)
         self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
-        self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
+        self.linear_part = LinearOperator(operator - self.affine_shift)
 
     def jacobian(self, U, mu=None):
         jac = self.linear_part.jacobian(U, mu)
@@ -1019,9 +1061,11 @@ class InverseOperator(Operator):
 
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
-        name or operator.name + '_inverse'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.range
         self.range = operator.source
         self.linear = operator.linear
@@ -1065,9 +1109,11 @@ class InverseAdjointOperator(Operator):
     def __init__(self, operator, solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
-        name = name or operator.name + '_inverse_adjoint'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
         self.range = operator.range
 
@@ -1104,7 +1150,7 @@ class AdjointOperator(Operator):
 
     Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
     `op^*v` is simply given by application of the
-    :attr:adjoint <pymor.operators.interface.Operator.H>`
+    :attr:`adjoint <pymor.operators.interface.Operator.H>`
     |Operator|.
 
     Parameters
@@ -1122,7 +1168,7 @@ class AdjointOperator(Operator):
         and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
+        :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
     solver
         The |Solver| for the operator.
     name
@@ -1135,9 +1181,14 @@ class AdjointOperator(Operator):
                  solver=None, name=None):
         assert isinstance(operator, Operator)
         assert operator.linear
-        name or operator.name + '_adjoint'
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.source_product = source_product
+        self.range_product = range_product
+        self.with_apply_inverse = with_apply_inverse
+        self.solver = solver
+        self.name = name
+
         self.source = operator.range
         self.range = operator.source
 
@@ -1226,16 +1277,19 @@ class SelectionOperator(Operator):
         operators = tuple(operators)
         boundaries = tuple(boundaries)
 
-        self.__auto_init(locals())
+        self.operators = operators
+        self.parameter_functional = parameter_functional
+        self.boundaries = boundaries
+        self.solver = solver
+        self.name = name
+
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
 
     @property
     def H(self):
-        return self.with_(operators=[op.H for op in self.operators],
-                          solver=self._adjoint_solver,
-                          name=self.name + '_adjoint')
+        return self.with_(operators=[op.H for op in self.operators], solver=self._adjoint_solver)
 
     def _get_operator_number(self, mu):
         value = self.parameter_functional.evaluate(mu)
@@ -1369,7 +1423,11 @@ class InducedNorm(ParametricObject):
 
     def __init__(self, product, raise_negative, tol, name):
         name = name or product.name
-        self.__auto_init(locals())
+
+        self.product = product
+        self.raise_negative = raise_negative
+        self.tol = tol
+        self.name = name
 
     def __call__(self, U, mu=None):
         norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real
@@ -1411,7 +1469,12 @@ class NumpyConversionOperator(Operator):
 
     def __init__(self, space, direction='to_numpy', solver=None, name=None):
         assert direction in ('to_numpy', 'from_numpy')
-        self.__auto_init(locals())
+
+        self.space = space
+        self.direction = direction
+        self.solver = solver
+        self.name = name
+
         if direction == 'to_numpy':
             self.source = space
             self.range = NumpyVectorSpace(space.dim)
@@ -1491,7 +1554,11 @@ class QuadraticFunctional(Operator):
     def __init__(self, operator, solver=None, name=None):
         assert operator.linear
         assert operator.source == operator.range
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.solver = solver
+        self.name = name
+
         self.source = operator.source
 
     def apply(self, U, mu=None):
@@ -1500,11 +1567,11 @@ class QuadraticFunctional(Operator):
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
-        return VectorFunctional(inner_vec, solver=self._jacobian_solver, name=self.name + '_jacobian')
+        return VectorFunctional(inner_vec, solver=self._jacobian_solver)
 
     def d_mu(self, parameter, index=1):
         # the parameter derivative only takes effect on the inner operator
-        return QuadraticFunctional(self.operator.d_mu(parameter, index), solver=self.solver, name=self.name + '_d_mu')
+        return QuadraticFunctional(self.operator.d_mu(parameter, index), solver=self.solver)
 
 
 class QuadraticProductFunctional(QuadraticFunctional):
@@ -1538,9 +1605,13 @@ class QuadraticProductFunctional(QuadraticFunctional):
         assert product is None or (
             isinstance(product, Operator) and product.source == right.range
             and product.range == left.range)
-        self.__auto_init(locals())
-        self.source = left.source
+
         if product is None:
-            super().__init__(left.H @ right, name=name)
+            super().__init__(left.H @ right, solver=solver, name=name)
         else:
-            super().__init__(left.H @ product @ right, name=name)
+            super().__init__(left.H @ product @ right, solver=solver, name=name)
+        self.left = left
+        self.right = right
+        self.product = product
+
+        self.source = left.source

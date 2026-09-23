@@ -33,7 +33,7 @@ class DefaultSolver(Solver):
 
     @defaults('try_to_matrix')
     def __init__(self, try_to_matrix=True):
-        self.__auto_init(locals())
+        self.try_to_matrix = try_to_matrix
 
     def _solve(self, operator, V, mu, initial_guess):
         # if the operator implement it's own _apply_inverse, use it

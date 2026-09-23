@@ -77,7 +77,11 @@ class StationaryModel(Model):
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-        self.__auto_init(locals())
+        self.operator = operator
+        self.rhs = rhs
+        self.output_functional = output_functional
+        self.output_d_mu_use_adjoint = output_d_mu_use_adjoint
+
         self.solution_space = operator.source
         self.linear = operator.linear and output_functional.linear
         self.dim_output = output_functional.range.dim
@@ -294,8 +298,16 @@ class InstationaryModel(Model):
         super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
 
+        self.T = T
+        self.initial_data = initial_data
+        self.operator = operator
+        self.rhs = rhs
+        self.mass = mass
+        self.time_stepper = time_stepper
+        self.num_values = num_values
+        self.output_functional = output_functional
+
         self.parameters_internal = dict(self.parameters_internal, t=1)
-        self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
         self.dim_output = output_functional.range.dim

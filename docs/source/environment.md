@@ -24,7 +24,7 @@ from importing the Slycot library.
 
 ```{envvar} PYMOR_DEFAULTS
 If empty or `NONE`, do not load any {mod}`~pymor.core.defaults`
-from file. Otherwise, a `:`-separated list of the paths to a
+from file. Otherwise, a `:`-separated list of the paths to
 Python scripts containing defaults.
 ```
 

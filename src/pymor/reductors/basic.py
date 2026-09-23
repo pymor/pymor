@@ -51,8 +51,15 @@ class ProjectionBasedReductor(BasicObject):
         assert products.keys() <= bases.keys()
         bases = dict(bases)
         products = dict(products)
-        self.__auto_init(locals())
-        self.extension_params = extension_params or {}
+        extension_params = extension_params or {}
+
+        self.fom = fom
+        self.bases = bases
+        self.products = products
+        self.check_orthonormality = check_orthonormality
+        self.check_tol = check_tol
+        self.extension_params = extension_params
+
         self._last_rom = None
 
         if check_orthonormality:
@@ -271,7 +278,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         The basis of the reduced space onto which to project. If `None` an empty basis is used.
     product
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
-        the Euclidean inner product is used.
+        Euclidean inner product is used.
     initial_data_product
         Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected.
         If `None`, the Euclidean inner product is used.
@@ -666,7 +673,8 @@ class ProxyEstimator(ImmutableObject):
 
     def __init__(self, fom, reductor=None):
         assert getattr(fom, 'error_estimator', None)
-        self.__auto_init(locals())
+        self.fom = fom
+        self.reductor = reductor
 
     def estimate_error(self, U, mu, m):
         if len(U) == 0:

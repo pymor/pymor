@@ -52,7 +52,11 @@ class RectGrid(GridWithOrthogonalCenters):
         if identify_bottom_top:
             assert num_intervals[1] > 1
         domain = np.array(domain)
-        self.__auto_init(locals())
+
+        self.num_intervals = num_intervals
+        self.domain = domain
+        self.identify_left_right = identify_left_right
+        self.identify_bottom_top = identify_bottom_top
 
         self.x0_num_intervals = num_intervals[0]
         self.x1_num_intervals = num_intervals[1]
@@ -211,7 +215,7 @@ class RectGrid(GridWithOrthogonalCenters):
         U
             |NumPy array| of the data to visualize. If `U.dim == 2 and U.shape[1] > 1`, the
             data is visualized as a time series of plots. Alternatively, a tuple of
-            |Numpy arrays| can be provided, in which case a subplot is created for
+            |NumPy arrays| can be provided, in which case a subplot is created for
             each entry of the tuple. The number of time points per array must match.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).

@@ -79,7 +79,7 @@ def project(op, range_basis, source_basis, product=None):
     rb = product.apply(range_basis) if product is not None and range_basis is not None else range_basis
 
     try:
-        return ProjectRules(rb, source_basis).apply(op).with_(name=None)
+        return ProjectRules(rb, source_basis).apply(op)
     except NoMatchingRuleError:
         op.logger.warning('Using inefficient generic projection operator')
         return ProjectedOperator(op, range_basis, source_basis, product)
@@ -90,7 +90,8 @@ class ProjectRules(RuleTable):
 
     def __init__(self, range_basis, source_basis):
         super().__init__(use_caching=True)
-        self.__auto_init(locals())
+        self.range_basis = range_basis
+        self.source_basis = source_basis
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
@@ -294,7 +295,8 @@ class ProjectToSubbasisRules(RuleTable):
 
     def __init__(self, dim_range, dim_source):
         super().__init__(use_caching=True)
-        self.__auto_init(locals())
+        self.dim_range = dim_range
+        self.dim_source = dim_source
 
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op):

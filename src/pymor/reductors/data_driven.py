@@ -69,7 +69,7 @@ class DataDrivenReductor(BasicObject):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     input_scaler_fitted
         If `True`, the `input_scaler` is assumed to be already fitted and will
@@ -89,28 +89,37 @@ class DataDrivenReductor(BasicObject):
                  input_scaler_fitted=False, output_scaler_fitted=False):
         assert target_quantity in ('solution', 'output')
         assert target_quantity == 'solution' or output_functional is None
-        self.__auto_init(locals())
-
-        if self.regressor is None:
-            self.regressor = VKOGARegressor()
-
         assert training_parameters is not None
         assert len(training_parameters) > 0
         assert training_snapshots is not None
+
+        if regressor is None:
+            regressor = VKOGARegressor()
+
+        self.training_parameters = training_parameters
+        self.training_snapshots = training_snapshots
+        self.regressor = regressor
+        self.target_quantity = target_quantity
+        self.T = T
+        self.time_vectorized = time_vectorized
+        self.output_functional = output_functional
+        self.input_scaler = input_scaler
+        self.output_scaler = output_scaler
+        self.input_scaler_fitted = input_scaler_fitted
+        self.output_scaler_fitted = output_scaler_fitted
+
         self.parameters = training_parameters[0].parameters()
         self.parameters_dim = training_parameters[0].parameters().dim
         self.nt = int(len(training_snapshots) / len(training_parameters))
         assert len(training_snapshots) == len(training_parameters) * self.nt
         if self.nt > 1:  # instationary
             assert T is not None
-            self.T = T
             self.is_stationary = False
         else:  # stationary
             assert T is None
             self.is_stationary = True
 
         self.dim_solution_space = None
-
         self._n_trained = 0
 
         # compute training data
@@ -284,11 +293,23 @@ class DataDrivenPODReductor(DataDrivenReductor):
                  input_scaler=None, output_scaler=None,
                  input_scaler_fitted=False, output_scaler_fitted=False,
                  product=None, pod_params=None):
-        self.reduced_basis = None
-        self.__auto_init(locals())
+        if pod_params is None:
+            pod_params = {}
 
-        if self.pod_params is None:
-            self.pod_params = {}
+        self.training_parameters = training_parameters
+        self.training_snapshots = training_snapshots
+        self.regressor = regressor
+        self.T = T
+        self.time_vectorized = time_vectorized
+        self.output_functional = output_functional
+        self.input_scaler = input_scaler
+        self.output_scaler = output_scaler
+        self.input_scaler_fitted = input_scaler_fitted
+        self.output_scaler_fitted = output_scaler_fitted
+        self.product = product
+        self.pod_params = pod_params
+
+        self.reduced_basis = None
 
     def reduce(self, **kwargs):
         if self.reduced_basis is None:
@@ -354,7 +375,11 @@ class AdaptiveDataDrivenReductor(BasicObject):
         assert isinstance(dd_reductor_parameters, dict)
         assert isinstance(retrain_interval, int)
         assert retrain_interval >= 1
-        self.__auto_init(locals())
+
+        self.dd_reductor_parameters = dd_reductor_parameters
+        self.retrain_interval = retrain_interval
+        self.fom = fom
+
         self.dd_reductors = []
         self.dd_models = []
         self._pending_retrains = []

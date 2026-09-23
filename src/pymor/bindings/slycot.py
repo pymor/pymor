@@ -152,7 +152,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
 
 
 class SlycotRiccatiSolverLR(RiccatiSolverLR):
-    r"""Compute a low-rank factor of a the solution of a |RiccatiEquation| using slycot.
+    r"""Compute a low-rank factor of the solution of a |RiccatiEquation| using slycot.
 
     Computes the dense solution :math:`X` with :class:`SlycotRiccatiSolver` and
     factorizes it.

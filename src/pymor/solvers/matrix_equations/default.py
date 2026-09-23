@@ -223,7 +223,13 @@ class MatrixEquationSolvers(ImmutableObject):
         assert isinstance(positive_riccati_lr, PositiveRiccatiSolverLR)
         assert isinstance(sylvester, SylvesterSolver)
 
-        self.__auto_init(locals())
+        self.lyapunov = lyapunov
+        self.lyapunov_lr = lyapunov_lr
+        self.riccati = riccati
+        self.riccati_lr = riccati_lr
+        self.positive_riccati = positive_riccati
+        self.positive_riccati_lr = positive_riccati_lr
+        self.sylvester = sylvester
 
 def _dense_backend():
     return 'slycot' if config.HAVE_SLYCOT else 'scipy'

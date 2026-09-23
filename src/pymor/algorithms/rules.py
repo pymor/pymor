@@ -214,7 +214,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         cls.rules.insert(index, rule_)
 
     @insert_rule.instancemethod
-    def insert_rule(self, index, rule_):
+    def _(self, index, rule_):
         """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.insert(index, rule_)
@@ -225,7 +225,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         cls.rules.append(rule_)
 
     @append_rule.instancemethod
-    def append_rule(self, rule_):
+    def _(self, rule_):
         """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
@@ -375,7 +375,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         attributes `a`, for which one of the following is true:
 
             1. `a` is an |Operator|.
-            2. `a` is a dict` and each of its values is either an |Operator| or `None`.
+            2. `a` is a `dict` and each of its values is either an |Operator| or `None`.
             3. `a` is a `list` or `tuple` and each of its elements is either an |Operator|
                or `None`.
             4. `a` is an 'np.ndarray` of `dtype=object` and each of its elements is either

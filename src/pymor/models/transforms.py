@@ -16,7 +16,7 @@ class MoebiusTransformation(ImmutableObject):
     A Moebius transformation
 
     .. math::
-        M(s) = \frac{as+b}{cs+b}
+        M(s) = \frac{as+b}{cs+d}
 
     is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
     a group under composition, therefore the `__matmul__` operator is defined to yield a
@@ -45,7 +45,9 @@ class MoebiusTransformation(ImmutableObject):
             else:
                 coefficients /= np.sqrt(np.abs(kappa)) / np.exp(-1j * np.angle(coefficients[0]))
 
-        self.__auto_init(locals())
+        self.coefficients = coefficients
+        self.normalize = normalize
+        self.name = name
 
     @classmethod
     def from_points(cls, z, w=(0, 1, np.inf), name=None):
@@ -59,8 +61,8 @@ class MoebiusTransformation(ImmutableObject):
         z
             A tuple, list or |NumPy array| of three complex numbers that are transformed.
         w
-            A tuple, list or |NumPy array| of three complex numbers represent the images of `z`.
-            Defaults to `(0, 1, np.inf)`.
+            A tuple, list or |NumPy array| of three complex numbers that represent the images of
+            `z`. Defaults to `(0, 1, np.inf)`.
         name
             Name of the transformation.
 
@@ -100,7 +102,7 @@ class MoebiusTransformation(ImmutableObject):
         """
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
-        return MoebiusTransformation(coefficients, normalize=normalize, name=self.name + '_inverse')
+        return MoebiusTransformation(coefficients, normalize=normalize)
 
     def _mapping(self, x):
         a, b, c, d = self.coefficients
@@ -155,7 +157,7 @@ class BilinearTransformation(MoebiusTransformation):
         assert isinstance(x, Number)
         assert x > 0
         super().__init__([x, -x, 1, 1], name=name)
-        self.__auto_init(locals())
+        self.x = x
 
 
 class CayleyTransformation(MoebiusTransformation):
@@ -174,4 +176,3 @@ class CayleyTransformation(MoebiusTransformation):
 
     def __init__(self, name=None):
         super().__init__([1, -1j, 1, 1j], name=name)
-        self.__auto_init(locals())

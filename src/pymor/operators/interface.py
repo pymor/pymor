@@ -34,6 +34,17 @@ class Operator(ParametricObject):
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
+    H
+        Adjoint |Operator|.
+
+        It holds that ::
+
+            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
+
+        for all `V`, `mu`.
+
+        If the operator has a |Solver|, the adjoint operator will be equipped
+        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
     """
 
     # override NumPy binary operations and ufuncs
@@ -45,17 +56,6 @@ class Operator(ParametricObject):
 
     @property
     def H(self):
-        """Adjoint |Operator|.
-
-        It hold that ::
-
-            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
-
-        for all `V`, `mu`.
-
-        If the operator has a |Solver|, the adjoint operator will be equipped
-        with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
-        """
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self, solver=self._adjoint_solver)
 
@@ -306,7 +306,7 @@ class Operator(ParametricObject):
             raise NotImplementedError
         else:
             from pymor.operators.constructions import ZeroOperator
-            return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
+            return ZeroOperator(self.range, self.source)
 
     def as_range_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its range space.
@@ -422,7 +422,7 @@ class Operator(ParametricObject):
         if self.parametric:
             from pymor.operators.constructions import FixedParameterOperator
 
-            return FixedParameterOperator(self, mu=mu, solver=self.solver, name=self.name + '_assembled')
+            return FixedParameterOperator(self, mu=mu, solver=self.solver, name=self.name)
         else:
             return self
 
@@ -502,13 +502,13 @@ class Operator(ParametricObject):
         if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
-        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
-            if other.name == 'LincombOperator' and isinstance(other, LincombOperator):
+        if self.name is not None or not isinstance(self, LincombOperator):
+            if other.name is None and isinstance(other, LincombOperator):
                 operators = (self,) + other.operators
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 operators, coefficients = (self, other), (1., sign)
-        elif other.name == 'LincombOperator' and isinstance(other, LincombOperator):
+        elif other.name is None and isinstance(other, LincombOperator):
             operators = self.operators + other.operators
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
@@ -538,7 +538,7 @@ class Operator(ParametricObject):
     def __mul__(self, other):
         assert isinstance(other, Number | ParameterFunctional)
         from pymor.operators.constructions import LincombOperator
-        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
+        if self.name is not None or not isinstance(self, LincombOperator):
             return LincombOperator((self,), (other,))
         else:
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))

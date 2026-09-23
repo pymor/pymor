@@ -63,7 +63,8 @@ class ToMatrixRules(RuleTable):
 
     def __init__(self, format, mu):
         super().__init__()
-        self.__auto_init(locals())
+        self.format = format
+        self.mu = mu
 
     @match_class(NumpyHankelOperator)
     def action_NumpyHankelOperator(self, op):

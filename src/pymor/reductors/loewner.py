@@ -19,10 +19,10 @@ class LoewnerReductor(CacheableObject):
     Parameters
     ----------
     s
-        |Numpy Array| of shape (n,) containing the frequencies.
+        |NumPy array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
-        |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
+        |NumPy array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
+        |NumPy array| of shape (n,) for SISO systems where the |NumPy arrays| represent the transfer
         function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
         attribute.
     partitioning
@@ -105,7 +105,12 @@ class LoewnerReductor(CacheableObject):
             self.dim_output = 1
             self.dim_input = 1
 
-        self.__auto_init(locals())
+        self.s = s
+        self.Hs = Hs
+        self.partitioning = partitioning
+        self.ordering = ordering
+        self.conjugate = conjugate
+        self.mimo_handling = mimo_handling
 
     def reduce(self, r=None, tol=1e-12):
         """Reduce using Loewner framework.
@@ -201,7 +206,7 @@ class LoewnerReductor(CacheableObject):
             return (left, right)
         else:
             if self.ordering == 'magnitude':
-                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in len(self.Hs[0])])
+                idx = np.argsort([np.linalg.norm(self.Hs[i]) for i in range(len(self.Hs))])
             elif self.ordering == 'random':
                 rng = new_rng(0)
                 idx = rng.permutation(self.s.shape[0])
@@ -282,6 +287,7 @@ class LoewnerReductor(CacheableObject):
 
         # transform the system to have real matrices
         if self.conjugate:
+            scale = 1 / np.sqrt(2)
             TL = np.zeros((len(ip), len(ip)), dtype=np.complex128)
             for i, si in enumerate(ip):
                 if self.s[si].imag == 0:
@@ -289,10 +295,10 @@ class LoewnerReductor(CacheableObject):
                 else:
                     j = np.argmin(np.abs(self.s[ip] - self.s[si].conjugate()))
                     if i < j:
-                        TL[i, i] = 1
-                        TL[i, j] = 1
-                        TL[j, i] = -1j
-                        TL[j, j] = 1j
+                        TL[i, i] = scale
+                        TL[i, j] = scale
+                        TL[j, i] = -1j * scale
+                        TL[j, j] = 1j * scale
 
             TR = np.zeros((len(jp), len(jp)), dtype=np.complex128)
             for i, si in enumerate(jp):
@@ -301,12 +307,10 @@ class LoewnerReductor(CacheableObject):
                 else:
                     j = np.argmin(np.abs(self.s[jp] - self.s[si].conjugate()))
                     if i < j:
-                        TR[i, i] = 1
-                        TR[i, j] = 1
-                        TR[j, i] = -1j
-                        TR[j, j] = 1j
-            TR = TR / np.sqrt(2)
-            TL = TL / np.sqrt(2)
+                        TR[i, i] = scale
+                        TR[i, j] = scale
+                        TR[j, i] = -1j * scale
+                        TR[j, j] = 1j * scale
 
             if self.mimo_handling == 'full' and not self.dim_input == self.dim_output == 1:
                 L = np.tensordot(TL, L, axes=(1, 0))

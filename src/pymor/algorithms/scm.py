@@ -47,22 +47,30 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
                  linprog_method='highs', linprog_options={}, M=None):
         assert isinstance(operator, LincombOperator)
         assert all(op.linear and not op.parametric for op in operator.operators)
-        self.__auto_init(locals())
+        assert len(bounds) == len(operator.operators)
+        assert all(isinstance(b, tuple) and len(b) == 2 for b in bounds)
+        assert len(coercivity_constants) == len(constraint_parameters)
+
+        if M is not None:
+            if len(constraint_parameters) < M:
+                self.logger.warning(f'Only {len(constraint_parameters)} parameters available, M is clipped ...')
+                M = len(constraint_parameters)
+
+        self.operator = operator
+        self.constraint_parameters = constraint_parameters
+        self.coercivity_constants = coercivity_constants
+        self.bounds = bounds
+        self.linprog_method = linprog_method
+        self.linprog_options = linprog_options
+        self.M = M
+
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                             for f in operator.coefficients)
 
-        if self.M is not None:
-            if len(self.constraint_parameters) < self.M:
-                self.logger.warning(f'Only {len(self.constraint_parameters)} parameters available, M is clipped ...')
-                self.M = len(self.constraint_parameters)
+        if M is not None:
             self.logger.info(f'Setting up KDTree to find {self.M} neighboring parameters ...')
             self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
-
-        assert len(self.bounds) == len(self.operators)
-        assert all(isinstance(b, tuple) and len(b) == 2 for b in self.bounds)
-
-        assert len(self.coercivity_constants) == len(self.constraint_parameters)
 
     def evaluate(self, mu=None):
         c, A_ub, b_ub = self._construct_linear_program(mu)
@@ -106,7 +114,11 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
     def __init__(self, operator, constraint_parameters, minimizers):
         assert isinstance(operator, LincombOperator)
         assert all(op.linear and not op.parametric for op in operator.operators)
-        self.__auto_init(locals())
+
+        self.operator = operator
+        self.constraint_parameters = constraint_parameters
+        self.minimizers = minimizers
+
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                             for f in operator.coefficients)
@@ -127,7 +139,7 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide a bounds on the
+        |LincombOperator| for which to provide bounds on the
         coercivity constant.
     initial_parameter
         |Parameter| used to initialize the surrogate for the greedy algorithm.
@@ -149,7 +161,14 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
 
     def __init__(self, operator, initial_parameter, bounds, product=None,
                  linprog_method='highs', linprog_options={}, M=None):
-        self.__auto_init(locals())
+        self.operator = operator
+        self.initial_parameter = initial_parameter
+        self.bounds = bounds
+        self.product = product
+        self.linprog_method = linprog_method
+        self.linprog_options = linprog_options
+        self.M = M
+
         self.constraint_parameters = []
         self.coercivity_constants = []
         self.minimizers = []
@@ -190,7 +209,7 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide a bounds on the
+        |LincombOperator| for which to provide bounds on the
         coercivity constant.
     training_set
         |Parameters| used as training set for the greedy algorithm.

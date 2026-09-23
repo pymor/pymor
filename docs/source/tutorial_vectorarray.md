@@ -35,7 +35,7 @@ Instead of constantly converting between NumPy arrays and the solver's data stru
 these vectors through a unified interface.
 So as soon as you get in touch with a model's state-space data, e.g., by calling its
 {meth}`~pymor.models.interface.Model.solve` method, you will work with {{ VectorArrays }}.
-Note that this also the case for ROMs. pyMOR does not distinguish between FOMs and ROMs,
+Note that this is also the case for ROMs. pyMOR does not distinguish between FOMs and ROMs,
 so even though no external solver is involved, the ROM state is still represented by
 {{ VectorArrays }}.
 
@@ -310,7 +310,7 @@ between the i-th vector in `U` and the i-th vector in `V`:
 U.pairwise_inner(V)
 ```
 
-Norms can be conveniently computed using using the
+Norms can be conveniently computed using the
 {meth}`~pymor.vectorarrays.interface.VectorArray.norm` or
 {meth}`~pymor.vectorarrays.interface.VectorArray.norm2` methods:
 
@@ -372,7 +372,7 @@ copy of the data.
 
 ## Indexing and views
 
-Like NumPy arrays, {{ VectorArrays }} can be indexes with positive or negative integers,
+Like NumPy arrays, {{ VectorArrays }} can be indexed with positive or negative integers,
 slices or lists of integers.
 This *always* results in a new {{ VectorArray }} that is a view onto the data in the original
 array.
@@ -477,7 +477,7 @@ print(U)
 This also works for external solvers that do not support complex numbers themselves.
 In that case, pyMOR automatically manages pairs of real vectors to represent the real and
 imaginary parts and translates all operations on these 'complexified' vectors to the
-corresponding operations on the real and complex parts.
+corresponding operations on the real and imaginary parts.
 For any {{ VectorArray }}, those can be accessed through the
 {attr}`~pymor.vectorarrays.interface.VectorArray.real` and
 {attr}`~pymor.vectorarrays.interface.VectorArray.imag`
@@ -500,7 +500,7 @@ print(U.inner(U * 1j) == U.inner(U) * 1j)
 
 ## Internals / other types of arrays
 
-Finally, we want to take brief look at the internals of {{ VectorArrays }} and also try one other type of
+Finally, we want to take a brief look at the internals of {{ VectorArrays }} and also try one other type of
 array. Let's first build another {{ NumpyVectorArray }}.
 
 ```{code-cell} ipython3

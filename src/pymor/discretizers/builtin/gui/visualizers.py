@@ -42,7 +42,12 @@ class PatchVisualizer(ImmutableObject):
             backend = 'jupyter' if is_jupyter() else 'gl'
         if bounding_box is None:
             bounding_box = grid.bounding_box()
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.codim = codim
+        self.bounding_box = bounding_box
+        self.backend = backend
+        self.block = block
 
     def visualize(self, U, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2,
@@ -133,7 +138,11 @@ class OnedVisualizer(ImmutableObject):
         assert backend in {'jupyter_or_matplotlib', 'jupyter', 'matplotlib'}
         if backend == 'jupyter_or_matplotlib':
             backend = 'jupyter' if is_jupyter() else 'matplotlib'
-        self.__auto_init(locals())
+
+        self.grid = grid
+        self.codim = codim
+        self.block = block
+        self.backend = backend
 
     def visualize(self, U, title=None, legend=None, separate_plots=False,
                   rescale_axes=False, block=None, columns=2, return_widget=False):

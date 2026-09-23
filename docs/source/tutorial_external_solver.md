@@ -82,7 +82,7 @@ example we will actually completely implement the {{ Model }} in Python using a
 
 When this is not an option,
 [RPC](<https://en.wikipedia.org/wiki/Remote_procedure_call>)-based approaches are
-possible as well. For small to medium-sized linear problems, another option it to import
+possible as well. For small to medium-sized linear problems, another option is to import
 system matrices and snapshot data into pyMOR via file exchange and to use NumPy-based
 {mod}`Operators <pymor.operators.numpy>` and {mod}`VectorArrays <pymor.vectorarrays.numpy>`
 to represent the full-order model.

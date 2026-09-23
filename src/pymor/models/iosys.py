@@ -221,7 +221,21 @@ class LTIModel(Model):
 
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+        self.T = T
+        self.initial_data = initial_data
+        self.time_stepper = time_stepper
+        self.num_values = num_values
+        self.presets = presets
+        self.matrix_equation_solvers = matrix_equation_solvers
+        self.shifted_system_solver = shifted_system_solver
+        self.ast_pole_data = ast_pole_data
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
@@ -240,7 +254,7 @@ class LTIModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
     def __str__(self):
         string = (
@@ -937,12 +951,12 @@ class LTIModel(Model):
         """Compute system poles.
 
         .. note::
-            Assumes the systems is small enough to use a dense eigenvalue solver.
+            Assumes the system is small enough to use a dense eigenvalue solver.
 
         Parameters
         ----------
         mu
-            |Parameter values| for which to compute the systems poles.
+            |Parameter values| for which to compute the system's poles.
 
         Returns
         -------
@@ -1210,7 +1224,7 @@ class LTIModel(Model):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm of the |LTIModel|.
 
         .. note::
-            Assumes the system is asymptotically stable. Under this is assumption the
+            Assumes the system is asymptotically stable. Under this assumption, the
             :math:`\mathcal{H}_\infty`-norm is equal to the :math:`\mathcal{L}_\infty`-norm.
             Accordingly, this method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
 
@@ -1740,7 +1754,13 @@ class PHLTIModel(LTIModel):
                          shifted_system_solver=shifted_system_solver,
                          error_estimator=error_estimator, visualizer=visualizer,
                          name=name)
-        self.__auto_init(locals())
+        self.J = J
+        self.R = R
+        self.G = G
+        self.P = P
+        self.S = S
+        self.N = N
+        self.Q = Q
 
     def to_berlin_form(self):
         """Convert the |PHLTIModel| into its Berlin form.
@@ -2110,7 +2130,16 @@ class SecondOrderModel(Model):
         assert matrix_equation_solvers is None or isinstance(matrix_equation_solvers, MatrixEquationSolvers)
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.M = M
+        self.E = E
+        self.K = K
+        self.B = B
+        self.Cp = Cp
+        self.Cv = Cv
+        self.D = D
+        self.sampling_time = sampling_time
+        self.matrix_equation_solvers = matrix_equation_solvers
+
         self.solution_space = M.source
         self.dim_output = Cp.range.dim
 
@@ -2130,7 +2159,7 @@ class SecondOrderModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
         self._lti_model = LTIModel(A=SecondOrderModelOperator(0, 1, -self.E, -self.K),
                                    B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
@@ -2142,8 +2171,7 @@ class SecondOrderModel(Model):
                                    sampling_time=self.sampling_time,
                                    matrix_equation_solvers=self.matrix_equation_solvers,
                                    error_estimator=self.error_estimator,
-                                   visualizer=self.visualizer,
-                                   name=self.name + '_first_order')
+                                   visualizer=self.visualizer)
 
     def __str__(self):
         string = (
@@ -2484,7 +2512,7 @@ class SecondOrderModel(Model):
         """Compute system poles.
 
         .. note::
-            Assumes the systems is small enough to use a dense eigenvalue solver.
+            Assumes the system is small enough to use a dense eigenvalue solver.
 
         Parameters
         ----------
@@ -2653,7 +2681,7 @@ class SecondOrderModel(Model):
         mu
             |Parameter values|.
         return_fpeak
-            Should the frequency at which the maximum is achieved should be returned.
+            Should the frequency at which the maximum is achieved be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
         tol
@@ -2819,7 +2847,15 @@ class LinearDelayModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.Ad = Ad
+        self.tau = tau
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.q = len(Ad)
@@ -2840,7 +2876,7 @@ class LinearDelayModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time)
 
     def __str__(self):
         string = (
@@ -3017,7 +3053,7 @@ class LinearStochasticModel(Model):
         y(k)
         & =
             C x(k)
-            + D u(t),
+            + D u(k),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators and :math:`\omega_i` are stochastic processes.
@@ -3106,7 +3142,14 @@ class LinearStochasticModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.As = As
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.q = len(As)
@@ -3158,7 +3201,7 @@ class BilinearModel(Model):
         y(k)
         & =
             C x(k)
-            + D u(t),
+            + D u(k),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators and :math:`m` is the number of inputs.
@@ -3245,7 +3288,14 @@ class BilinearModel(Model):
         assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
+        self.A = A
+        self.N = N
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
+        self.sampling_time = sampling_time
+
         self.solution_space = A.source
         self.dim_output = C.range.dim
         self.linear = False
@@ -3352,7 +3402,10 @@ class StepFunction(Function):
 
     def __init__(self, dim_input, component, sampling_time):
         super().__init__()
-        self.__auto_init(locals())
+        self.dim_input = dim_input
+        self.component = component
+        self.sampling_time = sampling_time
+
         self.shape_range = (dim_input,)
 
     def evaluate(self, x, mu=None):
@@ -3370,7 +3423,10 @@ class ImpulseFunction(Function):
 
     def __init__(self, dim_input, component, sampling_time):
         super().__init__()
-        self.__auto_init(locals())
+        self.dim_input = dim_input
+        self.component = component
+        self.sampling_time = sampling_time
+
         self.shape_range = (dim_input,)
 
     def evaluate(self, x, mu=None):

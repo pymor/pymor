@@ -35,7 +35,7 @@ class DataDrivenModel(Model):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
@@ -70,7 +70,14 @@ class DataDrivenModel(Model):
 
         assert target_quantity == 'solution' or output_functional is None
 
-        self.__auto_init(locals())
+        self.regressor = regressor
+        self.target_quantity = target_quantity
+        self.parameters = parameters
+        self.dim_solution_space = dim_solution_space
+        self.input_scaler = input_scaler
+        self.output_scaler = output_scaler
+        self.output_functional = output_functional
+
         if self.target_quantity == 'solution':
             assert self.dim_solution_space
             self.solution_space = NumpyVectorSpace(self.dim_solution_space)
@@ -104,7 +111,7 @@ class DataDrivenModel(Model):
 class DataDrivenInstationaryModel(DataDrivenModel):
     """Class for models of instationary problems that use regressors for prediction.
 
-    This class implements a |Model| that uses an regressor for solution
+    This class implements a |Model| that uses a regressor for solution
     or output approximation.
 
     Parameters
@@ -131,7 +138,7 @@ class DataDrivenInstationaryModel(DataDrivenModel):
     output_scaler
         If not `None`, a scaler object with `fit`, `transform` and
         `inverse_transform` methods similar to the scikit-learn interface can be
-        used to scale the outputs (reduced coeffcients or output quantities)
+        used to scale the outputs (reduced coefficients or output quantities)
         before passing them to the regressor.
     time_vectorized
         In the instationary case, determines whether to predict the whole time
@@ -171,8 +178,9 @@ class DataDrivenInstationaryModel(DataDrivenModel):
                          dim_solution_space=dim_solution_space, input_scaler=input_scaler, output_scaler=output_scaler,
                          output_functional=output_functional, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
-
-        self.__auto_init(locals())
+        self.T = T
+        self.nt = nt
+        self.time_vectorized = time_vectorized
 
     def _perform_prediction(self, mu):
         """Performs the prediction with correct scaling."""
@@ -226,7 +234,9 @@ class ModelOfDataDrivenModels(Model):
         assert all(isinstance(m.solution_space, NumpyVectorSpace) for m in models)
         assert all(isinstance(m, DataDrivenModel) for m in models)
         super().__init__(error_estimator=error_estimator)
-        self.__auto_init(locals())
+        self.models = models
+        self.output_functional = output_functional
+
         self.solution_space = NumpyVectorSpace(sum(m.solution_space.dim for m in models))
 
     def _compute(self, quantities, data, mu):
