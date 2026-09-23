@@ -51,11 +51,18 @@ functionality:
 import abc
 import inspect
 import uuid
-from functools import wraps
+from collections.abc import Callable
+from types import MethodType
+from typing import TYPE_CHECKING, Any, Concatenate, Generic, ParamSpec, TypeVar, overload
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
 from pymor.tools.formatrepr import _format_generic, format_repr
+
+try:
+    from typing import Self
+except ImportError:
+    Self = TypeVar('Self', bound='classinstancemethod')
 
 NoneType = type(None)
 
@@ -177,29 +184,32 @@ abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
 
 
-class classinstancemethod: # noqa: N801
+P = ParamSpec('P')
 
-    def __init__(self, cls_meth):
-        self.cls_meth = cls_meth
+R = TypeVar('R')
 
-    def __get__(self, instance, cls):
+
+class classinstancemethod(Generic[P, R]): # noqa: N801
+
+    def __init__(self, cls_meth: Callable[Concatenate[Any, P], R]):
+        self.cls_meth: Callable[Concatenate[Any, P], R] = cls_meth
+
+    @overload
+    def __get__(self, instance: None, cls: None, /) -> Self: ...
+    @overload
+    def __get__(self, instance: object, cls: type[Any] | None, /) -> Callable[P, R]: ...
+
+    def __get__(self, instance: Any, cls: Any, /) -> Any:
         if cls is None:
             return self
-        if instance is None:
-            @wraps(self.cls_meth)
-            def the_class_method(*args, **kwargs):
-                return self.cls_meth(cls, *args, **kwargs)
-            the_class_method.autoapi_skip = True
-            return the_class_method
+        elif instance is None:
+            return MethodType(self.cls_meth, cls)
         else:
-            @wraps(self.inst_meth)
-            def the_instance_method(*args, **kwargs):
-                return self.inst_meth(instance, *args, **kwargs)
-            return the_instance_method
+            return MethodType(self.inst_meth, instance)
 
-    def instancemethod(self, inst_meth):
+    def instancemethod(self, inst_meth: Callable[Concatenate[Any, P], R]) -> Self:
         inst_meth.__doc__ = inst_meth.__doc__ or self.cls_meth.__doc__
-        self.inst_meth = inst_meth
+        self.inst_meth: Callable[Concatenate[Any, P], R] = inst_meth
         return self
 
 
@@ -226,7 +236,8 @@ class ImmutableMeta(UberMeta):
         instance._locked = True
         return instance
 
-    __call__ = _call
+    if not TYPE_CHECKING:
+        __call__ = _call
 
 
 class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
