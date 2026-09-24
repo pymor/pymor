@@ -24,10 +24,10 @@ class BlockOperatorBase(Operator):
             assert blocks.ndim == 2
         elif self.blocked_source:
             if blocks.ndim == 1:
-                blocks.shape = (1, len(blocks))
+                blocks = blocks.reshape((1, len(blocks)))
         else:
             if blocks.ndim == 1:
-                blocks.shape = (len(blocks), 1)
+                blocks = blocks.reshape((len(blocks), 1))
         assert all(isinstance(op, Operator) or op is None for op in blocks.ravel())
 
         # check if every row/column contains at least one operator
