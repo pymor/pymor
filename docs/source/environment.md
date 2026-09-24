@@ -55,6 +55,6 @@ is unset the value of `mpi4py.rc.finalize` remains unchanged, unless
 Required threading level to require when pyMOR calls `mpi4py.MPI.Init_thread`.
 ```
 
-```{envvar} PYMOR_PROGRESS
-If set, display progress bars for long running operations. (EXPERIMENTAL)
+```{envvar} PYMOR_PROGRESS_DISABLE
+If set, disable progress bars for long running operations.
 ```

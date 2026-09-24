@@ -186,7 +186,7 @@ class ConstantFunction(Function):
     def evaluate(self, x, mu=None):
         x = np.asarray(x)
         if x.ndim == 0:
-            x.shape = (1,)
+            x = x.reshape((1,))
         assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
@@ -248,7 +248,7 @@ class GenericFunction(Function):
         assert self.parameters.assert_compatible(mu)
         x = np.asarray(x)
         if x.ndim == 0:
-            x.shape = (1,)
+            x = x.reshape((1,))
         assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
 

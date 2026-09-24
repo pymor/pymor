@@ -184,7 +184,8 @@ class RichAwareHandler(logging.Handler):
 
 @defaults('filename')
 def default_handler(filename=None):
-    streamhandler = RichAwareHandler() if int(os.environ.get('PYMOR_PROGRESS', 0)) == 1 else logging.StreamHandler()
+    streamhandler = (logging.StreamHandler() if int(os.environ.get('PYMOR_PROGRESS_DISABLE', 0)) == 1
+                     else RichAwareHandler())
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
     handlers = [streamhandler]

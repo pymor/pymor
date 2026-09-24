@@ -395,11 +395,11 @@ class Mu(ImmutableObject):
                 time_dependent_values[k] = v
             else:
                 vv = np.asarray(v)
-                if vv.ndim == 0:
-                    vv.shape = (1,)
-                assert vv.ndim == 1
-                assert k != 't' or len(vv) == 1
+                assert vv.ndim <= 1
+                assert k != 't' or vv.size == 1
                 assert not vv.setflags(write=False)
+                if vv.ndim == 0:
+                    vv = vv.reshape((1,))
                 values[k] = vv
 
         assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
