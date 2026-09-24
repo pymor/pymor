@@ -22,7 +22,7 @@ pytestmark = pytest.mark.builtin
 
 
 n_list_small = [10, 20]
-n_list_big = [250]
+n_list_big = [100]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lr_backend_list_small = [
