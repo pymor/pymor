@@ -194,7 +194,8 @@ class RichProgressDisplay(ProgressDisplay):
                 pass
 
 
-progress_display = RichProgressDisplay() if int(os.environ.get('PYMOR_PROGRESS', 0)) == 1 else DummyProgressDisplay()
+progress_display = (DummyProgressDisplay() if int(os.environ.get('PYMOR_PROGRESS_DISABLE', 0)) == 1
+                    else RichProgressDisplay())
 
 
 def get_progress_display():
