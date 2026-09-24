@@ -7,8 +7,8 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.operators.constructions import IdentityOperator
-from pymor.solvers.matrix_equations.interface import RiccatiSolverLR
+from pymor.operators.constructions import IdentityOperator, LowRankOperator, LowRankUpdatedOperator
+from pymor.solvers.matrix_equations.interface import PositiveRiccatiSolverLR, RiccatiSolverLR
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -53,12 +53,30 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         self.hamiltonian_shifts_subspace_columns = hamiltonian_shifts_subspace_columns
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S
+        A, E, B, C, R, Q, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.Q, equation.S
         trans = equation.trans
 
-        if S is not None:
-            raise NotImplementedError
+        if R is None:
+            R = np.eye(len(B))
+        if Q is None:
+            Q = np.eye(len(C))
 
+        if not trans:
+            B, C = C, B
+            R, Q = Q, R
+
+        if S is None:
+            Z_lr = self._solve_impl(A, E, B, C, R, Q, trans)
+        else:
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(Q, -Rinv)
+            Z_lr = self._solve_impl(A, E, B, tC, R, tQ, trans, S=S)
+
+        return Z_lr
+
+
+    def _solve_impl(self, A, E, B, C, R, Q, trans, S=None):
         if self.radi_shifts == 'hamiltonian_shifts':
             init_shifts = self.hamiltonian_shifts_init
             iteration_shifts = self.hamiltonian_shifts
@@ -71,106 +89,156 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             E = IdentityOperator(A.source)
 
         if R is not None:
-            Rc = spla.cholesky(R)                                 # R = Rc^T * Rc
-            Rci = spla.solve_triangular(Rc, np.eye(Rc.shape[0]))  # R^{-1} = Rci * Rci^T
-            if not trans:
-                C = C.lincomb(Rci)
-            else:
-                B = B.lincomb(Rci)
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+            Rinv = 0.5 * (Rinv + Rinv.T)
+        else:
+            R = Rinv = np.eye(len(B))
 
-        if not trans:
-            B, C = C, B
+        A_original = A
+        if S is not None:
+            A = A - (LowRankOperator(B, Rinv, S) if trans else LowRankOperator(S, Rinv, B))
 
         Z = A.source.empty(reserve=len(C) * self.radi_maxiter)
         Y = np.empty((0, 0))
 
         K = A.source.zeros(len(B))
         RF = C.copy()
+        RC = Q.copy()
 
         j = 0
         j_shift = 0
-        shifts = init_shifts(A, E, B, C)
+        shifts = init_shifts(A, E, B, C, Rinv, Q)
 
-        res = np.linalg.norm(RF.gramian(), ord=2)
+        res = np.linalg.norm(RF.gramian() @ RC, ord=2)
         init_res = res
         Ctol = res * self.radi_tol
 
         while res > Ctol and j < self.radi_maxiter:
+            s = shifts[j_shift]
+            sr = s.real
+            si = s.imag
+            sa = np.abs(s)
+            alpha = np.sqrt(-2.0 * sr)
+
             if not trans:
-                AsE = A + shifts[j_shift] * E
+                AsE = A_original + s * E
             else:
-                AsE = A + np.conj(shifts[j_shift]) * E
-            if j == 0:
-                if not trans:
-                    V = AsE.apply_inverse(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
-                else:
-                    V = AsE.apply_inverse_adjoint(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
+                AsE = A_original + np.conj(s) * E
+
+            K_total = K if S is None else K + S
+            BRiK = LowRankOperator(B, Rinv, K_total) if trans else LowRankOperator(K_total, Rinv, B)
+            AsEBRiK = LowRankUpdatedOperator(AsE.assemble(), BRiK, 1, -1)
+
+            if not trans:
+                V = AsEBRiK.apply_inverse(RF, solver=solver)
             else:
-                if not trans:
-                    LN = AsE.apply_inverse(cat_arrays([RF, K]), solver=solver)
-                else:
-                    LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]), solver=solver)
-                L = LN[:len(RF)]
-                N = LN[-len(K):]
-                ImBN = np.eye(len(K)) - B.inner(N)
-                ImBNKL = spla.solve(ImBN, B.inner(L))
-                V = (L + N.lincomb(ImBNKL)) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsEBRiK.apply_inverse_adjoint(RF, solver=solver)
+
+            V = V.lincomb(RC.T)
 
             if np.imag(shifts[j_shift]) == 0:
+                V = alpha * V
                 Z.append(V)
                 VB = V.inner(B)
-                Yt = np.eye(len(C)) - (VB @ VB.T) / (2 * shifts[j_shift].real)
+                Yt = RC + (VB @ Rinv @ VB.T) / alpha**2
                 Y = spla.block_diag(Y, Yt)
                 if not trans:
                     EVYt = E.apply(V).lincomb(spla.inv(Yt).T)
                 else:
                     EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt).T)
-                RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
+                RF.axpy(alpha, EVYt)
                 K += EVYt.lincomb(VB)
                 j += 1
             else:
-                Z.append(V.real)
-                Z.append(V.imag)
-                Vr = V.real.inner(B)
-                Vi = V.imag.inner(B)
-                sa = np.abs(shifts[j_shift])
+                V1 = alpha * V.real
+                V2 = alpha * V.imag
+                Z.append(V1)
+                Z.append(V2)
+                Vr = V1.inner(B)
+                Vi = V2.inner(B)
                 F1 = np.vstack((
-                    -shifts[j_shift].real/sa * Vr - shifts[j_shift].imag/sa * Vi,
-                    shifts[j_shift].imag/sa * Vr - shifts[j_shift].real/sa * Vi
+                    -sr/sa * Vr - si/sa * Vi,
+                    si/sa * Vr - sr/sa * Vi
                 ))
                 F2 = np.vstack((
                     Vr,
                     Vi
                 ))
                 F3 = np.vstack((
-                    shifts[j_shift].imag/sa * np.eye(len(C)),
-                    shifts[j_shift].real/sa * np.eye(len(C))
+                    si/sa * np.eye(len(RF)),
+                    sr/sa * np.eye(len(RF))
                 ))
-                Yt = spla.block_diag(np.eye(len(C)), 0.5 * np.eye(len(C))) \
-                    - (F1 @ F1.T) / (4 * shifts[j_shift].real)  \
-                    - (F2 @ F2.T) / (4 * shifts[j_shift].real)  \
-                    - (F3 @ F3.T) / 2
+                Yt = spla.block_diag(RC, 0.5 * RC) \
+                    - (F1 @ Rinv @ F1.T) / (4 * sr)  \
+                    - (F2 @ Rinv @ F2.T) / (4 * sr)  \
+                    - (F3 @ RC @ F3.T) / 2
                 Y = spla.block_diag(Y, Yt)
                 if not trans:
-                    EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt).T)
+                    EVYt = E.apply(cat_arrays([V1, V2])).lincomb(spla.inv(Yt).T)
                 else:
-                    EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt).T)
-                RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
+                    EVYt = E.apply_adjoint(cat_arrays([V1, V2])).lincomb(spla.inv(Yt).T)
+                RF.axpy(alpha, EVYt[:len(C)])
                 K += EVYt.lincomb(F2)
                 j += 2
             j_shift += 1
-            res = np.linalg.norm(RF.gramian(), ord=2)
+            res = np.linalg.norm(RF.gramian() @ RC, ord=2)
             self.logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
             if j_shift >= shifts.size:
-                shifts = iteration_shifts(A, E, B, RF, K, Z)
+                shifts = iteration_shifts(A, E, B, Rinv, RF, RC, K, Z)
                 j_shift = 0
         # transform solution to low-rank factor
-        cf = spla.cholesky(Y)
-        Z_lr = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))))
+        Yinv = spla.inv(Y)
+        Yinv = (Yinv + Yinv.T) / 2.0
+        Z_lr, S = self.LDL_T_rank_truncation(Z, Yinv)
+        S = np.diag(np.sqrt(np.diag(S)))
+        Z_lr = Z_lr.lincomb(S)
         return Z_lr
 
+    def LDL_T_rank_truncation(self, L, D, tol=np.finfo(float).eps):
+        r"""Computes a rank-truncated :math:`LDL^T` factorization.
 
-    def hamiltonian_shifts_init(self, A, E, B, C):
+        Computes the QR factorization of :math:`L = QR` followed by an
+        eigendecomposition of :math:'RDR^T' and a rank decision based on the absolute
+        values of the computed eigenvalues. The truncated core matrix is the diagonal
+        matrix of preserved eigenvalues and the truncated :math:`L` is computed as
+        :math:`Q` times the preserved (left) eingenvectors.
+
+        Parameters
+        ----------
+        L
+            The |VectorArray| representing the left factor in the
+            :math:`LDL^\top` facorization.
+        D
+            The |NumPy array| representing the core factor.
+        tol
+            The relative truncation tolerance.
+
+        Returns
+        -------
+        hL
+            The |VectorArray| hL representing the left factor in the
+            :math:`LDL^\top` rank-truncated facorization.
+        hD
+            The |NumPy array| representing the core factor.
+        """
+        # QR decomposition of left factor
+        Q, R = gram_schmidt(L, return_R=True)
+        # Solve symmetric eigenvalue problem
+        RDRT = R @ D @ R.T
+        # ensure numerical symmetry
+        RDRT = (RDRT+RDRT.T)/2.0
+        S, U = spla.eigh(RDRT)
+
+        # Thresholding based on tolerance
+        r = np.abs(S) > tol * np.max(np.abs(S))
+
+        # Filtering columns of V and elements of S based on r
+        hL = Q.lincomb(U[:, r])
+        hD = np.diag(S[r])
+        return hL, hD
+
+
+    def hamiltonian_shifts_init(self, A, E, B, C, Rinv, Q):
         """Compute initial shift parameters for low-rank RADI iteration.
 
         Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return
@@ -182,13 +250,17 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         Parameters
         ----------
         A
-            The |Operator| A from the corresponding Riccati equation.
+            The |Operator| A from the corresponding |RiccatiEquation|.
         E
-            The |Operator| E from the corresponding Riccati equation.
+            The |Operator| E from the corresponding |RiccatiEquation|.
         B
-            The |VectorArray| B from the corresponding Riccati equation.
+            The |VectorArray| B from the corresponding |RiccatiEquation|.
         C
-            The |VectorArray| C from the corresponding Riccati equation.
+            The |VectorArray| C from the corresponding |RiccatiEquation|.
+        Rinv
+            The matrix :math:`R^{-1}` as a |NumPy array| from the corresponding |RiccatiEquation|.
+        Q
+            The matrix :math:`Q` as a |NumPy array| from the corresponding |RiccatiEquation|.
 
         Returns
         -------
@@ -197,20 +269,20 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         """
         rng = new_rng(0)
         for _ in range(self.hamiltonian_shifts_init_maxiter):
-            Q = gram_schmidt(C, atol=0, rtol=0)
-            Ap = A.apply2(Q, Q)
-            QB = Q.inner(B)
-            Gp = QB.dot(QB.T)
-            QR = Q.inner(C)
-            Rp = QR.dot(QR.T)
+            U = gram_schmidt(C, atol=0, rtol=0)
+            Ap = A.apply2(U, U)
+            UB = U.inner(B)
+            Gp = UB @ (Rinv @ UB.T)
+            UR = U.inner(C)
+            Rp = (UR @ Q) @ UR.T if Q is not None else UR @ UR.T
             Hp = np.block([
                 [Ap, Gp],
                 [Rp, -Ap.T]
             ])
-            Ep = E.apply2(Q, Q)
+            Ep = E.apply2(U, U)
             EEp = spla.block_diag(Ep, Ep.T)
             eigvals, eigvecs = spla.eig(Hp, EEp)
-            eigpairs = zip(eigvals, eigvecs, strict=True)
+            eigpairs = zip(eigvals, eigvecs.T, strict=True)
             # filter stable eigenvalues
             eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
             if len(eigpairs) == 0:
@@ -223,8 +295,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             maxind = 0
             for i in range(len(eigpairs)):
                 eig = eigpairs[i][1]
-                y_eig = eig[-len(Q):]
-                x_eig = eig[:len(Q)]
+                y_eig = eig[-len(U):]
+                x_eig = eig[:len(U)]
                 Ey = Ep.T.dot(y_eig)
                 xEy = np.abs(np.dot(x_eig, Ey))
                 currval = np.linalg.norm(y_eig)**2 / xEy
@@ -239,7 +311,7 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         raise RuntimeError('Could not generate initial shifts for low-rank RADI iteration.')
 
 
-    def hamiltonian_shifts(self, A, E, B, R, K, Z):
+    def hamiltonian_shifts(self, A, E, B, Rinv, RF, RC, K, Z):
         """Compute further shift parameters for low-rank RADI iteration.
 
         Compute Galerkin projection of Hamiltonian matrix on space spanned by last few columns of
@@ -256,10 +328,15 @@ class RADIRiccatiSolver(RiccatiSolverLR):
             The |Operator| E from the corresponding Riccati equation.
         B
             The |VectorArray| B from the corresponding Riccati equation.
-        R
+        Rinv
+            The matrix :math:`R^{-1}` as a |NumPy array| from the corresponding |RiccatiEquation|.
+        RF
             A |VectorArray| representing the currently computed residual factor.
+        RC
+            A |NumPy array| representing the currently computed residual core.
         K
-            A |VectorArray| representing the currently computed iterate.
+            A |VectorArray| representing the currently computed iterate before
+            multiplication by :math:`R^{-1}`.
         Z
             A |VectorArray| representing the currently computed solution factor.
 
@@ -270,26 +347,29 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         """
         l = self.hamiltonian_shifts_subspace_columns
         # always use multiple of len(R) columns
-        l = max(1, l // len(R)) * len(R)
+        l = max(1, l // len(RF)) * len(RF)
         if len(Z) < l:
             l = len(Z)
 
-        Q = gram_schmidt(Z[-l:], atol=0, rtol=0)
-        Ap = A.apply2(Q, Q)
-        KBp = Q.inner(K) @ Q.inner(B).T
-        AAp = Ap - KBp
-        QB = Q.inner(B)
-        Gp = QB.dot(QB.T)
-        QR = Q.inner(R)
-        Rp = QR.dot(QR.T)
+        if RC is None:
+            RC = np.eye(len(RF))
+
+        U = gram_schmidt(Z[-l:], atol=0, rtol=0)
+        Ap = A.apply2(U, U)
+        BKp = U.inner(K) @ Rinv @ U.inner(B).T
+        AAp = Ap - BKp
+        UB = U.inner(B)
+        Gp = UB.dot(Rinv @ UB.T)
+        UR = U.inner(RF)
+        Rp = UR.dot(RC @ UR.T)
         Hp = np.block([
             [AAp, Gp],
             [Rp, -AAp.T]
         ])
-        Ep = E.apply2(Q, Q)
+        Ep = E.apply2(U, U)
         EEp = spla.block_diag(Ep, Ep.T)
         eigvals, eigvecs = spla.eig(Hp, EEp)
-        eigpairs = zip(eigvals, eigvecs, strict=True)
+        eigpairs = zip(eigvals, eigvecs.T, strict=True)
         # filter stable eigenvalues
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         # find shift with most impact on convergence
@@ -297,8 +377,8 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         maxind = 0
         for i in range(len(eigpairs)):
             eig = eigpairs[i][1]
-            y_eig = eig[-len(Q):]
-            x_eig = eig[:len(Q)]
+            y_eig = eig[-len(U):]
+            x_eig = eig[:len(U)]
             Ey = Ep.T.dot(y_eig)
             xEy = np.abs(np.dot(x_eig, Ey))
             currval = np.linalg.norm(y_eig)**2 / xEy
@@ -310,3 +390,72 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         if np.abs(shift.imag) / np.abs(shift) < 1e-8:
             shift = shift.real
         return np.array([shift])
+
+
+class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
+    r"""Compute an approximate low-rank factor of the solution of a |PositiveRiccatiEquation|.
+
+    Calls :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver` with flipped signs in
+    the `R` or `Q` terms (depending whether the transposed version is solved or not).
+
+    Parameters
+    ----------
+    radi_tol
+        Convergence tolerance for the RADI iteration.
+    radi_maxiter
+        Maximum number of RADI steps. A real shift counts as one step, a
+        complex-conjugate shift pair as two.
+    radi_shifts
+            Strategy for computing the RADI shift parameters. Currently only
+        ``'hamiltonian_shifts'`` is supported.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
+    hamiltonian_shifts_init_maxiter
+        Maximum number of attempts to generate stable initial shifts before an error is raised.
+        See :meth:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver.hamiltonian_shifts_init`.
+    hamiltonian_shifts_subspace_columns
+        Number of trailing columns of the solution factor :math:`Z` used to span the
+        Galerkin subspace for the subsequent shifts.
+        See :meth:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver.hamiltonian_shifts`.
+    """
+
+    @defaults('radi_tol', 'radi_maxiter', 'radi_shifts', 'shifted_system_solver',
+                'hamiltonian_shifts_init_maxiter', 'hamiltonian_shifts_subspace_columns')
+    def __init__(self, radi_tol=1e-10, radi_maxiter=500, radi_shifts='hamiltonian_shifts',
+                shifted_system_solver=None, hamiltonian_shifts_init_maxiter=20,
+                hamiltonian_shifts_subspace_columns=6):
+
+        self._radi_solver = RADIRiccatiSolver(radi_tol=radi_tol, radi_maxiter=radi_maxiter, radi_shifts=radi_shifts,
+                                              shifted_system_solver=shifted_system_solver,
+                                              hamiltonian_shifts_init_maxiter=hamiltonian_shifts_init_maxiter,
+                                              hamiltonian_shifts_subspace_columns=hamiltonian_shifts_subspace_columns)
+        super().__init__()
+        self.radi_tol = radi_tol
+        self.radi_maxiter = radi_maxiter
+        self.radi_shifts = radi_shifts
+        self.shifted_system_solver = shifted_system_solver
+        self.hamiltonian_shifts_init_maxiter = hamiltonian_shifts_init_maxiter
+        self.hamiltonian_shifts_subspace_columns = hamiltonian_shifts_subspace_columns
+
+    def _solve(self, equation):
+        A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
+        trans = equation.trans
+
+        if R is None:
+            R = np.eye(len(B))
+        if Q is None:
+            Q = np.eye(len(C))
+
+        if not trans:
+            B, C = C, B
+            R, Q = Q, R
+
+        if S is None:
+            Z_lr = self._radi_solver._solve_impl(A, E, B, C, -R, Q, trans)
+        else:
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(Q, Rinv)
+            Z_lr = self._radi_solver._solve_impl(A, E, B, tC, -R, tQ, trans, S=S)
+
+        return Z_lr

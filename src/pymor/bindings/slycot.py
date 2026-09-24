@@ -85,67 +85,75 @@ class SlycotRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.to_matrices()
+        A, E, B, C, R, Q, S = equation.to_matrices()
         trans = equation.trans
 
         dico = 'C'
         n = A.shape[0]
+        m = B.shape[1]
+        p = C.shape[0]
+
         if E is not None:
             jobb = 'B'
-            fact = 'C'
+            fact = 'N'
             uplo = 'U'
             jobl = 'Z' if S is None else 'N'
             scal = 'N'
             sort = 'S'
             acc = 'R'
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
+
             if R is None:
                 R = np.eye(m)
-            if S is None:
-                S = np.empty((n, m))
-            elif not trans:
-                S = S.T
+            if Q is None:
+                Q = np.eye(p)
             if not trans:
                 A = A.T
                 E = E.T
                 B, C = C.T, B.T
+                R, Q = Q, R
+                m, p = p, m
+                if S is not None:
+                    S = S.T
+            if S is None:
+                S = np.empty((n, m))
+
+            CTQC = C.T @ Q @ C
             out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
                                 n, m, p,
-                                A, E, B, C, R, S)
+                                A, E, B, CTQC, R, S)
             X = out[1]
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
         elif S is not None:
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
             if R is None:
                 R = np.eye(m)
-            else:
-                R = R.copy()  # fix overwrite issue (#2200)
-            S = S.copy()  # fix overwrite issue (#2200)
-            if trans:
-                C = C.copy()  # fix overwrite issue (#2200)
-                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
-            else:
-                B = B.copy()  # fix overwrite issue (#2200)
-                X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S.T, fact='C')[:2]
+            if Q is None:
+                Q = np.eye(p)
+            if not trans:
+                A = A.T
+                B, C = C.T, B.T
+                R, Q = Q, R
+                m, p = p, m
+                S = S.T
+
+            R, S, C = R.copy(), S.copy(), C.copy()  # fix overwrite issue (#2200)
+            CTQC = C.T @ Q @ C
+            X, rcond = slycot.sb02od(n, m, A, B, CTQC, R, dico, L=S, fact='N')[:2]
             _ricc_rcond_check('slycot.sb02od', rcond)
         else:
-            if trans:
-                if R is None:
-                    G = B @ B.T
-                else:
-                    G = B @ spla.solve(R, B.T)
-                Q = C.T @ C
-                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+            if not trans:
+                A = A.T
+                B, C = C.T, B.T
+                R, Q = Q, R
+            if R is None:
+                G = B @ B.T
             else:
-                if R is None:
-                    G = C.T @ C
-                else:
-                    G = C.T @ spla.solve(R, C)
-                Q = B @ B.T
-                X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
+                G = B @ spla.solve(R, B.T)
+            if Q is None:
+                Q = np.eye(C.shape[0])
+
+            CTQC = C.T @ Q @ C
+            X, rcond = slycot.sb02md(n, A, G, CTQC, dico)[:2]
             _ricc_rcond_check('slycot.sb02md', rcond)
 
         return X
@@ -178,9 +186,17 @@ class SlycotPositiveRiccatiSolver(PositiveRiccatiSolver):
 
     def _solve(self, equation):
         R = equation.R
+        Q = equation.Q
+
         if R is None:
-            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
-        temp_equation = equation.with_(R=-R)
+            R = np.eye(len(equation.B))
+        if Q is None:
+            Q = np.eye(len(equation.C))
+
+        if equation.trans:
+            temp_equation = equation.with_(R=-R)
+        else:
+            temp_equation = equation.with_(Q=-Q)
         return SlycotRiccatiSolver()._solve(temp_equation)
 
 

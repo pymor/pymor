@@ -446,19 +446,24 @@ class ScipyRiccatiSolver(RiccatiSolver):
     """
 
     def _solve(self, equation):
-        A, E, B, C, R, S = equation.to_matrices()
+        A, E, B, C, R, Q, S = equation.to_matrices()
         trans = equation.trans
 
         if R is None:
-            R = np.eye(C.shape[0] if not trans else B.shape[1])
+            R = np.eye(B.shape[1])
+        if Q is None:
+            Q = np.eye(C.shape[0])
         if not trans:
+            A = A.T
+            B, C = C.T, B.T
+            R, Q = Q, R
             if E is not None:
                 E = E.T
             if S is not None:
                 S = S.T
-            return solve_continuous_are(A.T, C.T, B.dot(B.T), R, e=E, s=S)
-        else:
-            return solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
+
+        CTQC = C.T @ Q @ C
+        return solve_continuous_are(A, B, CTQC, R, e=E, s=S)
 
 
 class ScipyRiccatiSolverLR(RiccatiSolverLR):
@@ -486,11 +491,14 @@ class ScipyPositiveRiccatiSolver(PositiveRiccatiSolver):
     """
 
     def _solve(self, equation):
-        R = equation.R
-        if R is None:
-            R = np.eye(len(equation.C) if not equation.trans else len(equation.B))
+        R = equation.R if equation.R is not None else np.eye(len(equation.B))
+        Q = equation.Q if equation.Q is not None else np.eye(len(equation.C))
 
-        temp_equation = equation.with_(R=-R if R is not None else None)
+        if equation.trans:
+            temp_equation = equation.with_(R=-R)
+        else:
+            temp_equation = equation.with_(Q=-Q)
+
         return ScipyRiccatiSolver()._solve(temp_equation)
 
 
