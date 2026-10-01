@@ -66,22 +66,15 @@ class ScipyLinearSolver(Solver):
     def __init__(self, check_finite=True):
         self.check_finite = check_finite
 
-    def _assemble_matrix(self, operator, mu):
+    def _solve(self, operator, V, mu, initial_guess):
         assembled = operator.assemble(mu)
         from pymor.operators.numpy import NumpyMatrixOperator
         if isinstance(assembled, NumpyMatrixOperator):
-            return assembled.matrix, assembled
-
-        mat_op = getattr(operator, '_mat_op', None)
-        if mat_op is None:
+            matrix = assembled.matrix
+        else:
             from pymor.algorithms.to_matrix import to_matrix
-            mat_op = NumpyMatrixOperator(to_matrix(assembled))
-            if not operator.parametric:
-                operator._mat_op = mat_op
-        return mat_op.matrix, assembled
+            matrix = to_matrix(operator, mu=mu, caching=True)
 
-    def _solve(self, operator, V, mu, initial_guess):
-        matrix, operator = self._assemble_matrix(operator, mu)
         V = V.to_numpy()
         initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
         promoted_type = np.promote_types(matrix.dtype, V.dtype)
@@ -92,7 +85,7 @@ class ScipyLinearSolver(Solver):
             if not np.isfinite(np.sum(R)):
                 raise InversionError('Result contains non-finite values')
 
-        return operator.source.from_numpy(R), {}
+        return assembled.source.from_numpy(R), {}
 
     def _solve_impl(self, matrix, V, initial_guess, promoted_type):
         raise NotImplementedError
