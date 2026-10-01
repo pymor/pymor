@@ -29,10 +29,13 @@ from pymor.operators.numpy import (
     NumpyMatrixOperator,
     NumpyToeplitzOperator,
 )
+from pymor.tools.weakrefcache import WeakRefCache
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+_matrix_cache = WeakRefCache()
 
-def to_matrix(op, format=None, mu=None):
+
+def to_matrix(op, format=None, mu=None, caching=False, return_info=False):
     """Convert a linear |Operator| to a matrix.
 
     Parameters
@@ -46,16 +49,41 @@ def to_matrix(op, format=None, mu=None):
         automatically made.
     mu
         The |parameter values| for which to convert `op`.
+    caching
+        If `True`, cache matrices for non-parametric operators, separately for
+        each requested `format`.
+    return_info
+        If `True`, also return a dict indicating whether the matrix was retrieved
+        from the cache.
 
     Returns
     -------
     res
         The matrix equivalent to `op`.
+    info
+        Dict with a boolean `cache_hit` entry. This is `False` for cache misses,
+        disabled caching, and parametric operators. Only returned when
+        `return_info` is `True`.
     """
     assert format is None or format in ('dense', 'bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
     assert op.linear
+
+    cache_key = op
+    caching = caching and not op.parametric
+    if caching:
+        try:
+            matrices = _matrix_cache.get(cache_key)
+        except KeyError:
+            matrices = {}
+        if format in matrices:
+            return (matrices[format], {'cache_hit': True}) if return_info else matrices[format]
+
     op = op.assemble(mu)
-    return ToMatrixRules(format, mu).apply(op)
+    matrix = ToMatrixRules(format, mu).apply(op)
+    if caching:
+        matrices[format] = matrix
+        _matrix_cache.set(cache_key, matrices)
+    return (matrix, {'cache_hit': False}) if return_info else matrix
 
 
 class ToMatrixRules(RuleTable):

@@ -58,7 +58,7 @@ class DefaultSolver(Solver):
         if operator.linear:
             if not self.try_to_matrix:
                 raise InversionError(f'{operator!r} has no solver.')
-            mat_op = self._convert_to_matrix(operator, assembled_op)
+            mat_op = self._convert_to_matrix_and_cache(operator, mu)
             v = mat_op.range.from_numpy(V.to_numpy())
             i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
             u, info = mat_op.apply_inverse(v, initial_guess=i, return_info=True)
@@ -91,26 +91,23 @@ class DefaultSolver(Solver):
                 pass
 
         # try converting to a matrix as a last resort
-        mat_op = self._convert_to_matrix(operator, assembled_op)
+        mat_op = self._convert_to_matrix_and_cache(operator, mu)
         u = mat_op.source.from_numpy(U.to_numpy())
         i = None if initial_guess is None else mat_op.range.from_numpy(initial_guess.to_numpy())
         v, info = mat_op.apply_inverse_adjoint(u, initial_guess=i, return_info=True)
         V = operator.range.from_numpy(v.to_numpy())
         return V, info
 
-    def _convert_to_matrix(self, op, assembled_op):
-        mat_op = getattr(op, '_mat_op', None)
-        if mat_op is None:
+    def _convert_to_matrix_and_cache(self, op, mu):
+        from pymor.algorithms.rules import NoMatchingRuleError
+        from pymor.algorithms.to_matrix import to_matrix
+        from pymor.operators.numpy import NumpyMatrixOperator
+
+        try:
+            matrix, info = to_matrix(op, mu=mu, caching=True, return_info=True)
+        except (NoMatchingRuleError, NotImplementedError) as e:
+            raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
+        if not info['cache_hit']:
             self.logger.warning(f'No specialized linear solver available for {op}.')
             self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
-            from pymor.algorithms.rules import NoMatchingRuleError
-            try:
-                from pymor.algorithms.to_matrix import to_matrix
-                from pymor.operators.numpy import NumpyMatrixOperator
-                mat = to_matrix(assembled_op)
-                mat_op = NumpyMatrixOperator(mat)
-                if not op.parametric:
-                    op._mat_op = mat_op
-            except (NoMatchingRuleError, NotImplementedError) as e:
-                raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
-        return mat_op
+        return NumpyMatrixOperator(matrix)
