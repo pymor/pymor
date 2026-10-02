@@ -198,6 +198,14 @@ NEURAL_NETWORK_ARGS = (
     ('neural_network', ['--grid-search-parameter-optimization']),
 )
 
+RANDOM_SAMPLING_ARGS = (
+    ('random_sampling', ['uniform']),
+    ('random_sampling', ['normal']),
+    ('random_sampling', ['weibull']),
+    ('random_sampling', ['gamma']),
+    ('random_sampling', ['exponential']),
+)
+
 STOKES_REDUCTOR_ARGS = (
     ('stokes', []),
 )
@@ -224,6 +232,7 @@ DEMO_ARGS = (
     + VKOGA_ARGS
     + VKOGA_2D_INPUT_ARGS
     + NEURAL_NETWORK_ARGS
+    + RANDOM_SAMPLING_ARGS
     + STOKES_REDUCTOR_ARGS
 )
 

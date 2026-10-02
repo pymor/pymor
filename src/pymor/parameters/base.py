@@ -695,7 +695,7 @@ class ParameterSpace(ParametricObject):
         else:
             return list(unconstrained_mus)
 
-    def sample_randomly(self, count=None):
+    def sample_randomly(self, count=None, distributions=None):
         """Randomly sample |parameter values| from the space.
 
         Parameters
@@ -704,6 +704,11 @@ class ParameterSpace(ParametricObject):
             If `None`, a single dict `mu` of |parameter values| is returned.
             Otherwise, the number of random samples to generate and return as
             a list of |parameter values| dicts.
+        distributions
+            If `None`, uniform distributions according to the parameter ranges
+            are chosen.
+            Otherwise, a dict of callables for all components that generate a
+            random vector with appropriate size for the component when called.
 
         Returns
         -------
@@ -711,11 +716,28 @@ class ParameterSpace(ParametricObject):
         """
         rng = get_rng()
         constraints = self.constraints
+        if distributions is None:
+            def make_uniform_distribution(k, size):
+                def uniform_distribution():
+                    return rng.uniform(self.ranges[k][0], self.ranges[k][1], size)
+                return uniform_distribution
+            distributions = {k: make_uniform_distribution(k, size)
+                             for k, size in self.parameters.items()}
+        else:
+            assert isinstance(distributions, dict)
+
+            def range_check(mu):
+                return all((self.ranges[k][0] <= mu[k]).all() and (mu[k] <= self.ranges[k][1]).all()
+                           for k in self.parameters)
+
+            if constraints:
+                constraints = (lambda mu: constraints(mu) and range_check(mu))
+            else:
+                constraints = (lambda mu: range_check(mu))
 
         def get_param():
             while True:
-                mu = Mu((k, rng.uniform(self.ranges[k][0], self.ranges[k][1], size))
-                        for k, size in self.parameters.items())
+                mu = Mu((k, distributions[k]()) for k in self.parameters)
                 if constraints:
                     if constraints(mu):
                         return mu
