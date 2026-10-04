@@ -22,6 +22,7 @@ from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, s
 from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
+from pymor.solvers.default import _convert_to_matrix_and_cache
 from pymor.solvers.interface import Solver
 from pymor.solvers.matrix_equations.interface import (
     LyapunovSolver,
@@ -72,8 +73,7 @@ class ScipyLinearSolver(Solver):
         if isinstance(assembled, NumpyMatrixOperator):
             matrix = assembled.matrix
         else:
-            from pymor.algorithms.to_matrix import to_matrix
-            matrix = to_matrix(operator, mu=mu, caching=True)
+            matrix = _convert_to_matrix_and_cache(operator, assembled).matrix
 
         V = V.to_numpy()
         initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
