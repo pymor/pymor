@@ -5,6 +5,9 @@
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.solvers.interface import Solver
+from pymor.tools.weakrefcache import WeakRefCache
+
+_matrix_operators = WeakRefCache()
 
 
 class DefaultSolver(Solver):
@@ -58,7 +61,7 @@ class DefaultSolver(Solver):
         if operator.linear:
             if not self.try_to_matrix:
                 raise InversionError(f'{operator!r} has no solver.')
-            mat_op = self._convert_to_matrix(operator, assembled_op)
+            mat_op = _convert_to_matrix_and_cache(operator, assembled_op, logger=self.logger)
             v = mat_op.range.from_numpy(V.to_numpy())
             i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
             u, info = mat_op.apply_inverse(v, initial_guess=i, return_info=True)
@@ -91,26 +94,35 @@ class DefaultSolver(Solver):
                 pass
 
         # try converting to a matrix as a last resort
-        mat_op = self._convert_to_matrix(operator, assembled_op)
+        mat_op = _convert_to_matrix_and_cache(operator, assembled_op, logger=self.logger)
         u = mat_op.source.from_numpy(U.to_numpy())
         i = None if initial_guess is None else mat_op.range.from_numpy(initial_guess.to_numpy())
         v, info = mat_op.apply_inverse_adjoint(u, initial_guess=i, return_info=True)
         V = operator.range.from_numpy(v.to_numpy())
         return V, info
 
-    def _convert_to_matrix(self, op, assembled_op):
-        mat_op = getattr(op, '_mat_op', None)
-        if mat_op is None:
-            self.logger.warning(f'No specialized linear solver available for {op}.')
-            self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
-            from pymor.algorithms.rules import NoMatchingRuleError
-            try:
-                from pymor.algorithms.to_matrix import to_matrix
-                from pymor.operators.numpy import NumpyMatrixOperator
-                mat = to_matrix(assembled_op)
-                mat_op = NumpyMatrixOperator(mat)
-                if not op.parametric:
-                    op._mat_op = mat_op
-            except (NoMatchingRuleError, NotImplementedError) as e:
-                raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
-        return mat_op
+
+def _convert_to_matrix_and_cache(op, assembled_op, logger=None):
+    """Convert an assembled operator, caching the result for non-parametric operators."""
+    cache_key = op
+    if not op.parametric:
+        try:
+            return _matrix_operators.get(cache_key)
+        except KeyError:
+            pass
+
+    if logger is not None:
+        logger.warning(f'No specialized linear solver available for {op}.')
+        logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
+
+    from pymor.algorithms.rules import NoMatchingRuleError
+    from pymor.algorithms.to_matrix import to_matrix
+    from pymor.operators.numpy import NumpyMatrixOperator
+
+    try:
+        mat_op = NumpyMatrixOperator(to_matrix(assembled_op))
+    except (NoMatchingRuleError, NotImplementedError) as e:
+        raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
+    if not op.parametric:
+        _matrix_operators.set(cache_key, mat_op)
+    return mat_op
