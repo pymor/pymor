@@ -7,9 +7,9 @@ import scipy.linalg as spla
 
 from pymor.algorithms.loewner import (
     _real_transformation,
-    _sample_transfer_function,
     complete_conjugate_pairs,
     loewner_quadruple,
+    sample_transfer_function,
 )
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
@@ -82,7 +82,7 @@ class QuadBTReductor(CacheableObject):
 
     cache_region = 'memory'
 
-    generate_samples = staticmethod(_sample_transfer_function)
+    generate_samples = staticmethod(sample_transfer_function)
 
     def __init__(self, left_nodes, right_nodes, left_values, right_values, left_weights=None, right_weights=None,
                  *, derivatives=None, sampling_time=0, feedthrough=None, force_real=True):
