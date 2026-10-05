@@ -11,10 +11,10 @@ license = "BSD-2-Clause AND BSD-3-Clause"
 license-files = ["LICENSE.txt", "LICENSES_bundled.txt"]
 requires-python = ">=3.10"
 authors = [
-  {name = "pyMOR developers", email = "main.developers@pymor.org"},
+  { name = "pyMOR developers", email = "main.developers@pymor.org" },
 ]
 maintainers = [
-  {name = "Stephan Rave", email = "stephan.rave@uni-muenster.de"},
+  { name = "Stephan Rave", email = "stephan.rave@uni-muenster.de" },
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
