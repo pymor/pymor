@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
-from pymor.algorithms.loewner import _sample_transfer_function
+from pymor.algorithms.loewner import sample_transfer_function
 from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.quadbt import QuadBTReductor
@@ -186,7 +186,7 @@ def test_quadbt_sampled_model(rng, sampling_time, mimo, model_input, shared_node
     if shared_nodes:
         right = left.conj()[::-1]
     source = fom if model_input else fom.transfer_function
-    assert QuadBTReductor.generate_samples is _sample_transfer_function
+    assert QuadBTReductor.generate_samples is sample_transfer_function
     left_values = QuadBTReductor.generate_samples(left, source)
     right_values = QuadBTReductor.generate_samples(right, source)
     derivatives = QuadBTReductor.generate_samples(left, source, derivative=True) if shared_nodes else None

@@ -108,7 +108,16 @@ class QuadBTReductor(CacheableObject):
                 if np.any(feedthrough.imag != 0):
                     raise ValueError('feedthrough must be real when force_real=True.')
                 feedthrough = feedthrough.real
-        self.__auto_init(locals())
+        self.left_nodes = left_nodes
+        self.right_nodes = right_nodes
+        self.left_values = left_values
+        self.right_values = right_values
+        self.left_weights = left_weights
+        self.right_weights = right_weights
+        self.derivatives = derivatives
+        self.sampling_time = sampling_time
+        self.feedthrough = feedthrough
+        self.force_real = force_real
 
     @staticmethod
     def _nodes(nodes, name, sampling_time, canonicalize):
