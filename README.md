@@ -108,6 +108,10 @@ lock files from the pyMOR repository:
     conda activate pymorenv
     conda install pymor
 
+To install the latest release of pyMOR with most optional dependencies:
+
+    conda install -c conda-forge pymor-full
+
 ## Documentation
 
 Documentation is available [online](https://docs.pymor.org/).
