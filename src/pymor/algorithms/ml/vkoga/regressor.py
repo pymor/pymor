@@ -282,16 +282,15 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         where :math:`X_n=\{x_1,\dots,x_n\}\subset\mathbb{R}^d` is the set containing the :math:`n`
         selected centers. When adding :math:`\mu` as new center, i.e.
-        :math:`X_{n+1}=X_n\cup \{\mu\}`, the new coefficient
-        vector :math:`c_{n+1}\in\mathbb{R}^{n+1}` is given as
+        :math:`X_{n+1}=X_n\cup \{\mu\}`, the updated kernel coefficients
+        :math:`c_{n+1}\in\mathbb{R}^{n+1}` are recovered from the Newton-basis
+        coefficients :math:`z_1,\ldots,z_{n+1}` by solving
 
         .. math::
-            c_{n+1} = C_{n+1}^\top \begin{bmatrix}
-                c_n \\
-                z_{n+1}
-            \end{bmatrix}
+            L_{n+1}^\top c_{n+1} =
+                \begin{bmatrix} z_1 & \cdots & z_{n+1} \end{bmatrix}^\top.
 
-        for an unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
+        The new Newton-basis coefficient :math:`z_{n+1}\in\mathbb{R}` is computed via the
         residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n`
         evaluated at :math:`\mu` (the definitions of these quantities are given below):
 
