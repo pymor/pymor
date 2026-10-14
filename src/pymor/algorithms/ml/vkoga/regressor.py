@@ -225,8 +225,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         p2 = self._power2[idxs]
 
         if self.criterion in ('fp', 'f'):
-            Ypred = self.predict(Xc)
-            Fres = self.F_train[idxs] - Ypred
+            if self.res is None:
+                Fres = self.F_train[idxs]
+            else:
+                Fres = (self.res - self._V[:, -1:] @ self._z[-1:])[idxs]
             res_norms = np.linalg.norm(Fres, axis=1)
             if self.criterion == 'fp':
                 scores = res_norms * np.sqrt(p2)
