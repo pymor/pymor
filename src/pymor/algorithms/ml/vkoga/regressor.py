@@ -155,6 +155,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         self._z = None
         self._K_X_mu = None
         self._V = None
+        self._V_buf = None
         self.res = None
         # power2 = trace(k(x,x)) for each training point
         self._power2 = self.kernel.diag(self.X_train) + self.reg
@@ -194,7 +195,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 K_new_center = self.kernel(X_new, self.X_train[center_idx:center_idx+1]).ravel()
                 V_new[:, j] = (K_new_center - V_new[:, :j] @ self._V[center_idx, :j]) / self._V[center_idx, j]
                 new_power2 -= V_new[:, j] ** 2
-            self._V = np.vstack([self._V, V_new])
+            self._append_newton_rows(V_new)
 
             # residual must match the state of old points: F - V[:, :-1] @ z[:-1]
             new_res = F_new - V_new[:, :-1] @ self._z[:-1]
@@ -402,11 +403,40 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _update_newton_basis(self, idx_in_X):
         """Append Xi as the last block to the Newton basis V."""
         if self._V is None:
-            self._V = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
+            Xi = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
         else:
             Xi = self._K_X_mu - (self._V[idx_in_X] @ self._V.T).reshape(-1, 1)
             Xi = Xi / np.sqrt(self._power2[idx_in_X])
-            self._V = np.concatenate([self._V, Xi], axis=1)
+        self._append_newton_column(Xi)
+
+    def _append_newton_column(self, Xi):
+        """Append Xi (shape ``(N, 1)``) as a new column of V.
+
+        ``self._V`` stays an ``(N, n)`` view into a preallocated buffer, so all
+        existing indexing (``-1``, ``.shape[1]``, row/column slices) keeps
+        working; the buffer only grows (by doubling) when it runs out of columns.
+        """
+        n = 0 if self._V is None else self._V.shape[1]
+        if self._V_buf is None or self._V_buf.shape[1] < n + 1:
+            cap = max(2 * (self._V_buf.shape[1] if self._V_buf is not None else 0), 8)
+            buf = np.empty((self.X_train.shape[0], cap))
+            if self._V is not None:
+                buf[:, :n] = self._V
+            self._V_buf = buf
+        self._V_buf[:, n] = Xi.ravel()
+        self._V = self._V_buf[:, :n + 1]
+
+    def _append_newton_rows(self, V_new):
+        """Append V_new (shape ``(n_new, n)``) as new training rows of V."""
+        if self._V_buf is None:
+            self._V_buf = np.ascontiguousarray(self._V)
+        n = self._V.shape[1]
+        old_n = self._V.shape[0]
+        buf = np.empty((old_n + V_new.shape[0], self._V_buf.shape[1]))
+        buf[:old_n, :n] = self._V
+        buf[old_n:, :n] = V_new
+        self._V_buf = buf
+        self._V = buf[:, :n]
 
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
