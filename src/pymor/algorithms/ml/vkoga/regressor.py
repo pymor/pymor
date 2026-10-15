@@ -352,8 +352,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         ----------
         mu
             Parameter (center) to add.
-        mu_is_idx
-            Whether the passed parameter `mu` is an index to an element in the training set.
         """
         mu = np.asarray(mu)
 
