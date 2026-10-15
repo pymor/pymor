@@ -222,10 +222,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def evaluate(self, mus, return_all_values=False):
         mus = np.asarray(mus)
         idxs = mus
+        Xc = self.X_train[idxs]
         p2 = self._power2[idxs]
 
         if self.criterion in ('fp', 'f'):
-            if self.res is None and self._V is None and self._z is None:
+            if self.res is None or self._V is None or self._z is None:
                 Fres = self.F_train[idxs]
             else:
                 Fres = (self.res - self._V[:, -1:] @ self._z[-1:])[idxs]
@@ -240,9 +241,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
         if return_all_values:
             return scores
         idx = np.argmax(scores)
-        return scores[idx], int(idxs[idx])
+        return scores[idx], Xc[idx]
 
-    def extend(self, mu, mu_is_idx=True):
+    def extend(self, mu):
         r"""Extends the kernel interpolant by adding a new center and updating all quantities.
 
         Incrementally add a new center :math:`\mu` with corresponding function value
@@ -354,21 +355,16 @@ class VKOGASurrogate(WeakGreedySurrogate):
         mu_is_idx
             Whether the passed parameter `mu` is an index to an element in the training set.
         """
-        if mu_is_idx:
-            # Fast path: center specified by its training index
-            idx_in_X = int(mu)
-            mu = self.X_train[idx_in_X]
-        else:
-            mu = np.asarray(mu)
+        mu = np.asarray(mu)
 
-            # --- Find corresponding training index (exact or nearest match) ---
-            # this is mainly required since we do not enforce that `mu` is in the training set;
-            # when introducing a suitable `Dataset` class, this should be handled by the dataset
-            matches = np.where(np.all(np.isclose(self.X_train, mu), axis=1))[0]
-            if matches.size > 0:
-                idx_in_X = int(matches[0])
-            else:
-                idx_in_X = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
+        # --- Find corresponding training index (exact or nearest match) ---
+        # this is mainly required since we do not enforce that `mu` is in the training set;
+        # when introducing a suitable `Dataset` class, this should be handled by the dataset
+        matches = np.where(np.all(np.isclose(self.X_train, mu), axis=1))[0]
+        if matches.size > 0:
+            idx_in_X = int(matches[0])
+        else:
+            idx_in_X = int(np.argmin(np.linalg.norm(self.X_train - mu, axis=1)))
 
         if self._centers_idx is not None and idx_in_X in self._centers_idx:
             raise ExtensionError('Center already selected.')
