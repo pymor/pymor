@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from scipy.linalg import solve_triangular
 
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
 from pymor.algorithms.ml.base_regressor import BaseRegressor
@@ -151,11 +152,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         self._centers = None
         self._centers_idx = None
-        self._coefficients = None
         self._z = None
         self._K_X_mu = None
         self._V = None
-        self._C = None
+        self._V_buf = None
         self.res = None
         # power2 = trace(k(x,x)) for each training point
         self._power2 = self.kernel.diag(self.X_train) + self.reg
@@ -195,7 +195,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
                 K_new_center = self.kernel(X_new, self.X_train[center_idx:center_idx+1]).ravel()
                 V_new[:, j] = (K_new_center - V_new[:, :j] @ self._V[center_idx, :j]) / self._V[center_idx, j]
                 new_power2 -= V_new[:, j] ** 2
-            self._V = np.vstack([self._V, V_new])
+            self._append_newton_rows(V_new)
 
             # residual must match the state of old points: F - V[:, :-1] @ z[:-1]
             new_res = F_new - V_new[:, :-1] @ self._z[:-1]
@@ -215,7 +215,8 @@ class VKOGASurrogate(WeakGreedySurrogate):
             return np.zeros((X.shape[0], self.m))
 
         K = self.kernel(X, self._centers)
-        coeff = self._coefficients
+        V_selected = self._V[self._centers_idx, :]
+        coeff = solve_triangular(V_selected.T, self._z, lower=False)
         return K @ coeff
 
     def evaluate(self, mus, return_all_values=False):
@@ -225,8 +226,10 @@ class VKOGASurrogate(WeakGreedySurrogate):
         p2 = self._power2[idxs]
 
         if self.criterion in ('fp', 'f'):
-            Ypred = self.predict(Xc)
-            Fres = self.F_train[idxs] - Ypred
+            if self.res is None or self._V is None or self._z is None:
+                Fres = self.F_train[idxs]
+            else:
+                Fres = (self.res - self._V[:, -1:] @ self._z[-1:])[idxs]
             res_norms = np.linalg.norm(Fres, axis=1)
             if self.criterion == 'fp':
                 scores = res_norms * np.sqrt(p2)
@@ -248,11 +251,9 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         * the selected centers (`self._centers`)
         * the indices of the selected centers in the training set (`self._centers_idx`)
-        * the coefficients of the interpolant (`self._coefficients`)
         * the (squared) power function evaluations on the training set (`self._power2`)
         * the Newton basis evaluations on the training set (`self._V`)
         * the residual :math:`f - s_f` at the training points (`self.res`)
-        * the inverse of the Cholesky factor of the kernel matrix (`self._C`)
         * the coefficients in the Newton basis (`self._z`).
 
         In the following derivation we leave out the regularization term for simplicity
@@ -260,10 +261,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
         Let :math:`K_n` denote the full kernel matrix for the current set of selected
         centers :math:`X_n`. Since :math:`K_n` is a kernel matrix, it is in particular
         positive-definite, so it has a Cholesky decomposition,
-        i.e. :math:`K_n=L_nL_n^\top`. The inverse of the Cholesky decomposition
-        :math:`C_n := L_{n}^{-1}` will be used to efficiently compute and update the
-        coefficients  of the kernel interpolant. The formula for the computation and update of
-        :math:`C_n` can be found below.
+        i.e. :math:`K_n=L_nL_n^\top`. Evaluating the Newton basis at the selected centers
+        yields a lower-triangular matrix that equals :math:`L_n`. Rather than tracking
+        :math:`L_n` explicitly, the coefficients of the kernel interpolant are recovered
+        from the Newton-basis coefficients by a single triangular solve at prediction time
+        (see :meth:`predict`).
 
         Updating the coefficients of the kernel interpolant: Let :math:`c_n\in\mathbb{R}^n` denote
         the coefficients associated to the kernel interpolant for the first :math:`n` selected
@@ -280,16 +282,15 @@ class VKOGASurrogate(WeakGreedySurrogate):
 
         where :math:`X_n=\{x_1,\dots,x_n\}\subset\mathbb{R}^d` is the set containing the :math:`n`
         selected centers. When adding :math:`\mu` as new center, i.e.
-        :math:`X_{n+1}=X_n\cup \{\mu\}`, the new coefficient
-        vector :math:`c_{n+1}\in\mathbb{R}^{n+1}` is given as
+        :math:`X_{n+1}=X_n\cup \{\mu\}`, the updated kernel coefficients
+        :math:`c_{n+1}\in\mathbb{R}^{n+1}` are recovered from the Newton-basis
+        coefficients :math:`z_1,\ldots,z_{n+1}` by solving
 
         .. math::
-            c_{n+1} = C_{n+1}^\top \begin{bmatrix}
-                c_n \\
-                z_{n+1}
-            \end{bmatrix}
+            L_{n+1}^\top c_{n+1} =
+                \begin{bmatrix} z_1 & \cdots & z_{n+1} \end{bmatrix}^\top.
 
-        for an unknown coefficient :math:`z_{n+1}\in\mathbb{R}`, which is computed via the
+        The new Newton-basis coefficient :math:`z_{n+1}\in\mathbb{R}` is computed via the
         residual :math:`r_n` and the power function :math:`P_n` for the centers :math:`X_n`
         evaluated at :math:`\mu` (the definitions of these quantities are given below):
 
@@ -347,25 +348,6 @@ class VKOGASurrogate(WeakGreedySurrogate):
         We are going to track this quantity evaluated at all training points during the
         iterations of the greedy algorithm.
 
-        It remains the computation of the inverse of the Cholesky factor :math:`C_n`:
-        The initial inverse Cholesky factor is given as
-
-        .. math::
-            \begin{align*}
-                C_1 = \frac{1}{V_1(\mu)}
-            \end{align*}
-
-        and is updated via
-
-        .. math::
-            C_{n+1} = \begin{bmatrix}
-                C_n & 0 \\
-                -\frac{1}{V_{n+1}(\mu)}\bar{v}_{n}(\mu) C_n & \frac{1}{V_{n+1}(\mu)}
-            \end{bmatrix},
-
-        where we denote as :math:`\bar{v}_{n}(\mu)\in\mathbb{R}^n`
-        the vector :math:`[V_{1}(\mu),\ldots,V_{n}(\mu)]`.
-
         Parameters
         ----------
         mu
@@ -405,13 +387,11 @@ class VKOGASurrogate(WeakGreedySurrogate):
         z_new = (self.res[idx_in_X] / np.sqrt(self._power2[idx_in_X])).reshape(1, self.m)
         self._z = np.vstack([self._z, z_new]) if self._z is not None else z_new
 
-        # update Cholesky inverse, Newton basis and the power function values
+        # update Newton basis and the power function values
         self._update_newton_basis(idx_in_X)
-        self._update_cholesky_inverse(idx_in_X)
         self._update_power_function_evals()
 
-        # update centers and final coefficients
-        self._coefficients = self._C.T @ self._z
+        # update centers
         if self._centers is None and self._centers_idx is None:
             self._centers = np.atleast_2d(mu)
             self._centers_idx = np.array([idx_in_X], dtype=int)
@@ -422,20 +402,40 @@ class VKOGASurrogate(WeakGreedySurrogate):
     def _update_newton_basis(self, idx_in_X):
         """Append Xi as the last block to the Newton basis V."""
         if self._V is None:
-            self._V = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
+            Xi = self._K_X_mu / np.sqrt(self._power2[idx_in_X])
         else:
             Xi = self._K_X_mu - (self._V[idx_in_X] @ self._V.T).reshape(-1, 1)
             Xi = Xi / np.sqrt(self._power2[idx_in_X])
-            self._V = np.concatenate([self._V, Xi], axis=1)
+        self._append_newton_column(Xi)
 
-    def _update_cholesky_inverse(self, idx_in_X):
-        """Extend the inverse of the Cholesky matrix by the new block."""
-        c_nn = 1 / self._V[idx_in_X, -1]
-        if self._C is None:
-            self._C = np.atleast_2d(c_nn)
-        else:
-            self._C = np.block([[self._C, np.zeros((self._C.shape[0], 1))],
-                                [- c_nn * self._V[idx_in_X, :-1] @ self._C, c_nn]])
+    def _append_newton_column(self, Xi):
+        """Append Xi (shape ``(N, 1)``) as a new column of V.
+
+        ``self._V`` stays an ``(N, n)`` view into a preallocated buffer, so all
+        existing indexing (``-1``, ``.shape[1]``, row/column slices) keeps
+        working; the buffer only grows (by doubling) when it runs out of columns.
+        """
+        n = 0 if self._V is None else self._V.shape[1]
+        if self._V_buf is None or self._V_buf.shape[1] < n + 1:
+            cap = max(2 * (self._V_buf.shape[1] if self._V_buf is not None else 0), 1)
+            buf = np.empty((self.X_train.shape[0], cap))
+            if self._V is not None:
+                buf[:, :n] = self._V
+            self._V_buf = buf
+        self._V_buf[:, n] = Xi.ravel()
+        self._V = self._V_buf[:, :n + 1]
+
+    def _append_newton_rows(self, V_new):
+        """Append V_new (shape ``(n_new, n)``) as new training rows of V."""
+        if self._V_buf is None:
+            self._V_buf = np.ascontiguousarray(self._V)
+        n = self._V.shape[1]
+        old_n = self._V.shape[0]
+        buf = np.empty((old_n + V_new.shape[0], self._V_buf.shape[1]))
+        buf[:old_n, :n] = self._V
+        buf[old_n:, :n] = V_new
+        self._V_buf = buf
+        self._V = buf[:, :n]
 
     def _update_power_function_evals(self):
         """Incrementally update self._power2 after adding new center."""
