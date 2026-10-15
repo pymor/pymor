@@ -417,7 +417,7 @@ class VKOGASurrogate(WeakGreedySurrogate):
         """
         n = 0 if self._V is None else self._V.shape[1]
         if self._V_buf is None or self._V_buf.shape[1] < n + 1:
-            cap = max(2 * (self._V_buf.shape[1] if self._V_buf is not None else 0), 8)
+            cap = max(2 * (self._V_buf.shape[1] if self._V_buf is not None else 0), 1)
             buf = np.empty((self.X_train.shape[0], cap))
             if self._V is not None:
                 buf[:, :n] = self._V
