@@ -498,3 +498,115 @@ def two_dimensional_parametric_diffusion(diameter=1/50):
     fom, _ = discretize_stationary_cg(problem, diameter=diameter)
 
     return fom
+
+
+# Base URL of the SLICOT benchmark examples, see
+# https://www.slicot.org/20-site/126-benchmark-examples-for-model-reduction
+_SLICOT_BENCHMARK_BASE_URL = 'https://www.slicot.org/objects/software/shared/bench-data'
+
+# 'Orr-Som' is not included as the data file does not contain a B matrix
+_SLICOT_BENCHMARKS = {
+    'CDPLAYER': ('CDplayer', 'dab015dd871a32644a9ac08dea4579c7'),
+    'MNA_1': ('MNA_1', '3f3129ef26da51d244e95eda74adc5e9'),
+    'MNA_2': ('MNA_2', 'b51c2285d814a9474911aa2ac99ede82'),
+    'MNA_3': ('MNA_3', '8bc3dd9734467be1d916ce382be5a09d'),
+    'MNA_4': ('MNA_4', '505119ab586871f228a54ba8d1cb81b9'),
+    'MNA_5': ('MNA_5', '0120332b8fcd14479db1f80e5378a43a'),
+    'BEAM': ('beam', '749d51799347c5c29fba6af0f4797452'),
+    'BUILD': ('build', '3aab5dd422202df27a7c08c8235cb8e1'),
+    'EADY': ('eady', 'cab5d11731039836d5bcaa451d604174'),
+    'FOM': ('fom', '65c6593ddad7ad55cde290aed641e213'),
+    'HEAT-CONT': ('heat-cont', '4f4de67c2040bbec27a3dbf90c58deb8'),
+    'HEAT-DISC': ('heat-disc', 'c129a54c96ed6f64c7a796a5954e4e7c'),
+    'ISS': ('iss', 'e4f81bf4c4dc4f9d65dc9d3195a464a1'),
+    'PDE': ('pde', '0ef3d4673f057dc118e09b56f82919df'),
+    'PEEC': ('peec', '4613034037df6628a5115c38b6c43cf3'),
+    'RANDOM': ('random', '84d2a6b7b0fbddd3ae30de72eca2b8e5'),
+    'TLINE': ('tline', '25a27a1ba7c133b5cf820b2c54610187'),
+}
+
+def slicot_model_names():
+    """Return a list of available SLICOT benchmark models.
+
+    See :meth:`~pymor.models.examples.slicot_model` for details.
+    """
+    return [m[0] for m in _SLICOT_BENCHMARKS.values()]
+
+
+def slicot_model(name):
+    r"""Return a SLICOT benchmark example as an |LTIModel|.
+
+    Downloads the MAT-file of the SLICOT benchmark example `name` (see
+    https://www.slicot.org/20-site/126-benchmark-examples-for-model-reduction),
+    caches it in pooch's OS dependent default data directory (e.g.
+    `~/.cache/pooch` on Linux) and returns the corresponding |LTIModel|.
+
+    Parameters
+    ----------
+    name
+        Name of the benchmark model. Use
+        :meth:`~pymor.models.examples.slicot_model_names` to get a list
+        of available models.
+
+    Returns
+    -------
+    model
+        The SLICOT benchmark model as a |LTIModel|.
+    """
+    from pymor.core.config import config
+    config.require('POOCH')
+
+    import numpy as np
+    import pooch
+    from packaging.version import parse
+    from scipy.io import loadmat
+    from scipy.sparse import dia_array, issparse
+
+    from pymor.models.iosys import LTIModel
+
+    if name.upper() not in _SLICOT_BENCHMARKS:
+        raise ValueError(
+            f"Unknown SLICOT benchmark model '{name}'. Available models: {slicot_model_names()}"
+        )
+    name = name.upper()
+
+    filename, md5 = _SLICOT_BENCHMARKS[name]
+
+    def convert_matrix(M):
+        if M is None:
+            return None
+        if issparse(M):
+            return M.tocsc().astype(np.float64)
+        return M.astype(np.float64)
+
+    unpacked = pooch.retrieve(
+        f'{_SLICOT_BENCHMARK_BASE_URL}/{filename}.zip',
+        known_hash=f'md5:{md5}',
+        processor=pooch.Unzip(),
+    )
+    mat_path = next(p for p in unpacked if p.endswith('.mat'))
+
+    if parse(config.SCIPY_VERSION) >= parse('1.15'):
+        data = loadmat(mat_path, spmatrix=False)
+    else:
+        data = loadmat(mat_path)
+
+    A = convert_matrix(data['A'])
+    B = convert_matrix(data['B'])
+    C = convert_matrix(data['C']) if 'C' in data else B.T
+    D = convert_matrix(data['D']) if 'D' in data else None
+    E = convert_matrix(data['E']) if 'E' in data else None
+
+    m = LTIModel.from_matrices(A, B, C, D=D, E=E, name='SLICOT_' + name)
+
+    match name:
+        case 'BEAM':
+            m = m.with_(A=m.A.with_(matrix=m.A.matrix.toarray()))
+        case 'BUILD':
+            m = m.with_(A=m.A.with_(matrix=m.A.matrix.toarray()))
+        case 'HEAT-DISC':
+            m = m.with_(sampling_time=1)
+        case 'TLINE':
+            m = m.with_(A=m.A.with_(matrix=dia_array(m.A.matrix)))
+
+    return m
