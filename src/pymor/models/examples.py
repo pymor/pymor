@@ -564,11 +564,11 @@ def slicot_model(name):
 
     from pymor.models.iosys import LTIModel
 
-    name = name.upper()
-    if name not in _SLICOT_BENCHMARKS:
+    if name.upper() not in _SLICOT_BENCHMARKS:
         raise ValueError(
             f"Unknown SLICOT benchmark model '{name}'. Available models: {slicot_model_names()}"
         )
+    name = name.upper()
 
     filename, md5 = _SLICOT_BENCHMARKS[name]
 
