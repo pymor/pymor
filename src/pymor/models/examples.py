@@ -545,7 +545,7 @@ def slicot_model(name):
     ----------
     name
         Name of the benchmark model. Use
-        :meth:`~pymor.model.examples.slicot_model_names` to get a list
+        :meth:`~pymor.models.examples.slicot_model_names` to get a list
         of available models.
 
     Returns
