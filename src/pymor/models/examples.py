@@ -528,24 +528,24 @@ _SLICOT_BENCHMARKS = {
 def slicot_model_names():
     """Return a list of available SLICOT benchmark models.
 
-    See :meth:`~pymor.models.examples.sclicot_model` for details.
+    See :meth:`~pymor.models.examples.slicot_model` for details.
     """
     return [m[0] for m in _SLICOT_BENCHMARKS.values()]
 
 
 def slicot_model(name):
-    r"""Return a SLICOT benchmark example as a |LTIModel|.
+    r"""Return a SLICOT benchmark example as an |LTIModel|.
 
     Downloads the MAT-file of the SLICOT benchmark example `name` (see
     https://www.slicot.org/20-site/126-benchmark-examples-for-model-reduction),
-    caches it in pooch's OS independent default data directory (e.g.
+    caches it in pooch's OS dependent default data directory (e.g.
     `~/.cache/pooch` on Linux) and returns the corresponding |LTIModel|.
 
     Parameters
     ----------
     name
         Name of the benchmark model. Use
-        :meth:`~pymor.model.examples.sclicot_model_names` to get a list
+        :meth:`~pymor.model.examples.slicot_model_names` to get a list
         of available models.
 
     Returns
