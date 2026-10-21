@@ -559,8 +559,8 @@ def slicot_model(name):
     import numpy as np
     import pooch
     from packaging.version import parse
-    from scipy import sparse as sp
     from scipy.io import loadmat
+    from scipy.sparse import dia_array, issparse
 
     from pymor.models.iosys import LTIModel
 
@@ -575,7 +575,7 @@ def slicot_model(name):
     def convert_matrix(M):
         if M is None:
             return None
-        if sp.issparse(M):
+        if issparse(M):
             return M.tocsc().astype(np.float64)
         return M.astype(np.float64)
 
@@ -597,4 +597,16 @@ def slicot_model(name):
     D = convert_matrix(data['D']) if 'D' in data else None
     E = convert_matrix(data['E']) if 'E' in data else None
 
-    return LTIModel.from_matrices(A, B, C, D=D, E=E, name='SLICOT_' + name)
+    m = LTIModel.from_matrices(A, B, C, D=D, E=E, name='SLICOT_' + name)
+
+    match name:
+        case 'BEAM':
+            m = m.with_(A=m.A.with_(matrix=m.A.matrix.toarray()))
+        case 'BUILD':
+            m = m.with_(A=m.A.with_(matrix=m.A.matrix.toarray()))
+        case 'HEAT-DISC':
+            m = m.with_(sampling_time=1)
+        case 'TLINE':
+            m = m.with_(A=m.A.with_(matrix=dia_array(m.A.matrix)))
+
+    return m
