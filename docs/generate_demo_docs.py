@@ -79,17 +79,13 @@ Demo Scripts
 Source code
 -----------
 
-.. raw:: html
+.. py:function:: main()
+   :module: pymordemos.{demo}
+   :no-index:
 
-   <details><summary>Show full source of <code>{demo}.py</code></summary>
-
-.. literalinclude:: ../../../src/pymordemos/{demo}.py
-   :language: python
-   :lines: 5-
-
-.. raw:: html
-
-   </details>
+   .. literalinclude:: ../../../src/pymordemos/{demo}.py
+      :language: python
+      :lines: 5-
 """, file=f)
         print('   ' + demo, file=index)
 
