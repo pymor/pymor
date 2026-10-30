@@ -37,4 +37,20 @@ Demo Scripts
             print(demo, file=f)
             print('=' * len(demo), file=f)
             print('\n'.join(docs[5:]), file=f)
+            print(f"""
+Source code
+-----------
+
+.. raw:: html
+
+   <details><summary>Show full source of <code>{demo}.py</code></summary>
+
+.. literalinclude:: ../../../src/pymordemos/{demo}.py
+   :language: python
+   :lines: 5-
+
+.. raw:: html
+
+   </details>
+""", file=f)
         print('   ' + demo, file=index)
