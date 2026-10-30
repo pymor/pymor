@@ -170,11 +170,12 @@ class VectorArrayPlot(K3DPlot):
             self.mesh.triangles_attribute = self.data
 
 
-@defaults('warp_by_scalar', 'scale_factor', 'background_color')
+@defaults('warp_by_scalar', 'scale_factor', 'background_color', 'static_html')
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
                   warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
-                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True):
+                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True,
+                  static_html=False):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -220,6 +221,13 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         Matplotlib `Colormap` object or a K3D array((step, r, g, b)).
     background_color
         Background color of the plot.
+    return_widget
+        Ignored.
+    static_html
+        If `True`, return a self-contained `IPython.display.HTML` object instead of an
+        ipywidget. The raw HTML string is available via its `data` attribute. Each
+        subplot is embedded as a static K3D snapshot, and time series are controlled
+        by a single slider shared by all subplots.
     """
     if rescale_colorbars:
         raise NotImplementedError
@@ -307,5 +315,39 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
             p.set(u, vmin[0], vmax[0])
 
     main_widget.set = set
+
+    if static_html:
+        import html
+
+        from IPython.display import HTML
+
+        time_listener = ("window.addEventListener('message', function(e) {"
+                         "  if (e.source === window.parent && e.data && e.data.k3dTime !== undefined) {"
+                         "    K3DInstance.setTime(e.data.k3dTime);"
+                         "  }"
+                         "});")
+
+        def cell(plot, label):
+            doc = html.escape(plot.get_snapshot(additional_js_code=time_listener), quote=True)
+            frame = (f'<iframe srcdoc="{doc}" '
+                     f'style="width: 100%; height: {height}px; border: none;"></iframe>')
+            cap = f'<div style="text-align: center;">{html.escape(label)}</div>' if label else ''
+            return f'<div>{cap}{frame}</div>'
+
+        labels = legend if legend is not None else [None] * len(plots)
+        cols = columns if len(plots) > 1 else 1
+        cells = ''.join(cell(p, l) for p, l in zip(plots, labels, strict=True))
+        plot_grid = f'<div style="display: grid; grid-template-columns: repeat({cols},1fr); gap: 8px;">{cells}</div>'
+        headline = f'<div style="text-align:center;font-weight:bold">{html.escape(title)}</div>' if title else ''
+        slider = ''
+        if U[0].shape[1] > 1:
+            on_input = ("this.nextElementSibling.textContent = this.value;"
+                        "this.closest('.pymor-k3d').querySelectorAll('iframe').forEach("
+                        "f => f.contentWindow.postMessage({k3dTime: Number(this.value)}, '*'));")
+            slider = ('<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">'
+                      f'<input type="range" min="0" max="{U[0].shape[1] - 1}" step="1" value="0" '
+                      f'style="width: 50%;" oninput="{html.escape(on_input, quote=True)}">'
+                      '<span>0</span></div>')
+        return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{slider}</div>')
 
     return main_widget
