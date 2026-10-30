@@ -274,6 +274,8 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
     plt.show()
 
 
+TAGS = ('instationary', 'linear', 'system-theoretic', 'builtin-discretizer')
+
 app = App(help_on_error=True, help_format='plaintext')
 
 @app.default
