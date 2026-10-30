@@ -334,7 +334,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              "});"
                              "try {"  # when loading plots lazily, sliders might change before plots are available
                              "  var container = window.frameElement && window.frameElement.closest('.pymor-k3d');"
-                             "  var slider = container && container.querySelector('input[type=range]');"
+                             "  var slider = container && container.querySelector('.pymor-k3d-frame');"
                              "  if (slider) K3DInstance.setTime(Number(slider.value));"
                              "} catch (e) {}")
 
@@ -352,16 +352,41 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         headline = f'<div style="text-align:center; font-weight:bold">{html.escape(title)}</div>' if title else ''
 
         # add controls for time-dependence
-        slider = ''
-        if time_dependent:
-            on_input = ("this.nextElementSibling.textContent = this.value;"
-                        "this.closest('.pymor-k3d').querySelectorAll('iframe').forEach("
-                        "f => f.contentWindow.postMessage({k3dTime: Number(this.value)}, '*'));")
-            slider = ('<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">'
-                      f'<input type="range" min="0" max="{U[0].shape[1] - 1}" step="1" value="0" '
-                      f'style="width: 50%;" oninput="{html.escape(on_input, quote=True)}">'
-                      '<span>0</span></div>')
+        controls = _static_animation_controls(U[0].shape[1]) if time_dependent else ''
 
-        return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{slider}</div>')
+        return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{controls}</div>')
 
     return main_widget
+
+
+def _static_animation_controls(frames):
+    """HTML counterpart of |AnimationWidget| for static k3d snapshots.
+
+    Consists of a play/pause button, a frame slider with frame counter and a delay
+    slider.
+    """
+    import html
+
+    on_frame = ("var c = this.closest('.pymor-k3d');"
+                "c.querySelector('.pymor-k3d-counter').textContent = this.value;"
+                "c.querySelectorAll('iframe').forEach("
+                "f => f.contentWindow.postMessage({k3dTime: Number(this.value)}, '*'));")
+    on_play = ("var b = this, c = b.closest('.pymor-k3d');"
+               "var s = c.querySelector('.pymor-k3d-frame'), d = c.querySelector('.pymor-k3d-delay');"
+               "if (b._playing) { b._playing = false; b.textContent = '▶'; return; }"
+               "if (Number(s.value) >= Number(s.max)) { s.value = 0; s.dispatchEvent(new Event('input')); }"
+               "b._playing = true; b.textContent = '⏸';"
+               "(function step() {"
+               "  if (!b._playing) return;"
+               "  if (Number(s.value) >= Number(s.max)) { b._playing = false; b.textContent = '▶'; return; }"
+               "  s.value = Number(s.value) + 1; s.dispatchEvent(new Event('input'));"
+               "  setTimeout(step, Number(d.value));"
+               "})();")
+    return ('<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">'
+            f'<button type="button" style="min-width: 2.5em;" onclick="{html.escape(on_play, quote=True)}">▶</button>'
+            f'<input class="pymor-k3d-frame" type="range" min="0" max="{frames - 1}" step="1" value="0" '
+            f'style="flex: 1; max-width: 50%;" oninput="{html.escape(on_frame, quote=True)}">'
+            '<span class="pymor-k3d-counter" style="min-width: 2.5em;">0</span>'
+            '<label>delay: <input class="pymor-k3d-delay" type="range" min="10" max="1000" value="100" '
+            'style="width: 8em; vertical-align: middle;"></label>'
+            '</div>')
