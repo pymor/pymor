@@ -321,15 +321,26 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
 
         from IPython.display import HTML
 
-        time_listener = ("window.addEventListener('message', function(e) {"
-                         "  if (e.source === window.parent && e.data && e.data.k3dTime !== undefined) {"
-                         "    K3DInstance.setTime(e.data.k3dTime);"
-                         "  }"
-                         "});")
+        time_dependent = False
+        if U[0].shape[1] > 1:
+            time_dependent = True
+
+        time_listener = ''
+        if time_dependent:
+            time_listener = ("window.addEventListener('message', function(e) {"
+                             "  if (e.source === window.parent && e.data && e.data.k3dTime !== undefined) {"
+                             "    K3DInstance.setTime(e.data.k3dTime);"
+                             "  }"
+                             "});"
+                             "try {"  # when loading plots lazily, sliders might change before plots are available
+                             "  var container = window.frameElement && window.frameElement.closest('.pymor-k3d');"
+                             "  var slider = container && container.querySelector('input[type=range]');"
+                             "  if (slider) K3DInstance.setTime(Number(slider.value));"
+                             "} catch (e) {}")
 
         def cell(plot, label):
             doc = html.escape(plot.get_snapshot(additional_js_code=time_listener), quote=True)
-            frame = (f'<iframe srcdoc="{doc}" '
+            frame = (f'<iframe srcdoc="{doc}" loading="lazy" '
                      f'style="width: 100%; height: {height}px; border: none;"></iframe>')
             cap = f'<div style="text-align: center;">{html.escape(label)}</div>' if label else ''
             return f'<div>{cap}{frame}</div>'
@@ -337,10 +348,12 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         labels = legend if legend is not None else [None] * len(plots)
         cols = columns if len(plots) > 1 else 1
         cells = ''.join(cell(p, l) for p, l in zip(plots, labels, strict=True))
-        plot_grid = f'<div style="display: grid; grid-template-columns: repeat({cols},1fr); gap: 8px;">{cells}</div>'
-        headline = f'<div style="text-align:center;font-weight:bold">{html.escape(title)}</div>' if title else ''
+        plot_grid = f'<div style="display: grid; grid-template-columns: repeat({cols}, 1fr); gap: 8px;">{cells}</div>'
+        headline = f'<div style="text-align:center; font-weight:bold">{html.escape(title)}</div>' if title else ''
+
+        # add controls for time-dependence
         slider = ''
-        if U[0].shape[1] > 1:
+        if time_dependent:
             on_input = ("this.nextElementSibling.textContent = this.value;"
                         "this.closest('.pymor-k3d').querySelectorAll('iframe').forEach("
                         "f => f.contentWindow.postMessage({k3dTime: Number(this.value)}, '*'));")
@@ -348,6 +361,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                       f'<input type="range" min="0" max="{U[0].shape[1] - 1}" step="1" value="0" '
                       f'style="width: 50%;" oninput="{html.escape(on_input, quote=True)}">'
                       '<span>0</span></div>')
+
         return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{slider}</div>')
 
     return main_widget
