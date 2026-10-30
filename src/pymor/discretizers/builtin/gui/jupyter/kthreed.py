@@ -170,12 +170,11 @@ class VectorArrayPlot(K3DPlot):
             self.mesh.triangles_attribute = self.data
 
 
-@defaults('warp_by_scalar', 'scale_factor', 'background_color', 'static_html')
+@defaults('warp_by_scalar', 'scale_factor', 'background_color')
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
                   warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
-                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True,
-                  static_html=False):
+                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -222,12 +221,12 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     background_color
         Background color of the plot.
     return_widget
-        Ignored.
-    static_html
-        If `True`, return a self-contained `IPython.display.HTML` object instead of an
-        ipywidget. The raw HTML string is available via its `data` attribute. Each
-        subplot is embedded as a static K3D snapshot, and time series are controlled
-        by a single slider shared by all subplots.
+        If `True`, return an ipywidget which can be updated with new data via its `set`
+        method. This requires a running Jupyter kernel. If `False`, return a
+        self-contained `IPython.display.HTML` object, which also works without a kernel,
+        e.g., in the documentation. The raw HTML string is available via its `data`
+        attribute. Each subplot is embedded as a static K3D snapshot, and time series are
+        controlled by play/pause, frame and delay controls shared by all subplots.
     """
     if rescale_colorbars:
         raise NotImplementedError
@@ -269,6 +268,9 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              height=height,
                              background_color=background_color)
              for u, vmin, vmax, sf in zip(U, vmins, vmaxs, scale_factors, strict=True)]
+
+    if not return_widget:
+        return _static_html(plots, U[0].shape[1], title, legend, columns, height)
 
     for p in plots[1:]:
         jslink((plots[0], 'camera'), (p, 'camera'))
@@ -316,54 +318,53 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
 
     main_widget.set = set
 
-    if static_html:
-        import html
-
-        from IPython.display import HTML
-
-        time_dependent = False
-        if U[0].shape[1] > 1:
-            time_dependent = True
-
-        time_listener = ''
-        if time_dependent:
-            time_listener = ("window.addEventListener('message', function(e) {"
-                             "  if (e.source === window.parent && e.data && e.data.k3dTime !== undefined) {"
-                             "    K3DInstance.setTime(e.data.k3dTime);"
-                             "  }"
-                             "});"
-                             "try {"  # when loading plots lazily, sliders might change before plots are available
-                             "  var container = window.frameElement && window.frameElement.closest('.pymor-k3d');"
-                             "  var slider = container && container.querySelector('.pymor-k3d-frame');"
-                             "  if (slider) K3DInstance.setTime(Number(slider.value));"
-                             "} catch (e) {}")
-
-        def cell(plot, label):
-            doc = html.escape(plot.get_snapshot(additional_js_code=time_listener), quote=True)
-            frame = (f'<iframe srcdoc="{doc}" loading="lazy" '
-                     f'style="width: 100%; height: {height}px; border: none;"></iframe>')
-            cap = f'<div style="text-align: center;">{html.escape(label)}</div>' if label else ''
-            return f'<div>{cap}{frame}</div>'
-
-        labels = legend if legend is not None else [None] * len(plots)
-        cols = columns if len(plots) > 1 else 1
-        cells = ''.join(cell(p, l) for p, l in zip(plots, labels, strict=True))
-        plot_grid = f'<div style="display: grid; grid-template-columns: repeat({cols}, 1fr); gap: 8px;">{cells}</div>'
-        headline = f'<div style="text-align:center; font-weight:bold">{html.escape(title)}</div>' if title else ''
-
-        # add controls for time-dependence
-        controls = _static_animation_controls(U[0].shape[1]) if time_dependent else ''
-
-        return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{controls}</div>')
-
     return main_widget
+
+
+def _static_html(plots, frames, title, legend, columns, height):
+    """Embed k3d plots as static snapshots into a self-contained `IPython.display.HTML` object."""
+    import html
+
+    from IPython.display import HTML
+
+    time_dependent = frames > 1
+
+    time_listener = ''
+    if time_dependent:
+        time_listener = ("window.addEventListener('message', function(e) {"
+                         "  if (e.source === window.parent && e.data && e.data.k3dTime !== undefined) {"
+                         "    K3DInstance.setTime(e.data.k3dTime);"
+                         "  }"
+                         "});"
+                         "try {"  # when loading plots lazily, sliders might change before plots are available
+                         "  var container = window.frameElement && window.frameElement.closest('.pymor-k3d');"
+                         "  var slider = container && container.querySelector('.pymor-k3d-frame');"
+                         "  if (slider) K3DInstance.setTime(Number(slider.value));"
+                         "} catch (e) {}")
+
+    def cell(plot, label):
+        doc = html.escape(plot.get_snapshot(additional_js_code=time_listener), quote=True)
+        frame = (f'<iframe srcdoc="{doc}" loading="lazy" '
+                 f'style="width: 100%; height: {height}px; border: none;"></iframe>')
+        cap = f'<div style="text-align: center;">{html.escape(label)}</div>' if label else ''
+        return f'<div>{cap}{frame}</div>'
+
+    labels = legend if legend is not None else [None] * len(plots)
+    cols = columns if len(plots) > 1 else 1
+    cells = ''.join(cell(p, l) for p, l in zip(plots, labels, strict=True))
+    plot_grid = f'<div style="display: grid; grid-template-columns: repeat({cols}, 1fr); gap: 8px;">{cells}</div>'
+    headline = f'<div style="text-align:center; font-weight:bold">{html.escape(title)}</div>' if title else ''
+
+    # add controls for time-dependence
+    controls = _static_animation_controls(frames) if time_dependent else ''
+
+    return HTML(f'<div class="pymor-k3d">{headline}{plot_grid}{controls}</div>')
 
 
 def _static_animation_controls(frames):
     """HTML counterpart of |AnimationWidget| for static k3d snapshots.
 
-    Consists of a play/pause button, a frame slider with frame counter and a delay
-    slider.
+    Consists of a play/pause button, a frame slider with frame counter and a delay slider.
     """
     import html
 
