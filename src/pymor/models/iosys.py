@@ -18,6 +18,7 @@ from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
+from pymor.models.pole_residue import PoleResidueTransferFunction
 from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (
@@ -414,6 +415,43 @@ class LTIModel(Model):
         D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format, mu)
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
         return A, B, C, D, E
+
+    def to_pole_residue(self, mu=None):
+        """Return the transfer function in pole-residue form.
+
+        .. note::
+            Uses a dense eigenvalue solver and assumes that `E` is invertible and that the
+            matrix pencil `(A, E)` is diagonalizable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values| for which to convert the system.
+            All |Operators| need to be convertible to |NumPy arrays| for `mu`.
+
+        Returns
+        -------
+        tf
+            |PoleResidueTransferFunction| equal to the transfer function of the system.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        A = to_matrix(self.A, format='dense', mu=mu)
+        B = to_matrix(self.B, format='dense', mu=mu)
+        C = to_matrix(self.C, format='dense', mu=mu)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format='dense', mu=mu)
+        if isinstance(self.E, IdentityOperator):
+            poles, X = spla.eig(A)
+            EX = X
+        else:
+            E = to_matrix(self.E, format='dense', mu=mu)
+            poles, X = spla.eig(A, E)
+            EX = E @ X
+        b = spla.solve(EX, B)
+        c = (C @ X).T
+        return PoleResidueTransferFunction(poles, b, c, D, sampling_time=self.sampling_time, name=self.name)
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
@@ -3317,83 +3355,6 @@ class BilinearModel(Model):
             f'    solution_space:  {self.solution_space}'
         )
         return string
-
-
-def _lti_to_poles_b_c(lti, mu=None):
-    """Compute poles and residues.
-
-    Parameters
-    ----------
-    lti
-        |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
-        The D operator is ignored.
-    mu
-        |Parameter values|.
-
-    Returns
-    -------
-    poles
-        1D |NumPy array| of poles.
-    b
-        |NumPy array| of shape `(lti.order, lti.dim_input)`.
-    c
-        |NumPy array| of shape `(lti.order, lti.dim_output)`.
-    """
-    A = to_matrix(lti.A, format='dense', mu=mu)
-    B = to_matrix(lti.B, format='dense', mu=mu)
-    C = to_matrix(lti.C, format='dense', mu=mu)
-    if isinstance(lti.E, IdentityOperator):
-        poles, X = spla.eig(A)
-        EX = X
-    else:
-        E = to_matrix(lti.E, format='dense', mu=mu)
-        poles, X = spla.eig(A, E)
-        EX = E @ X
-    b = spla.solve(EX, B)
-    c = (C @ X).T
-    return poles, b, c
-
-
-def _poles_b_c_to_lti(poles, b, c):
-    r"""Create an |LTIModel| from poles and residue rank-1 factors.
-
-    Returns an |LTIModel| with real matrices such that its transfer
-    function is
-
-    .. math::
-        \sum_{i = 1}^r \frac{c_i b_i^T}{s - \lambda_i}
-
-    where :math:`\lambda_i, b_i, c_i` are the poles and residue rank-1
-    factors.
-
-    Parameters
-    ----------
-    poles
-        Sequence of poles.
-    b
-        |NumPy array| of shape `(rom.order, rom.dim_input)`.
-    c
-        |NumPy array| of shape `(rom.order, rom.dim_output)`.
-
-    Returns
-    -------
-    |LTIModel|.
-    """
-    A, B, C = [], [], []
-    for i, pole in enumerate(poles):
-        if pole.imag == 0:
-            A.append(pole.real)
-            B.append(b[i].real)
-            C.append(c[i].real[:, np.newaxis])
-        elif pole.imag > 0:
-            A.append([[pole.real, pole.imag],
-                      [-pole.imag, pole.real]])
-            B.append(np.vstack([2 * b[i].real, -2 * b[i].imag]))
-            C.append(np.hstack([c[i].real[:, np.newaxis], c[i].imag[:, np.newaxis]]))
-    A = spla.block_diag(*A)
-    B = np.vstack(B)
-    C = np.hstack(C)
-    return LTIModel.from_matrices(A, B, C)
 
 
 class StepFunction(Function):
