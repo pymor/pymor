@@ -561,3 +561,127 @@ class SylvesterEquation(ImmutableObject):
         Cr = NumpyMatrixOperator(Cr) if Cr is not None else None
 
         return cls(A, Ar, E=E, Er=Er, B=B, Br=Br, C=C, Cr=Cr, name=name)
+
+
+class BernoulliEquation(ImmutableObject):
+    r"""A (generalized) algebraic Bernoulli equation.
+
+    With :math:`E` taken to be the identity if `None`:
+
+    - if `trans` is `False`:
+
+      .. math::
+          A X E^H + E X A^H
+          - E X B^H B X E^H = 0,
+
+    - if `trans` is `True`:
+
+      .. math::
+          A^H X E + E^H X A
+          - E^H X B B^H X E = 0.
+
+    Use :meth:`solve` to obtain the dense solution :math:`X` and :meth:`solve_lr`
+    to obtain a low-rank factor :math:`Z` with :math:`X = Z Z^H`.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    trans
+        Whether the first |Operator| in the equation is transposed.
+    name
+        Name of the equation.
+    """
+
+    def __init__(self, A, E, B, trans=False, name=None):
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range
+            assert E.source == A.source
+        assert B in A.source
+
+        self.A = A
+        self.E = E
+        self.B = B
+        self.trans = trans
+        self.name = name
+
+    @property
+    def dim(self):
+        r"""Dimension of the unknown :math:`X`."""
+        return self.A.source.dim
+
+    def solve(self, solver=None):
+        r"""Compute the dense solution :math:`X` as a |NumPy array|."""
+        from pymor.solvers.matrix_equations.default import DefaultBernoulliSolver
+        from pymor.solvers.matrix_equations.interface import BernoulliSolver
+        solver = DefaultBernoulliSolver() if solver is None else solver
+        assert isinstance(solver, BernoulliSolver)
+        return solver.solve(self)
+
+    def solve_lr(self, solver=None):
+        r"""Compute a low-rank factor :math:`Z` as a |VectorArray| from `A.source`."""
+        from pymor.solvers.matrix_equations.default import DefaultBernoulliSolverLR
+        from pymor.solvers.matrix_equations.interface import BernoulliSolverLR
+        solver = DefaultBernoulliSolverLR() if solver is None else solver
+        assert isinstance(solver, BernoulliSolverLR)
+        return solver.solve(self)
+
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        A
+            The |NumPy array| A.
+        E
+            The |NumPy array| E or `None`.
+        B
+            The |NumPy array| B.
+        """
+        from pymor.algorithms.to_matrix import to_matrix
+        A = to_matrix(self.A, format='dense')
+        E = to_matrix(self.E, format='dense') if self.E is not None else None
+        B = self.B.to_numpy()
+
+        return A, E, (B if self.trans else B.T)
+
+    @classmethod
+    def from_matrices(cls, A, E, B, trans=False, name=None):
+        r"""Create a |BernoulliEquation| from matrices.
+
+        Parameters
+        ----------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None`.
+        B
+            The |NumPy array| B.
+        trans
+            Whether the first matrix in the equation is transposed.
+        name
+            Name of the equation.
+        """
+        from pymor.bindings.scipy import sparray
+        from pymor.operators.numpy import NumpyMatrixOperator
+
+        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(B, np.ndarray)
+
+        A = NumpyMatrixOperator(A)
+        E = NumpyMatrixOperator(E) if E is not None else None
+        B = A.source.from_numpy(B if trans else B.T)
+
+        return cls(A, E, B, trans=trans, name=name)
