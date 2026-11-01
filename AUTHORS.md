@@ -8,6 +8,7 @@
 * Petar Mlinarić, @pmli (2016-)
 * Stephan Rave, @sdrave (2012-)
 * Felix Schindler, @ftschindler (2012-)
+* Sven Ullmann, @ullmannsven (2026-)
 
 ## Contributors
 
