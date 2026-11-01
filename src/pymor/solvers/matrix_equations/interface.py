@@ -4,6 +4,7 @@
 
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.solvers.matrix_equations.equations import (
+    BernoulliEquation,
     LyapunovEquation,
     PositiveRiccatiEquation,
     RiccatiEquation,
@@ -185,6 +186,57 @@ class SylvesterSolver(ImmutableObject):
             from `equation.A.source`.
         """
         assert isinstance(equation, SylvesterEquation)
+        return self._solve(equation)
+
+    @abstractmethod
+    def _solve(self, equation):
+        pass
+
+
+class BernoulliSolver(ImmutableObject):
+    r"""Dense solver interface for |BernoulliEquations|."""
+
+    def solve(self, equation):
+        """Solve a |BernoulliEquation|.
+
+        Parameters
+        ----------
+        equation
+            The |BernoulliEquation| to solve.
+
+        Returns
+        -------
+        X
+            |BernoulliEquation| solution as a |NumPy array|.
+        """
+        assert isinstance(equation, BernoulliEquation)
+        return self._solve(equation)
+
+    @abstractmethod
+    def _solve(self, equation):
+        pass
+
+
+class BernoulliSolverLR(ImmutableObject):
+    r"""Low-rank solver interface for |BernoulliEquations|.
+
+    Computes a low-rank factor of the solution of the |BernoulliEquation|.
+    """
+
+    def solve(self, equation):
+        """Solve a |BernoulliEquation|.
+
+        Parameters
+        ----------
+        equation
+            The |BernoulliEquation| to solve.
+
+        Returns
+        -------
+        Z
+            Low-rank factor of the solution, |VectorArray| from `equation.A.source`.
+        """
+        assert isinstance(equation, BernoulliEquation)
         return self._solve(equation)
 
     @abstractmethod
