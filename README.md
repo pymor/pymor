@@ -97,7 +97,11 @@ by running
     conda install -c conda-forge pymor
 
 This will install pyMOR with its core dependencies into the current active conda
-environment. To replicate an environment with most optional dependencies, which
+environment. To install the latest release of pyMOR with most optional dependencies:
+
+    conda install -c conda-forge pymor-full
+
+To replicate an environment with most optional dependencies, which
 is also used in our continuous integration tests, you can use the
 [conda-linux-64.lock](https://raw.githubusercontent.com/pymor/pymor/main/conda-linux-64.lock),
 [conda-osx-64.lock](https://raw.githubusercontent.com/pymor/pymor/main/conda-osx-64.lock),
@@ -107,10 +111,6 @@ lock files from the pyMOR repository:
     conda create -n pymorenv --file ./conda-{linux,osx,win}-64.lock
     conda activate pymorenv
     conda install pymor
-
-To install the latest release of pyMOR with most optional dependencies:
-
-    conda install -c conda-forge pymor-full
 
 ## Documentation
 
