@@ -15,6 +15,9 @@ authors = [
 ]
 maintainers = [
   { name = "Stephan Rave", email = "stephan.rave@uni-muenster.de" },
+  { name = "Hendrik Kleikamp", email = "hendrik.kleikamp@uni-graz.at" },
+  { name = "Petar Mlinarić", email = "petar.mlinaric@math.hr" },
+  { name = "Sven Ullmann", email = "sven.ullmann@uni-muenster.de" },
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
