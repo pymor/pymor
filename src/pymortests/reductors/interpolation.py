@@ -39,11 +39,12 @@ def test_ltibhi_mimo_tangential_interpolation(projection, rng):
 @pytest.mark.parametrize('projection', ['orth', 'biorth', 'arnoldi'])
 def test_ltibhi_parametric(projection):
     n = 10
-    A = (NumpyMatrixOperator(-np.diag(np.arange(1, n + 1)))
-         + ProjectionParameterFunctional('p') * NumpyMatrixOperator(-np.eye(n)))
+    p = ProjectionParameterFunctional('p')
+    A = NumpyMatrixOperator(-np.diag(np.arange(1, n + 1))) + p * NumpyMatrixOperator(-np.eye(n))
     B = NumpyMatrixOperator(np.ones((n, 1)))
     C = NumpyMatrixOperator(np.arange(1, n + 1)[np.newaxis])
-    fom = LTIModel(A, B, C)
+    E = NumpyMatrixOperator(np.eye(n)) + p * NumpyMatrixOperator(0.1 * np.eye(n))
+    fom = LTIModel(A, B, C, E=E)
     mu = fom.parameters.parse(5)
     sigma = np.array([1, 2 + 3j, 2 - 3j])
     ones = np.ones((3, 1))

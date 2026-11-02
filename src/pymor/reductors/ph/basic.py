@@ -64,9 +64,10 @@ class PHLTIPGReductor(ProjectionBasedReductor):
                                    'S': fom.S,
                                    'N': fom.N}
         elif self.pg_projection == 'energy_stable':
-            projected_operators = {'E': project(fom.E, W, V),
-                                   'A': IdentityOperator(fom.Q.source) if self.QTE_orthonormal
-                                                                       else project(fom.E.H @ fom.Q, V, V),
+            E = project(fom.E, W, V)
+            projected_operators = {'E': E,
+                                   'A': IdentityOperator(E.source) if self.QTE_orthonormal
+                                                                   else project(fom.E.H @ fom.Q, V, V),
                                    'B': project(fom.G - fom.P, W, None),
                                    'C': project((fom.G + fom.P).H @ fom.Q, None, V),
                                    'D': fom.S - fom.N}
