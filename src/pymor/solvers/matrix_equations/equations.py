@@ -155,7 +155,7 @@ class RiccatiData(ImmutableObject):
     Not intended to be used directly.
     """
 
-    def __init__(self, A, E, B, C, R=None, Q=None, S=None, trans=False, name=None):
+    def __init__(self, A, E, B, C, R=None, Q=None, S=None, trans=False, cont_time=True, name=None):
         assert isinstance(A, Operator)
         assert A.linear
         assert not A.parametric
@@ -189,6 +189,7 @@ class RiccatiData(ImmutableObject):
         self.Q = Q
         self.S = S
         self.trans = trans
+        self.cont_time = cont_time
         self.name = name
 
     @property
@@ -227,7 +228,7 @@ class RiccatiData(ImmutableObject):
         return A, E, B, C, self.R, self.Q, S
 
     @classmethod
-    def from_matrices(cls, A, E, B, C, R=None, Q=None, S=None, trans=False, name=None):
+    def from_matrices(cls, A, E, B, C, R=None, Q=None, S=None, trans=False, cont_time=True, name=None):
         """Create the |RiccatiEquation| or |PositiveRiccatiEquation| from matrices.
 
         Parameters
@@ -248,6 +249,8 @@ class RiccatiData(ImmutableObject):
             The |NumPy array| S or `None`.
         trans
             Whether the first matrix in the equation is transposed.
+        cont_time
+            If `True`, the continuous-time equation, otherwise the discrete-time one.
         name
             Name of the equation.
         """
@@ -269,14 +272,14 @@ class RiccatiData(ImmutableObject):
         if S is not None:
             S = A.source.from_numpy(S.T if not trans else S)
 
-        return cls(A, E, B, C, R=R, Q=Q, S=S, trans=trans, name=name)
+        return cls(A, E, B, C, R=R, Q=Q, S=S, trans=trans, cont_time=cont_time, name=name)
 
 
 class RiccatiEquation(RiccatiData):
-    r"""A (generalized) continuous-time algebraic Riccati equation.
+    r"""A (generalized) continuous- or discrete-time algebraic Riccati equation.
 
-    With :math:`E` taken to be the identity if `None`, :math:`R` the identity if
-    `None`, and :math:`S` zero if `None`:
+    With :math:`E` taken to be the identity if `None`, :math:`R` and :math:`Q` the
+    identity if `None`, and :math:`S` zero if `None`, for `cont_time` `True`:
 
     - if `trans` is `False`:
 
@@ -292,7 +295,21 @@ class RiccatiEquation(RiccatiData):
           - (E^T X B + S) R^{-1} (B^T X E + S^T)
           + C^T Q C = 0.
 
-    Only the continuous-time equation is supported.
+    If `cont_time` is `False`, the discrete-time equation is described:
+
+    - if `trans` is `False`:
+
+      .. math::
+          A X A^T - E X E^T
+          - (A X C^T + S^T) (Q + C X C^T)^{-1} (C X A^T + S)
+          + B R B^T = 0,
+
+    - if `trans` is `True`:
+
+      .. math::
+          A^T X A - E^T X E
+          - (A^T X B + S) (R + B^T X B)^{-1} (B^T X A + S^T)
+          + C^T Q C = 0.
 
     Parameters
     ----------
@@ -312,6 +329,9 @@ class RiccatiEquation(RiccatiData):
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
+    cont_time
+        If `True`, the continuous-time equation is described, otherwise the
+        discrete-time equation.
     name
         Name of the equation.
     """
@@ -334,9 +354,10 @@ class RiccatiEquation(RiccatiData):
 
 
 class PositiveRiccatiEquation(RiccatiData):
-    r"""A (generalized) positive continuous-time algebraic Riccati equation.
+    r"""A (generalized) positive continuous- or discrete-time algebraic Riccati equation.
 
-    Differs from :class:`RiccatiEquation` only in the sign of the quadratic term:
+    Differs from :class:`RiccatiEquation` only in the sign of the quadratic term,
+    for `cont_time` `True`:
 
     - if `trans` is `False`:
 
@@ -350,6 +371,22 @@ class PositiveRiccatiEquation(RiccatiData):
       .. math::
           A^T X E + E^T X A
           + (E^T X B + S) R^{-1} (B^T X E + S^T)
+          + C^T Q C = 0.
+
+    If `cont_time` is `False`, the discrete-time equation is described:
+
+    - if `trans` is `False`:
+
+      .. math::
+          A X A^T - E X E^T
+          + (A X C^T + S^T) (Q - C X C^T)^{-1} (C X A^T + S)
+          + B R B^T = 0,
+
+    - if `trans` is `True`:
+
+      .. math::
+          A^T X A - E^T X E
+          + (A^T X B + S) (R - B^T X B)^{-1} (B^T X A + S^T)
           + C^T Q C = 0.
 
     Parameters
@@ -370,6 +407,9 @@ class PositiveRiccatiEquation(RiccatiData):
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the equation is transposed.
+    cont_time
+        If `True`, the continuous-time equation is described, otherwise the
+        discrete-time equation.
     name
         Name of the equation.
     """
