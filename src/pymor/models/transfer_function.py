@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from itertools import chain
+from numbers import Number
 
 import numpy as np
 import scipy.linalg as spla
@@ -10,8 +11,10 @@ import scipy.linalg as spla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.plot import adaptive
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class TransferFunction(CacheableObject, ParametricObject):
@@ -518,6 +521,15 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
+        if isinstance(other, Number):
+            if other == 0:
+                zero = lambda s, mu=None: np.zeros((self.dim_output, self.dim_input))
+                return self.with_(tf=zero, dtf=zero, parameters={}, presets={'h2_norm': 0.})
+            tf = lambda s, mu=None: other * self.eval_tf(s, mu=mu)
+            dtf = (lambda s, mu=None: other * self.eval_dtf(s, mu=mu)) if self.dtf is not None else None
+            presets = {'h2_norm': abs(other) * self.presets['h2_norm']} if 'h2_norm' in self.presets else None
+            return self.with_(tf=tf, dtf=dtf, presets=presets)
+
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
@@ -532,6 +544,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
+        if isinstance(other, Number):
+            return self * other
+
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
@@ -677,6 +692,22 @@ class FactorizedTransferFunction(TransferFunction):
         return self.with_(C=C, D=D, dC=dC, dD=dD)
 
     def __mul__(self, other):
+        if isinstance(other, Number):
+            if other == 0:
+                X = NumpyVectorSpace(0)
+                U, Y = self.B.source, self.C.range
+                return FactorizedTransferFunction(
+                    self.dim_input, self.dim_output,
+                    IdentityOperator(X), ZeroOperator(X, U), ZeroOperator(Y, X), ZeroOperator(Y, U),
+                    ZeroOperator(X, X), ZeroOperator(X, U), ZeroOperator(Y, X), ZeroOperator(Y, U),
+                    sampling_time=self.sampling_time)
+            # balance the multiplication between B and C
+            c = np.sqrt(abs(other))
+            return self.with_(B=self.B * c, C=self.C * (other / c), D=self.D * other,
+                              dB=self.dB * c if self.dB is not None else None,
+                              dC=self.dC * (other / c) if self.dC is not None else None,
+                              dD=self.dD * other if self.dD is not None else None)
+
         if (type(other) is not FactorizedTransferFunction
                 and not hasattr(other, 'transfer_function')):
             return NotImplemented
@@ -709,6 +740,8 @@ class FactorizedTransferFunction(TransferFunction):
         return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
+        if isinstance(other, Number):
+            return self * other
         if not hasattr(other, 'transfer_function'):
             return NotImplemented
         return other.transfer_function * self
