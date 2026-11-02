@@ -9,6 +9,7 @@
 
 <script language="javascript">
     function scrollToTarget() {
+        if (!$(":target").length) return;
         target_position = $(":target").offset().top;
         header_height = $('header').height();
         $(window).scrollTop(target_position - header_height);
