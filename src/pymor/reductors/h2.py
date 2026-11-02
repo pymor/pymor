@@ -85,15 +85,16 @@ class GenericIRKAReductor(BasicObject):
         else:
             raise ValueError(f'rom0_params is of wrong type ({type(rom0_params)}).')
 
-    @staticmethod
-    def _check_common_args(tol, maxit, num_prev, conv_crit):
+    _conv_crits = ('sigma', 'h2')
+
+    def _check_common_args(self, tol, maxit, num_prev, conv_crit):
         assert isinstance(tol, Real)
         assert tol > 0
         assert isinstance(maxit, Integral)
         assert maxit >= 1
         assert isinstance(num_prev, Integral)
         assert num_prev >= 1
-        assert conv_crit in ('sigma', 'h2')
+        assert conv_crit in self._conv_crits
 
     def _order_to_sigma_b_c(self, r):
         sigma = np.logspace(-1, 1, r)
@@ -668,6 +669,8 @@ class GapIRKAReductor(GenericIRKAReductor):
         |Parameter|.
     """
 
+    _conv_crits = ('sigma', 'htwogap', 'ltwo')
+
     def __init__(self, fom, mu=None, riccati_solver=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
@@ -732,6 +735,7 @@ class GapIRKAReductor(GenericIRKAReductor):
         self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params)
         self._store_sigma_b_c(sigma, b, c)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth')
 
         self.logger.info('Starting gap IRKA')
@@ -818,7 +822,7 @@ class GapIRKAReductor(GenericIRKAReductor):
             C = to_matrix(rom.C, format='dense')
             F = -to_matrix(gap_rom.B, format='dense')[:, :C.shape[0]]
             D = np.eye(rom.C.range.dim)
-            E = to_matrix(rom.E, format='dense') if isinstance(rom.E, IdentityOperator) else None
+            E = None if isinstance(rom.E, IdentityOperator) else to_matrix(rom.E, format='dense')
 
             mi = LTIModel.from_matrices(A, F, C, D, E)
             dist = min((gap_rom_old - gap_rom).h2_norm() * mi.linf_norm() / rom.l2_norm()

@@ -6,10 +6,53 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
-from pymor.reductors.interpolation import TFBHIReductor
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
 pytestmark = pytest.mark.builtin
+
+
+@pytest.mark.parametrize('projection', ['orth', 'biorth'])
+def test_ltibhi_mimo_tangential_interpolation(projection, rng):
+    n, m, p = 10, 3, 2
+    A = -np.diag(np.arange(1, n + 1)) + 0.1 * rng.standard_normal((n, n))
+    fom = LTIModel.from_matrices(A, rng.standard_normal((n, m)), rng.standard_normal((p, n)))
+    sigma = np.array([1, 2 + 3j, 2 - 3j])
+    b1 = rng.standard_normal(m) + 1j * rng.standard_normal(m)
+    c1 = rng.standard_normal(p) + 1j * rng.standard_normal(p)
+    b = np.array([rng.standard_normal(m), b1, b1.conj()])
+    c = np.array([rng.standard_normal(p), c1, c1.conj()])
+
+    rom = LTIBHIReductor(fom).reduce(sigma, b, c, projection=projection)
+
+    for s, bi, ci in zip(sigma, b, c, strict=True):
+        H, Hr = fom.transfer_function.eval_tf(s), rom.transfer_function.eval_tf(s)
+        dH, dHr = fom.transfer_function.eval_dtf(s), rom.transfer_function.eval_dtf(s)
+        assert np.allclose(H @ bi, Hr @ bi)
+        assert np.allclose(ci @ H, ci @ Hr)
+        assert np.allclose(ci @ dH @ bi, ci @ dHr @ bi)
+
+
+@pytest.mark.parametrize('projection', ['orth', 'biorth', 'arnoldi'])
+def test_ltibhi_parametric(projection):
+    n = 10
+    A = (NumpyMatrixOperator(-np.diag(np.arange(1, n + 1)))
+         + ProjectionParameterFunctional('p') * NumpyMatrixOperator(-np.eye(n)))
+    B = NumpyMatrixOperator(np.ones((n, 1)))
+    C = NumpyMatrixOperator(np.arange(1, n + 1)[np.newaxis])
+    fom = LTIModel(A, B, C)
+    mu = fom.parameters.parse(5)
+    sigma = np.array([1, 2 + 3j, 2 - 3j])
+    ones = np.ones((3, 1))
+
+    rom = LTIBHIReductor(fom, mu=mu).reduce(sigma, ones, ones, projection=projection)
+
+    for s in sigma:
+        assert np.allclose(rom.transfer_function.eval_tf(s), fom.transfer_function.eval_tf(s, mu=mu))
+        assert np.allclose(rom.transfer_function.eval_dtf(s), fom.transfer_function.eval_dtf(s, mu=mu))
 
 
 def test_tfbhi_value_and_derivative_interpolation():

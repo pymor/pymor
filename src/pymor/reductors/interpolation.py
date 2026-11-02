@@ -121,8 +121,8 @@ class GenericBHIReductor(BasicObject):
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b / np.linalg.norm(b, axis=0) if b.shape[1] > 1 else np.ones((r, 1))
-        c = c / np.linalg.norm(c, axis=0) if c.shape[1] > 1 else np.ones((r, 1))
+        b = b / np.linalg.norm(b, axis=1, keepdims=True) if b.shape[1] > 1 else np.ones((r, 1))
+        c = c / np.linalg.norm(c, axis=1, keepdims=True) if c.shape[1] > 1 else np.ones((r, 1))
         b = self.fom.D.source.from_numpy(b.T)
         c = self.fom.D.range.from_numpy(c.T)
 
@@ -229,13 +229,14 @@ class LTIBHIReductor(GenericBHIReductor):
         assert c.shape == (r, self.fom.dim_output)
 
         # compute projection matrices
-        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma,
-                                  shifted_system_solver=self.fom.shifted_system_solver)
-        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True,
-                                  shifted_system_solver=self.fom.shifted_system_solver)
+        fom = self._fom_assemble()
+        self.V = rational_arnoldi(fom.A, fom.E, fom.B, sigma,
+                                  shifted_system_solver=fom.shifted_system_solver)
+        self.W = rational_arnoldi(fom.A, fom.E, fom.C, sigma, trans=True,
+                                  shifted_system_solver=fom.shifted_system_solver)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)
+        self._pg_reductor = self._PGReductor(fom, self.W, self.V)
         rom = self._pg_reductor.reduce()
         return rom
 

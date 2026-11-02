@@ -8,9 +8,15 @@ import pytest
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
-from pymor.reductors.h2 import IRKAReductor, TFIRKAReductor, VectorFittingReductor
+from pymor.reductors.h2 import GapIRKAReductor, IRKAReductor, TFIRKAReductor, VectorFittingReductor
 
 pytestmark = pytest.mark.builtin
+
+
+def _random_mimo_lti(rng):
+    n, m, p = 10, 2, 2
+    A = -np.diag(np.arange(1, n + 1)) + 0.5 * rng.standard_normal((n, n))
+    return LTIModel.from_matrices(A, rng.standard_normal((n, m)), rng.standard_normal((p, n)))
 
 
 def test_vector_fitting_sampled_transfer_function():
@@ -66,3 +72,21 @@ def test_tfirka_numerical_conjugate_pairs():
     rom = TFIRKAReductor(fom).reduce(initial_data, maxit=2, tol=1e-12)
 
     assert all(np.isrealobj(to_matrix(getattr(rom, operator), format='dense')) for operator in 'ABCE')
+
+
+@pytest.mark.parametrize('kwargs', [{'conv_crit': 'h2'}, {'tol': -1}, {'maxit': 0}, {'num_prev': 0}])
+def test_gap_irka_invalid_args(kwargs, rng):
+    with pytest.raises(AssertionError):
+        GapIRKAReductor(_random_mimo_lti(rng)).reduce(2, **kwargs)
+
+
+@pytest.mark.parametrize('conv_crit', ['sigma', 'htwogap', 'ltwo'])
+def test_gap_irka_conv_crit_independent_of_projection(conv_crit, rng):
+    fom = _random_mimo_lti(rng)
+    conv_crits = []
+    for projection in ('orth', 'biorth'):
+        gap_irka = GapIRKAReductor(fom)
+        gap_irka.reduce(2, tol=1e-14, maxit=4, conv_crit=conv_crit, projection=projection)
+        conv_crits.append(gap_irka.conv_crit)
+
+    assert np.allclose(*conv_crits)
