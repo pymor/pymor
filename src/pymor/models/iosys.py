@@ -1280,10 +1280,12 @@ class LTIModel(Model):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        if 'hinf_norm' in self.presets:
+        if not return_fpeak and 'hinf_norm' in self.presets:
             hinf_norm = self.presets['hinf_norm']
         elif not return_fpeak:
             hinf_norm = self.linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
+        elif {'fpeak', 'hinf_norm'} <= self.presets.keys():
+            hinf_norm, fpeak = self.presets['hinf_norm'], self.presets['fpeak']
         else:
             hinf_norm, fpeak = self.linf_norm(
                 mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol
