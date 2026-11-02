@@ -44,6 +44,7 @@ from pymor.solvers.matrix_equations.equations import LyapunovEquation, PositiveR
 from pymor.solvers.matrix_equations.utils import chol
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 @defaults('value')
@@ -796,7 +797,34 @@ class LTIModel(Model):
         return self.with_(C=-self.C, D=-self.D, new_type=LTIModel)  # ensure that __neg__ works in subclasses
 
     def __mul__(self, other):
-        """Postmultiply by an |LTIModel|."""
+        """Multiply by a scalar or postmultiply by an |LTIModel|.
+
+        Multiplication by a nonzero scalar `alpha` is balanced between `B` and `C`, i.e.,
+        `B` is multiplied by `sqrt(abs(alpha))` and `C` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension.
+        """
+        if isinstance(other, Number):
+            if other == 0:
+                X = NumpyVectorSpace(0)
+                presets = {'c_lr': X.empty(), 'o_lr': X.empty(),
+                           'c_dense': np.zeros((0, 0)), 'o_dense': np.zeros((0, 0)), 'hsv': np.zeros(0),
+                           'h2_norm': 0., 'hinf_norm': 0., 'l2_norm': 0., 'linf_norm': 0., 'fpeak': 0.}
+                return LTIModel(ZeroOperator(X, X), ZeroOperator(X, self.B.source), ZeroOperator(self.C.range, X),
+                                sampling_time=self.sampling_time,
+                                T=self.T, time_stepper=self.time_stepper, num_values=self.num_values,
+                                presets=presets, matrix_equation_solvers=self.matrix_equation_solvers)
+
+            c = np.sqrt(abs(other))
+            # the state and Gramian factors are scaled by c, the remaining presets by abs(other)
+            preset_factors = {'c_lr': c, 'o_lr': c, 'c_dense': abs(other), 'o_dense': abs(other),
+                              'hsv': abs(other), 'h2_norm': abs(other), 'hinf_norm': abs(other),
+                              'l2_norm': abs(other), 'linf_norm': abs(other)}
+            presets = {k: v * preset_factors[k] if k in preset_factors else v for k, v in self.presets.items()}
+            initial_data = self.initial_data * c if self.initial_data is not None else None
+            return self.with_(B=self.B * c, C=self.C * (other / c), D=self.D * other,
+                              initial_data=initial_data, presets=presets,
+                              new_type=LTIModel)  # ensure that __mul__ works in subclasses
+
         if not isinstance(other, LTIModel):
             return NotImplemented
 
@@ -828,6 +856,12 @@ class LTIModel(Model):
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
                         T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         matrix_equation_solvers=self.matrix_equation_solvers)
+
+    def __rmul__(self, other):
+        """Multiply by a scalar."""
+        if isinstance(other, Number):
+            return self * other
+        return NotImplemented
 
     def impulse_resp(self, mu=None, return_solution=False):
         """Compute impulse response from all inputs.
@@ -2480,7 +2514,22 @@ class SecondOrderModel(Model):
         return self.with_(Cp=-self.Cp, Cv=-self.Cv, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
+        """Multiply by a scalar or postmultiply by a |SecondOrderModel| or an |LTIModel|.
+
+        Multiplication by a nonzero scalar `alpha` is balanced between `B` and `Cp`, `Cv`, i.e.,
+        `B` is multiplied by `sqrt(abs(alpha))` and `Cp`, `Cv` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension.
+        """
+        if isinstance(other, Number):
+            if other == 0:
+                X = NumpyVectorSpace(0)
+                return SecondOrderModel(IdentityOperator(X), ZeroOperator(X, X), ZeroOperator(X, X),
+                                        ZeroOperator(X, self.B.source), ZeroOperator(self.Cp.range, X),
+                                        sampling_time=self.sampling_time,
+                                        matrix_equation_solvers=self.matrix_equation_solvers)
+            c = np.sqrt(abs(other))
+            return self.with_(B=self.B * c, Cp=self.Cp * (other / c), Cv=self.Cv * (other / c), D=self.D * other)
+
         if isinstance(other, LTIModel):
             return self.to_lti() * other
 
@@ -2502,7 +2551,9 @@ class SecondOrderModel(Model):
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
     def __rmul__(self, other):
-        """Premultiply by an |LTIModel|."""
+        """Multiply by a scalar or premultiply by an |LTIModel|."""
+        if isinstance(other, Number):
+            return self * other
         if isinstance(other, LTIModel):
             return other * self.to_lti()
         else:
@@ -2962,7 +3013,21 @@ class LinearDelayModel(Model):
         return self.with_(C=-self.C, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
+        """Postmultiply an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|.
+
+        Multiplication by a nonzero scalar `alpha` is balanced between `B` and `C`, i.e.,
+        `B` is multiplied by `sqrt(abs(alpha))` and `C` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension.
+        """
+        if isinstance(other, Number):
+            if other == 0:
+                X = NumpyVectorSpace(0)
+                return LinearDelayModel(ZeroOperator(X, X), tuple(ZeroOperator(X, X) for _ in self.tau), self.tau,
+                                        ZeroOperator(X, self.B.source), ZeroOperator(self.C.range, X),
+                                        sampling_time=self.sampling_time)
+            c = np.sqrt(abs(other))
+            return self.with_(B=self.B * c, C=self.C * (other / c), D=self.D * other)
+
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -3002,7 +3067,10 @@ class LinearDelayModel(Model):
         return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
 
     def __rmul__(self, other):
-        """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
+        """Multiply by a scalar or premultiply by an |LTIModel| or a |SecondOrderModel|."""
+        if isinstance(other, Number):
+            return self * other
+
         assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
