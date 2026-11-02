@@ -543,9 +543,9 @@ class SOLTIPGReductor(ProjectionBasedReductor):
         The basis of the test space.
     V
         The basis of the ansatz space.
-    E_biorthonormal
-        If `True`, no `E` matrix will be assembled for the reduced |Model|.
-        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    M_biorthonormal
+        If `True`, the `M` matrix of the reduced |Model| will be the identity.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.M`.
     """
 
     def __init__(self, fom, W, V, M_biorthonormal=False):
@@ -557,9 +557,10 @@ class SOLTIPGReductor(ProjectionBasedReductor):
         fom = self.fom
         W = self.bases['W']
         V = self.bases['V']
-        projected_operators = {'M':  None if self.M_biorthonormal else project(fom.M, W, V),
+        K = project(fom.K, W, V)
+        projected_operators = {'M':  IdentityOperator(K.source) if self.M_biorthonormal else project(fom.M, W, V),
                                'E':  project(fom.E, W, V),
-                               'K':  project(fom.K, W, V),
+                               'K':  K,
                                'B':  project(fom.B, W, None),
                                'Cp': project(fom.Cp, None, V),
                                'Cv': project(fom.Cv, None, V),
@@ -571,12 +572,12 @@ class SOLTIPGReductor(ProjectionBasedReductor):
             raise ValueError
         rom = self._last_rom
         dim = dims['V']
-        projected_operators = {'M':  None if self.M_biorthonormal else project_to_subbasis(rom.M, dim, dim),
+        projected_operators = {'M':  project_to_subbasis(rom.M, dim, dim),
                                'E':  project_to_subbasis(rom.E, dim, dim),
                                'K':  project_to_subbasis(rom.K, dim, dim),
                                'B':  project_to_subbasis(rom.B, dim, None),
-                               'Cp': project_to_subbasis(rom.C, None, dim),
-                               'Cv': project_to_subbasis(rom.C, None, dim),
+                               'Cp': project_to_subbasis(rom.Cp, None, dim),
+                               'Cv': project_to_subbasis(rom.Cv, None, dim),
                                'D':  rom.D}
         return projected_operators
 
