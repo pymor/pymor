@@ -138,11 +138,25 @@ changes it introduces. See the [labels' descriptions](https://github.com/pymor/p
 
 pyMOR ships a config for the [pre-commit](https://pre-commit.com/) hook management system.
 Using this setup can be a good way to find code style errors before pushing to GitHub, but using
-it is not required. Once you have `pre-commit` installed in your environment, run
+it is not required.
+
+We recommend running the hooks with [prek](https://github.com/j178/prek), a faster drop-in
+replacement for `pre-commit` which uses the same `.pre-commit-config.yaml`.
+It can be installed with [uv](https://github.com/astral-sh/uv) by running
 
 ```
-pre-commit install
+uv tool install prek
 ```
+
+To activate the hooks for your local clone of pyMOR, run
+
+```
+prek install
+```
+
+If you have previously activated the hooks with `pre-commit`, use `prek install -f` instead
+to overwrite the existing Git hook.
+Alternatively, you can still use `pre-commit` itself by running `pre-commit install`.
 
 Afterwards, the hooks configured in `.pre-commit-config.yaml` will run on all changed
 files prior to committing changes. Errors will block the commit, some
