@@ -491,7 +491,7 @@ where tangential and matrix interpolation are the same.
 
 Bitangential Hermite interpolation is also relevant for $\mathcal{H}_2$-optimal
 model order reduction and methods such as IRKA (iterative rational Krylov
-algorithm), but we don't discuss them in this tutorial.
+algorithm), which we discuss in {doc}`tutorial_h2`.
 
 Interpolation at multiple points can be achieved by concatenating different $V$
 and $W$ matrices discussed above.
