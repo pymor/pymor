@@ -1,0 +1,57 @@
+---
+on:
+  schedule:
+    # quarterly, like the previous pre-commit.ci autoupdate schedule
+    - cron: 0 6 1 1,4,7,10 *
+  workflow_dispatch:
+name: prek update
+permissions: {}
+jobs:
+  update:
+    if: github.repository == 'pymor/pymor'
+    name: Update hook revisions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: j178/prek-action@v3.1.0
+        with:
+          install-only: true
+      - name: Update hook revisions
+        run: |
+          {
+            echo 'Hook revisions in `.pre-commit-config.yaml` updated by `prek update`:'
+            echo
+            echo '```'
+            prek update --no-progress --color=never
+            echo '```'
+          } > "$RUNNER_TEMP/pr_body.md"
+      - name: Sync ruff version in pyproject.toml
+        run: |
+          ruff_rev=$(awk '/repo: https:\/\/github.com\/astral-sh\/ruff-pre-commit/ {found=1}
+                          found && /rev:/ {print $2; exit}' .pre-commit-config.yaml)
+          test -n "$ruff_rev"
+          sed -i -E "s/\"ruff==[^\"]+\"/\"ruff==${ruff_rev#v}\"/" pyproject.toml
+          if ! git diff --quiet pyproject.toml; then
+            {
+              echo
+              echo "The \`ruff\` version in \`pyproject.toml\` was synced to ${ruff_rev#v}."
+              echo 'Run `make ci_requirements` and commit the changed files to update the CI requirements.'
+            } >> "$RUNNER_TEMP/pr_body.md"
+          fi
+      # PRs created with the default GITHUB_TOKEN do not trigger CI workflows,
+      # so prefer a dedicated token if one is configured.
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.PREK_UPDATE_TOKEN || github.token }}
+          branch: prek-update
+          delete-branch: true
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          commit-message: update hook revisions with prek update
+          title: Update prek hook revisions
+          labels: pr:new-feature
+          body-path: ${{ runner.temp }}/pr_body.md

@@ -294,13 +294,23 @@ This includes Conda-based MacOS and Windows test suite runs and management of Gi
 Further, for PRs from external repositories, a local mirror branch is created and updated.
 This enables GitLab CI runs for those PRs.
 
-### pre-commit.ci
+### prek
 
-The main pyMOR repository has the `pre-commit.ci` GitHub App installed. This runs the pre-commit hooks
-defined in `.pre-commit-config.yaml` on every pull request.
-If the hooks change files, the changes are pushed back to the PR branch.
-[Configuration](https://pre-commit.ci/#configuration) is done
-via the `.pre-commit-config.yaml` file.
+The `prek` GitHub Actions workflow uses [prek-action](https://github.com/j178/prek-action) to run
+the hooks defined in `.pre-commit-config.yaml` on all files for every pull request and in the merge
+queue.
+The workflow does not push any changes, so reported errors have to be fixed locally, e.g., by running
+`prek run --all-files`.
+
+Once per quarter, the `prek update` workflow runs `prek update` to update the hook revisions in
+`.pre-commit-config.yaml` and opens a pull request with the changes.
+It also syncs the version of `ruff` in the `dev` extra in `pyproject.toml` with the revision of the
+`ruff-pre-commit` hook.
+In that case, the CI requirement files have to be updated by running `make ci_requirements`.
+The workflow can also be triggered manually from the Actions tab on GitHub.
+The pull request is created using the `PREK_UPDATE_TOKEN` repository secret, if it is set.
+Otherwise, the default `GITHUB_TOKEN` is used, in which case no CI workflows are triggered for the
+pull request until it is closed and reopened.
 
 ### Performance tests
 
