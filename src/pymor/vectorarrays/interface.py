@@ -2,13 +2,17 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Integral, Number
+from numbers import Number
+from typing import TypeAlias
 
 import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_rng
+
+Ind:     TypeAlias = list[int] | slice | None
+IndLike: TypeAlias = Ind | int | np.integer | np.ndarray
 
 
 class VectorArray(BasicObject):
@@ -77,22 +81,24 @@ class VectorArray(BasicObject):
     is_view = False
     _impl = None
     base = None
-    ind = None
+    ind: Ind = None
 
     @property
     def impl(self):
         return self.base._impl if self.is_view else self._impl
 
-    def __init__(self, space, impl, base=None, ind=None, _len=None):
+    def __init__(self, space, impl, base=None, ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
-        assert base is None or impl is None
-        assert ind is None or base is not None
         self.space = space
         if base is None:
+            assert impl is not None
+            assert ind is None
             self._impl = impl
             self._refcount = [1]
             self._len = len(impl)
         else:
+            assert base is not None
+            assert _len is not None
             self.is_view = True
             self.base = base
             self.ind = ind
@@ -212,13 +218,13 @@ class VectorArray(BasicObject):
     def __len__(self):
         return self._len
 
-    def __getitem__(self, ind):
+    def __getitem__(self, ind: IndLike):
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
         l = self._len
 
         # normalize ind s.t. the length of the view does not change when
         # the array is appended to
-        if isinstance(ind, Integral):
+        if isinstance(ind, int | np.integer):
             if 0 <= ind < l:
                 ind = slice(ind, ind+1)
             elif ind >= l or ind < -l:
@@ -244,12 +250,13 @@ class VectorArray(BasicObject):
             view_len = len(ind)
 
         if self.is_view:
+            assert self.base is not None
             ind = self._sub_index(self.base._len, self.ind, ind)
             return type(self)(self.space, None, self.base, ind, view_len)
         else:
             return type(self)(self.space, None, self, ind, view_len)
 
-    def __delitem__(self, ind):
+    def __delitem__(self, ind: IndLike):
         """Remove vectors from the array."""
         if self.is_view:
             raise ValueError('Cannot delete items from VectorArray view')
@@ -731,8 +738,8 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
-                or isinstance(ind, list | np.ndarray) and all(-l <= i < l for i in ind))
+                or isinstance(ind, int | np.integer) and -l <= ind < l
+                or isinstance(ind, list[int] | np.ndarray) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
         """Check if index is admissible and unique.
@@ -746,11 +753,11 @@ class VectorArray(BasicObject):
                 or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
-    def len_ind(self, ind):
+    def len_ind(self, ind: IndLike):
         """Return the number of given indices."""
         return self.impl.len_ind(ind)
 
-    def len_ind_unique(self, ind):
+    def len_ind_unique(self, ind: IndLike):
         """Return the number of specified unique indices."""
         l = len(self)
         if type(ind) is slice:
