@@ -760,11 +760,14 @@ class VectorArray(BasicObject):
     def len_ind_unique(self, ind: IndLike):
         """Return the number of specified unique indices."""
         l = len(self)
-        if type(ind) is slice:
+        if ind is None:
+            return l
+        elif type(ind) is slice:
             return len(range(*ind.indices(l)))
-        if isinstance(ind, int | np.integer):
+        elif isinstance(ind, int | np.integer):
             return 1
-        return len({i if i >= 0 else l+i for i in ind})
+        else:
+            return len({i if i >= 0 else l+i for i in ind})
 
     def _copy_impl_if_multiple_refs(self):
         array = self if self.base is None else self.base
