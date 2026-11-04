@@ -193,7 +193,7 @@ class VectorArray(BasicObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        return self.space.random(count, distribution, **kwargs)
+        return self.space.random(count, distribution, reserve, **kwargs)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
