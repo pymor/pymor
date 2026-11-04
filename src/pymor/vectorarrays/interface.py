@@ -334,6 +334,7 @@ class VectorArray(BasicObject):
             return C
 
     def __deepcopy__(self, memo):
+        del memo  # memo is unused
         return self.copy(deep=True)
 
     def scal(self, alpha):
@@ -907,6 +908,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
+        del reserve  # reserve unused
         return self.from_numpy(np.full((self.dim, count), value))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
@@ -939,6 +941,7 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
+        del reserve # reserve unused
         values = _create_random_values((self.dim, count), distribution, **kwargs)
         return self.from_numpy(values)
 
