@@ -86,7 +86,7 @@ class VectorArray(BasicObject):
 
     @property
     def impl(self) -> 'VectorArrayImpl':
-        return self.base._impl if self.is_view else self._impl
+        return self.base._impl if self.is_view else self._impl  # type: ignore
 
     def __init__(self, space, impl, base=None, ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
