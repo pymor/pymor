@@ -13,7 +13,7 @@ from pymor.core.defaults import defaults
 from pymor.tools.random import get_rng
 
 Ind:     TypeAlias = list[int] | slice | None
-IndLike: TypeAlias = Ind | int | np.integer | np.ndarray
+IndLike: TypeAlias = Ind | int | np.ndarray
 
 
 class VectorArray(BasicObject):
@@ -225,7 +225,7 @@ class VectorArray(BasicObject):
 
         # normalize ind s.t. the length of the view does not change when
         # the array is appended to
-        if isinstance(ind, int | np.integer):
+        if isinstance(ind, int):
             if 0 <= ind < l:
                 ind = slice(ind, ind+1)
             elif ind >= l or ind < -l:
@@ -740,8 +740,8 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int | np.integer) and -l <= ind < l
-                or isinstance(ind, list[int] | np.ndarray) and all(-l <= i < l for i in ind))
+                or isinstance(ind, int) and -l <= ind < l
+                or isinstance(ind, list | np.ndarray) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind) -> bool:
         """Check if index is admissible and unique.
@@ -751,7 +751,7 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int | np.integer) and -l <= ind < l
+                or isinstance(ind, int) and -l <= ind < l
                 or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
@@ -766,7 +766,7 @@ class VectorArray(BasicObject):
             return l
         elif type(ind) is slice:
             return len(range(*ind.indices(l)))
-        elif isinstance(ind, int | np.integer):
+        elif isinstance(ind, int):
             return 1
         else:
             return len({i if i >= 0 else l+i for i in ind})
