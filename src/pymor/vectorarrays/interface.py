@@ -77,14 +77,14 @@ class VectorArray(BasicObject):
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
-    impl_type = None
+    impl_type: 'type[VectorArrayImpl]'
     is_view = False
-    _impl = None
-    base = None
+    _impl: 'VectorArrayImpl | None' = None
+    base: 'VectorArray | None' = None
     ind: Ind = None
 
     @property
-    def impl(self):
+    def impl(self) -> 'VectorArrayImpl':
         return self.base._impl if self.is_view else self._impl
 
     def __init__(self, space, impl, base=None, ind: Ind = None, _len: int | None = None):
@@ -353,7 +353,7 @@ class VectorArray(BasicObject):
             The scalar coefficient or one-dimensional |NumPy array| of coefficients
             with which the vectors in `self` are multiplied.
         """
-        assert not self.is_view or self.base.check_ind_unique(self.ind)
+        assert self.base is None or self.base.check_ind_unique(self.ind)
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         self._copy_impl_if_multiple_refs()
@@ -380,7 +380,7 @@ class VectorArray(BasicObject):
         x
             A |VectorArray| containing the x-summands.
         """
-        assert not self.is_view or self.base.check_ind_unique(self.ind)
+        assert self.base is None or self.base.check_ind_unique(self.ind)
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         assert x in self.space
@@ -749,7 +749,7 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
+                or isinstance(ind, int | np.integer) and -l <= ind < l
                 or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
@@ -762,12 +762,12 @@ class VectorArray(BasicObject):
         l = len(self)
         if type(ind) is slice:
             return len(range(*ind.indices(l)))
-        if isinstance(ind, Number):
+        if isinstance(ind, int | np.integer):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
 
     def _copy_impl_if_multiple_refs(self):
-        array = self.base if self.is_view else self
+        array = self if self.base is None else self.base
         if array._refcount[0] == 1:
             return
         array._impl = array.impl.copy(False, None)  # copy the array implementation
@@ -1027,8 +1027,7 @@ class VectorArrayImpl(BasicObject):
     """
 
     @abstractmethod
-    def __len__(self):
-        pass
+    def __len__(self) -> int: ...
 
     @abstractmethod
     def to_numpy(self, ensure_copy, ind):
