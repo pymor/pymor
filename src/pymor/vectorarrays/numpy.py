@@ -44,20 +44,21 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             self._array = np.empty((self._array.shape[0], 0))
             self._len = 0
             return
-        if type(ind) is slice:
-            ind = set(range(*ind.indices(self._len)))
-        elif not hasattr(ind, '__len__'):
-            ind = {ind if 0 <= ind else self._len + ind}
+        if isinstance(ind, slice):
+            ind_set = set(range(*ind.indices(self._len)))
+        elif isinstance(ind, int):
+            ind_set = {ind if 0 <= ind else self._len + ind}
         else:
             l = self._len
-            ind = {i if 0 <= i else l+i for i in ind}
-        remaining = sorted(set(range(len(self))) - ind)
+            ind_set = {i if 0 <= i else l+i for i in ind}
+        remaining = sorted(set(range(len(self))) - ind_set)
         self._array = self._array[:, remaining]
         self._len = self._array.shape[1]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy(order='F')
 
     def copy(self, deep: bool, ind: Ind) -> VectorArrayImpl:
+        del deep # unused
         new_array = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if not new_array.flags['OWNDATA']:
             new_array = new_array.copy(order='F')
@@ -88,8 +89,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
 
-        alpha_type = type(alpha)
-        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
+        alpha_dtype = alpha.dtype if isinstance(alpha, np.ndarray) else type(alpha)
         if self._array.dtype != alpha_dtype:
             new_dtype = np.promote_types(self._array.dtype, alpha_dtype)
             if new_dtype != self._array.dtype:
@@ -111,11 +111,11 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
     def axpy(self, alpha: float | complex, x: VectorArrayImpl, ind: Ind, xind: Ind) -> None:
+        assert isinstance(x, NumpyVectorArrayImpl)
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
-        alpha_type = type(alpha)
-        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
+        alpha_dtype = alpha.dtype if isinstance(alpha, np.ndarray) else type(alpha)
         if self._array.dtype != alpha_dtype or self._array.dtype != B.dtype:
             new_dtype = np.promote_types(self._array.dtype, alpha_dtype)
             new_dtype = np.promote_types(new_dtype, B.dtype)
@@ -139,6 +139,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         self._array[:, ind] += B * alpha
 
     def axpy_copy(self, alpha: float | complex, x: VectorArrayImpl, ind: Ind, xind: Ind) -> VectorArrayImpl:
+        assert isinstance(x, NumpyVectorArrayImpl)
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -154,6 +155,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return type(self)(np.add(self._array[:, ind], B * alpha, order='F'))
 
     def inner(self, other: VectorArrayImpl, ind: Ind, oind: Ind) -> np.ndarray:
+        assert isinstance(other, NumpyVectorArrayImpl)
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -164,6 +166,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return np.matmul(A.conj().T, B, order='F')
 
     def pairwise_inner(self, other: VectorArrayImpl, ind: Ind, oind: Ind) -> np.ndarray:
+        assert isinstance(other, NumpyVectorArrayImpl)
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -236,7 +239,8 @@ class NumpyVectorArray(VectorArray):
     def __str__(self) -> str:
         return str(self.to_numpy())
 
-    def _format_repr(self, max_width, verbosity):
+    def _format_repr(self, max_width, verbosity, override={}):
+        del override # ignored
         return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy())})
 
 
@@ -251,7 +255,8 @@ class NumpyVectorSpace(VectorSpace):
 
     def __init__(self, dim: int):
         assert isinstance(dim, Integral)
-        self.dim = int(dim)
+        self.dim = dim = int(dim)
+        self.is_scalar = (dim == 1)
 
     def __eq__(self, other: VectorSpace) -> bool:
         return type(other) is type(self) and self.dim == other.dim
@@ -274,6 +279,7 @@ class NumpyVectorSpace(VectorSpace):
         assert count >= 0
         assert reserve >= 0
         va = self.zeros(count, reserve)
+        assert isinstance(va.impl, NumpyVectorArrayImpl)
         va.impl._array[:, :count] = _create_random_values((self.dim, count), distribution, **kwargs)
         return va
 
@@ -322,7 +328,7 @@ class NumpyVectorSpace(VectorSpace):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
-            array = array.toarray()
+            array = array.toarray() # type: ignore
         else:
             array = np.array(array, ndmin=2)
         if array.ndim != 2:
@@ -333,7 +339,3 @@ class NumpyVectorSpace(VectorSpace):
         else:
             assert array.shape[0] == space.dim
             return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
-
-    @property
-    def is_scalar(self):
-        return self.dim == 1
