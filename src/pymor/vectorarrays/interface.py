@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import numpy as np
 from typing_extensions import Self
@@ -11,6 +11,9 @@ from typing_extensions import Self
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_rng
+
+if TYPE_CHECKING:
+    from pymor.operators.interface import Operator
 
 Ind:     TypeAlias = list[int] | slice | None
 IndLike: TypeAlias = Ind | int | np.ndarray
@@ -88,7 +91,8 @@ class VectorArray(BasicObject):
     def impl(self) -> 'VectorArrayImpl':
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
-    def __init__(self, space, impl, base=None, ind: Ind = None, _len: int | None = None):
+    def __init__(self, space: 'VectorSpace', impl: 'VectorArrayImpl | None', base: 'Self | None' = None,
+                 ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
         if base is None:
@@ -105,7 +109,7 @@ class VectorArray(BasicObject):
             self.ind = ind
             self._len = _len
 
-    def zeros(self, count=1, reserve=0) -> Self:
+    def zeros(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
@@ -123,7 +127,7 @@ class VectorArray(BasicObject):
         """
         return self.space.zeros(count, reserve=reserve)
 
-    def ones(self, count=1, reserve=0) -> Self:
+    def ones(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
 
         This is a shorthand for `self.space.full(1., count, reserve)`.
@@ -141,7 +145,7 @@ class VectorArray(BasicObject):
         """
         return self.space.full(1., count, reserve)
 
-    def full(self, value, count=1, reserve=0) -> Self:
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
@@ -161,7 +165,7 @@ class VectorArray(BasicObject):
         """
         return self.space.full(value, count, reserve=reserve)
 
-    def random(self, count=1, distribution='uniform', reserve=0, **kwargs) -> Self:
+    def random(self, count:int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> 'VectorArray':
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
@@ -196,7 +200,7 @@ class VectorArray(BasicObject):
         """
         return self.space.random(count, distribution, reserve, **kwargs)
 
-    def empty(self, reserve=0) -> Self:
+    def empty(self, reserve: int = 0) -> 'VectorArray':
         """Create an empty |VectorArray| of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(0, reserve)`.
@@ -266,7 +270,7 @@ class VectorArray(BasicObject):
         self.impl.delete(ind)
         self._len = len(self.impl)
 
-    def to_numpy(self, ensure_copy=False) -> np.ndarray:
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
         """Return (self.dim, len(self)) NumPy array with the data stored in the array.
 
         Parameters
@@ -277,7 +281,7 @@ class VectorArray(BasicObject):
         """
         return self.impl.to_numpy(ensure_copy, self.ind)
 
-    def append(self, other, remove_from_other=False) -> None:
+    def append(self, other: 'VectorArray', remove_from_other=False) -> None:
         """Append vectors to the array.
 
         Parameters
@@ -301,11 +305,11 @@ class VectorArray(BasicObject):
         self._len += other._len
         if remove_from_other:
             if other.is_view:
-                other.base._len = len(other.base._impl)
+                other.base._len = len(other.base._impl)  # type: ignore
             else:
                 other._len = 0
 
-    def copy(self, deep=False) -> Self:
+    def copy(self, deep: bool = False) -> Self:
         """Returns a copy of the array.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
@@ -338,7 +342,7 @@ class VectorArray(BasicObject):
         del memo  # memo is unused
         return self.copy(deep=True)
 
-    def scal(self, alpha) -> None:
+    def scal(self, alpha: float | complex) -> None:
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
@@ -361,7 +365,7 @@ class VectorArray(BasicObject):
         self._copy_impl_if_multiple_refs()
         self.impl.scal(alpha, self.ind)
 
-    def axpy(self, alpha, x) -> None:
+    def axpy(self, alpha: float | complex, x: 'VectorArray') -> None:
         """BLAS AXPY operation.
 
         This method forms the sum ::
@@ -390,7 +394,7 @@ class VectorArray(BasicObject):
         self._copy_impl_if_multiple_refs()
         self.impl.axpy(alpha, x.impl, self.ind, x.ind)
 
-    def inner(self, other, product=None) -> np.ndarray:
+    def inner(self, other: 'VectorArray', product: 'Operator | None' = None) -> np.ndarray:
         """Returns the inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -444,7 +448,7 @@ class VectorArray(BasicObject):
             assert self.space == other.space
             return self.impl.inner(other.impl, self.ind, other.ind)
 
-    def pairwise_inner(self, other, product=None) -> np.ndarray:
+    def pairwise_inner(self, other: 'VectorArray', product: 'Operator | None' = None) -> np.ndarray:
         """Returns the pairwise inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -501,7 +505,7 @@ class VectorArray(BasicObject):
             assert len(self) == len(other)
             return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
 
-    def lincomb(self, coefficients) -> Self:
+    def lincomb(self, coefficients: np.ndarray) -> Self:
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -528,7 +532,7 @@ class VectorArray(BasicObject):
         assert coefficients.shape[0] == len(self)
         return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
 
-    def norm(self, product=None, tol=None, raise_complex=None) -> np.ndarray:
+    def norm(self, product: 'Operator | None' = None, tol = None, raise_complex = None) -> np.ndarray:
         """Norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -570,7 +574,7 @@ class VectorArray(BasicObject):
             return norm
 
     @defaults('tol', 'raise_complex')
-    def norm2(self, product=None, tol=1e-10, raise_complex=True) -> np.ndarray:
+    def norm2(self, product: 'Operator | None' = None, tol = 1e-10, raise_complex = True) -> np.ndarray:
         """Squared norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -627,7 +631,7 @@ class VectorArray(BasicObject):
             _, max_val = self.amax()
             return max_val
 
-    def dofs(self, dof_indices) -> np.ndarray:
+    def dofs(self, dof_indices: list[int] | np.ndarray) -> np.ndarray:
         """Extract DOFs of the vectors contained in the array.
 
         Parameters
@@ -667,7 +671,7 @@ class VectorArray(BasicObject):
         assert self.dim > 0
         return self.impl.amax(self.ind)
 
-    def gramian(self, product=None) -> np.ndarray:
+    def gramian(self, product: 'Operator | None' = None) -> np.ndarray:
         """Shorthand for `self.inner(self, product)`."""
         if product is not None:
             return product.apply2(self, self)
@@ -695,37 +699,37 @@ class VectorArray(BasicObject):
         else:
             return type(self)(self.space, impl)
 
-    def __add__(self, other) -> Self:
-        if isinstance(other, Number):
+    def __add__(self, other: 'float | complex | VectorArray') -> Self:
+        if isinstance(other, int | float | complex):
             assert other == 0
             return self.copy()
         assert other in self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(1, other.impl, self.ind, other.ind))
 
-    def __iadd__(self, other) -> Self:
+    def __iadd__(self, other: 'VectorArray') -> Self:
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other) -> Self:
+    def __sub__(self, other: 'VectorArray') -> Self:
         assert other in self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(-1, other.impl, self.ind, other.ind))
 
-    def __isub__(self, other) -> Self:
+    def __isub__(self, other: 'VectorArray') -> Self:
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other) -> Self:
-        assert isinstance(other, Number) \
+    def __mul__(self, other: 'float | complex | VectorArray') -> Self:
+        assert isinstance(other, int | float | complex) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return type(self)(self.space, self.impl.scal_copy(other, self.ind))
 
     __rmul__ = __mul__
 
-    def __imul__(self, other) -> Self:
+    def __imul__(self, other: 'float | complex') -> Self:
         self.scal(other)
         return self
 
@@ -859,7 +863,7 @@ class VectorSpace(ImmutableObject):
         ...
 
     @abstractmethod
-    def zeros(self, count=1, reserve=0) -> VectorArray:
+    def zeros(self, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of null vectors.
 
         Parameters
@@ -875,7 +879,7 @@ class VectorSpace(ImmutableObject):
         """
         ...
 
-    def ones(self, count=1, reserve=0) -> VectorArray:
+    def ones(self, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of vectors with all DOFs set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
@@ -893,7 +897,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.full(1., count, reserve)
 
-    def full(self, value, count=1, reserve=0) -> VectorArray:
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         Parameters
@@ -1036,72 +1040,71 @@ class VectorArrayImpl(BasicObject):
     def __len__(self) -> int: ...
 
     @abstractmethod
-    def to_numpy(self, ensure_copy, ind) -> np.ndarray: ...
+    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray: ...
 
     @abstractmethod
-    def append(self, other, remove_from_other, oind) -> None: ...
+    def append(self, other: 'VectorArrayImpl', remove_from_other: bool, oind: Ind) -> None: ...
 
     @abstractmethod
-    def delete(self, ind) -> None: ...
+    def delete(self, ind: Ind) -> None: ...
 
     @abstractmethod
-    def copy(self, deep, ind) -> Self: ...
+    def copy(self, deep: bool, ind: Ind) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha, ind) -> None: ...
+    def scal(self, alpha: float | complex, ind: Ind) -> None: ...
 
-    def scal_copy(self, alpha, ind) -> Self:
+    def scal_copy(self, alpha: float | complex, ind: Ind) -> Self:
         result = self.copy(True, ind)
         result.scal(alpha, None)
         return result
 
     @abstractmethod
-    def axpy(self, alpha, x, ind, xind) -> None: ...
+    def axpy(self, alpha: float | complex, x: 'VectorArrayImpl', ind: Ind, xind: Ind) -> None: ...
 
-    def axpy_copy(self, alpha, x, ind, xind) -> Self:
+    def axpy_copy(self, alpha: float | complex, x: 'VectorArrayImpl', ind: Ind, xind: Ind) -> Self:
         result = self.copy(True, ind)
         result.axpy(alpha, x, None, xind)
         return result
 
     @abstractmethod
-    def inner(self, other, ind, oind) -> np.ndarray: ...
+    def inner(self, other: 'VectorArrayImpl', ind: Ind, oind: Ind) -> np.ndarray: ...
 
     @abstractmethod
-    def pairwise_inner(self, other, ind, oind) -> np.ndarray: ...
+    def pairwise_inner(self, other: 'VectorArrayImpl', ind: Ind, oind: Ind) -> np.ndarray: ...
 
-    def gramian(self, ind) -> np.ndarray:
+    def gramian(self, ind: Ind) -> np.ndarray:
         return self.inner(self, ind, ind)
 
     @abstractmethod
-    def lincomb(self, coefficients, ind) -> Self: ...
+    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self: ...
 
-    def norm(self, ind) -> np.ndarray:
+    def norm(self, ind: Ind) -> np.ndarray:
         return np.sqrt(self.norm2(ind))
 
     @abstractmethod
-    def norm2(self, ind) -> np.ndarray: ...
+    def norm2(self, ind: Ind) -> np.ndarray: ...
 
     @abstractmethod
-    def dofs(self, dof_indices, ind) -> np.ndarray: ...
+    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray: ...
 
     @abstractmethod
-    def amax(self, ind) -> tuple[np.ndarray, np.ndarray]: ...
+    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]: ...
 
     @abstractmethod
-    def real(self, ind) -> Self: ...
+    def real(self, ind: Ind) -> Self: ...
 
     @abstractmethod
-    def imag(self, ind) -> Self: ...
+    def imag(self, ind: Ind) -> Self: ...
 
     @abstractmethod
-    def conj(self, ind) -> Self: ...
+    def conj(self, ind: Ind) -> Self: ...
 
-    def len_ind(self, ind) -> int:
+    def len_ind(self, ind: IndLike) -> int:
         if ind is None:
             return len(self)
         if type(ind) is slice:
             return len(range(*ind.indices(len(self))))
-        try:
-            return len(ind)
-        except TypeError:
+        if isinstance(ind, int):
             return 1
+        return len(ind)
