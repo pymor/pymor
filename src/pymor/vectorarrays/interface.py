@@ -966,7 +966,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy(self, data, ensure_copy=False) -> VectorArray:
+    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> VectorArray:
         """Create a |VectorArray| from a |NumPy array|.
 
         Note that this method will not be supported by all vector
