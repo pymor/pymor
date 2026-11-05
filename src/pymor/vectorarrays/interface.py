@@ -91,7 +91,7 @@ class VectorArray(BasicObject):
     def impl(self) -> 'VectorArrayImpl':
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
-    def __init__(self, space: 'VectorSpace', impl: 'VectorArrayImpl | None', base: 'Self | None' = None,
+    def __init__(self, space: 'VectorSpace', impl: 'VectorArrayImpl | None', base: 'VectorArray | None' = None,
                  ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
@@ -223,7 +223,7 @@ class VectorArray(BasicObject):
     def __len__(self) -> int:
         return self._len
 
-    def __getitem__(self, ind: IndLike) -> Self:
+    def __getitem__(self, ind: IndLike) -> 'VectorArray':
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
         l = self._len
 
@@ -309,7 +309,7 @@ class VectorArray(BasicObject):
             else:
                 other._len = 0
 
-    def copy(self, deep: bool = False) -> Self:
+    def copy(self, deep: bool = False) -> 'VectorArray':
         """Returns a copy of the array.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
@@ -338,7 +338,7 @@ class VectorArray(BasicObject):
             self._refcount[0] += 1
             return C
 
-    def __deepcopy__(self, memo) -> Self:
+    def __deepcopy__(self, memo) -> 'VectorArray':
         del memo  # memo is unused
         return self.copy(deep=True)
 
@@ -505,7 +505,7 @@ class VectorArray(BasicObject):
             assert len(self) == len(other)
             return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
 
-    def lincomb(self, coefficients: np.ndarray) -> Self:
+    def lincomb(self, coefficients: np.ndarray) -> 'VectorArray':
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -679,7 +679,7 @@ class VectorArray(BasicObject):
             return self.impl.gramian(self.ind)
 
     @property
-    def real(self) -> Self:
+    def real(self) -> 'VectorArray':
         impl = self.impl.real(self.ind)
         if impl is self.impl:
             return self.copy()
@@ -687,11 +687,11 @@ class VectorArray(BasicObject):
             return type(self)(self.space, impl)
 
     @property
-    def imag(self) -> Self:
+    def imag(self) -> 'VectorArray':
         """Imaginary part."""
         return type(self)(self.space, self.impl.imag(self.ind))
 
-    def conj(self) -> Self:
+    def conj(self) -> 'VectorArray':
         """Complex conjugation."""
         impl = self.impl.conj(self.ind)
         if impl is self.impl:
@@ -699,7 +699,7 @@ class VectorArray(BasicObject):
         else:
             return type(self)(self.space, impl)
 
-    def __add__(self, other: 'float | complex | VectorArray') -> Self:
+    def __add__(self, other: 'float | complex | VectorArray') -> 'VectorArray':
         if isinstance(other, int | float | complex):
             assert other == 0
             return self.copy()
@@ -713,7 +713,7 @@ class VectorArray(BasicObject):
 
     __radd__ = __add__
 
-    def __sub__(self, other: 'VectorArray') -> Self:
+    def __sub__(self, other: 'VectorArray') -> 'VectorArray':
         assert other in self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(-1, other.impl, self.ind, other.ind))
@@ -722,7 +722,7 @@ class VectorArray(BasicObject):
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other: 'float | complex | VectorArray') -> Self:
+    def __mul__(self, other: 'float | complex | VectorArray') -> 'VectorArray':
         assert isinstance(other, int | float | complex) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return type(self)(self.space, self.impl.scal_copy(other, self.ind))
@@ -733,7 +733,7 @@ class VectorArray(BasicObject):
         self.scal(other)
         return self
 
-    def __neg__(self) -> Self:
+    def __neg__(self) -> 'VectorArray':
         return type(self)(self.space, self.impl.scal_copy(-1, self.ind))
 
     def check_ind(self, ind) -> bool:
@@ -1049,12 +1049,12 @@ class VectorArrayImpl(BasicObject):
     def delete(self, ind: Ind) -> None: ...
 
     @abstractmethod
-    def copy(self, deep: bool, ind: Ind) -> Self: ...
+    def copy(self, deep: bool, ind: Ind) -> 'VectorArrayImpl': ...
 
     @abstractmethod
     def scal(self, alpha: float | complex, ind: Ind) -> None: ...
 
-    def scal_copy(self, alpha: float | complex, ind: Ind) -> Self:
+    def scal_copy(self, alpha: float | complex, ind: Ind) -> 'VectorArrayImpl':
         result = self.copy(True, ind)
         result.scal(alpha, None)
         return result
@@ -1062,7 +1062,7 @@ class VectorArrayImpl(BasicObject):
     @abstractmethod
     def axpy(self, alpha: float | complex, x: 'VectorArrayImpl', ind: Ind, xind: Ind) -> None: ...
 
-    def axpy_copy(self, alpha: float | complex, x: 'VectorArrayImpl', ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: float | complex, x: 'VectorArrayImpl', ind: Ind, xind: Ind) -> 'VectorArrayImpl':
         result = self.copy(True, ind)
         result.axpy(alpha, x, None, xind)
         return result
@@ -1077,7 +1077,7 @@ class VectorArrayImpl(BasicObject):
         return self.inner(self, ind, ind)
 
     @abstractmethod
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self: ...
+    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> 'VectorArrayImpl': ...
 
     def norm(self, ind: Ind) -> np.ndarray:
         return np.sqrt(self.norm2(ind))
@@ -1092,13 +1092,13 @@ class VectorArrayImpl(BasicObject):
     def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]: ...
 
     @abstractmethod
-    def real(self, ind: Ind) -> Self: ...
+    def real(self, ind: Ind) -> 'VectorArrayImpl': ...
 
     @abstractmethod
-    def imag(self, ind: Ind) -> Self: ...
+    def imag(self, ind: Ind) -> 'VectorArrayImpl': ...
 
     @abstractmethod
-    def conj(self, ind: Ind) -> Self: ...
+    def conj(self, ind: Ind) -> 'VectorArrayImpl': ...
 
     def len_ind(self, ind: IndLike) -> int:
         if ind is None:
