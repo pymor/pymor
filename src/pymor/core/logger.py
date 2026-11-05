@@ -16,6 +16,7 @@ import time
 from contextlib import contextmanager
 from functools import lru_cache
 from types import MethodType
+from typing import TYPE_CHECKING, cast
 
 import rich
 from rich.text import Text
@@ -197,8 +198,15 @@ def default_handler(filename=None):
     return handlers
 
 
+if TYPE_CHECKING:
+    class PyMORLogger(logging.Logger):
+        def block(self, msg: str, *args, **kwargs) -> 'LogIndenter': ...
+        def info2(self, msg: str, *args, **kwargs) -> None: ...
+        def info3(self, msg: str, *args, **kwargs) -> None: ...
+
+
 @defaults('filename')
-def getLogger(module, level=None, filename=None):
+def getLogger(module, level=None, filename=None) -> 'PyMORLogger':
     """Get the logger of the respective module for pyMOR's logging facility.
 
     In addition to the logging methods inherited from :class:`~logging.Logger`
@@ -230,7 +238,7 @@ def getLogger(module, level=None, filename=None):
     logger.propagate = False
     if level:
         logger.setLevel(level)
-    return logger
+    return cast('PyMORLogger', logger)
 
 
 class DummyLogger:
