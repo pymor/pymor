@@ -3,42 +3,43 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Integral, Number
+from pathlib import Path
 
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
-from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
 class NumpyVectorArrayImpl(VectorArrayImpl):
 
-    def __init__(self, array, l=None):
+    def __init__(self, array: np.ndarray, l: int | None = None):
         self._array = array
         self._len = array.shape[1] if l is None else l
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if ensure_copy and not A.flags['OWNDATA']:
             return A.copy(order='F')
         else:
             return A
 
-    def real(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).real.copy(order='F'))
+    def real(self, ind: Ind) -> VectorArrayImpl:
+        return type(self)(self.to_numpy(False, ind).real.copy(order='F'))
 
-    def imag(self, ind):
+    def imag(self, ind: Ind) -> VectorArrayImpl:
         return NumpyVectorArrayImpl(self.to_numpy(False, ind).imag.copy(order='F'))
 
-    def conj(self, ind):
+    def conj(self, ind: Ind) -> VectorArrayImpl:
         if np.isrealobj(self._array):
             return self.copy(False, ind)
         return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind), order='F'))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._len
 
-    def delete(self, ind):
+    def delete(self, ind: Ind) -> None:
         if ind is None:
             self._array = np.empty((self._array.shape[0], 0))
             self._len = 0
@@ -56,13 +57,13 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy(order='F')
 
-    def copy(self, deep, ind):
+    def copy(self, deep: bool, ind: Ind) -> VectorArrayImpl:
         new_array = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if not new_array.flags['OWNDATA']:
             new_array = new_array.copy(order='F')
         return NumpyVectorArrayImpl(new_array)
 
-    def append(self, other, remove_from_other, oind):
+    def append(self, other: VectorArrayImpl, remove_from_other: bool, oind: Ind) -> None:
         other_array = other.to_numpy(False, oind)
         len_other = other_array.shape[1]
         if len_other == 0:
@@ -82,7 +83,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if remove_from_other:
             other.delete(oind)
 
-    def scal(self, alpha, ind):
+    def scal(self, alpha: float | complex, ind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -99,7 +100,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] *= alpha
 
-    def scal_copy(self, alpha, ind):
+    def scal_copy(self, alpha: float | complex, ind: Ind) -> VectorArrayImpl:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -109,7 +110,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
-    def axpy(self, alpha, x, ind, xind):
+    def axpy(self, alpha: float | complex, x: VectorArrayImpl, ind: Ind, xind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -137,7 +138,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] += B * alpha
 
-    def axpy_copy(self, alpha, x, ind, xind):
+    def axpy_copy(self, alpha: float | complex, x: VectorArrayImpl, ind: Ind, xind: Ind) -> VectorArrayImpl:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -152,7 +153,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(np.add(self._array[:, ind], B * alpha, order='F'))
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: VectorArrayImpl, ind: Ind, oind: Ind) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -162,7 +163,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.matmul(A.conj().T, B, order='F')
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: VectorArrayImpl, ind: Ind, oind: Ind) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -172,35 +173,35 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.sum(A.conj() * B, axis=0)
 
-    def lincomb(self, coefficients, ind):
+    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> VectorArrayImpl:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return NumpyVectorArrayImpl(np.matmul(A, coefficients, order='F'))
 
-    def norm(self, ind):
+    def norm(self, ind: Ind) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.linalg.norm(A, axis=0)
 
-    def norm2(self, ind):
+    def norm2(self, ind: Ind) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.sum((A * A.conj()).real, axis=0)
 
-    def dofs(self, dof_indices, ind):
+    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         ind = slice(None, self._len) if ind is None else ind
         return np.asfortranarray(self._array[dof_indices, :][:, ind])
 
-    def amax(self, ind):
+    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -232,7 +233,7 @@ class NumpyVectorArray(VectorArray):
 
     impl_type = NumpyVectorArrayImpl
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.to_numpy())
 
     def _format_repr(self, max_width, verbosity):
@@ -248,28 +249,28 @@ class NumpyVectorSpace(VectorSpace):
         The dimension of the vectors contained in the space.
     """
 
-    def __init__(self, dim):
+    def __init__(self, dim: int):
         assert isinstance(dim, Integral)
         self.dim = int(dim)
 
-    def __eq__(self, other):
+    def __eq__(self, other: VectorSpace) -> bool:
         return type(other) is type(self) and self.dim == other.dim
 
     def __hash__(self):
         return hash(self.dim)
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve)), order='F'), count))
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         return NumpyVectorArray(self,
                                 NumpyVectorArrayImpl(np.full((self.dim, max(count, reserve)), value, order='F'), count))
 
-    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
+    def random(self, count: int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         va = self.zeros(count, reserve)
@@ -277,25 +278,26 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj):  # noqa: N805
+    def make_array(cls, obj) -> NumpyVectorArray:  # type: ignore # noqa: N805
         return cls._array_factory(obj)
 
     @make_array.instancemethod
-    def _(self, obj):
+    def _(self, obj) -> NumpyVectorArray:
         """:noindex:"""  # noqa: D400
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # type: ignore # noqa: N805
         return cls._array_factory(data.copy(order='F') if ensure_copy else data)
 
     @from_numpy.instancemethod
-    def _(self, data, ensure_copy=False):
+    def _(self, data: np.ndarray, ensure_copy: bool = False):
         """:noindex:"""  # noqa: D400
         return self._array_factory(data.copy(order='F') if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False):  # noqa: N805
+    def from_file(cls, path: str | Path, key: str | None = None, single_vector: bool = False, # noqa: N805
+                  transpose: bool = False):
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -310,13 +312,13 @@ class NumpyVectorSpace(VectorSpace):
             array = array.T
         return cls.make_array(np.asfortranarray(array))
 
-    @from_file.instancemethod
-    def _(self, path, key=None, single_vector=False, transpose=False):
+    def _(self, path: str | Path, key: str | None = None, single_vector: bool = False,
+          transpose: bool = False):
         """:noindex:"""  # noqa: D400
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose)
 
     @classmethod
-    def _array_factory(cls, array, space=None):
+    def _array_factory(cls, array, space=None) -> NumpyVectorArray:
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
