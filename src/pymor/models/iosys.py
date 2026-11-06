@@ -1003,14 +1003,16 @@ class LTIModel(Model):
             return solver.solve(LyapunovEquation(A, E, C, trans=True, cont_time=cont_time))
         elif typ == 'bs_c_lr':
             ast_spectrum = self.get_ast_spectrum(mu=mu)
-            K = bernoulli_stabilize(A, E, B, ast_spectrum, trans=True)
+            K = bernoulli_stabilize(A, E, B, ast_spectrum, trans=True,
+                                    solver=self.matrix_equation_solvers.bernoulli)
             BK = LowRankOperator(B, np.eye(len(K)), K)
             return LyapunovEquation(A - BK, E, B, trans=False).solve_lr(
                 solver=self.matrix_equation_solvers.lyapunov_lr
             )
         elif typ == 'bs_o_lr':
             ast_spectrum = self.get_ast_spectrum(mu=mu)
-            K = bernoulli_stabilize(A, E, C, ast_spectrum, trans=False)
+            K = bernoulli_stabilize(A, E, C, ast_spectrum, trans=False,
+                                    solver=self.matrix_equation_solvers.bernoulli)
             KC = LowRankOperator(K, np.eye(len(K)), C)
             return LyapunovEquation(A - KC, E, C, trans=True).solve_lr(
                 solver=self.matrix_equation_solvers.lyapunov_lr
@@ -1291,7 +1293,8 @@ class LTIModel(Model):
         if len(ast_spectrum[0]) == 0:
             return self.h2_norm()
 
-        K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False)
+        K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False,
+                                solver=self.matrix_equation_solvers.bernoulli)
         KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=mu))
 
         if not isinstance(D, ZeroOperator):

@@ -187,6 +187,8 @@ common = """
 .. |PositiveRiccatiEquations| replace:: :class:`PositiveRiccatiEquations <pymor.solvers.matrix_equations.equations.PositiveRiccatiEquation>`
 .. |SylvesterEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.SylvesterEquation`
 .. |SylvesterEquations| replace:: :class:`SylvesterEquations <pymor.solvers.matrix_equations.equations.SylvesterEquation>`
+.. |BernoulliEquation| replace:: :class:`~pymor.solvers.matrix_equations.equations.BernoulliEquation`
+.. |BernoulliEquations| replace:: :class:`BernoulliEquations <pymor.solvers.matrix_equations.equations.BernoulliEquation>`
 
 .. |LyapunovSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolver`
 .. |LyapunovSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.LyapunovSolverLR`
@@ -195,6 +197,8 @@ common = """
 .. |PositiveRiccatiSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolver`
 .. |PositiveRiccatiSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolverLR`
 .. |SylvesterSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.SylvesterSolver`
+.. |BernoulliSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.BernoulliSolver`
+.. |BernoulliSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.BernoulliSolverLR`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 .. |RandomizedRangeFinder| replace:: :class:`randmomized range finder <pymor.algorithms.rand_la.RandomizedRangeFinder>`
