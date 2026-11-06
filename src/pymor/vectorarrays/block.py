@@ -15,7 +15,7 @@ from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, Vect
 
 class BlockVectorArrayImpl(VectorArrayImpl):
 
-    def __init__(self, blocks: Sequence[VectorArray], space):
+    def __init__(self, blocks: Sequence[VectorArray], space: 'BlockVectorSpace'):
         self._blocks = tuple(blocks)
         self.space = space
         assert self._blocks_are_valid(False)
@@ -183,7 +183,6 @@ class BlockVectorArray(VectorArray):
     @property
     def blocks(self):
         impl = self.impl
-        assert isinstance(impl, BlockVectorArrayImpl)
         if self.ind is None:
             return impl._blocks
         else:

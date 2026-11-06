@@ -276,7 +276,6 @@ class NumpyVectorSpace(VectorSpace):
         assert count >= 0
         assert reserve >= 0
         va = self.zeros(count, reserve)
-        assert isinstance(va.impl, NumpyVectorArrayImpl)
         va.impl._array[:, :count] = _create_random_values((self.dim, count), distribution, **kwargs)
         return va
 

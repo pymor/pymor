@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Generic, TypeAlias, TypeVar
 
 import numpy as np
 from typing_extensions import Self
@@ -17,9 +17,10 @@ if TYPE_CHECKING:
 
 Ind:     TypeAlias = list[int] | slice | None
 IndLike: TypeAlias = Ind | int | np.ndarray
+T = TypeVar('T', bound='VectorArrayImpl')
 
 
-class VectorArray(BasicObject):
+class VectorArray(BasicObject, Generic[T]):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
@@ -62,12 +63,12 @@ class VectorArray(BasicObject):
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
-    impl_type: 'type[VectorArrayImpl]'
+    impl_type: type[T]
     is_view = False
     """`True` if the array is a view obtained by indexing another array."""
 
-    _impl: 'VectorArrayImpl | None' = None
-    base: 'VectorArray | None' = None
+    _impl: 'T | None' = None
+    base: 'Self | None' = None
     """In case the array is a view, the |VectorArray| this array refers to. `None` otherwise."""
 
     ind: Ind = None
@@ -77,10 +78,10 @@ class VectorArray(BasicObject):
     """The |VectorSpace| the array belongs to."""
 
     @property
-    def impl(self) -> 'VectorArrayImpl':
+    def impl(self) -> T:
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
-    def __init__(self, space: 'VectorSpace', impl: 'VectorArrayImpl | None', base: 'VectorArray | None' = None,
+    def __init__(self, space: 'VectorSpace', impl: 'T | None', base: 'Self | None' = None,
                  ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
