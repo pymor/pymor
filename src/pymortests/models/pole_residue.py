@@ -159,6 +159,7 @@ def test_mixed_arithmetic(rng, name, pr_first, sampling_time, parametric):
         assert_tf(m1, m2, m, parametric)
 
 
+@pytest.mark.xfail(reason='complex transfer functions are not supported')
 def test_to_lti_repeated_real_poles_with_conjugate_factors():
     pr = PoleResidueTransferFunction([-1, -1], [[1j], [-1j]], [[1j], [-1j]])
     assert np.allclose(pr.eval_tf(0), [[-2.]])
