@@ -9,7 +9,7 @@ jobs:
     if: github.event.pull_request.head.repo.owner.login != 'pymor'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           allow-unsafe-pr-checkout: true
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.owner.login != 'pymor'
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v9
         with:
           script: |-
             await github.rest.issues.createComment({
