@@ -445,18 +445,19 @@ class TransferFunction(CacheableObject, ParametricObject):
         else:
             return norm, norm_relerr, quad_out[2:]
 
-    def h2_inner(self, lti, mu=None):
-        """Compute H2 inner product with an |LTIModel|.
+    def h2_inner(self, other, mu=None):
+        """Compute H2 inner product with an |LTIModel| or a |PoleResidueTransferFunction|.
 
-        Uses the inner product formula based on the pole-residue form
+        Uses the inner product formula based on the pole-residue form of `other`
         (see, e.g., Lemma 1 in :cite:`ABG10`).
-        It assumes that `self.tf` is defined on `-lti.poles()`.
+        It assumes that `self.tf` is defined on `-other.poles()` (or `-other.poles`).
 
         Parameters
         ----------
-        lti
-            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
-            The D operator is ignored.
+        other
+            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|
+            or |PoleResidueTransferFunction|.
+            The D term is assumed to be zero (a warning is logged otherwise).
         mu
             |Parameter values|.
 
@@ -465,19 +466,18 @@ class TransferFunction(CacheableObject, ParametricObject):
         inner
             H2 inner product.
         """
-        from pymor.models.iosys import LTIModel, _lti_to_poles_b_c
-        assert isinstance(lti, LTIModel)
+        from pymor.models.iosys import LTIModel
+        from pymor.models.pole_residue import PoleResidueTransferFunction
+        assert isinstance(other, LTIModel | PoleResidueTransferFunction)
 
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
 
-        poles, b, c = _lti_to_poles_b_c(lti, mu=mu)
-        inner = sum(c[i].dot(self.eval_tf(-poles[i], mu=mu).dot(b[i]))
-                    for i in range(len(poles)))
-        inner = inner.conjugate()
+        if isinstance(other, LTIModel):
+            other = other.to_pole_residue(mu=mu)
 
-        return inner
+        return np.conj(other.h2_inner(self, mu=mu))
 
     def __add__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -491,7 +491,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other), new_type=TransferFunction)
 
     __radd__ = __add__
 
@@ -510,12 +510,12 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other), new_type=TransferFunction)
 
     def __neg__(self):
         tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
         dtf = (lambda s, mu=None: -self.eval_dtf(s, mu=mu)) if self.dtf is not None else None
-        return self.with_(tf=tf, dtf=dtf)
+        return self.with_(tf=tf, dtf=dtf, new_type=TransferFunction)
 
     def __mul__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -529,7 +529,7 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other), new_type=TransferFunction)
 
     def __rmul__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -543,7 +543,7 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other), new_type=TransferFunction)
 
 
 class FactorizedTransferFunction(TransferFunction):

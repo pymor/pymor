@@ -14,7 +14,8 @@ from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.algorithms.loewner import complete_conjugate_pairs, sample_transfer_function
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
-from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.models.iosys import LTIModel
+from pymor.models.pole_residue import PoleResidueTransferFunction
 from pymor.models.transfer_function import TransferFunction
 from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
@@ -107,7 +108,8 @@ class GenericIRKAReductor(BasicObject):
 
     @staticmethod
     def _rom_to_sigma_b_c(rom, force_sigma_in_rhp):
-        poles, b, c = _lti_to_poles_b_c(rom)
+        pr = rom.to_pole_residue()
+        poles, b, c = pr.poles, pr.b, pr.c
         sigma = (np.abs(poles.real) + poles.imag * 1j
                  if force_sigma_in_rhp
                  else -poles)
@@ -134,16 +136,16 @@ class GenericIRKAReductor(BasicObject):
         self._check_rom0_params(rom0_params)
         if isinstance(rom0_params, Integral):
             sigma, b, c = self._order_to_sigma_b_c(rom0_params)
-            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+            rom0 = PoleResidueTransferFunction(-sigma, b, c).to_lti()
         elif isinstance(rom0_params, np.ndarray):
             sigma = rom0_params
             _, b, c = self._order_to_sigma_b_c(len(rom0_params))
-            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+            rom0 = PoleResidueTransferFunction(-sigma, b, c).to_lti()
         elif isinstance(rom0_params, dict):
             sigma = rom0_params['sigma']
             b = rom0_params['b']
             c = rom0_params['c']
-            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+            rom0 = PoleResidueTransferFunction(-sigma, b, c).to_lti()
         else:
             rom0 = rom0_params
         return rom0
@@ -974,4 +976,4 @@ class VectorFittingReductor(BasicObject):
         A = self.weights_sqrt[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
         psis = spla.lstsq(A, b)[0]
 
-        return _poles_b_c_to_lti(lambdas, psis[:, np.newaxis], np.ones((r, 1)))
+        return PoleResidueTransferFunction(lambdas, psis[:, np.newaxis], np.ones((r, 1))).to_lti()
