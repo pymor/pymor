@@ -216,6 +216,7 @@ class BlockVectorSpace(VectorSpace):
         subspaces = tuple(subspaces)
         assert all(isinstance(subspace, VectorSpace) for subspace in subspaces)
         self.subspaces = subspaces
+        self.dim = sum(subspace.dim for subspace in self.subspaces)
 
     def __eq__(self, other) -> bool:
         return (type(other) is BlockVectorSpace
@@ -225,10 +226,6 @@ class BlockVectorSpace(VectorSpace):
 
     def __hash__(self):
         return sum(hash(s) for s in self.subspaces)
-
-    @property
-    def dim(self):
-        return sum(subspace.dim for subspace in self.subspaces)
 
     def zeros(self, count: int = 1, reserve: int = 0) -> BlockVectorArray:
         # these asserts make sure we also trigger if the subspace list is empty
