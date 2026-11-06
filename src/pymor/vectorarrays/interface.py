@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 
 Ind:     TypeAlias = list[int] | slice | None
 IndLike: TypeAlias = Ind | int | np.ndarray
-T = TypeVar('T', bound='VectorArrayImpl')
+S = TypeVar('S', bound='VectorSpace')
+A = TypeVar('A', bound='VectorArray')
+I = TypeVar('I', bound='VectorArrayImpl')
 
 
-class VectorArray(BasicObject, Generic[T]):
+class VectorArray(BasicObject, Generic[S, I]):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
@@ -82,17 +84,18 @@ class VectorArray(BasicObject, Generic[T]):
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
-    impl_type: type[T]
+    impl_type: type[I]
     is_view = False
-    _impl: 'T | None' = None
+    space: S
+    _impl: 'I | None' = None
     base: 'Self | None' = None
     ind: Ind = None
 
     @property
-    def impl(self) -> T:
+    def impl(self) -> I:
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
-    def __init__(self, space: 'VectorSpace', impl: 'T | None', base: 'Self | None' = None,
+    def __init__(self, space: S, impl: 'I | None', base: 'Self | None' = None,
                  ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
@@ -810,7 +813,7 @@ class VectorArray(BasicObject, Generic[T]):
             self._refcount[0] -= 1
 
 
-class VectorSpace(ImmutableObject):
+class VectorSpace(ImmutableObject, Generic[A]):
     """Class describing a vector space.
 
     Vector spaces act as factories for |VectorArrays| of vectors
@@ -846,11 +849,12 @@ class VectorSpace(ImmutableObject):
         Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
     """
 
+    array_type: type[A]
     dim: int
     is_scalar = False
 
     @abstractmethod
-    def make_array(*args, **kwargs) -> VectorArray:
+    def make_array(*args, **kwargs) -> A:
         """Create a |VectorArray| from raw data.
 
         This method is used in the implementation of |Operators|
@@ -864,7 +868,7 @@ class VectorSpace(ImmutableObject):
         ...
 
     @abstractmethod
-    def zeros(self, count: int = 1, reserve: int = 0) -> VectorArray:
+    def zeros(self, count: int = 1, reserve: int = 0) -> A:
         """Create a |VectorArray| of null vectors.
 
         Parameters
@@ -880,7 +884,7 @@ class VectorSpace(ImmutableObject):
         """
         ...
 
-    def ones(self, count: int = 1, reserve: int = 0) -> VectorArray:
+    def ones(self, count: int = 1, reserve: int = 0) -> A:
         """Create a |VectorArray| of vectors with all DOFs set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
@@ -898,7 +902,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.full(1., count, reserve)
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> VectorArray:
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> A:
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         Parameters
@@ -917,7 +921,7 @@ class VectorSpace(ImmutableObject):
         del reserve  # reserve unused
         return self.from_numpy(np.full((self.dim, count), value))
 
-    def random(self, count=1, distribution='uniform', reserve=0, **kwargs) -> VectorArray:
+    def random(self, count=1, distribution='uniform', reserve=0, **kwargs) -> A:
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -951,7 +955,7 @@ class VectorSpace(ImmutableObject):
         values = _create_random_values((self.dim, count), distribution, **kwargs)
         return self.from_numpy(values)
 
-    def empty(self, reserve=0) -> VectorArray:
+    def empty(self, reserve=0) -> A:
         """Create an empty |VectorArray|.
 
         This is a shorthand for `self.zeros(0, reserve)`.
@@ -967,7 +971,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> VectorArray:
+    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> A:
         """Create a |VectorArray| from a |NumPy array|.
 
         Note that this method will not be supported by all vector

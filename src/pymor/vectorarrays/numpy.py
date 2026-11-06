@@ -250,6 +250,8 @@ class NumpyVectorSpace(VectorSpace):
         The dimension of the vectors contained in the space.
     """
 
+    array_type = NumpyVectorArray
+
     def __init__(self, dim: int):
         assert isinstance(dim, Integral)
         self.dim = dim = int(dim)
