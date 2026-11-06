@@ -3319,6 +3319,511 @@ class BilinearModel(Model):
         return string
 
 
+class LQOModel(Model):
+    r"""Class for linear time-invariant systems with quadratic outputs.
+
+    This class describes input-state-output systems given by
+
+    .. math::
+        E(\mu) \dot{x}(t, \mu) & = A(\mu) x(t, \mu) + B(\mu) u(t), \\
+                  y_k(t, \mu) & = C_k(\mu) x(t, \mu) + x(t, \mu)^T M_k(\mu) x(t, \mu),
+                  \quad k = 1, \ldots, p,
+
+    if continuous-time, or
+
+    .. math::
+        E(\mu) x(j + 1, \mu) & = A(\mu) x(j, \mu) + B(\mu) u(j), \\
+                 y_k(j, \mu) & = C_k(\mu) x(j, \mu) + x(j, \mu)^T M_k(\mu) x(j, \mu),
+                 \quad k = 1, \ldots, p,
+
+    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`M_k`, and :math:`E` are
+    linear operators, :math:`C_k` denotes the :math:`k`-th row of :math:`C`, and :math:`p` is the
+    number of outputs. Each output consists of a linear and a quadratic part. Outputs which are
+    purely linear (purely quadratic) are realized by setting the corresponding :math:`M_k`
+    (row :math:`C_k`) to zero.
+
+    Since :math:`x^T M_k x = x^T \frac{1}{2} (M_k + M_k^T) x`, it is assumed that the
+    :math:`M_k` are symmetric.
+
+    The :math:`\mathcal{H}_2`-norm and Gramians follow :cite:`BGP22`. In particular, the
+    observability Gramian :math:`Q` solves
+
+    .. math::
+        A^T Q E + E^T Q A + C^T C + \sum_{k = 1}^p M_k P M_k = 0,
+
+    where :math:`P` is the (standard) controllability Gramian.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    M
+        The tuple of |Operators| M_k (one per output).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
+    sampling_time
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
+    T
+        The final time T.
+    initial_data
+        The initial data `x_0`. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for given |parameter values|. If `None`, it is
+        assumed to be zero.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
+    matrix_equation_solvers
+        :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+        in which case default matrix equation solvers are used.
+    error_estimator
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with a
+        `visualize(U, model, ...)` method. If `visualizer` is not `None`, a
+        `visualize(U, *args, **kwargs)` method is added to the model which forwards its arguments to
+        the visualizer's `visualize` method.
+    name
+        Name of the system.
+
+    Attributes
+    ----------
+    order
+        The order of the system.
+    dim_input
+        The number of inputs.
+    dim_output
+        The number of outputs.
+    A
+        The |Operator| A.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    M
+        The tuple of |Operators| M_k.
+    E
+        The |Operator| E.
+    """
+
+    cache_region = 'memory'
+
+    def __init__(self, A, B, C, M, E=None, sampling_time=0,
+                 T=None, initial_data=None, time_stepper=None, num_values=None,
+                 matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
+
+        assert A.linear
+        assert A.source == A.range
+        assert B.linear
+        assert B.range == A.source
+        assert C.linear
+        assert C.source == A.range
+        assert isinstance(M, tuple)
+        assert len(M) == C.range.dim
+        assert all(Mk.linear for Mk in M)
+        assert all(Mk.source == A.source and Mk.range == A.source for Mk in M)
+
+        E = E or IdentityOperator(A.source)
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
+
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
+
+        assert T is None or T > 0
+
+        if T is not None:
+            if initial_data is None:
+                initial_data = A.source.zeros(1)
+            if isinstance(initial_data, VectorArray):
+                assert initial_data in A.source
+                assert len(initial_data) == 1
+                initial_data = VectorOperator(initial_data, name='initial_data')
+            assert initial_data.source.is_scalar
+            assert initial_data.range == A.source
+
+            if sampling_time == 0:
+                assert isinstance(time_stepper, TimeStepper)
+                assert not isinstance(time_stepper, DiscreteTimeStepper)
+            else:
+                if time_stepper is None:
+                    time_stepper = DiscreteTimeStepper()
+                assert isinstance(time_stepper, DiscreteTimeStepper)
+        else:
+            if initial_data is not None:
+                raise ValueError('Initial data is given but T is not.')
+            if time_stepper is not None:
+                raise ValueError('Time-stepper is given but T is not.')
+
+        matrix_equation_solvers = matrix_equation_solvers or MatrixEquationSolvers()
+        assert isinstance(matrix_equation_solvers, MatrixEquationSolvers)
+
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        self.A = A
+        self.B = B
+        self.C = C
+        self.M = M
+        self.E = E
+        self.sampling_time = sampling_time
+        self.T = T
+        self.initial_data = initial_data
+        self.time_stepper = time_stepper
+        self.num_values = num_values
+        self.matrix_equation_solvers = matrix_equation_solvers
+
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
+        self.linear = False
+
+    def __str__(self):
+        string = (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
+            f'    linear time-invariant with quadratic output\n'
+            f'    solution_space:  {self.solution_space}'
+        )
+        return string
+
+    @classmethod
+    def from_matrices(cls, A, B, C, M, E=None, sampling_time=0,
+                      T=None, initial_data=None, time_stepper=None, num_values=None,
+                      matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
+        """Create |LQOModel| from matrices.
+
+        Parameters
+        ----------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        C
+            The |NumPy array| or |SciPy spmatrix| C or `None` (then C is assumed to be zero,
+            i.e., all outputs are purely quadratic).
+        M
+            Sequence of |NumPy arrays| or |SciPy spmatrices| M_k (one per output).
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
+        sampling_time
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
+        T
+            The final time T.
+        initial_data
+            The initial data `x_0` as a |NumPy array|. If `None`, it is assumed
+            to be zero.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
+        matrix_equation_solvers
+            :class:`~pymor.solvers.matrix_equations.default.MatrixEquationSolvers` or `None`,
+            in which case default matrix equation solvers are used.
+        error_estimator
+            An error estimator for the problem. This can be any object with an
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
+        name
+            Name of the system.
+
+        Returns
+        -------
+        lqo
+            The |LQOModel| with operators A, B, C, M, and E.
+        """
+        assert isinstance(A, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(B, np.ndarray | sps.spmatrix | sparray)
+        assert isinstance(C, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(M, list | tuple)
+        assert all(isinstance(Mk, np.ndarray | sps.spmatrix | sparray) for Mk in M)
+        assert isinstance(E, np.ndarray | sps.spmatrix | sparray | type(None))
+        assert isinstance(initial_data, np.ndarray | type(None))
+
+        if C is None:
+            C = np.zeros((len(M), A.shape[0]))
+
+        A = NumpyMatrixOperator(A)
+        B = NumpyMatrixOperator(B)
+        C = NumpyMatrixOperator(C)
+        M = tuple(NumpyMatrixOperator(Mk) for Mk in M)
+        if E is not None:
+            E = NumpyMatrixOperator(E)
+        if initial_data is not None:
+            initial_data = A.source.from_numpy(initial_data)
+
+        return cls(A, B, C, M, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
+                   time_stepper=time_stepper, num_values=num_values,
+                   matrix_equation_solvers=matrix_equation_solvers,
+                   error_estimator=error_estimator, visualizer=visualizer, name=name)
+
+    def to_matrices(self, format=None, mu=None):
+        """Return operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
+
+        Returns
+        -------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        C
+            The |NumPy array| or |SciPy spmatrix| C.
+        M
+            List of |NumPy arrays| or |SciPy spmatrices| M_k.
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
+        """
+        A = to_matrix(self.A, format, mu)
+        B = to_matrix(self.B, format, mu)
+        C = to_matrix(self.C, format, mu)
+        M = [to_matrix(Mk, format, mu) for Mk in self.M]
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
+        return A, B, C, M, E
+
+    def to_lti(self):
+        """Return the linear part of the system as an |LTIModel|.
+
+        Returns
+        -------
+        lti
+            |LTIModel| with operators A, B, C, and E (the quadratic output is dropped).
+        """
+        return LTIModel(self.A, self.B, self.C, E=self.E, sampling_time=self.sampling_time,
+                        T=self.T, initial_data=self.initial_data, time_stepper=self.time_stepper,
+                        num_values=self.num_values, matrix_equation_solvers=self.matrix_equation_solvers,
+                        name=None if self.name is None else f'{self.name}_linear_part')
+
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities or 'output' in quantities:
+            assert self.T is not None
+
+            compute_solution = 'solution' in quantities
+            compute_output = 'output' in quantities
+
+            # solution computation
+            iterator = self.time_stepper.iterate(
+                0,  # initial_time
+                self.T,  # end_time
+                self.initial_data.as_range_array(mu),  # initial_data
+                (-self.A).with_(solver=self.A.solver),  # operator
+                rhs=LinearInputOperator(self.B),
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                mu=mu,
+                num_values=self.num_values
+            )
+            if self.num_values is None:
+                try:
+                    n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+                except NotImplementedError:
+                    n = 0
+            else:
+                n = self.num_values
+
+            if compute_solution:
+                data['solution'] = self.solution_space.empty(reserve=n)
+            if compute_output:
+                data['output'] = np.empty((self.dim_output, n))
+                data_output_extra = []
+            for i, (x, t) in enumerate(iterator):
+                if compute_solution:
+                    data['solution'].append(x)
+                if compute_output:
+                    y = (self.C.apply(x, mu=mu).to_numpy().ravel()
+                         + np.array([Mk.pairwise_apply2(x, x, mu=mu)[0] for Mk in self.M]))
+                    if i < n:
+                        data['output'][:, i] = y
+                    else:
+                        data_output_extra.append(y[:, np.newaxis])
+            if compute_output:
+                if data_output_extra:
+                    data['output'] = np.hstack((data['output'], *data_output_extra))
+                if data['output'].shape[1] > i + 1:
+                    data['output'] = data['output'][:, :i + 1]
+
+            if compute_solution:
+                quantities.remove('solution')
+            if compute_output:
+                quantities.remove('output')
+
+        super()._compute(quantities, data, mu=mu)
+
+    @cached
+    def _gramian(self, typ, mu=None):
+        A = self.A.assemble(mu)
+        E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+
+        if typ in ('c_lr', 'c_dense'):
+            B = self.B.as_range_array(mu=mu)
+            solver = (self.matrix_equation_solvers.lyapunov_lr if typ == 'c_lr'
+                      else self.matrix_equation_solvers.lyapunov)
+            return solver.solve(LyapunovEquation(A, E, B, trans=False))
+        elif typ in ('o_lr', 'o_dense'):
+            # right-hand side C^T C + sum_k M_k P M_k = W W^T with
+            # W = [C^T, M_1 Z, ..., M_p Z] and P = Z Z^T
+            if typ == 'o_lr':
+                Z = self.gramian('c_lr', mu=mu)
+            else:
+                Z = A.source.from_numpy(chol(self.gramian('c_dense', mu=mu)))
+            W = self.C.as_source_array(mu=mu).copy()
+            for Mk in self.M:
+                W.append(Mk.apply(Z, mu=mu))
+            solver = (self.matrix_equation_solvers.lyapunov_lr if typ == 'o_lr'
+                      else self.matrix_equation_solvers.lyapunov)
+            return solver.solve(LyapunovEquation(A, E, W, trans=True))
+
+    def gramian(self, typ, mu=None):
+        r"""Compute a Gramian.
+
+        The controllability Gramian :math:`P` solves
+
+        .. math::
+            A P E^T + E P A^T + B B^T = 0
+
+        and the observability Gramian :math:`Q` solves
+
+        .. math::
+            A^T Q E + E^T Q A + C^T C + \sum_{k = 1}^p M_k P M_k = 0.
+
+        Parameters
+        ----------
+        typ
+            The type of the Gramian:
+
+            - `'c_lr'`: low-rank factor of the controllability Gramian,
+            - `'o_lr'`: low-rank factor of the observability Gramian,
+            - `'c_dense'`: dense controllability Gramian,
+            - `'o_dense'`: dense observability Gramian.
+
+            .. note::
+                The method assumes the system is asymptotically stable.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        If typ ends with `'_lr'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
+        If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
+        """
+        assert typ in ('c_lr', 'o_lr', 'c_dense', 'o_dense')
+
+        if self.sampling_time > 0:
+            raise NotImplementedError
+
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        gramian = self._gramian(typ, mu=mu)
+
+        assert (typ.endswith('_lr') and gramian in self.A.source
+                or isinstance(gramian, np.ndarray) and gramian.shape == (self.order, self.order))
+
+        return gramian
+
+    @cached
+    def _hankel_svd(self, mu=None):
+        cf = self.gramian('c_lr', mu=mu)
+        of = self.gramian('o_lr', mu=mu)
+        return spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
+
+    def hsv(self, mu=None):
+        """Hankel singular values (w.r.t. the quadratic-output Gramians).
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        sv
+            One-dimensional |NumPy array| of singular values.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        return self._hankel_svd(mu=mu)[1]
+
+    @cached
+    def _h2_norm(self, mu=None):
+        Z = self.gramian('c_lr', mu=mu)
+        lin_norm2 = self.C.apply(Z, mu=mu).norm2().sum()
+        quad_norm2 = sum(np.sum(np.abs(Mk.apply2(Z, Z, mu=mu))**2) for Mk in self.M)
+        return np.sqrt(lin_norm2 + quad_norm2)
+
+    def h2_norm(self, mu=None):
+        r"""Compute the :math:`\mathcal{H}_2`-norm of the |LQOModel|.
+
+        The squared :math:`\mathcal{H}_2`-norm is given by
+
+        .. math::
+            \operatorname{tr}\left(C P C^T\right)
+            + \sum_{k = 1}^p \operatorname{tr}\left(M_k P M_k P\right)
+            = \operatorname{tr}\left(B^T Q B\right),
+
+        see :cite:`BGP22`, which is computed using a low-rank factor of :math:`P`.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        norm
+            :math:`\mathcal{H}_2`-norm.
+        """
+        if self.sampling_time > 0:
+            raise NotImplementedError
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+        return self._h2_norm(mu=mu)
+
+
 def _lti_to_poles_b_c(lti, mu=None):
     """Compute poles and residues.
 
