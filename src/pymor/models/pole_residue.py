@@ -127,9 +127,10 @@ class PoleResidueTransferFunction(TransferFunction):
                           [-pole.imag, pole.real]])
                 B.append(np.vstack([2 * b.real, -2 * b.imag]))
                 C.append(np.hstack([c.real[:, np.newaxis], c.imag[:, np.newaxis]]))
-        A = spla.block_diag(*A)
-        B = np.vstack(B)
-        C = np.hstack(C)
+        # the empty arrays ensure correct shapes when there are no poles
+        A = spla.block_diag(np.empty((0, 0)), *A)
+        B = np.vstack([np.empty((0, self.dim_input)), *B])
+        C = np.hstack([np.empty((self.dim_output, 0)), *C])
         return LTIModel.from_matrices(A, B, C, self.D, sampling_time=self.sampling_time, name=self.name)
 
     def __add__(self, other):
