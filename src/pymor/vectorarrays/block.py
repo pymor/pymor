@@ -210,6 +210,8 @@ class BlockVectorSpace(VectorSpace):
         The tuple defined above.
     """
 
+    array_type = BlockVectorArray
+
     def __init__(self, subspaces: Sequence[VectorSpace]):
         subspaces = tuple(subspaces)
         assert all(isinstance(subspace, VectorSpace) for subspace in subspaces)
@@ -257,7 +259,7 @@ class BlockVectorSpace(VectorSpace):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
 
-    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False):
+    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> BlockVectorArray:
         if data.ndim == 1:
             data = data.reshape((-1, 1))
         data = data.T
