@@ -8,9 +8,33 @@ import pytest
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
-from pymor.reductors.h2 import IRKAReductor, TFIRKAReductor, VectorFittingReductor
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.reductors.h2 import (
+    GapIRKAReductor,
+    IRKAReductor,
+    OneSidedIRKAReductor,
+    TFIRKAReductor,
+    TSIAReductor,
+    VectorFittingReductor,
+)
 
 pytestmark = pytest.mark.builtin
+
+IRKA_TYPE_REDUCTORS = {
+    'irka': (IRKAReductor, {}),
+    'one_sided_V': (OneSidedIRKAReductor, {'version': 'V'}),
+    'one_sided_W': (OneSidedIRKAReductor, {'version': 'W'}),
+    'tsia': (TSIAReductor, {}),
+    'tf_irka': (TFIRKAReductor, {}),
+    'gap_irka': (GapIRKAReductor, {}),
+}
+
+
+def _random_mimo_lti(rng):
+    n, m, p = 10, 2, 2
+    A = -np.diag(np.arange(1, n + 1)) + 0.5 * rng.standard_normal((n, n))
+    return LTIModel.from_matrices(A, rng.standard_normal((n, m)), rng.standard_normal((p, n)))
 
 
 def test_vector_fitting_sampled_transfer_function():
@@ -66,3 +90,61 @@ def test_tfirka_numerical_conjugate_pairs():
     rom = TFIRKAReductor(fom).reduce(initial_data, maxit=2, tol=1e-12)
 
     assert all(np.isrealobj(to_matrix(getattr(rom, operator), format='dense')) for operator in 'ABCE')
+
+
+@pytest.mark.parametrize('kwargs', [{'conv_crit': 'h2'}, {'tol': -1}, {'maxit': 0}, {'num_prev': 0}])
+def test_gap_irka_invalid_args(kwargs, rng):
+    with pytest.raises(AssertionError):
+        GapIRKAReductor(_random_mimo_lti(rng)).reduce(2, **kwargs)
+
+
+@pytest.mark.parametrize('conv_crit', ['sigma', 'htwogap', 'ltwo'])
+def test_gap_irka_conv_crit_independent_of_projection(conv_crit, rng):
+    fom = _random_mimo_lti(rng)
+    conv_crits = []
+    for projection in ('orth', 'biorth'):
+        gap_irka = GapIRKAReductor(fom)
+        gap_irka.reduce(2, tol=1e-14, maxit=4, conv_crit=conv_crit, projection=projection)
+        conv_crits.append(gap_irka.conv_crit)
+
+    assert np.allclose(*conv_crits)
+
+
+@pytest.mark.parametrize('rom0_kind', ['order', 'sigma', 'dict', 'rom'])
+@pytest.mark.parametrize('name', IRKA_TYPE_REDUCTORS)
+def test_irka_type_reductors(name, rom0_kind, rng):
+    fom = _random_mimo_lti(rng)
+    rom0_params = {
+        'order': 2,
+        'sigma': np.array([1., 2.]),
+        'dict': {'sigma': np.array([1., 2.]), 'b': np.ones((2, 2)), 'c': np.ones((2, 2))},
+        'rom': LTIModel.from_matrices(-np.diag([1., 2.]), np.ones((2, 2)), np.ones((2, 2))),
+    }[rom0_kind]
+    cls, kwargs = IRKA_TYPE_REDUCTORS[name]
+    reductor = cls(fom, **kwargs)
+
+    rom = reductor.reduce(rom0_params, tol=1e-14, maxit=3)
+
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 2
+    assert len(reductor.conv_crit) == 3
+    assert len(reductor.sigma_list) == 4
+    if cls is TFIRKAReductor:
+        assert reductor.V is None
+        assert reductor.W is None
+    else:
+        assert len(reductor.V) == len(reductor.W) == 2
+        assert reductor.reconstruct(rom.solution_space.ones()) in fom.solution_space
+
+
+def test_irka_parametric_compute_errors():
+    n = 10
+    p = ProjectionParameterFunctional('p')
+    A = NumpyMatrixOperator(-np.diag(np.arange(1, n + 1))) + p * NumpyMatrixOperator(-np.eye(n))
+    fom = LTIModel(A, NumpyMatrixOperator(np.ones((n, 1))), NumpyMatrixOperator(np.ones((1, n))))
+    irka = IRKAReductor(fom, mu=fom.parameters.parse(1))
+
+    irka.reduce(2, maxit=2, compute_errors=True)
+
+    assert len(irka.errors) == len(irka.conv_crit)
+    assert all(0 < error < 1 for error in irka.errors)

@@ -2,8 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from abc import abstractmethod
-
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -56,6 +54,7 @@ class GenericBHIReductor(BasicObject):
     """
 
     _PGReductor = ProjectionBasedReductor
+    _operators = ()
 
     def __init__(self, fom, mu=None):
         if not isinstance(mu, Mu):
@@ -67,6 +66,7 @@ class GenericBHIReductor(BasicObject):
         self.W = None
         self._pg_reductor = None
         self._product = None
+        self._fom_mu = self._fom_assemble()
 
     def _B_apply(self, s, V):
         mu = self.mu.with_(s=s)
@@ -84,9 +84,8 @@ class GenericBHIReductor(BasicObject):
         mu = self.mu.with_(s=s)
         return self.fom.transfer_function.K.apply_inverse_adjoint(V, mu=mu)
 
-    @abstractmethod
     def _fom_assemble(self):
-        pass
+        return _assemble_fom(self.fom, self.mu, self._operators)
 
     def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
@@ -120,11 +119,8 @@ class GenericBHIReductor(BasicObject):
         assert c.shape == (r, self.fom.dim_output)
         assert projection in ('orth', 'biorth')
 
-        # rescale tangential directions (to avoid overflow or underflow)
-        b = b / np.linalg.norm(b, axis=0) if b.shape[1] > 1 else np.ones((r, 1))
-        c = c / np.linalg.norm(c, axis=0) if c.shape[1] > 1 else np.ones((r, 1))
-        b = self.fom.D.source.from_numpy(b.T)
-        c = self.fom.D.range.from_numpy(c.T)
+        b = self.fom.D.source.from_numpy(_normalize_directions(b).T)
+        c = self.fom.D.range.from_numpy(_normalize_directions(c).T)
 
         # compute projection matrices
         self.V = self.fom.solution_space.empty(reserve=r)
@@ -153,7 +149,7 @@ class GenericBHIReductor(BasicObject):
             gram_schmidt_biorth(self.V, self.W, product=self._product, copy=False)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V,
+        self._pg_reductor = self._PGReductor(self._fom_mu, self.W, self.V,
                                              projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
@@ -175,19 +171,12 @@ class LTIBHIReductor(GenericBHIReductor):
     """
 
     _PGReductor = LTIPGReductor
+    _operators = ('A', 'B', 'C', 'D', 'E')
 
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
-        self._product = fom.E
-
-    def _fom_assemble(self):
-        if self.fom.parametric:
-            return self.fom.with_(
-                **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']}
-            )
-        return self.fom
+        self._product = self._fom_mu.E
 
     def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
@@ -229,13 +218,14 @@ class LTIBHIReductor(GenericBHIReductor):
         assert c.shape == (r, self.fom.dim_output)
 
         # compute projection matrices
-        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma,
-                                  shifted_system_solver=self.fom.shifted_system_solver)
-        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True,
-                                  shifted_system_solver=self.fom.shifted_system_solver)
+        fom = self._fom_mu
+        self.V = rational_arnoldi(fom.A, fom.E, fom.B, sigma,
+                                  shifted_system_solver=fom.shifted_system_solver)
+        self.W = rational_arnoldi(fom.A, fom.E, fom.C, sigma, trans=True,
+                                  shifted_system_solver=fom.shifted_system_solver)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)
+        self._pg_reductor = self._PGReductor(fom, self.W, self.V)
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -252,19 +242,12 @@ class SOBHIReductor(GenericBHIReductor):
     """
 
     _PGReductor = SOLTIPGReductor
+    _operators = ('M', 'E', 'K', 'B', 'Cp', 'Cv', 'D')
 
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         super().__init__(fom, mu=mu)
-        self._product = fom.M
-
-    def _fom_assemble(self):
-        if self.fom.parametric:
-            return self.fom.with_(
-                **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']}
-            )
-        return self.fom
+        self._product = self._fom_mu.M
 
 
 class DelayBHIReductor(GenericBHIReductor):
@@ -280,19 +263,18 @@ class DelayBHIReductor(GenericBHIReductor):
 
     _PGReductor = DelayLTIPGReductor
 
+    _operators = ('A', 'B', 'C', 'D', 'E')
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LinearDelayModel)
         super().__init__(fom, mu=mu)
-        self._product = fom.E
+        self._product = self._fom_mu.E
 
     def _fom_assemble(self):
+        fom = super()._fom_assemble()
         if self.fom.parametric:
-            return self.fom.with_(
-                **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad)
-            )
-        return self.fom
+            fom = fom.with_(Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad))
+        return fom
 
 
 class TFBHIReductor(BasicObject):
@@ -343,9 +325,8 @@ class TFBHIReductor(BasicObject):
         assert b.shape == (r, self.fom.dim_input)
         assert c.shape == (r, self.fom.dim_output)
 
-        # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / np.linalg.norm(b)) if b.shape[1] > 1 else np.ones((r, 1))
-        c = c * (1 / np.linalg.norm(c)) if c.shape[1] > 1 else np.ones((r, 1))
+        b = _normalize_directions(b)
+        c = _normalize_directions(c)
 
         Hs = np.array([self.fom.eval_tf(s, mu=self.mu) for s in sigma])
         dHs = np.array([self.fom.eval_dtf(s, mu=self.mu) for s in sigma])
@@ -361,3 +342,23 @@ class TFBHIReductor(BasicObject):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
+
+
+def _assemble_fom(fom, mu, operators):
+    """Return `fom` with `operators` assembled for `mu` (or `fom` if it is not parametric)."""
+    if not fom.parametric:
+        return fom
+    return fom.with_(**{op: getattr(fom, op).assemble(mu=mu) for op in operators})
+
+
+def _normalize_directions(directions):
+    """Rescale tangential directions (to avoid overflow or underflow).
+
+    Each direction is scaled to unit norm, which does not change the
+    interpolation conditions. For a single input or output, the
+    directions are scalars and are replaced by ones.
+    """
+    r, m = directions.shape
+    if m == 1:
+        return np.ones((r, 1))
+    return directions / np.linalg.norm(directions, axis=1, keepdims=True)
