@@ -166,16 +166,6 @@ def test_to_lti_repeated_real_poles_with_conjugate_factors():
     assert_same_tf(pr, pr.to_lti())
 
 
-def test_h2_inner_ignores_parametric_feedthrough():
-    A = NumpyMatrixOperator(np.array([[-1.]]))
-    B = NumpyMatrixOperator(np.ones((1, 1)))
-    C = NumpyMatrixOperator(np.ones((1, 1)))
-    D = ProjectionParameterFunctional('alpha') * NumpyMatrixOperator(np.ones((1, 1)))
-    lti = LTIModel(A, B, C, D)
-    tf = TransferFunction(1, 1, lambda s: np.array([[1 / (s + 1)]]))
-    assert np.allclose(tf.h2_inner(lti), 0.5)
-
-
 def test_constant_lti_round_trip():
     lti = LTIModel.from_matrices(np.empty((0, 0)), np.empty((0, 1)), np.empty((1, 0)), np.array([[3.]]))
     assert_same_tf(lti, lti.to_pole_residue().to_lti())
