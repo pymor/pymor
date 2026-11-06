@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from pymor.models.iosys import LTIModel
+from pymor.models.pole_residue import PoleResidueTransferFunction
 from pymor.models.transfer_function import TransferFunction
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
@@ -40,6 +41,7 @@ def test_h2_inner_warns_on_nonzero_feedthrough(alpha):
     lti = LTIModel(A, B, C, D)
     tf = TransferFunction(1, 1, lambda s: np.array([[1 / (s + 1)]]))
     mu = lti.parameters.parse(alpha)
-    with mock.patch.object(tf.logger, 'warning') as warning:
+    # the warning is logged by the pole-residue form of lti
+    with mock.patch.object(PoleResidueTransferFunction._logger, 'warning') as warning:
         assert np.allclose(tf.h2_inner(lti, mu=mu), 0.5)
     assert warning.called == (alpha != 0)

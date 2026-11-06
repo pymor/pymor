@@ -6,6 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.models.transfer_function import TransferFunction
+from pymor.parameters.base import Mu
 
 
 class PoleResidueTransferFunction(TransferFunction):
@@ -132,6 +133,41 @@ class PoleResidueTransferFunction(TransferFunction):
         B = np.vstack([np.empty((0, self.dim_input)), *B])
         C = np.hstack([np.empty((self.dim_output, 0)), *C])
         return LTIModel.from_matrices(A, B, C, self.D, sampling_time=self.sampling_time, name=self.name)
+
+    def h2_inner(self, other, mu=None):
+        """Compute H2 inner product with a |TransferFunction| or a |Model|.
+
+        Uses the inner product formula based on the pole-residue form of `self`
+        (see, e.g., Lemma 1 in :cite:`ABG10`).
+        It assumes that the transfer function of `other` is defined on `-self.poles`.
+
+        Parameters
+        ----------
+        other
+            |TransferFunction| or |Model| with a `transfer_function` attribute.
+        mu
+            |Parameter values| for `other`.
+
+        Returns
+        -------
+        inner
+            H2 inner product.
+        """
+        if not isinstance(other, TransferFunction):
+            assert hasattr(other, 'transfer_function')
+            other = other.transfer_function
+
+        if not isinstance(mu, Mu):
+            mu = other.parameters.parse(mu)
+        assert other.parameters.assert_compatible(mu)
+
+        D_norm2 = 0 if self.D is None else spla.norm(self.D)**2
+        if D_norm2 != 0:
+            self.logger.warning('The D operator is not exactly zero '
+                                f'(squared Frobenius norm is {D_norm2}).')
+
+        return sum(c @ other.eval_tf(-pole, mu=mu) @ b
+                   for pole, b, c in zip(self.poles, self.b, self.c, strict=True))
 
     def __add__(self, other):
         if not isinstance(other, PoleResidueTransferFunction):

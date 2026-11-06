@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -157,6 +159,36 @@ def test_mixed_arithmetic(rng, name, pr_first, sampling_time, parametric):
     for m, assert_tf in ((m1 + m2, assert_tf_add), (m1 - m2, assert_tf_sub), (m1 * m2, assert_tf_mul)):
         assert type(m) is TransferFunction
         assert_tf(m1, m2, m, parametric)
+
+
+@pytest.mark.parametrize('parametric', [False, True])
+def test_h2_inner(rng, parametric):
+    pr = get_pole_residue_tf(rng, 2, 3, False, 0)
+    lti = get_lti(rng, 2, 3, False, False, 0)
+    if parametric:
+        lti = lti.with_(A=lti.A + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(lti.order)))
+        mu = lti.parameters.parse(-1)
+    else:
+        mu = None
+    tf = lti.transfer_function
+
+    inner = pr.h2_inner(lti, mu=mu)
+    assert np.isclose(inner, pr.h2_inner(tf, mu=mu))
+    assert np.isclose(inner, np.conj(tf.h2_inner(pr, mu=mu)))
+    assert np.isclose(inner, np.conj(lti.to_pole_residue(mu=mu).h2_inner(pr)))
+    assert np.isclose(inner, tf.h2_inner(pr.to_lti(), mu=mu))
+
+    # compare with norms computed by numerical integration
+    assert np.isclose(pr.h2_inner(pr), pr.h2_norm()**2)
+    assert np.isclose(inner.real, ((pr + tf).h2_norm(mu=mu)**2 - pr.h2_norm()**2 - tf.h2_norm(mu=mu)**2) / 2)
+
+
+def test_h2_inner_warns_on_nonzero_D(rng):
+    pr = get_pole_residue_tf(rng, 1, 1, True, 0)
+    lti = get_lti(rng, 1, 1, False, False, 0)
+    with mock.patch.object(pr.logger, 'warning') as warning:
+        pr.h2_inner(lti)
+    assert warning.called
 
 
 @pytest.mark.xfail(reason='complex transfer functions are not supported')

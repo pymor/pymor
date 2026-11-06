@@ -445,18 +445,19 @@ class TransferFunction(CacheableObject, ParametricObject):
         else:
             return norm, norm_relerr, quad_out[2:]
 
-    def h2_inner(self, lti, mu=None):
-        """Compute H2 inner product with an |LTIModel|.
+    def h2_inner(self, other, mu=None):
+        """Compute H2 inner product with an |LTIModel| or a |PoleResidueTransferFunction|.
 
-        Uses the inner product formula based on the pole-residue form
+        Uses the inner product formula based on the pole-residue form of `other`
         (see, e.g., Lemma 1 in :cite:`ABG10`).
-        It assumes that `self.tf` is defined on `-lti.poles()`.
+        It assumes that `self.tf` is defined on `-other.poles()` (or `-other.poles`).
 
         Parameters
         ----------
-        lti
-            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
-            The D operator is assumed to be zero (a warning is logged otherwise).
+        other
+            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|
+            or |PoleResidueTransferFunction|.
+            The D term is assumed to be zero (a warning is logged otherwise).
         mu
             |Parameter values|.
 
@@ -466,24 +467,17 @@ class TransferFunction(CacheableObject, ParametricObject):
             H2 inner product.
         """
         from pymor.models.iosys import LTIModel
-        assert isinstance(lti, LTIModel)
+        from pymor.models.pole_residue import PoleResidueTransferFunction
+        assert isinstance(other, LTIModel | PoleResidueTransferFunction)
 
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
 
-        D_norm2 = np.sum(lti.D.as_range_array(mu=mu).norm2())
-        if D_norm2 != 0:
-            self.logger.warning('The D operator is not exactly zero '
-                                f'(squared Frobenius norm is {D_norm2}).')
+        if isinstance(other, LTIModel):
+            other = other.to_pole_residue(mu=mu)
 
-        pr = lti.to_pole_residue(mu=mu)
-        poles, b, c = pr.poles, pr.b, pr.c
-        inner = sum(c[i].dot(self.eval_tf(-poles[i], mu=mu).dot(b[i]))
-                    for i in range(len(poles)))
-        inner = inner.conjugate()
-
-        return inner
+        return np.conj(other.h2_inner(self, mu=mu))
 
     def __add__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
