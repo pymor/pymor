@@ -456,7 +456,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         ----------
         lti
             |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
-            The D operator is ignored.
+            The D operator is assumed to be zero (a warning is logged otherwise).
         mu
             |Parameter values|.
 
@@ -471,6 +471,11 @@ class TransferFunction(CacheableObject, ParametricObject):
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
+
+        D_norm2 = np.sum(lti.D.as_range_array(mu=mu).norm2())
+        if D_norm2 != 0:
+            self.logger.warning('The D operator is not exactly zero '
+                                f'(squared Frobenius norm is {D_norm2}).')
 
         pr = lti.to_pole_residue(mu=mu)
         poles, b, c = pr.poles, pr.b, pr.c
