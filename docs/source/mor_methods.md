@@ -282,6 +282,9 @@ rom_aaa = PAAAReductor(s, samples).reduce()
 
 from pymor.reductors.loewner import LoewnerReductor
 rom_loewner = LoewnerReductor(s, samples).reduce()
+
+from pymor.reductors.vf import VectorFittingReductor
+rom_vf = VectorFittingReductor(s, samples).reduce(10)
 ```
 
 Download the code:
