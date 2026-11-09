@@ -19,6 +19,9 @@ authors:
   - family-names: Kleikamp
     given-names: Hendrik
     orcid: https://orcid.org/0000-0003-1264-5941
+  - family-names: Ullmann
+    given-names: Sven
+    orcid: https://orcid.org/0009-0009-7042-5091
 cff-version: 1.2.0
 preferred-citation:
   title: pyMOR -- Generic Algorithms and Interfaces for Model Order Reduction
