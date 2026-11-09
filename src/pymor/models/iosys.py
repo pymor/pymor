@@ -728,14 +728,17 @@ class LTIModel(Model):
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
             if compute_output:
-                D = LinearInputOperator(self.D)
+                D = self.D.as_range_array(mu=mu)
+                input_function = mu.time_dependent_values.get('input')
                 data['output'] = np.empty((self.dim_output, n))
                 data_output_extra = []
             for i, (x, t) in enumerate(iterator):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.at_time(t)).to_numpy()
+                    y = self.C.apply(x, mu=mu).to_numpy()
+                    u = input_function(np.array([t])) if input_function is not None else mu['input']
+                    y = y + D.lincomb(u).to_numpy()
                     if i < n:
                         data['output'][:, i] = y.ravel()
                     else:

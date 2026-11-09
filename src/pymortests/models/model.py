@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitMidpointTimeStepper
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dumps, loads
 from pymor.discretizers.builtin import discretize_stationary_cg
@@ -15,6 +15,7 @@ from pymor.models.iosys import LTIModel
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.numpy import NumpyGenericOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
@@ -133,6 +134,36 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert isinstance(X_step, tuple)
     assert all(Xi.dim == 2 for Xi in X_step)
     assert all(len(Xi) == len(X) for Xi in X_step)
+
+
+@pytest.mark.parametrize('input_type', ['constant', 'expression', 'function'])
+@pytest.mark.parametrize('parametric', [False, True])
+def test_lti_feedthrough_uses_fixed_operators(input_type, parametric):
+    D = np.array([[2., -1.], [3., 4.]])
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.zeros((1, 2)), np.ones((2, 1)), D=D, T=2,
+        time_stepper=ExplicitEulerTimeStepper(2),
+    )
+    mu = None
+    if parametric:
+        def mapping(U, mu):
+            assert 't' not in mu
+            return mu['gain'][0] * (D @ U)
+
+        lti = lti.with_(D=NumpyGenericOperator(mapping, dim_source=2, dim_range=2,
+                                              linear=True, parameters={'gain': 1}))
+        mu = {'gain': 2.}
+    times = np.arange(3)
+    values = np.vstack((1 + times, 2 - times))
+    if input_type == 'constant':
+        input = [1., 2.]
+        values = np.repeat(np.array(input)[:, np.newaxis], 3, axis=1)
+    elif input_type == 'expression':
+        input = '[1 + t[0], 2 - t[0]]'
+    else:
+        input = GenericFunction(lambda t: np.array([1 + t[0], 2 - t[0]]), 1, (2,))
+
+    np.testing.assert_allclose(lti.output(input=input, mu=mu), (2 if parametric else 1) * D @ values)
 
 
 if __name__ == '__main__':
