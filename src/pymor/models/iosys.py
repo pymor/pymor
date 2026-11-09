@@ -68,7 +68,9 @@ class LTIModel(Model):
                y(k, \mu)     & = C(\mu) x(k, \mu) + D(\mu) u(k),
 
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
-    operators.
+    operators. These operators and the initial data may depend on parameters, but not on
+    the time parameter `t`. During simulation their parameter values must be constant in
+    time. Time-dependent inputs :math:`u(t)` remain supported.
 
     All methods related to the transfer function
     (e.g., frequency response calculation and Bode plots)
@@ -235,6 +237,7 @@ class LTIModel(Model):
         self.matrix_equation_solvers = matrix_equation_solvers
         self.shifted_system_solver = shifted_system_solver
         self.ast_pole_data = ast_pole_data
+        self._check_time_invariant()
 
         self.solution_space = A.source
         self.dim_output = C.range.dim
@@ -699,9 +702,19 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
+    def _check_time_invariant(self, mu=None):
+        time_dependent_parameters = {'t'}
+        if mu is not None:
+            time_dependent_parameters.update(mu.time_dependent_values)
+        for name in ('A', 'B', 'C', 'D', 'E', 'initial_data'):
+            op = getattr(self, name)
+            if op is not None and time_dependent_parameters.intersection(op.parameters):
+                raise ValueError(f'LTIModel does not support time-dependent {name}.')
+
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities or 'output' in quantities:
             assert self.T is not None
+            self._check_time_invariant(mu)
 
             compute_solution = 'solution' in quantities
             compute_output = 'output' in quantities
@@ -713,7 +726,7 @@ class LTIModel(Model):
                 self.initial_data.as_range_array(mu),  # initial_data
                 (-self.A).with_(solver=self.A.solver),  # operator
                 rhs=LinearInputOperator(self.B) if self.dim_input else None,
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                mass=None if isinstance(self.E, IdentityOperator) else self.E.assemble(mu),
                 mu=mu,
                 num_values=self.num_values
             )

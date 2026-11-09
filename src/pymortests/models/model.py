@@ -175,16 +175,6 @@ def test_lti_complex_output_not_supported(complex_parts, input_value, num_values
         )
 
 
-@pytest.mark.parametrize('response', ['output', 'impulse_resp', 'step_resp'])
-def test_lti_complex_response_not_supported(response):
-    lti = LTIModel.from_matrices(
-        -np.eye(1), np.eye(1), 1j * np.eye(1), T=1, time_stepper=ImplicitEulerTimeStepper(2),
-    )
-    kwargs = {'input': [1.]} if response == 'output' else {}
-    with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
-        getattr(lti, response)(**kwargs)
-
-
 @pytest.mark.parametrize('quantity', ['solve', 'output', 'both'])
 @pytest.mark.parametrize('sampling_time', [0, 1])
 @pytest.mark.parametrize('functional_data', [False, True])
@@ -218,6 +208,28 @@ def test_lti_complex_simulation_data(complex_part, functional_data, sampling_tim
     assert not any('Complex-valued' in record.message for record in caplog.records)
 
 
+@pytest.mark.parametrize('matrix_type', [np.asarray, sps.csr_matrix])
+@pytest.mark.parametrize('imaginary_part', [0., 1.])
+def test_lti_complex_output_dtype_not_supported(matrix_type, imaginary_part):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.empty((1, 0)), matrix_type((1. + imaginary_part * 1j) * np.eye(1)),
+        T=1, initial_data=np.ones(1), time_stepper=ImplicitEulerTimeStepper(2),
+    )
+    np.testing.assert_allclose(lti.solve().to_numpy(), [[1., 2/3, 4/9]])
+    with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
+        lti.output()
+
+
+@pytest.mark.parametrize('response', ['output', 'impulse_resp', 'step_resp'])
+def test_lti_complex_response_not_supported(response):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.eye(1), 1j * np.eye(1), T=1, time_stepper=ImplicitEulerTimeStepper(2),
+    )
+    kwargs = {'input': [1.]} if response == 'output' else {}
+    with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
+        getattr(lti, response)(**kwargs)
+
+
 @pytest.mark.parametrize('estimated_count', [0, 2])
 def test_lti_output_becomes_complex(estimated_count, monkeypatch):
     monkeypatch.setattr(ImplicitEulerTimeStepper, 'estimate_time_step_count', lambda self, t0, t1: estimated_count)
@@ -229,6 +241,57 @@ def test_lti_output_becomes_complex(estimated_count, monkeypatch):
 
     with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
         lti.output(input=input)
+
+
+@pytest.mark.parametrize('operator', ['A', 'B', 'C', 'D', 'E'])
+@pytest.mark.parametrize('T', [None, 1])
+@pytest.mark.parametrize('sampling_time', [0, 1])
+def test_lti_rejects_time_dependent_operators(operator, T, sampling_time):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.eye(1), np.eye(1), D=np.eye(1), E=np.eye(1), T=T,
+        sampling_time=sampling_time,
+        time_stepper=ImplicitEulerTimeStepper(2) if T is not None and sampling_time == 0 else None,
+    )
+    varying_operator = getattr(lti, operator) * ProjectionParameterFunctional('t')
+
+    with pytest.raises(ValueError, match=f'time-dependent {operator}'):
+        lti.with_(**{operator: varying_operator})
+
+
+@pytest.mark.parametrize('sampling_time', [0, 1])
+def test_lti_rejects_time_dependent_initial_data(sampling_time):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.eye(1), np.eye(1), T=1, initial_data=np.ones(1), sampling_time=sampling_time,
+        time_stepper=ImplicitEulerTimeStepper(2) if sampling_time == 0 else None,
+    )
+
+    with pytest.raises(ValueError, match='time-dependent initial_data'):
+        lti.with_(initial_data=lti.initial_data * ProjectionParameterFunctional('t'))
+
+
+@pytest.mark.parametrize('operator', ['A', 'B', 'C', 'D', 'E', 'initial_data'])
+@pytest.mark.parametrize('sampling_time', [0, 1])
+@pytest.mark.parametrize('quantity', ['solve', 'output', 'both'])
+@pytest.mark.parametrize('time_dependent', [False, True])
+def test_lti_operator_parameter_values(operator, sampling_time, quantity, time_dependent):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.eye(1), np.eye(1), D=np.eye(1), E=np.eye(1), T=2,
+        initial_data=np.ones(1), sampling_time=sampling_time,
+        time_stepper=ImplicitEulerTimeStepper(2) if sampling_time == 0 else None,
+    )
+    parametric = lti.with_(**{operator: getattr(lti, operator) * ProjectionParameterFunctional('coefficient')})
+    mu = {'coefficient': '1 + t[0]' if time_dependent else 1.}
+    kwargs = {'solution': quantity != 'output', 'output': quantity != 'solve', 'input': '1 + t[0]'}
+
+    if time_dependent:
+        with pytest.raises(ValueError, match=f'time-dependent {operator}'):
+            parametric.compute(mu=mu, **kwargs)
+    else:
+        data = parametric.compute(mu=mu, **kwargs)
+        expected = lti.compute(**kwargs)
+        for key, value in data.items():
+            np.testing.assert_allclose(value.to_numpy() if key == 'solution' else value,
+                                       expected[key].to_numpy() if key == 'solution' else expected[key])
 
 
 @pytest.mark.parametrize('sampling_time', [0, 1])
@@ -245,18 +308,6 @@ def test_lti_without_input(sampling_time):
 
     np.testing.assert_allclose(lti.solve().to_numpy(), expected)
     np.testing.assert_allclose(lti.output(), C @ expected)
-
-
-@pytest.mark.parametrize('matrix_type', [np.asarray, sps.csr_matrix])
-@pytest.mark.parametrize('imaginary_part', [0., 1.])
-def test_lti_complex_output_dtype_not_supported(matrix_type, imaginary_part):
-    lti = LTIModel.from_matrices(
-        -np.eye(1), np.empty((1, 0)), matrix_type((1. + imaginary_part * 1j) * np.eye(1)),
-        T=1, initial_data=np.ones(1), time_stepper=ImplicitEulerTimeStepper(2),
-    )
-    np.testing.assert_allclose(lti.solve().to_numpy(), [[1., 2/3, 4/9]])
-    with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
-        lti.output()
 
 
 @pytest.mark.parametrize('input_type', ['constant', 'expression', 'function'])
