@@ -739,6 +739,8 @@ class LTIModel(Model):
                     y = self.C.apply(x, mu=mu).to_numpy()
                     u = input_function(np.array([t])) if input_function is not None else mu['input']
                     y = y + D.lincomb(u).to_numpy()
+                    if np.iscomplexobj(y):
+                        raise NotImplementedError('Complex-valued time-domain outputs are not supported.')
                     if i < n:
                         data['output'][:, i] = y.ravel()
                     else:
