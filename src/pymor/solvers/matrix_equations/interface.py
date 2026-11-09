@@ -215,30 +215,3 @@ class BernoulliSolver(ImmutableObject):
     @abstractmethod
     def _solve(self, equation):
         pass
-
-
-class BernoulliSolverLR(ImmutableObject):
-    r"""Low-rank solver interface for |BernoulliEquations|.
-
-    Computes a low-rank factor of the solution of the |BernoulliEquation|.
-    """
-
-    def solve(self, equation):
-        """Solve a |BernoulliEquation|.
-
-        Parameters
-        ----------
-        equation
-            The |BernoulliEquation| to solve.
-
-        Returns
-        -------
-        Z
-            Low-rank factor of the solution, |VectorArray| from `equation.A.source`.
-        """
-        assert isinstance(equation, BernoulliEquation)
-        return self._solve(equation)
-
-    @abstractmethod
-    def _solve(self, equation):
-        pass

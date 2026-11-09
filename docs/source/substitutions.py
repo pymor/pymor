@@ -198,7 +198,6 @@ common = """
 .. |PositiveRiccatiSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.PositiveRiccatiSolverLR`
 .. |SylvesterSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.SylvesterSolver`
 .. |BernoulliSolver| replace:: :class:`~pymor.solvers.matrix_equations.interface.BernoulliSolver`
-.. |BernoulliSolverLR| replace:: :class:`~pymor.solvers.matrix_equations.interface.BernoulliSolverLR`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 .. |RandomizedRangeFinder| replace:: :class:`randmomized range finder <pymor.algorithms.rand_la.RandomizedRangeFinder>`

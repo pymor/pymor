@@ -43,15 +43,3 @@ def test_bernoulli(n, trans, rng):
     X = BernoulliEquation.from_matrices(A, E, B, trans=trans).solve()
 
     assert residual(A, E, B, X, trans) < 1e-9
-
-
-@pytest.mark.parametrize('n', n_list)
-@pytest.mark.parametrize('trans', [False, True])
-def test_bernoulli_lr(n, trans, rng):
-    A, E, B = bernoulli_matrices(n, trans, rng)
-
-    Zva = BernoulliEquation.from_matrices(A, E, B, trans=trans).solve_lr()
-    Z = Zva.to_numpy()
-    X = Z @ Z.conj().T
-
-    assert residual(A, E, B, X, trans) < 1e-9

@@ -580,8 +580,7 @@ class BernoulliEquation(ImmutableObject):
           A^H X E + E^H X A
           - E^H X B B^H X E = 0.
 
-    Use :meth:`solve` to obtain the dense solution :math:`X` and :meth:`solve_lr`
-    to obtain a low-rank factor :math:`Z` with :math:`X = Z Z^H`.
+    Use :meth:`solve` to obtain the dense solution :math:`X`.
 
     Parameters
     ----------
@@ -627,14 +626,6 @@ class BernoulliEquation(ImmutableObject):
         from pymor.solvers.matrix_equations.interface import BernoulliSolver
         solver = DefaultBernoulliSolver() if solver is None else solver
         assert isinstance(solver, BernoulliSolver)
-        return solver.solve(self)
-
-    def solve_lr(self, solver=None):
-        r"""Compute a low-rank factor :math:`Z` as a |VectorArray| from `A.source`."""
-        from pymor.solvers.matrix_equations.default import DefaultBernoulliSolverLR
-        from pymor.solvers.matrix_equations.interface import BernoulliSolverLR
-        solver = DefaultBernoulliSolverLR() if solver is None else solver
-        assert isinstance(solver, BernoulliSolverLR)
         return solver.solve(self)
 
     def to_matrices(self):

@@ -5,43 +5,15 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.solvers.matrix_equations.interface import BernoulliSolver, BernoulliSolverLR
+from pymor.solvers.matrix_equations.interface import BernoulliSolver
 
 
 class SignBernoulliSolver(BernoulliSolver):
     r"""Compute the solution of a |BernoulliEquation| using the matrix sign function.
 
-    Computes a low-rank factor :math:`Z` with :class:`SignBernoulliSolverLR` and
-    returns :math:`X = Z Z^H`.
-
-    Parameters
-    ----------
-    maxiter
-        The maximum amount of iterations.
-    after_maxiter
-        The number of iterations which are to be performed after tolerance is reached.
-        This will improve the quality of the solution in cases where the iterates which are used
-        by the stopping criterion stagnate prematurely.
-    tol
-        Tolerance for stopping criterion based on relative change of iterates.
-    """
-
-    def __init__(self, maxiter=100, after_maxiter=3, tol=1e-8):
-        self.maxiter = maxiter
-        self.after_maxiter = after_maxiter
-        self.tol = tol
-
-    def _solve(self, equation):
-        solver = SignBernoulliSolverLR(maxiter=self.maxiter, after_maxiter=self.after_maxiter, tol=self.tol)
-        Z = solver.solve(equation).to_numpy()
-        return Z @ Z.conj().T
-
-
-class SignBernoulliSolverLR(BernoulliSolverLR):
-    r"""Compute a low-rank factor of the solution of a |BernoulliEquation|.
-
-    Uses the matrix sign function method from :cite:`BBQ07`. It works with dense
-    matrices, so it is only suitable for small problems.
+    Uses the matrix sign function method from :cite:`BBQ07` to compute a factor :math:`Z`
+    and returns :math:`X = Z Z^H`. It works with dense matrices, so it is only suitable for
+    small problems.
 
     Parameters
     ----------
@@ -108,4 +80,6 @@ class SignBernoulliSolverLR(BernoulliSolverLR):
         _, R = spla.qr(B.conj().T @ Q, mode='economic')
         Y = spla.solve_triangular(R, np.sqrt(2) * Q.conj().T, trans='C')
 
-        return equation.A.source.from_numpy(Y.conj().T)
+        Z = Y.conj().T
+
+        return Z @ Z.conj().T
