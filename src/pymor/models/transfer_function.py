@@ -609,11 +609,11 @@ class FactorizedTransferFunction(TransferFunction):
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
-                    C_vec_a = C.as_source_array(mu=mu).conj()
+                    C_vec_a = C.as_source_array(mu=mu)
                     Kia_Ca = K.apply_inverse_adjoint(C_vec_a, mu=mu)
                     dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj().T
 
-                    dC_vec_a = dC.as_source_array(mu=mu).conj()
+                    dC_vec_a = dC.as_source_array(mu=mu)
                     Kia_dCa = K.apply_inverse_adjoint(dC_vec_a, mu=mu)
                     CKidB = B.apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj().T
 

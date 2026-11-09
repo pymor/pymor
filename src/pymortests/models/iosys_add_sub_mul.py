@@ -156,6 +156,11 @@ def assert_tf_mul(m1, m2, m, parametric):
                            m1.eval_dtf(s, mu=mu) @ m2.eval_tf(s, mu=mu) + m1.eval_tf(s, mu=mu) @ m2.eval_dtf(s, mu=mu))
 
 
+def test_complex_lti_transfer_function_derivative():
+    lti = LTIModel.from_matrices(-np.eye(1), np.ones((1, 2)), np.array([[1j]]))
+    np.testing.assert_allclose(lti.transfer_function.eval_dtf(0), -1j * np.ones((1, 2)))
+
+
 @pytest.mark.parametrize('param2', [False, True])
 @pytest.mark.parametrize('param1', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
