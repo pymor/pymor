@@ -400,6 +400,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
         function.
         It only assumes that `self.tf` is defined over the imaginary axis.
+        The full imaginary axis is integrated without assuming real-system symmetry.
 
         By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
         optional argument `epsabs`).
@@ -435,9 +436,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         import scipy.integrate as spint
         quad_kwargs.setdefault('epsabs', 0)
         quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
-                              0, np.inf,
+                              -np.inf, np.inf,
                               **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / np.pi)
+        norm = np.sqrt(quad_out[0] / (2 * np.pi))
         if return_norm_only:
             return norm
         norm_relerr = quad_out[1] / (2 * quad_out[0])

@@ -5,7 +5,8 @@
 import numpy as np
 import pytest
 
-from pymor.models.transfer_function import FactorizedTransferFunction
+from pymor.models.iosys import LTIModel
+from pymor.models.transfer_function import FactorizedTransferFunction, TransferFunction
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 
@@ -93,3 +94,34 @@ def test_factorized_transfer_function_complex_coefficient_guard(dim_input, dim_o
             tf.eval_dtf(1j)
     else:
         np.testing.assert_allclose(tf.eval_dtf(1j), degree * 1j**(degree - 1) * H)
+
+
+@pytest.mark.parametrize('shift', [0., 2., -2.])
+@pytest.mark.parametrize('factorized', [False, True])
+@pytest.mark.parametrize('return_info', [False, True])
+def test_transfer_function_h2_quadrature(shift, factorized, return_info):
+    frequencies = []
+
+    def evaluate(s):
+        frequencies.append(s.imag)
+        return np.array([[1. / (s + 1 - shift * 1j)]])
+
+    if factorized:
+        tf = LTIModel.from_matrices(
+            np.array([[-1. + shift * 1j]]), np.ones((1, 1)), np.ones((1, 1)),
+        ).transfer_function
+    else:
+        tf = TransferFunction(1, 1, evaluate)
+
+    result = tf.h2_norm(return_norm_only=not return_info, full_output=return_info)
+
+    if return_info:
+        norm, relative_error, info = result
+        assert relative_error >= 0
+        assert info[0]['neval'] > 0
+    else:
+        norm = result
+    np.testing.assert_allclose(norm, np.sqrt(0.5))
+    if not factorized:
+        assert any(w > 0 for w in frequencies)
+        assert any(w < 0 for w in frequencies)
