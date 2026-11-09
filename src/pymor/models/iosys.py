@@ -442,6 +442,9 @@ class LTIModel(Model):
         B = to_matrix(self.B, format='dense', mu=mu)
         C = to_matrix(self.C, format='dense', mu=mu)
         D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format='dense', mu=mu)
+        if self.order == 0:
+            return PoleResidueTransferFunction(np.empty(0), B, C.T, D,
+                                               sampling_time=self.sampling_time, name=self.name)
         if isinstance(self.E, IdentityOperator):
             poles, X = spla.eig(A)
             EX = X

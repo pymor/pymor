@@ -64,8 +64,9 @@ def assert_same_tf(m1, m2, mu=None):
 @pytest.mark.parametrize('with_D', [False, True])
 @pytest.mark.parametrize('p', [1, 2])
 @pytest.mark.parametrize('m', [1, 3])
-def test_to_pole_residue(rng, m, p, with_D, with_E, sampling_time):
-    lti = get_lti(rng, m, p, with_D, with_E, sampling_time)
+@pytest.mark.parametrize('n', [0, 6])
+def test_to_pole_residue(rng, m, p, with_D, with_E, sampling_time, n):
+    lti = get_lti(rng, m, p, with_D, with_E, sampling_time, n=n)
     pr = lti.to_pole_residue()
     assert type(pr) is PoleResidueTransferFunction
     assert pr.order == lti.order
