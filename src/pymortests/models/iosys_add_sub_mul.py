@@ -156,6 +156,20 @@ def assert_tf_mul(m1, m2, m, parametric):
                            m1.eval_dtf(s, mu=mu) @ m2.eval_tf(s, mu=mu) + m1.eval_tf(s, mu=mu) @ m2.eval_dtf(s, mu=mu))
 
 
+@pytest.mark.parametrize('real1', [False, True])
+@pytest.mark.parametrize('real2', [False, True])
+@pytest.mark.parametrize('name1', ['TransferFunction', 'FactorizedTransferFunction'])
+@pytest.mark.parametrize('name2', ['TransferFunction', 'FactorizedTransferFunction'])
+def test_transfer_function_real_flag_arithmetic(real1, real2, name1, name2):
+    left = get_model(name1, 0, False).with_(is_real=real1)
+    right = get_model(name2, 0, False).with_(is_real=real2)
+
+    assert (-left).is_real is real1
+    assert (-right).is_real is real2
+    for result in (left + right, right + left, left - right, right - left, left * right, right * left):
+        assert result.is_real is (real1 and real2)
+
+
 @pytest.mark.parametrize('complex1', [False, True])
 @pytest.mark.parametrize('complex2', [False, True])
 @pytest.mark.parametrize('descriptor', [False, True])

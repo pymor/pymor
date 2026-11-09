@@ -13,20 +13,44 @@ from pymor.parameters.functionals import ProjectionParameterFunctional
 pytestmark = pytest.mark.builtin
 
 
-@pytest.mark.parametrize(('dim_input', 'dim_output'), [(1, 2), (2, 1)])
-def test_factorized_transfer_function_complex_feedthrough(dim_input, dim_output):
-    s = ProjectionParameterFunctional('s')
-    K = NumpyMatrixOperator(np.eye(2))
-    B = NumpyMatrixOperator(np.ones((2, dim_input)))
-    C = NumpyMatrixOperator(np.ones((dim_output, 2)))
-    D = NumpyMatrixOperator(np.ones((dim_output, dim_input)))
-    tf = FactorizedTransferFunction(
-        dim_input, dim_output, K, B, C, s * s * D,
-        dK=0 * K, dB=0 * B, dC=0 * C, dD=2 * s * D,
-    )
+@pytest.mark.parametrize(('shift', 'is_real'), [(0., False), (0., True), (2., False), (-2., False)])
+@pytest.mark.parametrize('factorized', [False, True])
+@pytest.mark.parametrize('return_info', [False, True])
+def test_transfer_function_h2_quadrature(shift, is_real, factorized, return_info):
+    frequencies = []
 
-    np.testing.assert_allclose(tf.eval_tf(1j), C.matrix @ B.matrix - D.matrix)
-    np.testing.assert_allclose(tf.eval_dtf(1j), 2j * D.matrix)
+    def evaluate(s):
+        frequencies.append(s.imag)
+        return np.array([[1. / (s + 1 - shift * 1j)]])
+
+    if factorized:
+        tf = LTIModel.from_matrices(
+            np.array([[-1. + shift * 1j]]), np.ones((1, 1)), np.ones((1, 1)),
+        ).transfer_function.with_(is_real=is_real)
+    else:
+        tf = TransferFunction(1, 1, evaluate, is_real=is_real)
+
+    result = tf.h2_norm(return_norm_only=not return_info, full_output=return_info)
+
+    if return_info:
+        norm, relative_error, info = result
+        assert relative_error >= 0
+        assert info[0]['neval'] > 0
+    else:
+        norm = result
+    np.testing.assert_allclose(norm, np.sqrt(0.5))
+    if not factorized:
+        assert any(w > 0 for w in frequencies)
+        assert any(w < 0 for w in frequencies) == (not is_real)
+
+
+@pytest.mark.parametrize('is_real', [False, True])
+def test_transfer_function_real_flag_with(is_real):
+    tf = TransferFunction(1, 1, lambda s: np.array([[1. / (s + 1)]]))
+    assert tf.is_real is False
+    marked = tf.with_(is_real=is_real)
+    assert marked.is_real is is_real
+    assert tf.is_real is False
 
 
 @pytest.mark.parametrize(('dim_input', 'dim_output'), [(1, 2), (2, 1), (2, 2)])
@@ -68,6 +92,22 @@ def test_factorized_transfer_function_derivative(dim_input, dim_output, complex_
 
 
 @pytest.mark.parametrize(('dim_input', 'dim_output'), [(1, 2), (2, 1)])
+def test_factorized_transfer_function_complex_feedthrough(dim_input, dim_output):
+    s = ProjectionParameterFunctional('s')
+    K = NumpyMatrixOperator(np.eye(2))
+    B = NumpyMatrixOperator(np.ones((2, dim_input)))
+    C = NumpyMatrixOperator(np.ones((dim_output, 2)))
+    D = NumpyMatrixOperator(np.ones((dim_output, dim_input)))
+    tf = FactorizedTransferFunction(
+        dim_input, dim_output, K, B, C, s * s * D,
+        dK=0 * K, dB=0 * B, dC=0 * C, dD=2 * s * D,
+    )
+
+    np.testing.assert_allclose(tf.eval_tf(1j), C.matrix @ B.matrix - D.matrix)
+    np.testing.assert_allclose(tf.eval_dtf(1j), 2j * D.matrix)
+
+
+@pytest.mark.parametrize(('dim_input', 'dim_output'), [(1, 2), (2, 1)])
 @pytest.mark.parametrize('degree', [1, 2])
 @pytest.mark.parametrize('combined', [False, True])
 def test_factorized_transfer_function_complex_coefficient_guard(dim_input, dim_output, degree, combined):
@@ -94,34 +134,3 @@ def test_factorized_transfer_function_complex_coefficient_guard(dim_input, dim_o
             tf.eval_dtf(1j)
     else:
         np.testing.assert_allclose(tf.eval_dtf(1j), degree * 1j**(degree - 1) * H)
-
-
-@pytest.mark.parametrize('shift', [0., 2., -2.])
-@pytest.mark.parametrize('factorized', [False, True])
-@pytest.mark.parametrize('return_info', [False, True])
-def test_transfer_function_h2_quadrature(shift, factorized, return_info):
-    frequencies = []
-
-    def evaluate(s):
-        frequencies.append(s.imag)
-        return np.array([[1. / (s + 1 - shift * 1j)]])
-
-    if factorized:
-        tf = LTIModel.from_matrices(
-            np.array([[-1. + shift * 1j]]), np.ones((1, 1)), np.ones((1, 1)),
-        ).transfer_function
-    else:
-        tf = TransferFunction(1, 1, evaluate)
-
-    result = tf.h2_norm(return_norm_only=not return_info, full_output=return_info)
-
-    if return_info:
-        norm, relative_error, info = result
-        assert relative_error >= 0
-        assert info[0]['neval'] > 0
-    else:
-        norm = result
-    np.testing.assert_allclose(norm, np.sqrt(0.5))
-    if not factorized:
-        assert any(w > 0 for w in frequencies)
-        assert any(w < 0 for w in frequencies)

@@ -43,6 +43,10 @@ class TransferFunction(CacheableObject, ParametricObject):
         attributes of |TransferFunction| such as `h2_norm`.
     name
         Name of the system.
+    is_real
+        Can be set to `True` if :math:`H(\bar{s}, \mu) = \overline{H(s, \mu)}` for all evaluated
+        parameter values. Certain computations can exploit this property, set this only if the
+        transfer function is truly real.
 
     Attributes
     ----------
@@ -54,11 +58,16 @@ class TransferFunction(CacheableObject, ParametricObject):
         The transfer function.
     dtf
         The complex derivative of the transfer function.
+    is_real
+        Whether conjugate symmetry is guaranteed. This does not imply real realization
+        matrices, stability, or a finite H2-norm.
     """
 
     cache_region = 'memory'
 
-    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None,
+                 is_real=False):
+        assert isinstance(is_real, bool)
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
         assert presets is None or presets.keys() <= {'h2_norm'}
@@ -77,6 +86,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         self.sampling_time = sampling_time
         self.presets = presets
         self.name = name
+        self.is_real = is_real
 
     def __str__(self):
         string = (
@@ -400,7 +410,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
         function.
         It only assumes that `self.tf` is defined over the imaginary axis.
-        The full imaginary axis is integrated without assuming real-system symmetry.
+        By default the full imaginary axis is integrated, without assuming real-system
+        symmetry. If :attr:`is_real` is `True`, only nonnegative frequencies are integrated
+        using the symmetry.
 
         By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
         optional argument `epsabs`).
@@ -435,10 +447,12 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         import scipy.integrate as spint
         quad_kwargs.setdefault('epsabs', 0)
+        lower_bound = 0 if self.is_real else -np.inf
+        normalization = np.pi if self.is_real else 2 * np.pi
         quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
-                              -np.inf, np.inf,
+                              lower_bound, np.inf,
                               **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / (2 * np.pi))
+        norm = np.sqrt(quad_out[0] / normalization)
         if return_norm_only:
             return norm
         norm_relerr = quad_out[1] / (2 * quad_out[0])
@@ -493,7 +507,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     __radd__ = __add__
 
@@ -512,7 +527,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __neg__(self):
         tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
@@ -531,7 +547,8 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __rmul__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -545,7 +562,8 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
 
 class FactorizedTransferFunction(TransferFunction):
@@ -574,6 +592,9 @@ class FactorizedTransferFunction(TransferFunction):
         sampling time (in seconds).
     name
         Name of the system.
+    is_real
+        Caller-guaranteed conjugate symmetry, as in :class:`TransferFunction`.
+        This concerns the resulting transfer function, not the individual factors.
 
     Notes
     -----
@@ -584,7 +605,7 @@ class FactorizedTransferFunction(TransferFunction):
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
-                 parameters={}, sampling_time=0, name=None):
+                 parameters={}, sampling_time=0, name=None, is_real=False):
         def check_source_array(op, mu):
             if isinstance(op, LincombOperator):
                 # LincombOperator.as_source_array does not conjugate its coefficients.
@@ -652,7 +673,7 @@ class FactorizedTransferFunction(TransferFunction):
                 return res
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
-                         sampling_time=sampling_time, name=name)
+                         sampling_time=sampling_time, name=name, is_real=is_real)
         self.K = K
         self.B = B
         self.C = C
@@ -691,7 +712,8 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     __radd__ = __add__
 
@@ -732,7 +754,8 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __rmul__(self, other):
         if not hasattr(other, 'transfer_function'):
