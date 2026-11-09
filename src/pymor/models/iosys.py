@@ -712,7 +712,7 @@ class LTIModel(Model):
                 self.T,  # end_time
                 self.initial_data.as_range_array(mu),  # initial_data
                 (-self.A).with_(solver=self.A.solver),  # operator
-                rhs=LinearInputOperator(self.B),
+                rhs=LinearInputOperator(self.B) if self.dim_input else None,
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
                 mu=mu,
                 num_values=self.num_values
@@ -728,8 +728,8 @@ class LTIModel(Model):
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
             if compute_output:
-                D = self.D.as_range_array(mu=mu)
-                input_function = mu.time_dependent_values.get('input')
+                D = self.D.as_range_array(mu=mu) if self.dim_input else None
+                input_function = mu.time_dependent_values.get('input') if self.dim_input else None
                 data['output'] = np.empty((self.dim_output, n))
                 data_output_extra = []
             for i, (x, t) in enumerate(iterator):
@@ -737,8 +737,9 @@ class LTIModel(Model):
                     data['solution'].append(x)
                 if compute_output:
                     y = self.C.apply(x, mu=mu).to_numpy()
-                    u = input_function(np.array([t])) if input_function is not None else mu['input']
-                    y = y + D.lincomb(u).to_numpy()
+                    if self.dim_input:
+                        u = input_function(np.array([t])) if input_function is not None else mu['input']
+                        y = y + D.lincomb(u).to_numpy()
                     if np.iscomplexobj(y):
                         raise NotImplementedError('Complex-valued time-domain outputs are not supported.')
                     if i < n:

@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import scipy.sparse as sps
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.timestepping import (
@@ -228,6 +229,34 @@ def test_lti_output_becomes_complex(estimated_count, monkeypatch):
 
     with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
         lti.output(input=input)
+
+
+@pytest.mark.parametrize('sampling_time', [0, 1])
+def test_lti_without_input(sampling_time):
+    A = np.diag([-0.25, -0.5])
+    C = np.array([[1., 2.], [3., 4.]])
+    initial_data = np.array([1., 2.])
+    lti = LTIModel.from_matrices(
+        A, np.empty((2, 0)), C, sampling_time=sampling_time, T=2, initial_data=initial_data,
+        time_stepper=ExplicitEulerTimeStepper(2) if sampling_time == 0 else None,
+    )
+    factors = 1 + A.diagonal() if sampling_time == 0 else A.diagonal()
+    expected = initial_data[:, np.newaxis] * factors[:, np.newaxis] ** np.arange(3)
+
+    np.testing.assert_allclose(lti.solve().to_numpy(), expected)
+    np.testing.assert_allclose(lti.output(), C @ expected)
+
+
+@pytest.mark.parametrize('matrix_type', [np.asarray, sps.csr_matrix])
+@pytest.mark.parametrize('imaginary_part', [0., 1.])
+def test_lti_complex_output_dtype_not_supported(matrix_type, imaginary_part):
+    lti = LTIModel.from_matrices(
+        -np.eye(1), np.empty((1, 0)), matrix_type((1. + imaginary_part * 1j) * np.eye(1)),
+        T=1, initial_data=np.ones(1), time_stepper=ImplicitEulerTimeStepper(2),
+    )
+    np.testing.assert_allclose(lti.solve().to_numpy(), [[1., 2/3, 4/9]])
+    with pytest.raises(NotImplementedError, match='Complex-valued time-domain outputs'):
+        lti.output()
 
 
 @pytest.mark.parametrize('input_type', ['constant', 'expression', 'function'])
