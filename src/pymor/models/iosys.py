@@ -1002,10 +1002,22 @@ class LTIModel(Model):
             return self.presets['o_lr'].to_numpy() @ self.presets['o_lr'].to_numpy().T
 
         A = self.A.assemble(mu)
-        B = self.B.as_range_array(mu=mu)
-        C = self.C.as_source_array(mu=mu)
         D = self.D
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+        kind = typ[0] if isinstance(typ, tuple) else typ
+        operators = {'A': A, 'E': E}
+        if kind not in ('o_lr', 'o_dense', 'bs_o_lr'):
+            operators['B'] = self.B.assemble(mu)
+        if kind not in ('c_lr', 'c_dense', 'bs_c_lr'):
+            operators['C'] = self.C.assemble(mu)
+        if kind.startswith('pr'):
+            operators['D'] = D.assemble(mu)
+        # shortcut: matrix-only validation; extend when other representations need checking.
+        for name, op in operators.items():
+            if isinstance(op, NumpyMatrixOperator) and np.iscomplexobj(op.matrix):
+                raise NotImplementedError(f'Gramian computations with complex {name} are not supported.')
+        B = self.B.as_range_array(mu=mu)
+        C = self.C.as_source_array(mu=mu)
         Z = A.source.zeros()
 
         DDH = to_matrix(D + D.H, 'dense') if str(typ).startswith('pr') else None
@@ -1063,6 +1075,9 @@ class LTIModel(Model):
 
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
+
+        Only real data are supported. Assembled |NumpyMatrixOperators| used by the requested
+        computation are checked for complex dtype and raise :class:`NotImplementedError`.
 
         Parameters
         ----------
