@@ -125,6 +125,8 @@ common = """
 .. |PHLTIModels| replace:: :class:`PHLTIModels <pymor.models.iosys.PHLTIModel>`
 .. |TransferFunction| replace:: :class:`~pymor.models.transfer_function.TransferFunction`
 .. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.transfer_function.TransferFunction>`
+.. |PoleResidueTransferFunction| replace:: :class:`~pymor.models.pole_residue.PoleResidueTransferFunction`
+.. |PoleResidueTransferFunctions| replace:: :class:`PoleResidueTransferFunctions <pymor.models.pole_residue.PoleResidueTransferFunction>`
 .. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
 .. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`

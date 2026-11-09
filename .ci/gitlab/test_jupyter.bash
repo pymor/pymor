@@ -5,4 +5,5 @@ source ${THIS_DIR}/common_test_setup.bash
 echo ${PYMOR_PYTEST_EXTRA}
 echo ${COMMON_PYTEST_OPTS}
 eval pytest --nbmake ${COMMON_PYTEST_OPTS} ${PYMOR_ROOT}/src/pymortests/jupyter/*.ipynb
-_coverage_xml
+# only a few notebooks are run, so overall coverage of src is low
+_coverage_xml 5
