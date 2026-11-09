@@ -16,9 +16,9 @@ PYMOR_HYPOTHESIS_PROFILE=${PYMOR_HYPOTHESIS_PROFILE:-dev}
 PYMOR_PYTEST_EXTRA=${PYMOR_PYTEST_EXTRA:-}
 
 function _coverage_xml() {
-  local extra=${1:-}
+  local fail_under=${1:-10}
   # make sure to fail if there was an error collecting data
-  coverage xml -o ${COVERAGE_FILE}.xml ${extra} --fail-under=10
+  coverage xml -o ${COVERAGE_FILE}.xml --fail-under=${fail_under}
 }
 export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
