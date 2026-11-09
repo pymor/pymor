@@ -10,6 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
+from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.plot import adaptive
 
@@ -572,10 +573,31 @@ class FactorizedTransferFunction(TransferFunction):
         sampling time (in seconds).
     name
         Name of the system.
+
+    Notes
+    -----
+    If there are more inputs than outputs, evaluation uses source-array representations
+    of C and dC. Linear combinations with non-real coefficients in these factors are
+    currently unsupported and raise :class:`NotImplementedError`, including when nested
+    in block operators. Complex matrix entries alone do not cause this restriction.
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
                  parameters={}, sampling_time=0, name=None):
+        def check_source_array(op, mu):
+            if isinstance(op, LincombOperator):
+                # LincombOperator.as_source_array does not conjugate its coefficients.
+                if np.any(np.imag(op.evaluate_coefficients(mu))):
+                    raise NotImplementedError('Adjoint-based transfer function evaluation does not support '
+                                              'LincombOperator output factors with non-real coefficients.')
+                children = op.operators
+            elif isinstance(op, BlockColumnOperator | BlockOperator | BlockRowOperator):
+                children = op.blocks.flat
+            else:
+                return
+            for child in children:
+                check_source_array(child, mu)
+
         def tf(s, mu=None):
             mu = Mu({'s': [s]}) if mu is None else mu.with_(s=s)
             if dim_input <= dim_output:
@@ -583,6 +605,7 @@ class FactorizedTransferFunction(TransferFunction):
                 Kinv_B = K.apply_inverse(B_vec, mu=mu)
                 res = C.apply(Kinv_B, mu=mu).to_numpy()
             else:
+                check_source_array(C, mu)
                 C_vec_adj = C.as_source_array(mu=mu)
                 Kinvadj_Cadj = K.apply_inverse_adjoint(C_vec_adj, mu=mu)
                 res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj().T
@@ -609,6 +632,8 @@ class FactorizedTransferFunction(TransferFunction):
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
+                    check_source_array(C, mu)
+                    check_source_array(dC, mu)
                     C_vec_a = C.as_source_array(mu=mu)
                     Kia_Ca = K.apply_inverse_adjoint(C_vec_a, mu=mu)
                     dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj().T
