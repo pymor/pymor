@@ -110,3 +110,16 @@ def test_hinf_norm(parametric):
     hinf_norm_f, fpeak = m.hinf_norm(mu=mu, return_fpeak=True)
 
     assert hinf_norm == hinf_norm_f
+
+
+@pytest.mark.parametrize('preset_fpeak', [False, True])
+def test_hinf_norm_presets(preset_fpeak):
+    m = get_model('LTIModel', 0, False)
+    hinf_norm, fpeak = m.hinf_norm(return_fpeak=True)
+    presets = {'hinf_norm': hinf_norm, 'fpeak': fpeak} if preset_fpeak else {'hinf_norm': hinf_norm}
+    m_presets = m.with_(presets=presets)
+
+    assert m_presets.hinf_norm() == hinf_norm
+    hinf_norm_f, fpeak_f = m_presets.hinf_norm(return_fpeak=True)
+    assert hinf_norm_f == hinf_norm
+    assert fpeak_f == fpeak
