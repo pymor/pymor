@@ -9,7 +9,7 @@ from pymor.solvers.matrix_equations.interface import BernoulliSolver
 
 
 class SignBernoulliSolver(BernoulliSolver):
-    r"""Compute the solution of a |BernoulliEquation| using the matrix sign function.
+    r"""Compute the stabilizing solution of a |BernoulliEquation| using the matrix sign function.
 
     Uses the matrix sign function method from :cite:`BBQ07` to compute a factor :math:`Z`
     and returns :math:`X = Z Z^H`. It works with dense matrices, so it is only suitable for

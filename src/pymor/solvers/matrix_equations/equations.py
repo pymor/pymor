@@ -580,7 +580,7 @@ class BernoulliEquation(ImmutableObject):
           A^H X E + E^H X A
           - E^H X B B^H X E = 0.
 
-    Use :meth:`solve` to obtain the dense solution :math:`X`.
+    Use :meth:`solve` to obtain the dense stabilizing solution :math:`X`.
 
     Parameters
     ----------
