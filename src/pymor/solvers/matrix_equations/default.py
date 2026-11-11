@@ -96,20 +96,22 @@ class DefaultRiccatiSolverLR(RiccatiSolverLR):
 
     A solver backend is chosen based on availability in the following order:
 
-    - for sparse problems (minimum size specified by
+    - for sparse, continuous-time problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
         1. `radi` (see :class:`pymor.solvers.matrix_equations.radi.RADIRiccatiSolver`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+        or discrete-time problems
 
         1. `slycot` (see :class:`pymor.bindings.slycot.SlycotRiccatiSolverLR`),
         2. `scipy` (see :class:`pymor.bindings.scipy.ScipyRiccatiSolverLR`).
     """
 
     def _solve(self, equation):
-        backend = 'radi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
+        backend = ('radi' if equation.cont_time and equation.dim >= mat_eqn_sparse_min_size()
+                   else _dense_backend())
         if backend == 'radi':
             from pymor.solvers.matrix_equations.radi import RADIRiccatiSolver
             solver = RADIRiccatiSolver()
@@ -150,20 +152,22 @@ class DefaultPositiveRiccatiSolverLR(PositiveRiccatiSolverLR):
 
     A solver backend is chosen based on availability in the following order:
 
-    - for sparse problems (minimum size specified by
+    - for sparse, continuous-time problems (minimum size specified by
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
 
         1. `radi` (see :class:`pymor.solvers.matrix_equations.radi.RADIPositiveRiccatiSolver`),
 
     - for dense problems (smaller than
         :func:`~pymor.solvers.matrix_equations.utils.mat_eqn_sparse_min_size`)
+        or discrete-time problems
 
         1. `slycot` (see :class:`pymor.bindings.slycot.SlycotPositiveRiccatiSolverLR`),
         2. `scipy` (see :class:`pymor.bindings.scipy.ScipyPositiveRiccatiSolverLR`).
     """
 
     def _solve(self, equation):
-        backend = 'radi' if equation.dim >= mat_eqn_sparse_min_size() else _dense_backend()
+        backend = ('radi' if equation.cont_time and equation.dim >= mat_eqn_sparse_min_size()
+                   else _dense_backend())
         if backend == 'radi':
             from pymor.solvers.matrix_equations.radi import RADIPositiveRiccatiSolver
             solver = RADIPositiveRiccatiSolver()

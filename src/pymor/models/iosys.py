@@ -1016,13 +1016,37 @@ class LTIModel(Model):
                 solver=self.matrix_equation_solvers.lyapunov_lr
             )
         elif typ == 'lqg_c_lr':
-            return RiccatiEquation(A, E, B, C, trans=False).solve_lr(
+            return RiccatiEquation(A, E, B, C, trans=False, cont_time=cont_time).solve_lr(
                 solver=self.matrix_equation_solvers.riccati_lr
             )
         elif typ == 'lqg_o_lr':
-            return RiccatiEquation(A, E, B, C, trans=True).solve_lr(
+            return RiccatiEquation(A, E, B, C, trans=True, cont_time=cont_time).solve_lr(
                 solver=self.matrix_equation_solvers.riccati_lr
             )
+        elif typ in ('bst_c_lr', 'bst_o_lr'):
+            D = to_matrix(D, format='dense', mu=mu)
+            if self.dim_output <= self.dim_input:
+                if typ == 'bst_c_lr':
+                    return self.gramian('c_lr', mu=mu)
+                cf = self.gramian('c_lr', mu=mu)
+                BW = cf.lincomb(cf.inner(C))
+                if E is not None:
+                    BW = E.apply(BW)
+                BW += B.lincomb(D.T)
+                return PositiveRiccatiEquation(A, E, BW, Z, R=D @ D.T, S=-C, trans=True).solve_lr(
+                    solver=self.matrix_equation_solvers.positive_riccati_lr
+                )
+            else:
+                if typ == 'bst_o_lr':
+                    return self.gramian('o_lr', mu=mu)
+                of = self.gramian('o_lr', mu=mu)
+                CW = of.lincomb(of.inner(B))
+                if E is not None:
+                    CW = E.apply_adjoint(CW)
+                CW += C.lincomb(D)
+                return PositiveRiccatiEquation(A, E, Z, CW, Q=D.T @ D, S=-B, trans=False).solve_lr(
+                    solver=self.matrix_equation_solvers.positive_riccati_lr
+                )
         elif typ == 'pr_c_lr' or typ == 'pr_c_dense':
             solver = self.matrix_equation_solvers.positive_riccati_lr if typ == 'pr_c_lr' \
                 else self.matrix_equation_solvers.positive_riccati
@@ -1033,17 +1057,29 @@ class LTIModel(Model):
             return solver.solve(PositiveRiccatiEquation(A, E, -B, Z, R=DDH, S=C, trans=True))
         elif typ[0] == 'br_c_lr':
             Q = typ[1] ** 2 * np.eye(self.dim_output) if typ[1] != 1 else None
-            return PositiveRiccatiEquation(A, E, B, C, Q=Q, trans=False).solve_lr(
+            return PositiveRiccatiEquation(A, E, B, C, Q=Q, trans=False, cont_time=cont_time).solve_lr(
                 solver=self.matrix_equation_solvers.positive_riccati_lr
             )
         elif typ[0] == 'br_o_lr':
             R = typ[1] ** 2 * np.eye(self.dim_input) if typ[1] != 1 else None
-            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=True).solve_lr(
+            return PositiveRiccatiEquation(A, E, B, C, R=R, trans=True, cont_time=cont_time).solve_lr(
                 solver=self.matrix_equation_solvers.positive_riccati_lr
+            )
+        elif typ[0] == 'hinf_c_lr':
+            beta2 = 1 - typ[1] ** -2
+            Q = np.eye(self.dim_output) / beta2 if beta2 != 1 else None
+            return RiccatiEquation(A, E, B, C, Q=Q, trans=False).solve_lr(
+                solver=self.matrix_equation_solvers.riccati_lr
+            )
+        elif typ[0] == 'hinf_o_lr':
+            beta2 = 1 - typ[1] ** -2
+            R = np.eye(self.dim_input) / beta2 if beta2 != 1 else None
+            return RiccatiEquation(A, E, B, C, R=R, trans=True).solve_lr(
+                solver=self.matrix_equation_solvers.riccati_lr
             )
 
     def gramian(self, typ, mu=None):
-        """Compute a Gramian.
+        r"""Compute a Gramian.
 
         Parameters
         ----------
@@ -1067,7 +1103,15 @@ class LTIModel(Model):
             - `'pr_c_lr'`: low-rank factor of the "controllability" positive real
               Gramian,
             - `'pr_o_lr'`: low-rank factor of the "observability" positive real
-              Gramian.
+              Gramian,
+            - `'bst_c_lr'`: low-rank factor of the "controllability" balanced stochastic
+              truncation Gramian,
+            - `'bst_o_lr'`: low-rank factor of the "observability" balanced stochastic
+              truncation Gramian,
+            - `('hinf_c_lr', gamma)`: low-rank factor of the "controllability"
+              :math:`\mathcal{H}_\infty` Gramian,
+            - `('hinf_o_lr', gamma)`: low-rank factor of the "observability"
+              :math:`\mathcal{H}_\infty` Gramian.
 
             .. note::
                 For `'*_lr'` types, the method assumes the system is asymptotically stable.
@@ -1077,6 +1121,11 @@ class LTIModel(Model):
                 discrete-time case.
                 Additionally, for `'pr_c_lr'` and `'pr_o_lr'`, it is assumed that `D + D^T` is
                 invertible.
+                For `'bst_c_lr'` and `'bst_o_lr'`, it is assumed that `D` has full rank.
+                For `('hinf_c_lr', gamma)` and `('hinf_o_lr', gamma)`, it is assumed that
+                `gamma > 1`.
+                The types starting with `'bs'`, `'pr'`, or `'hinf'` are only implemented for
+                continuous-time systems.
         mu
             |Parameter values|.
 
@@ -1086,11 +1135,13 @@ class LTIModel(Model):
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
         assert (typ in ('c_lr', 'o_lr', 'c_dense', 'o_dense', 'bs_c_lr', 'bs_o_lr', 'lqg_c_lr', 'lqg_o_lr',
-                        'pr_c_lr', 'pr_o_lr', 'pr_c_dense', 'pr_o_dense')
-                or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lr', 'br_o_lr'))
+                        'pr_c_lr', 'pr_o_lr', 'pr_c_dense', 'pr_o_dense', 'bst_c_lr', 'bst_o_lr')
+                or isinstance(typ, tuple) and len(typ) == 2
+                and typ[0] in ('br_c_lr', 'br_o_lr', 'hinf_c_lr', 'hinf_o_lr'))
 
-        if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
-                and self.sampling_time > 0):
+        if (self.sampling_time > 0
+                and (isinstance(typ, str) and typ.startswith(('bs', 'pr'))
+                     or isinstance(typ, tuple) and typ[0].startswith('hinf'))):
             raise NotImplementedError
 
         if not isinstance(mu, Mu):
@@ -1109,7 +1160,7 @@ class LTIModel(Model):
 
     @cached
     def _hankel_svd(self, typ='lyap', mu=None):
-        """Compute (Hankel) singular values and vectors.
+        r"""Compute (Hankel) singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
@@ -1124,6 +1175,8 @@ class LTIModel(Model):
             - `'lqg'`: LQG Gramian,
             - `'pr'`: positive real Gramian,
             - `('br', gamma)`: bounded real Gramian,
+            - `'bst'`: balanced stochastic truncation Gramian,
+            - `('hinf', gamma)`: :math:`\mathcal{H}_\infty` Gramian.
         mu
             |Parameter values|.
 
@@ -1155,6 +1208,13 @@ class LTIModel(Model):
             gamma = typ[1]
             cf = self.gramian(('br_c_lr', gamma), mu=mu)
             of = self.gramian(('br_o_lr', gamma), mu=mu)
+        elif typ == 'bst':
+            cf = self.gramian('bst_c_lr', mu=mu)
+            of = self.gramian('bst_o_lr', mu=mu)
+        elif isinstance(typ, tuple) and typ[0] == 'hinf' and typ[1] > 1:
+            gamma = typ[1]
+            cf = self.gramian(('hinf_c_lr', gamma), mu=mu)
+            of = self.gramian(('hinf_o_lr', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
         return spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
