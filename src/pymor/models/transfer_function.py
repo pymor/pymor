@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from itertools import chain
-from numbers import Number
+from numbers import Number, Real
 
 import numpy as np
 import scipy.linalg as spla
@@ -59,6 +59,10 @@ class TransferFunction(CacheableObject, ParametricObject):
     """
 
     cache_region = 'memory'
+
+    # make NumPy defer binary operators (e.g., multiplication by a 0-d array) to this class
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
         sampling_time = float(sampling_time)
@@ -521,16 +525,18 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
-        if isinstance(other, Number):
-            if other == 0:
+        alpha = _scalar_factor(other)
+        if alpha is not None:
+            if alpha == 0:
                 zero = lambda s, mu=None: np.zeros((self.dim_output, self.dim_input))
-                return self.with_(tf=zero, dtf=zero, parameters={}, presets={'h2_norm': 0.})
-            tf = lambda s, mu=None: other * self.eval_tf(s, mu=mu)
-            dtf = (lambda s, mu=None: other * self.eval_dtf(s, mu=mu)) if self.dtf is not None else None
-            presets = {'h2_norm': abs(other) * self.presets['h2_norm']} if 'h2_norm' in self.presets else None
+                return self.with_(tf=zero, dtf=zero, presets=None if self.parametric else {'h2_norm': 0.})
+            tf = lambda s, mu=None: alpha * self.eval_tf(s, mu=mu)
+            dtf = (lambda s, mu=None: alpha * self.eval_dtf(s, mu=mu)) if self.dtf is not None else None
+            presets = {'h2_norm': abs(alpha) * self.presets['h2_norm']} if 'h2_norm' in self.presets else None
             return self.with_(tf=tf, dtf=dtf, presets=presets)
 
-        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not (isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')):
+            return NotImplemented
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
         assert self.sampling_time == other.sampling_time
@@ -544,10 +550,11 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
-        if isinstance(other, Number):
-            return self * other
+        if _scalar_factor(other) is not None:
+            return self.__mul__(other)
 
-        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not (isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')):
+            return NotImplemented
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
         assert self.sampling_time == other.sampling_time
@@ -692,21 +699,22 @@ class FactorizedTransferFunction(TransferFunction):
         return self.with_(C=C, D=D, dC=dC, dD=dD)
 
     def __mul__(self, other):
-        if isinstance(other, Number):
-            if other == 0:
+        alpha = _scalar_factor(other)
+        if alpha is not None:
+            if alpha == 0:
                 X = NumpyVectorSpace(0)
                 U, Y = self.B.source, self.C.range
                 return FactorizedTransferFunction(
                     self.dim_input, self.dim_output,
                     IdentityOperator(X), ZeroOperator(X, U), ZeroOperator(Y, X), ZeroOperator(Y, U),
                     ZeroOperator(X, X), ZeroOperator(X, U), ZeroOperator(Y, X), ZeroOperator(Y, U),
-                    sampling_time=self.sampling_time)
+                    parameters=self.parameters, sampling_time=self.sampling_time)
             # balance the multiplication between B and C
-            c = np.sqrt(abs(other))
-            return self.with_(B=self.B * c, C=self.C * (other / c), D=self.D * other,
+            c = np.sqrt(abs(alpha))
+            return self.with_(B=self.B * c, C=self.C * (alpha / c), D=self.D * alpha,
                               dB=self.dB * c if self.dB is not None else None,
-                              dC=self.dC * (other / c) if self.dC is not None else None,
-                              dD=self.dD * other if self.dD is not None else None)
+                              dC=self.dC * (alpha / c) if self.dC is not None else None,
+                              dD=self.dD * alpha if self.dD is not None else None)
 
         if (type(other) is not FactorizedTransferFunction
                 and not hasattr(other, 'transfer_function')):
@@ -740,8 +748,38 @@ class FactorizedTransferFunction(TransferFunction):
         return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
-        if isinstance(other, Number):
-            return self * other
+        if _scalar_factor(other) is not None:
+            return self.__mul__(other)
         if not hasattr(other, 'transfer_function'):
             return NotImplemented
         return other.transfer_function * self
+
+
+def _scalar_factor(other):
+    """Return the factor of a scalar multiplication of a system.
+
+    Used in `__mul__` and `__rmul__` of systems and transfer functions to decide whether
+    `other` is a scalar factor. Python numbers, |NumPy| scalars and |NumPy| 0-d arrays are
+    treated as scalars. Only real scalars are supported.
+
+    Parameters
+    ----------
+    other
+        The other operand of the multiplication.
+
+    Returns
+    -------
+    `other` as a `float` if it is a real scalar, `None` if it is not a scalar.
+
+    Raises
+    ------
+    TypeError
+        If `other` is a non-real (e.g., complex) scalar.
+    """
+    if isinstance(other, np.generic | np.ndarray) and np.ndim(other) == 0:
+        other = other.item()
+    if not isinstance(other, Number):
+        return None
+    if not isinstance(other, Real):
+        raise TypeError(f'Multiplication by a non-real scalar ({other!r}) is not supported.')
+    return float(other)

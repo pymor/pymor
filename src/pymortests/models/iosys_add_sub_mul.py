@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from fractions import Fraction
 from itertools import chain
 
 import numpy as np
@@ -197,7 +198,7 @@ def test_mul(n1, n2, sampling_time, param1, param2):
     assert_tf_mul(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('alpha', [0, 2, -0.5, 1j])
+@pytest.mark.parametrize('alpha', [0, 2, -0.5, Fraction(1, 3), np.float64(3), np.array(-2.)])
 @pytest.mark.parametrize('scalar_first', [False, True])
 @pytest.mark.parametrize('param', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
@@ -206,15 +207,36 @@ def test_mul_scalar(n, sampling_time, param, scalar_first, alpha):
     m1 = get_model(n, sampling_time, param)
     m = alpha * m1 if scalar_first else m1 * alpha
     assert type(m) is (LTIModel if n == 'PHLTIModel' else type(m1))
+    assert m.parameters == m1.parameters
     if alpha == 0:
         if isinstance(m, FactorizedTransferFunction):
             assert m.K.source.dim == 0
         elif not isinstance(m, TransferFunction):
             assert m.order == 0
-    m1, _, m, mu = get_models_mu(m1, m1, m, param)
+    m1, m = get_tf(m1), get_tf(m)
+    assert m.parameters == m1.parameters
+    mu = 0 if param else None  # parameter values which have to be parsed
     for s in (0, 1j):
-        assert np.allclose(m.eval_tf(s, mu=mu), alpha * m1.eval_tf(s, mu=mu))
-        assert np.allclose(m.eval_dtf(s, mu=mu), alpha * m1.eval_dtf(s, mu=mu))
+        assert np.allclose(m.eval_tf(s, mu=mu), float(alpha) * m1.eval_tf(s, mu=mu))
+        assert np.allclose(m.eval_dtf(s, mu=mu), float(alpha) * m1.eval_dtf(s, mu=mu))
+
+
+@pytest.mark.parametrize('alpha', [1j, np.complex128(1 + 1j), np.array(1j)])
+@pytest.mark.parametrize('scalar_first', [False, True])
+@pytest.mark.parametrize('n', name_list + ['PHLTIModel'])
+def test_mul_complex_scalar(n, scalar_first, alpha):
+    m1 = get_model(n, 0, False)
+    with pytest.raises(TypeError):
+        _ = alpha * m1 if scalar_first else m1 * alpha
+
+
+@pytest.mark.parametrize('array_first', [False, True])
+@pytest.mark.parametrize('n', name_list + ['PHLTIModel'])
+def test_mul_array(n, array_first):
+    m1 = get_model(n, 0, False)
+    a = np.array([2.])
+    with pytest.raises(TypeError):
+        _ = a * m1 if array_first else m1 * a
 
 
 def get_lti_model():
@@ -225,7 +247,7 @@ def get_lti_model():
     return LTIModel.from_matrices(A, B, C, D)
 
 
-@pytest.mark.parametrize('alpha', [4, -0.25, 2j])
+@pytest.mark.parametrize('alpha', [4, -0.25])
 def test_mul_scalar_lti_balanced(alpha):
     lti = get_lti_model()
     lti_alpha = alpha * lti
