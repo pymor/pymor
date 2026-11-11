@@ -22,6 +22,8 @@ TEXT = 'pyMOR'
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'builtin-discretizer', 'fenics', 'ngsolve')
+
 app = App(help_on_error=True)
 
 @app.default
