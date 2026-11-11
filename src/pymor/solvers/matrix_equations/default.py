@@ -6,6 +6,7 @@
 from pymor.core.base import ImmutableObject
 from pymor.core.config import config
 from pymor.solvers.matrix_equations.interface import (
+    BernoulliSolver,
     LyapunovSolver,
     LyapunovSolverLR,
     PositiveRiccatiSolver,
@@ -193,6 +194,20 @@ class DefaultSylvesterSolver(SylvesterSolver):
         return solver.solve(equation)
 
 
+class DefaultBernoulliSolver(BernoulliSolver):
+    r"""Default |BernoulliSolver|.
+
+    As solver backend the :class:`pymor.solvers.matrix_equations.bernoulli.SignBernoulliSolver`
+    is chosen.
+    """
+
+    def _solve(self, equation):
+        from pymor.solvers.matrix_equations.bernoulli import SignBernoulliSolver
+        solver = SignBernoulliSolver()
+
+        return solver.solve(equation)
+
+
 class MatrixEquationSolvers(ImmutableObject):
     """This class configures matrix equation solvers for all supported types of matrix equations.
 
@@ -214,10 +229,13 @@ class MatrixEquationSolvers(ImmutableObject):
         :class:`DefaultPositiveRiccatiSolverLR` is used.
     sylvester
         A |SylvesterSolver| or `None`, then :class:`DefaultSylvesterSolver` is used.
+    bernoulli
+        A |BernoulliSolver| or `None`, then :class:`DefaultBernoulliSolver` is used.
     """
 
     def __init__(self, lyapunov=None, lyapunov_lr=None, riccati=None, riccati_lr=None,
-                 positive_riccati=None, positive_riccati_lr=None, sylvester=None):
+                 positive_riccati=None, positive_riccati_lr=None, sylvester=None,
+                 bernoulli=None):
 
         lyapunov = lyapunov or DefaultLyapunovSolver()
         lyapunov_lr = lyapunov_lr or DefaultLyapunovSolverLR()
@@ -226,6 +244,7 @@ class MatrixEquationSolvers(ImmutableObject):
         positive_riccati = positive_riccati or DefaultPositiveRiccatiSolver()
         positive_riccati_lr = positive_riccati_lr or DefaultPositiveRiccatiSolverLR()
         sylvester = sylvester or DefaultSylvesterSolver()
+        bernoulli = bernoulli or DefaultBernoulliSolver()
 
         assert isinstance(lyapunov, LyapunovSolver)
         assert isinstance(lyapunov_lr, LyapunovSolverLR)
@@ -234,6 +253,7 @@ class MatrixEquationSolvers(ImmutableObject):
         assert isinstance(positive_riccati, PositiveRiccatiSolver)
         assert isinstance(positive_riccati_lr, PositiveRiccatiSolverLR)
         assert isinstance(sylvester, SylvesterSolver)
+        assert isinstance(bernoulli, BernoulliSolver)
 
         self.lyapunov = lyapunov
         self.lyapunov_lr = lyapunov_lr
@@ -242,6 +262,7 @@ class MatrixEquationSolvers(ImmutableObject):
         self.positive_riccati = positive_riccati
         self.positive_riccati_lr = positive_riccati_lr
         self.sylvester = sylvester
+        self.bernoulli = bernoulli
 
 def _dense_backend():
     return 'slycot' if config.HAVE_SLYCOT else 'scipy'
