@@ -1563,7 +1563,7 @@ class QuadraticFunctional(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy(self.operator.pairwise_apply2(U, U, mu))
+        return self.range.from_numpy(self.operator.pairwise_apply2(U, U, mu).reshape(1, -1))
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
