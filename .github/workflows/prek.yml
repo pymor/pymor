@@ -1,0 +1,20 @@
+---
+on:
+  pull_request:
+  merge_group:
+    types:
+      - checks_requested
+name: prek
+permissions:
+  contents: read
+jobs:
+  prek:
+    name: Run prek hooks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: j178/prek-action@v3.1.0
+        with:
+          extra-args: --all-files
