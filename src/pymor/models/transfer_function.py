@@ -10,6 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
+from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.plot import adaptive
 
@@ -42,6 +43,10 @@ class TransferFunction(CacheableObject, ParametricObject):
         attributes of |TransferFunction| such as `h2_norm`.
     name
         Name of the system.
+    is_real
+        Can be set to `True` if :math:`H(\bar{s}, \mu) = \overline{H(s, \mu)}` for all evaluated
+        parameter values. Certain computations can exploit this property, set this only if the
+        transfer function is truly real.
 
     Attributes
     ----------
@@ -53,11 +58,16 @@ class TransferFunction(CacheableObject, ParametricObject):
         The transfer function.
     dtf
         The complex derivative of the transfer function.
+    is_real
+        Whether conjugate symmetry is guaranteed. This does not imply real realization
+        matrices, stability, or a finite H2-norm.
     """
 
     cache_region = 'memory'
 
-    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None,
+                 is_real=False):
+        assert isinstance(is_real, bool)
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
         assert presets is None or presets.keys() <= {'h2_norm'}
@@ -76,6 +86,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         self.sampling_time = sampling_time
         self.presets = presets
         self.name = name
+        self.is_real = is_real
 
     def __str__(self):
         string = (
@@ -399,6 +410,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
         function.
         It only assumes that `self.tf` is defined over the imaginary axis.
+        By default the full imaginary axis is integrated, without assuming real-system
+        symmetry. If :attr:`is_real` is `True`, only nonnegative frequencies are integrated
+        using the symmetry.
 
         By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
         optional argument `epsabs`).
@@ -433,10 +447,12 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         import scipy.integrate as spint
         quad_kwargs.setdefault('epsabs', 0)
+        lower_bound = 0 if self.is_real else -np.inf
+        normalization = np.pi if self.is_real else 2 * np.pi
         quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
-                              0, np.inf,
+                              lower_bound, np.inf,
                               **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / np.pi)
+        norm = np.sqrt(quad_out[0] / normalization)
         if return_norm_only:
             return norm
         norm_relerr = quad_out[1] / (2 * quad_out[0])
@@ -491,7 +507,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     __radd__ = __add__
 
@@ -510,7 +527,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __neg__(self):
         tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
@@ -529,7 +547,8 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __rmul__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -543,7 +562,8 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
 
 class FactorizedTransferFunction(TransferFunction):
@@ -572,10 +592,34 @@ class FactorizedTransferFunction(TransferFunction):
         sampling time (in seconds).
     name
         Name of the system.
+    is_real
+        Caller-guaranteed conjugate symmetry, as in :class:`TransferFunction`.
+        This concerns the resulting transfer function, not the individual factors.
+
+    Notes
+    -----
+    If there are more inputs than outputs, evaluation uses source-array representations
+    of C and dC. Linear combinations with non-real coefficients in these factors are
+    currently unsupported and raise :class:`NotImplementedError`, including when nested
+    in block operators. Complex matrix entries alone do not cause this restriction.
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
-                 parameters={}, sampling_time=0, name=None):
+                 parameters={}, sampling_time=0, name=None, is_real=False):
+        def check_source_array(op, mu):
+            if isinstance(op, LincombOperator):
+                # LincombOperator.as_source_array does not conjugate its coefficients.
+                if np.any(np.imag(op.evaluate_coefficients(mu))):
+                    raise NotImplementedError('Adjoint-based transfer function evaluation does not support '
+                                              'LincombOperator output factors with non-real coefficients.')
+                children = op.operators
+            elif isinstance(op, BlockColumnOperator | BlockOperator | BlockRowOperator):
+                children = op.blocks.flat
+            else:
+                return
+            for child in children:
+                check_source_array(child, mu)
+
         def tf(s, mu=None):
             mu = Mu({'s': [s]}) if mu is None else mu.with_(s=s)
             if dim_input <= dim_output:
@@ -583,10 +627,11 @@ class FactorizedTransferFunction(TransferFunction):
                 Kinv_B = K.apply_inverse(B_vec, mu=mu)
                 res = C.apply(Kinv_B, mu=mu).to_numpy()
             else:
+                check_source_array(C, mu)
                 C_vec_adj = C.as_source_array(mu=mu)
                 Kinvadj_Cadj = K.apply_inverse_adjoint(C_vec_adj, mu=mu)
                 res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj().T
-            res += to_matrix(D, format='dense', mu=mu)
+            res = res + to_matrix(D, format='dense', mu=mu)
             return res
 
         if dK is None or dB is None or dC is None:
@@ -609,11 +654,13 @@ class FactorizedTransferFunction(TransferFunction):
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
-                    C_vec_a = C.as_source_array(mu=mu).conj()
+                    check_source_array(C, mu)
+                    check_source_array(dC, mu)
+                    C_vec_a = C.as_source_array(mu=mu)
                     Kia_Ca = K.apply_inverse_adjoint(C_vec_a, mu=mu)
                     dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj().T
 
-                    dC_vec_a = dC.as_source_array(mu=mu).conj()
+                    dC_vec_a = dC.as_source_array(mu=mu)
                     Kia_dCa = K.apply_inverse_adjoint(dC_vec_a, mu=mu)
                     CKidB = B.apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj().T
 
@@ -622,11 +669,11 @@ class FactorizedTransferFunction(TransferFunction):
                     C_Ki_dK_Ki_B = B.apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj().T
 
                     res = dC_Ki_B + CKidB - C_Ki_dK_Ki_B
-                res += to_matrix(dD, format='dense', mu=mu)
+                res = res + to_matrix(dD, format='dense', mu=mu)
                 return res
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
-                         sampling_time=sampling_time, name=name)
+                         sampling_time=sampling_time, name=name, is_real=is_real)
         self.K = K
         self.B = B
         self.C = C
@@ -665,7 +712,8 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     __radd__ = __add__
 
@@ -706,7 +754,8 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other),
+                          is_real=self.is_real and other.is_real)
 
     def __rmul__(self, other):
         if not hasattr(other, 'transfer_function'):

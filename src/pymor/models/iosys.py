@@ -68,7 +68,9 @@ class LTIModel(Model):
                y(k, \mu)     & = C(\mu) x(k, \mu) + D(\mu) u(k),
 
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
-    operators.
+    operators. These operators and the initial data may depend on parameters, but not on
+    the time parameter `t`. During simulation their parameter values must be constant in
+    time. Time-dependent inputs :math:`u(t)` remain supported.
 
     All methods related to the transfer function
     (e.g., frequency response calculation and Bode plots)
@@ -235,6 +237,7 @@ class LTIModel(Model):
         self.matrix_equation_solvers = matrix_equation_solvers
         self.shifted_system_solver = shifted_system_solver
         self.ast_pole_data = ast_pole_data
+        self._check_time_invariant()
 
         self.solution_space = A.source
         self.dim_output = C.range.dim
@@ -699,9 +702,19 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
+    def _check_time_invariant(self, mu=None):
+        time_dependent_parameters = {'t'}
+        if mu is not None:
+            time_dependent_parameters.update(mu.time_dependent_values)
+        for name in ('A', 'B', 'C', 'D', 'E', 'initial_data'):
+            op = getattr(self, name)
+            if op is not None and time_dependent_parameters.intersection(op.parameters):
+                raise ValueError(f'LTIModel does not support time-dependent {name}.')
+
     def _compute(self, quantities, data, mu):
         if 'solution' in quantities or 'output' in quantities:
             assert self.T is not None
+            self._check_time_invariant(mu)
 
             compute_solution = 'solution' in quantities
             compute_output = 'output' in quantities
@@ -712,8 +725,8 @@ class LTIModel(Model):
                 self.T,  # end_time
                 self.initial_data.as_range_array(mu),  # initial_data
                 (-self.A).with_(solver=self.A.solver),  # operator
-                rhs=LinearInputOperator(self.B),
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                rhs=LinearInputOperator(self.B) if self.dim_input else None,
+                mass=None if isinstance(self.E, IdentityOperator) else self.E.assemble(mu),
                 mu=mu,
                 num_values=self.num_values
             )
@@ -728,14 +741,20 @@ class LTIModel(Model):
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
             if compute_output:
-                D = LinearInputOperator(self.D)
+                D = self.D.as_range_array(mu=mu) if self.dim_input else None
+                input_function = mu.time_dependent_values.get('input') if self.dim_input else None
                 data['output'] = np.empty((self.dim_output, n))
                 data_output_extra = []
             for i, (x, t) in enumerate(iterator):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.at_time(t)).to_numpy()
+                    y = self.C.apply(x, mu=mu).to_numpy()
+                    if self.dim_input:
+                        u = input_function(np.array([t])) if input_function is not None else mu['input']
+                        y = y + D.lincomb(u).to_numpy()
+                    if np.iscomplexobj(y):
+                        raise NotImplementedError('Complex-valued time-domain outputs are not supported.')
                     if i < n:
                         data['output'][:, i] = y.ravel()
                     else:
@@ -983,10 +1002,22 @@ class LTIModel(Model):
             return self.presets['o_lr'].to_numpy() @ self.presets['o_lr'].to_numpy().T
 
         A = self.A.assemble(mu)
-        B = self.B.as_range_array(mu=mu)
-        C = self.C.as_source_array(mu=mu)
         D = self.D
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+        kind = typ[0] if isinstance(typ, tuple) else typ
+        operators = {'A': A, 'E': E}
+        if kind not in ('o_lr', 'o_dense', 'bs_o_lr'):
+            operators['B'] = self.B.assemble(mu)
+        if kind not in ('c_lr', 'c_dense', 'bs_c_lr'):
+            operators['C'] = self.C.assemble(mu)
+        if kind.startswith('pr'):
+            operators['D'] = D.assemble(mu)
+        # shortcut: matrix-only validation; extend when other representations need checking.
+        for name, op in operators.items():
+            if isinstance(op, NumpyMatrixOperator) and np.iscomplexobj(op.matrix):
+                raise NotImplementedError(f'Gramian computations with complex {name} are not supported.')
+        B = self.B.as_range_array(mu=mu)
+        C = self.C.as_source_array(mu=mu)
         Z = A.source.zeros()
 
         DDH = to_matrix(D + D.H, 'dense') if str(typ).startswith('pr') else None
@@ -1044,6 +1075,9 @@ class LTIModel(Model):
 
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
+
+        Only real data are supported. Assembled |NumpyMatrixOperators| used by the requested
+        computation are checked for complex dtype and raise :class:`NotImplementedError`.
 
         Parameters
         ----------

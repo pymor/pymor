@@ -156,6 +156,63 @@ def assert_tf_mul(m1, m2, m, parametric):
                            m1.eval_dtf(s, mu=mu) @ m2.eval_tf(s, mu=mu) + m1.eval_tf(s, mu=mu) @ m2.eval_dtf(s, mu=mu))
 
 
+@pytest.mark.parametrize('real1', [False, True])
+@pytest.mark.parametrize('real2', [False, True])
+@pytest.mark.parametrize('name1', ['TransferFunction', 'FactorizedTransferFunction'])
+@pytest.mark.parametrize('name2', ['TransferFunction', 'FactorizedTransferFunction'])
+def test_transfer_function_real_flag_arithmetic(real1, real2, name1, name2):
+    left = get_model(name1, 0, False).with_(is_real=real1)
+    right = get_model(name2, 0, False).with_(is_real=real2)
+
+    assert (-left).is_real is real1
+    assert (-right).is_real is real2
+    for result in (left + right, right + left, left - right, right - left, left * right, right * left):
+        assert result.is_real is (real1 and real2)
+
+
+@pytest.mark.parametrize('complex1', [False, True])
+@pytest.mark.parametrize('complex2', [False, True])
+@pytest.mark.parametrize('descriptor', [False, True])
+@pytest.mark.parametrize('sampling_time', sampling_time_list)
+@pytest.mark.parametrize(('dim_input', 'dim_output'), [(1, 2), (2, 1), (2, 2)])
+def test_complex_lti_arithmetic(sampling_time, dim_input, dim_output, descriptor, complex1, complex2, rng):
+    models = []
+    for complex_data in (complex1, complex2):
+        shapes = [(3, 3), (3, dim_input), (dim_output, 3), (dim_output, dim_input), (3, 3)]
+        matrices = [rng.standard_normal(shape) for shape in shapes]
+        if complex_data:
+            matrices = [matrix + 1j * rng.standard_normal(matrix.shape) for matrix in matrices]
+        matrices[0] -= 4 * np.eye(3)
+        matrices[4] = matrices[4] + 4 * np.eye(3) if descriptor else None
+        model = LTIModel.from_matrices(*matrices, sampling_time=sampling_time)
+        models.append(model)
+
+        A, B, C, D, E = matrices
+        E = np.eye(3) if E is None else E
+        for s in (0, 1j, 0.7 + 0.2j):
+            X = np.linalg.solve(s * E - A, B)
+            H = C @ X + D
+            dH = -C @ np.linalg.solve(s * E - A, E @ X)
+            np.testing.assert_allclose(model.transfer_function.eval_tf(s), H)
+            np.testing.assert_allclose(model.transfer_function.eval_dtf(s), dH)
+            np.testing.assert_allclose((-model).transfer_function.eval_tf(s), -H)
+            np.testing.assert_allclose((-model).transfer_function.eval_dtf(s), -dH)
+
+    lti, other = models
+    for left, right in ((lti, other), (other, lti)):
+        assert_tf_add(left, right, left + right, False)
+        assert_tf_sub(left, right, left - right, False)
+    if dim_input != dim_output:
+        other = LTIModel(other.A.H, other.C.H, other.B.H, D=other.D.H, E=other.E.H, sampling_time=sampling_time)
+    assert_tf_mul(lti, other, lti * other, False)
+    assert_tf_mul(other, lti, other * lti, False)
+
+
+def test_complex_lti_transfer_function_derivative():
+    lti = LTIModel.from_matrices(-np.eye(1), np.ones((1, 2)), np.array([[1j]]))
+    np.testing.assert_allclose(lti.transfer_function.eval_dtf(0), -1j * np.ones((1, 2)))
+
+
 @pytest.mark.parametrize('param2', [False, True])
 @pytest.mark.parametrize('param1', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
