@@ -155,6 +155,7 @@ class MTReductor(BasicObject):
                 dominance = -np.array(absres)
         idx = np.where(poles.imag >= 0)[0]
         poles = poles[idx]
+        dominance = dominance[idx]
         rev = rev[idx]
         lev = lev[idx]
 
