@@ -46,7 +46,9 @@ class BarycentricRationalTransferFunction(TransferFunction):
     """
 
     def __init__(self, nodes, B, C, R, sampling_time=0, name=None):
-        nodes, B, C, R = (np.array(a, copy=True) for a in (nodes, B, C, R))
+        factors = [np.asarray(a) for a in (nodes, B, C, R)]
+        dtype = np.result_type(*factors, np.float64)
+        nodes, B, C, R = (np.array(a, dtype=dtype, copy=True) for a in factors)
         if nodes.ndim != 1 or any(a.ndim != 2 for a in (B, C, R)):
             raise ValueError('nodes must be a vector and B, C, R must be matrices.')
         k = len(nodes)
@@ -61,7 +63,9 @@ class BarycentricRationalTransferFunction(TransferFunction):
         for a in (nodes, B, C, R):
             a.flags.writeable = False
         self.nodes, self.B, self.C, self.R = nodes, B, C, R
-        self._A = np.diag(nodes) - B @ R
+        self._A = B @ R
+        self._A *= -1
+        self._A.flat[::k + 1] += nodes
         self._A.flags.writeable = False
         super().__init__(B.shape[1], C.shape[0], self._evaluate, dtf=self._evaluate_derivative,
                          sampling_time=sampling_time, name=name)

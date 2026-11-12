@@ -97,6 +97,17 @@ def test_frequency_scaling(scale):
         assert np.allclose(scale * tf.eval_dtf(scale * s), [[-2 / (s + 1)**3]])
 
 
+@pytest.mark.parametrize('dtype', [np.int8, np.uint8, np.int64, np.uint64])
+def test_integer_factors(dtype):
+    weight = np.iinfo(dtype).max // 2
+    tf = BarycentricRationalTransferFunction(
+        np.array([0], dtype=dtype), np.array([[weight]], dtype=dtype),
+        np.array([[1]], dtype=dtype), np.array([[4]], dtype=dtype)
+    )
+    assert np.allclose(tf.eval_tf(0), [[0.25]])
+    np.testing.assert_allclose(tf.eval_dtf(0), [[-1 / (16 * weight)]], atol=0)
+
+
 def test_zero_and_infinity():
     zero = BarycentricRationalTransferFunction([], np.empty((0, 2)), np.empty((3, 0)), np.empty((2, 0)))
     tf = BarycentricRationalTransferFunction([0.], [[1.]], [[2.]], [[1.]])
