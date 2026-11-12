@@ -201,7 +201,7 @@ sys.path.insert(0, 'minimal_cpp_demo/build')
 
 import model
 mymodel = model.DiffusionOperator(10, 0, 1)
-myvector = model.Vector(10, 0)
+myvector = model.Vector(mymodel.dim_source, 0)
 mymodel.apply(myvector, myvector)
 dir(model)
 ```

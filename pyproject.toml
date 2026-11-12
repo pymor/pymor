@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 # additional dependencies for building docs via 'make docs'
 docs = [
-  "pymor[docs_additional,jupyter,slycot,ann]",
+  "pymor[docs_additional,jupyter,slycot,ann,scikit-learn]",
 ]
 # we have the docs-related additional dependencies as a separate extra here
 # to avoid pip-compile include pymor itself as a dependency, why is happening

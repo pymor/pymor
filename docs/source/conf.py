@@ -61,7 +61,7 @@ myst_url_schemes = ('http', 'https', 'mailto')
 myst_heading_anchors = 2
 import substitutions  # noqa: I001
 myst_substitutions = substitutions.myst_substitutions
-nb_execute_notebooks = 'cache'
+nb_execution_mode = 'cache'
 nb_execution_timeout = 180
 # print tracebacks to stdout
 nb_execution_show_tb = True
