@@ -65,6 +65,7 @@ from pymor.discretizers.builtin.grids.boundaryinfos import (
     EmptyBoundaryInfo,
     GenericBoundaryInfo,
 )
+from pymor.models.barycentric import BarycentricRationalTransferFunction
 from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.models.iosys import LTIModel, PHLTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
