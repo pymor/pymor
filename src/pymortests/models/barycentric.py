@@ -9,6 +9,15 @@ import pytest
 import scipy.linalg as spla
 
 from pymor.models.barycentric import BarycentricRationalTransferFunction
+from pymor.models.iosys import LTIModel
+from pymor.models.transfer_function import TransferFunction
+from pymortests.models.iosys_add_sub_mul import (
+    assert_tf_add,
+    assert_tf_mul,
+    assert_tf_sub,
+    get_model,
+    name_list,
+)
 
 pytestmark = pytest.mark.builtin
 
@@ -19,6 +28,32 @@ def test_evaluation_at_and_away_from_support_nodes():
     for s in [0., 1., 1e-10, 1 + 1e-10, 2j]:
         expected = C @ np.diag([1 / (s + 1), 3 / (s + 2)])
         assert np.allclose(tf.eval_tf(s), expected)
+
+
+@pytest.mark.parametrize('parametric', [False, True])
+@pytest.mark.parametrize('sampling_time', [0, 0.1])
+@pytest.mark.parametrize('barycentric_first', [False, True])
+@pytest.mark.parametrize('name', name_list)
+def test_arithmetic(name, barycentric_first, sampling_time, parametric):
+    tf = BarycentricRationalTransferFunction([0.], [[1.]], [[2.]], [[1.]], sampling_time=sampling_time)
+    other = get_model(name, sampling_time, parametric)
+    m1, m2 = (tf, other) if barycentric_first else (other, tf)
+    for result, check in ((m1 + m2, assert_tf_add), (m1 - m2, assert_tf_sub), (m1 * m2, assert_tf_mul)):
+        assert type(result) is TransferFunction
+        assert result.sampling_time == sampling_time
+        check(m1, m2, result, parametric)
+
+
+@pytest.mark.parametrize('barycentric_first', [False, True])
+def test_rectangular_composition(barycentric_first):
+    tf = BarycentricRationalTransferFunction([0.], [[1., 2.]], np.ones((3, 1)), [[1.], [0.]])
+    m, p = (4, 2) if barycentric_first else (3, 4)
+    other = LTIModel.from_matrices(np.array([[-2.]]), np.ones((1, m)), np.ones((p, 1)))
+    m1, m2 = (tf, other) if barycentric_first else (other, tf)
+    result = m1 * m2
+    assert result.dim_input == m2.dim_input
+    assert result.dim_output == m1.dim_output
+    assert_tf_mul(m1, m2, result, False)
 
 
 @pytest.mark.parametrize('matrix_weights', [False, True])
