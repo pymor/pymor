@@ -157,6 +157,7 @@ _PACKAGES = {
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': _get_version('ngsolve', True),
     'NUMPY': _get_version('numpy', True),
+    'POOCH': _get_version('pooch'),
     'PYTEST': _get_version('pytest'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),

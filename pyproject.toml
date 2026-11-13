@@ -32,6 +32,7 @@ dependencies = [
   "numpy>=1.21,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
+  "pooch",
   "pygments",
   "qtpy>=2.3.1",
   "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
@@ -129,10 +130,14 @@ scikit-fem = [
 scikit-learn = [
   "scikit-learn",
 ]
+# cached file download
+pooch = [
+  "pooch",
+]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
-  "pymor[slycot,ann,ipyparallel,gui,jupyter,vtk,gmsh,scikit-fem]",
+  "pymor[slycot,ann,ipyparallel,gui,jupyter,vtk,gmsh,scikit-fem,pooch]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
