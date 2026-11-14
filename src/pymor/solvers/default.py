@@ -122,7 +122,7 @@ def _convert_to_matrix_and_cache(op, assembled_op, logger=None):
     try:
         mat_op = NumpyMatrixOperator(to_matrix(assembled_op))
     except (NoMatchingRuleError, NotImplementedError) as e:
-        raise InversionError(f'{op!r} has no solver, and to_matrix failed.') from e
+        raise InversionError(f'Could not convert {op!r} to a NumPy/SciPy matrix for solving.') from e
     if not op.parametric:
         _matrix_operators.set(cache_key, mat_op)
     return mat_op
