@@ -8,6 +8,8 @@ from scipy.sparse import diags
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.symplectic import psd_complex_svd, psd_cotangent_lift, psd_svd_like_decomp
+from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
+from pymor.bindings.scipy import ScipySpSolveSolver
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
@@ -129,7 +131,8 @@ def discretize_fom(T=50):
         space.make_array(np.zeros(n_x)),
     ])
 
-    fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
+    time_stepper = ImplicitMidpointTimeStepper(nt=nt, solver=ScipySpSolveSolver())
+    fom = QuadraticHamiltonianModel(T, initial_data, H_op, time_stepper=time_stepper, name='hamiltonian_wave_equation')
     return fom
 
 
