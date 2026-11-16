@@ -149,10 +149,6 @@ class MTReductor(BasicObject):
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
                                          r, **method_options)
-
-            for i in range(len(poles)):
-                lev[i].scal(1 / np.conj(lev[i].inner(fom.E.apply(rev[i]))[0][0]))
-
             absres = spla.norm(res, axis=(1, 2), ord=2)
             if method_options['which'] == 'NR':
                 dominance = -(absres / np.abs(np.real(poles)))
