@@ -346,7 +346,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             absres = np.empty(len(poles))
             residues = []
             for i in range(len(poles)):
-                leftev[i].scal(1 / leftev[i].inner(E.apply(rightev[i]))[0][0])
+                leftev[i].scal(1 / np.conj(leftev[i].inner(E.apply(rightev[i]))[0][0]))
                 residues.append(C.inner(rightev[i]) @ leftev[i].inner(B))
                 absres[i] = spla.norm(residues[-1], ord=2)
             residues = np.array(residues)
