@@ -618,7 +618,9 @@ class ComplexifiedListVectorSpace(ListVectorSpace, Generic[R]):
         return self.real_vector_from_numpy(np.full(self.dim, value))
 
     def full_vector(self, value: float | complex) -> ComplexifiedVector:
-        return self.vector_type(self.real_full_vector(value), None)
+        real_part = self.real_full_vector(value.real)
+        imag_part = self.real_full_vector(value.imag) if value.imag != 0. else None
+        return self.vector_type(real_part, imag_part)
 
     def real_random_vector(self, distribution, **kwargs) -> R:
         values = _create_random_values(self.dim, distribution, **kwargs)
