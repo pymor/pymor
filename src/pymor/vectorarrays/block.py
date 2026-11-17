@@ -236,6 +236,16 @@ class BlockVectorSpace(VectorSpace):
             BlockVectorArrayImpl([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
         )
 
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> BlockVectorArray:
+        # these asserts make sure we also trigger if the subspace list is empty
+        assert count >= 0
+        assert reserve >= 0
+        return BlockVectorArray(
+            self,
+            BlockVectorArrayImpl([subspace.full(value, count=count, reserve=reserve) for subspace in self.subspaces],
+                                 self)
+        )
+
     @classinstancemethod
     def make_array(cls, obj: Sequence[VectorArray]) -> BlockVectorArray:  # type: ignore # noqa: N805
         assert len(obj) > 0
