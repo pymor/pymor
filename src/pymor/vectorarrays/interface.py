@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-from typing import TYPE_CHECKING, Generic, Self, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Self
 
 import numpy as np
 
@@ -14,14 +14,11 @@ from pymor.tools.random import get_rng
 if TYPE_CHECKING:
     from pymor.operators.interface import Operator
 
-Ind:     TypeAlias = list[int] | slice | None
-IndLike: TypeAlias = Ind | int | np.ndarray
-S = TypeVar('S', bound='VectorSpace')
-A = TypeVar('A', bound='VectorArray')
-I = TypeVar('I', bound='VectorArrayImpl')
+type Ind = list[int] | slice | None
+type IndLike = Ind | int | np.ndarray
 
 
-class VectorArray(BasicObject, Generic[S, I]):
+class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
@@ -812,7 +809,7 @@ class VectorArray(BasicObject, Generic[S, I]):
             self._refcount[0] -= 1
 
 
-class VectorSpace(ImmutableObject, Generic[A]):
+class VectorSpace[A: VectorArray](ImmutableObject):
     """Class describing a vector space.
 
     Vector spaces act as factories for |VectorArrays| of vectors
