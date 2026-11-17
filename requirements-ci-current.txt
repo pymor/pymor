@@ -598,7 +598,7 @@ rpds-py==2026.6.3
     #   referencing
 ruamel-yaml==0.19.1
     # via conda-lock
-ruff==0.15.20
+ruff==0.16.10
     # via pymor (./pyproject.toml)
 scikit-fem==12.0.2
     # via pymor (./pyproject.toml)
