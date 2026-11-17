@@ -2,10 +2,16 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from typing import Generic, TypeVar
+
 import numpy as np
+from typing_extensions import Self
 
 from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
-from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+
+R = TypeVar('R', bound='Vector')
+V = TypeVar('V', bound='Vector')
 
 
 class Vector(BasicObject):
@@ -17,105 +23,97 @@ class Vector(BasicObject):
     """
 
     @abstractmethod
-    def copy(self, deep=False):
-        pass
+    def copy(self, deep: bool = False) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha):
-        pass
+    def scal(self, alpha: float | complex) -> None: ...
 
     @abstractmethod
-    def axpy(self, alpha, x):
-        pass
+    def axpy(self, alpha: float | complex, x: Self) -> None: ...
 
-    def inner(self, other):
+    def inner(self, other: Self) -> float | complex:
         raise NotImplementedError
 
     @abstractmethod
-    def norm(self):
-        pass
+    def norm(self) -> float: ...
 
     @abstractmethod
-    def norm2(self):
-        pass
+    def norm2(self) -> float: ...
 
-    def sup_norm(self):
+    def sup_norm(self) -> float:
         _, max_val = self.amax()
         return max_val
 
     @abstractmethod
-    def dofs(self, dof_indices):
-        pass
+    def dofs(self, dof_indices: list[int] | np.ndarray) -> np.ndarray: ...
 
     @abstractmethod
-    def amax(self):
-        pass
+    def amax(self) -> tuple[int, float]: ...
 
-    def __add__(self, other):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
+        raise NotImplementedError
+
+    def __add__(self, other: Self) -> Self:
         result = self.copy()
         result.axpy(1, other)
         return result
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Self) -> Self:
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
+    def __sub__(self, other: Self) -> Self:
         result = self.copy()
         result.axpy(-1, other)
         return result
 
-    def __isub__(self, other):
+    def __isub__(self, other: Self) -> Self:
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other):
+    def __mul__(self, other: float | complex) -> Self:
         result = self.copy()
         result.scal(other)
         return result
 
-    def __imul__(self, other):
+    def __imul__(self, other: float | complex) -> Self:
         self.scal(other)
         return self
 
-    def __neg__(self):
+    def __neg__(self) -> Self:
         result = self.copy()
         result.scal(-1)
         return result
 
     @property
-    def real(self):
+    def real(self) -> Self:
         return self.copy()
 
     @property
-    def imag(self):
+    def imag(self) -> Self | None:
         return None
 
-    def conj(self):
+    def conj(self) -> Self:
         return self.copy()
 
 
 class CopyOnWriteVector(Vector):
 
     @abstractclassmethod
-    def from_instance(cls, instance):  # noqa: N805
-        pass
+    def from_instance(cls, instance: Self) -> Self: ...  # noqa: N805
 
     @abstractmethod
-    def _copy_data(self):
-        pass
+    def _copy_data(self) -> None: ...
 
     @abstractmethod
-    def _scal(self, alpha):
-        pass
+    def _scal(self, alpha: float | complex) -> None: ...
 
     @abstractmethod
-    def _axpy(self, alpha, x):
-        pass
+    def _axpy(self, alpha: float | complex, x: Self) -> None: ...
 
-    def copy(self, deep=False):
+    def copy(self, deep: bool = False) -> Self:
         c = self.from_instance(self)
         if deep:
             c._copy_data()
@@ -127,21 +125,21 @@ class CopyOnWriteVector(Vector):
             c._refcount = self._refcount
         return c
 
-    def scal(self, alpha):
+    def scal(self, alpha: float | complex) -> None:
         self._copy_data_if_needed()
         self._scal(alpha)
 
-    def axpy(self, alpha, x):
+    def axpy(self, alpha: float | complex, x: Self) -> None:
         self._copy_data_if_needed()
         self._axpy(alpha, x)
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self._refcount[0] -= 1
         except AttributeError:
             pass
 
-    def _copy_data_if_needed(self):
+    def _copy_data_if_needed(self) -> None:
         try:
             if self._refcount[0] > 1:
                 self._refcount[0] -= 1
@@ -153,15 +151,15 @@ class CopyOnWriteVector(Vector):
 
 class ComplexifiedVector(Vector):
 
-    def __init__(self, real_part, imag_part):
+    def __init__(self, real_part: Vector, imag_part: Vector | None):
         self.real_part, self.imag_part = real_part, imag_part
 
-    def copy(self, deep=False):
+    def copy(self, deep: bool = False) -> Self:
         real_part = self.real_part.copy(deep=deep)
         imag_part = self.imag_part.copy(deep=deep) if self.imag_part is not None else None
         return type(self)(real_part, imag_part)
 
-    def scal(self, alpha):
+    def scal(self, alpha: float | complex) -> None:
         if self.imag_part is None:
             if alpha.imag != 0:
                 self.imag_part = self.real_part * alpha.imag
@@ -177,7 +175,7 @@ class ComplexifiedVector(Vector):
                 self.imag_part.scal(alpha.real)
                 self.imag_part.axpy(alpha.imag, old_real_part)
 
-    def axpy(self, alpha, x):
+    def axpy(self, alpha: float | complex, x: Self) -> None:
         if x is self:
             self.scal(1. + alpha)
             return
@@ -199,7 +197,7 @@ class ComplexifiedVector(Vector):
             else:
                 self.imag_part.axpy(alpha.real, x.imag_part)
 
-    def inner(self, other):
+    def inner(self, other: Self) -> float | complex:
         result = self.real_part.inner(other.real_part)
         if self.imag_part is not None:
             result += self.imag_part.inner(other.real_part) * (-1j)
@@ -209,25 +207,25 @@ class ComplexifiedVector(Vector):
             result += self.imag_part.inner(other.imag_part)
         return result
 
-    def norm(self):
+    def norm(self) -> float:
         result = self.real_part.norm()
         if self.imag_part is not None:
             result = np.linalg.norm([result, self.imag_part.norm()])
         return result
 
-    def norm2(self):
+    def norm2(self) -> float:
         result = self.real_part.norm2()
         if self.imag_part is not None:
             result += self.imag_part.norm2()
         return result
 
-    def sup_norm(self):
+    def sup_norm(self) -> float:
         if self.imag_part is not None:
             # we cannot compute the sup_norm from the sup_norms of real_part and imag_part
             return self.amax()[1]
         return self.real_part.sup_norm()
 
-    def dofs(self, dof_indices):
+    def dofs(self, dof_indices: list[int] | np.ndarray) -> np.ndarray:
         values = self.real_part.dofs(dof_indices)
         if self.imag_part is not None:
             imag_values = self.imag_part.dofs(dof_indices)
@@ -235,7 +233,7 @@ class ComplexifiedVector(Vector):
         else:
             return values
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         if self.imag_part is None:
             return self.real_part.amax()
         else:
@@ -243,35 +241,35 @@ class ComplexifiedVector(Vector):
             max_ind = np.argmax(A)
             return max_ind, A[max_ind]
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
         if self.imag_part is not None:
             return self.real_part.to_numpy(ensure_copy=False) + self.imag_part.to_numpy(ensure_copy=False) * 1j
         else:
             return self.real_part.to_numpy(ensure_copy=ensure_copy)
 
     @property
-    def real(self):
+    def real(self) -> Self:
         return type(self)(self.real_part.copy(), None)
 
     @property
-    def imag(self):
+    def imag(self) -> Self | None:
         return type(self)(self.imag_part.copy(), None) if self.imag_part is not None else None
 
-    def conj(self):
+    def conj(self) -> Self:
         return type(self)(self.real_part.copy(), -self.imag_part if self.imag_part is not None else None)
 
 
 class NumpyVector(CopyOnWriteVector):
     """Vector stored in a NumPy 1D-array."""
 
-    def __init__(self, array):
+    def __init__(self, array: np.ndarray):
         self._array = array
 
     @classmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance: Self) -> Self:
         return cls(instance._array)
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
         if ensure_copy:
             return self._array.copy()
         else:
@@ -279,19 +277,19 @@ class NumpyVector(CopyOnWriteVector):
             return self._array
 
     @property
-    def dim(self):
+    def dim(self) -> int:
         return len(self._array)
 
-    def _copy_data(self):
+    def _copy_data(self) -> None:
         self._array = self._array.copy()
 
-    def _scal(self, alpha):
+    def _scal(self, alpha: float | complex) -> None:
         try:
             self._array *= alpha
         except TypeError:  # e.g. when scaling real array by complex alpha
             self._array = self._array * alpha
 
-    def _axpy(self, alpha, x):
+    def _axpy(self, alpha: float | complex, x: Self) -> None:
         assert self.dim == x.dim
         if alpha == 0:
             return
@@ -311,11 +309,11 @@ class NumpyVector(CopyOnWriteVector):
             except TypeError:
                 self._array = self._array + x._array * alpha
 
-    def inner(self, other):
+    def inner(self, other: Self) -> float | complex:
         assert self.dim == other.dim
         return np.sum(self._array.conj() * other._array)
 
-    def norm(self):
+    def norm(self) -> float:
         return np.linalg.norm(self._array)
 
     def norm2(self):
@@ -324,21 +322,21 @@ class NumpyVector(CopyOnWriteVector):
     def dofs(self, dof_indices):
         return self._array[dof_indices]
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
         return max_ind, np.abs(max_val)
 
     @property
-    def real(self):
+    def real(self) -> Self:
         return self.__class__(self._array.real.copy())
 
     @property
-    def imag(self):
+    def imag(self) -> Self:
         return self.__class__(self._array.imag.copy())
 
-    def conj(self):
+    def conj(self) -> Self:
         return self.__class__(self._array.conj())
 
 
@@ -346,31 +344,30 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
     _NONE = ()
 
-    def __init__(self, vectors, space):
+    def __init__(self, vectors: list[Vector], space: 'ListVectorSpace'):
         self._list = vectors
         self.space = space
 
-    def _indexed(self, ind):
+    def _indexed(self, ind: Ind) -> list[Vector]:
         if ind is None:
             return self._list
         elif type(ind) is slice:
             return self._list[ind]
         elif hasattr(ind, '__len__'):
             return [self._list[i] for i in ind]
-        else:
-            return [self._list[ind]]
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
+        del ensure_copy # unused
         vectors = [v.to_numpy() for v in self._indexed(ind)]
         if vectors:
             return np.array(vectors).T
         else:
             return np.empty((self.space.dim, 0))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._list)
 
-    def delete(self, ind):
+    def delete(self, ind: Ind) -> None:
         if ind is None:
             del self._list[:]
         elif hasattr(ind, '__len__'):
@@ -381,17 +378,17 @@ class ListVectorArrayImpl(VectorArrayImpl):
         else:
             del self._list[ind]
 
-    def append(self, other, remove_from_other, oind):
+    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
         if not remove_from_other:
             self._list.extend([v.copy() for v in other._indexed(oind)])
         else:
             self._list.extend(other._indexed(oind))
             other.delete(oind)
 
-    def copy(self, deep, ind):
+    def copy(self, deep: bool, ind: Ind) -> Self:
         return ListVectorArrayImpl([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
 
-    def scal(self, alpha, ind):
+    def scal(self, alpha: float | complex, ind: Ind) -> None:
         if type(alpha) is np.ndarray:
             for a, v in zip(alpha, self._indexed(ind), strict=True):
                 v.scal(a)
@@ -399,7 +396,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
             for v in self._indexed(ind):
                 v.scal(alpha)
 
-    def axpy(self, alpha, x, ind, xind):
+    def axpy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> None:
         if np.all(alpha == 0):
             return
 
@@ -424,14 +421,14 @@ class ListVectorArrayImpl(VectorArrayImpl):
                 for xx, y in zip(x_list, self._indexed(ind), strict=True):
                     y.axpy(alpha, xx)
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
         return (np.array([[a.inner(b) for b in other._indexed(oind)] for a in self._indexed(ind)])
                   .reshape((self.len_ind(ind), other.len_ind(oind))))
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
         return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind), strict=True)])
 
-    def gramian(self, ind):
+    def gramian(self, ind: Ind) -> np.ndarray:
         self_list = self._indexed(ind)
         l = len(self_list)
         if l == 0:
@@ -447,7 +444,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         R = np.array(R)
         return R
 
-    def lincomb(self, coefficients, ind):
+    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
         RL = []
         for coeffs in coefficients.T:
             R = self.space.zero_vector()
@@ -455,19 +452,19 @@ class ListVectorArrayImpl(VectorArrayImpl):
                 R.axpy(c, v)
             RL.append(R)
 
-        return ListVectorArrayImpl(RL, self.space)
+        return type(self)(RL, self.space)
 
-    def norm(self, ind):
+    def norm(self, ind: Ind) -> np.ndarray:
         return np.array([v.norm() for v in self._indexed(ind)])
 
-    def norm2(self, ind):
+    def norm2(self, ind: Ind) -> np.ndarray:
         return np.array([v.norm2() for v in self._indexed(ind)])
 
-    def dofs(self, dof_indices, ind):
+    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
         return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
                   .reshape((self.len_ind(ind), len(dof_indices)))).T
 
-    def amax(self, ind):
+    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
         l = self.len_ind(ind)
         MI = np.empty(l, dtype=int)
         MV = np.empty(l)
@@ -477,18 +474,18 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
         return MI, MV
 
-    def real(self, ind):
-        return ListVectorArrayImpl([v.real for v in self._indexed(ind)], self.space)
+    def real(self, ind: Ind) -> Self:
+        return type(self)([v.real for v in self._indexed(ind)], self.space)
 
-    def imag(self, ind):
+    def imag(self, ind: Ind) -> Self:
         # note that Vector.imag is allowed to return None in case
         # of a real vector, so we have to check for that.
         # returning None is allowed as ComplexifiedVector does not know
         # how to create a new zero vector.
-        return ListVectorArrayImpl([v.imag or self.space.zero_vector() for v in self._indexed(ind)], self.space)
+        return type(self)([v.imag or self.space.zero_vector() for v in self._indexed(ind)], self.space)
 
-    def conj(self, ind):
-        return ListVectorArrayImpl([v.conj() for v in self._indexed(ind)], self.space)
+    def conj(self, ind: Ind) -> Self:
+        return type(self)([v.conj() for v in self._indexed(ind)], self.space)
 
 
 class ListVectorArray(VectorArray):
@@ -511,65 +508,63 @@ class ListVectorArray(VectorArray):
 
     impl_type = ListVectorArrayImpl
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{type(self).__name__} of {len(self.impl._list)} vectors of space {self.space}'
 
     @property
-    def vectors(self):
+    def vectors(self) -> list[Vector]:
         return self.impl._indexed(self.ind)
 
 
-class ListVectorSpace(VectorSpace):
+class ListVectorSpace(VectorSpace, Generic[V]):
     """|VectorSpace| of |ListVectorArrays|."""
 
-    dim = None
-    vector_type = Vector
+    vector_type: type[V]
+    array_type = ListVectorArray
 
     @abstractmethod
-    def zero_vector(self):
-        pass
+    def zero_vector(self) -> V: ...
 
-    def ones_vector(self):
+    def ones_vector(self) -> V:
         return self.full_vector(1.)
 
-    def full_vector(self, value):
+    def full_vector(self, value: float | complex) -> V:
         return self.vector_from_numpy(np.full(self.dim, value))
 
-    def random_vector(self, distribution, **kwargs):
+    def random_vector(self, distribution: 'str', **kwargs) -> V:
         values = _create_random_values(self.dim, distribution, **kwargs)
         return self.vector_from_numpy(values)
 
     @abstractmethod
-    def make_vector(self, obj):
-        pass
+    def make_vector(self, obj) -> V: ...
 
-    def vector_from_numpy(self, data, ensure_copy=False):
+    def vector_from_numpy(self, data: np.ndarray, ensure_copy=False) -> V:
         raise NotImplementedError
 
     @classmethod
-    def space_from_vector_obj(cls, vec):
+    def space_from_vector_obj(cls, vec: V) -> Self:
         raise NotImplementedError
 
     @classmethod
-    def space_from_dim(cls, dim):
+    def space_from_dim(cls, dim: int) -> Self:
         raise NotImplementedError
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> ListVectorArray:
         assert count >= 0
         assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.zero_vector() for _ in range(count)], self))
 
-    def ones(self, count=1, reserve=0):
+    def ones(self, count: int = 1, reserve: int = 0) -> ListVectorArray:
         assert count >= 0
         assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.ones_vector() for _ in range(count)], self))
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> ListVectorArray:
         assert count >= 0
         assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.full_vector(value) for _ in range(count)], self))
 
-    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
+    def random(self, count: int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> ListVectorArray:
         assert count >= 0
         assert reserve >= 0
         return ListVectorArray(
@@ -579,13 +574,13 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj):  # noqa: N805
+    def make_array(cls, obj) -> ListVectorArray:  # type: ignore # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0]).make_array(obj)
 
     @make_array.instancemethod
-    def _(self, obj):
+    def _(self, obj) -> ListVectorArray:
         """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self,
@@ -593,11 +588,11 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # type: ignore # noqa: N805
         return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
-    def _(self, data, ensure_copy=False):
+    def _(self, data: np.ndarray, ensure_copy: bool = False) -> ListVectorArray:
         """:noindex:"""  # noqa: D400
         if data.ndim == 1:
             data = data.reshape((-1, 1))
@@ -606,45 +601,43 @@ class ListVectorSpace(VectorSpace):
         )
 
 
-class ComplexifiedListVectorSpace(ListVectorSpace):
+class ComplexifiedListVectorSpace(ListVectorSpace, Generic[R]):
 
-    real_vector_type = Vector
+    real_vector_type: type[R]
     vector_type = ComplexifiedVector
 
     @abstractmethod
-    def real_zero_vector(self):
-        pass
+    def real_zero_vector(self) -> R: ...
 
-    def zero_vector(self):
+    def zero_vector(self) -> ComplexifiedVector:
         return self.vector_type(self.real_zero_vector(), None)
 
-    def real_full_vector(self, value):
+    def real_full_vector(self, value: float) -> R:
         return self.real_vector_from_numpy(np.full(self.dim, value))
 
-    def full_vector(self, value):
+    def full_vector(self, value: float | complex) -> ComplexifiedVector:
         return self.vector_type(self.real_full_vector(value), None)
 
-    def real_random_vector(self, distribution, **kwargs):
+    def real_random_vector(self, distribution, **kwargs) -> R:
         values = _create_random_values(self.dim, distribution, **kwargs)
         return self.real_vector_from_numpy(values)
 
-    def random_vector(self, distribution, **kwargs):
+    def random_vector(self, distribution, **kwargs) -> ComplexifiedVector:
         return self.vector_type(self.real_random_vector(distribution, **kwargs), None)
 
     @abstractmethod
-    def real_make_vector(self, obj):
-        pass
+    def real_make_vector(self, obj) -> R: ...
 
-    def make_vector(self, obj):
+    def make_vector(self, obj) -> ComplexifiedVector:
         if isinstance(obj, self.real_vector_type):
             return self.vector_type(obj, None)
         else:
             return self.vector_type(self.real_make_vector(obj), None)
 
-    def real_vector_from_numpy(self, data, ensure_copy=False):
+    def real_vector_from_numpy(self, data, ensure_copy=False) -> R:
         raise NotImplementedError
 
-    def vector_from_numpy(self, data, ensure_copy=False):
+    def vector_from_numpy(self, data: np.ndarray, ensure_copy=False) -> ComplexifiedVector:
         if np.iscomplexobj(data):
             real_part = self.real_vector_from_numpy(data.real)
             imag_part = self.real_vector_from_numpy(data.imag)
@@ -661,31 +654,31 @@ class NumpyListVectorSpace(ListVectorSpace):
     def __init__(self, dim):
         self.dim = dim
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return type(other) is NumpyListVectorSpace and self.dim == other.dim
 
     @classmethod
-    def space_from_vector_obj(cls, vec):
+    def space_from_vector_obj(cls, vec) -> Self:
         return cls(len(vec))
 
     @classmethod
-    def space_from_dim(cls, dim):
+    def space_from_dim(cls, dim) -> Self:
         return cls(dim)
 
-    def zero_vector(self):
+    def zero_vector(self) -> NumpyVector:
         return NumpyVector(np.zeros(self.dim))
 
-    def ones_vector(self):
+    def ones_vector(self) -> NumpyVector:
         return NumpyVector(np.ones(self.dim))
 
-    def full_vector(self, value):
+    def full_vector(self, value: float | complex) -> NumpyVector:
         return NumpyVector(np.full(self.dim, value))
 
-    def make_vector(self, obj):
+    def make_vector(self, obj) -> NumpyVector:
         obj = np.asarray(obj)
         assert obj.ndim == 1
         assert len(obj) == self.dim
         return NumpyVector(obj)
 
-    def vector_from_numpy(self, data, ensure_copy=False):
+    def vector_from_numpy(self, data: np.ndarray, ensure_copy=False) -> NumpyVector:
         return self.make_vector(data.copy() if ensure_copy else data)
