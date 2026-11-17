@@ -436,7 +436,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         l = len(self_list)
         if l == 0:
             return np.zeros((0,0))
-        R = [[0.] * l for _ in range(l)]
+        R: list[list[float | complex]] = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
                 R[i][j] = self_list[i].inner(self_list[j])
@@ -444,8 +444,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
                     R[i][j] = R[i][j].real
                 else:
                     R[j][i] = R[i][j].conjugate()
-        R = np.array(R)
-        return R
+        return np.array(R)
 
     def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
         RL = []
