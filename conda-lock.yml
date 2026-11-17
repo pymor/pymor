@@ -8,8 +8,8 @@
 #     conda-lock install -n YOURENV conda-lock.yml
 # This lock contains optional development dependencies. Include them in the installed environment with:
 #     conda-lock install --dev-dependencies -n YOURENV conda-lock.yml
-# This lock contains optional dependency categories gui, ipyparallel, jupyter, slycot, vtk. Include them in the installed environment with:
-#     conda-lock install -e gui -e ipyparallel -e jupyter -e slycot -e vtk -n YOURENV conda-lock.yml
+# This lock contains optional dependency categories ci-conda, gui, ipyparallel, jupyter, slycot, vtk. Include them in the installed environment with:
+#     conda-lock install -e ci-conda -e gui -e ipyparallel -e jupyter -e slycot -e vtk -n YOURENV conda-lock.yml
 # To update a single package to the latest version compatible with the version constraints in the source:
 #     conda-lock lock  --lockfile conda-lock.yml --update PACKAGE
 # To re-solve the entire environment, e.g. after changing a version constraint in the source file:
@@ -17,9 +17,9 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: 441f8f1cf6f3ea4da323997c1f1ac2b7f868c5d8e3ee0f293bc7522f6061e782
-    osx-64: ef2569409ab2f64c9ac3a1c12fd35e529abee9f1a5c311fb5d8c6abc205d1755
-    win-64: bd787d183b71bf1337411f9750aa587d4f78256f07f987e3aaa917c515ad477d
+    linux-64: 5e0c708b73679851a99873b7e547e72044b8b8c746d40646ad3b2a19af14f2a6
+    osx-64: 581b092f940e5d8fd1361dafeca04edc20c31cc5a75dc7e3896bd07d9894c4fc
+    win-64: 3fd1b55330c8a488360b7f3124e4c82368ede34450e6ed40e7e3af195847e012
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -10492,19 +10492,6 @@ package:
     sha256: 7bdca717c840e17d7dd050f925dd964da61086c2612b8579a4ff4147105f291f
   category: gui
   optional: true
-- name: libopengl-devel
-  version: 1.7.0
-  manager: conda
-  platform: linux-64
-  dependencies:
-    __glibc: '>=2.17,<3.0.a0'
-    libopengl: 1.7.0
-  url: https://conda.anaconda.org/conda-forge/linux-64/libopengl-devel-1.7.0-ha4b6fd6_5.conda
-  hash:
-    md5: 1f14643f3050957c6c44618c5f72054b
-    sha256: 33b7e81b22fd424c3d8ca2fa25941549ef29917dd73f9fe28cea5ae4681f1c9c
-  category: gui
-  optional: true
 - name: libopenvino
   version: 2026.4.1
   manager: conda
@@ -15371,51 +15358,47 @@ package:
     pyobjc-core: '13.0'
     python: ''
     python_abi: 3.14.*
-  url: https://conda.anaconda.org/conda-forge/osx-64/pyobjc-framework-cocoa-13.0-py314h6ba7e35_0.conda
+  url: https://conda.anaconda.org/conda-forge/osx-64/pyobjc-framework-cocoa-13.0-py314h6ba7e35_1.conda
   hash:
-    md5: ca11249a77a8f1ef3600353d2409c4a2
-    sha256: c750ee00748700cdec51adaa6eb743cc24cbae08b97bf6cbc9c95a7ce6cee842
+    md5: 2635ac50162809f8556ca808ccf1f238
+    sha256: f02cc8fc0e8f00ecc813117b7cd05ac6b7db1bf49aded9a66f6b1889df37e345
   category: jupyter
   optional: true
 - name: pyopengl
-  version: 3.1.10
+  version: 3.1.6
   manager: conda
   platform: linux-64
   dependencies:
-    __linux: ''
-    libopengl-devel: ''
-    python: '>=3.10'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyha804496_2.conda
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
   hash:
-    md5: cce156023226a62044a8112bebf3d5e1
-    sha256: 0775255f81e2c6b49948b3656796823758e64938a15543302857d99da0e3d737
-  category: gui
+    md5: e5f029b9da151034a6ba72f592599dd6
+    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
+  category: ci-conda
   optional: true
 - name: pyopengl
-  version: 3.1.10
+  version: 3.1.6
   manager: conda
   platform: osx-64
   dependencies:
-    __osx: ''
-    python: '>=3.10'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyh534df25_2.conda
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
   hash:
-    md5: dae7cd715f93d0e2f12af26dd3777328
-    sha256: 0d6496145c2a88eac74650dfe363729af5bfc47f50bcb8820b957037237cfdab
-  category: gui
+    md5: e5f029b9da151034a6ba72f592599dd6
+    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
+  category: ci-conda
   optional: true
 - name: pyopengl
-  version: 3.1.10
+  version: 3.1.6
   manager: conda
   platform: win-64
   dependencies:
-    __win: ''
-    python: '>=3.10'
-  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.10-pyh7428d3b_2.conda
+    python: '>=3.9'
+  url: https://conda.anaconda.org/conda-forge/noarch/pyopengl-3.1.6-pyhd8ed1ab_2.conda
   hash:
-    md5: 63a67d671e4a241ea2cd29a2dc62c22e
-    sha256: 4e2bd274c9c8d4d934b9e4d791a52cd9885ad5d6718687fef098d1e1d4d1505c
-  category: gui
+    md5: e5f029b9da151034a6ba72f592599dd6
+    sha256: 1e1d4429ddacd036ac5bc59f7b0efb872e7a4d86b17b393751dcb0104be9c7ef
+  category: ci-conda
   optional: true
 - name: pyparsing
   version: 3.3.3
@@ -16572,10 +16555,10 @@ package:
   dependencies:
     python: '>=3.14,<3.15.0a0'
     python_abi: 3.14.*
-  url: https://conda.anaconda.org/conda-forge/win-64/pywin32-ctypes-0.2.3-py314h86ab7b2_4.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/pywin32-ctypes-0.2.3-py314h86ab7b2_5.conda
   hash:
-    md5: 202999e164caa1307ba59db8f071a88f
-    sha256: 36a483fe6cfc39af48bd70f7048b54a3ddb9025143fb9953c97138e7dc823e9c
+    md5: f0f02307c27cd0ac012a69f9366bcaf8
+    sha256: 280af3944ffcf9549e7347cd8b10a61ef417954e5735930a9bfa0de65f58b94a
   category: dev
   optional: true
 - name: pywinpty
@@ -16589,10 +16572,10 @@ package:
     vc: '>=14.2,<15'
     vc14_runtime: '>=14.29.30139'
     winpty: ''
-  url: https://conda.anaconda.org/conda-forge/win-64/pywinpty-3.1.2-py314h51f0985_0.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/pywinpty-3.1.2-py314h51f0985_1.conda
   hash:
-    md5: 353d7e9aa405d53b4607dd3b797d9394
-    sha256: 380682ada12c987b37f2d5d559e709b1f628a55017735bd0d7faf0f7f5678341
+    md5: 024cb552eadb07896a9d95a9dce5682b
+    sha256: fab17fb9045cbbe36881e9a3f71ab02443a81791aae74383f94db35583fcf752
   category: jupyter
   optional: true
 - name: pyyaml
@@ -20032,7 +20015,7 @@ package:
   category: main
   optional: false
 - name: virtualenv
-  version: 21.15.6
+  version: 21.15.7
   manager: conda
   platform: linux-64
   dependencies:
@@ -20042,14 +20025,14 @@ package:
     platformdirs: '>=4.4,<5'
     python: '>=3.11'
     python-discovery: '>=1.6.1'
-  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.6-pyh5ded981_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.7-pyh5ded981_0.conda
   hash:
-    md5: 142dd4402cc0e7f0c9582f9a4fddf3b8
-    sha256: c872747c69862b7275053ed8140687c1c6fe39023e864feaca2bb414c5ab1851
+    md5: a1e4090dc7c9fe38478fe9d37562372d
+    sha256: 5542ab85ffbc658aa939b6a0191f1378bbdcae0b64765d81b0bbafcefc041e30
   category: dev
   optional: true
 - name: virtualenv
-  version: 21.15.6
+  version: 21.15.7
   manager: conda
   platform: osx-64
   dependencies:
@@ -20059,14 +20042,14 @@ package:
     platformdirs: '>=4.4,<5'
     python: '>=3.11'
     python-discovery: '>=1.6.1'
-  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.6-pyh5ded981_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.7-pyh5ded981_0.conda
   hash:
-    md5: 142dd4402cc0e7f0c9582f9a4fddf3b8
-    sha256: c872747c69862b7275053ed8140687c1c6fe39023e864feaca2bb414c5ab1851
+    md5: a1e4090dc7c9fe38478fe9d37562372d
+    sha256: 5542ab85ffbc658aa939b6a0191f1378bbdcae0b64765d81b0bbafcefc041e30
   category: dev
   optional: true
 - name: virtualenv
-  version: 21.15.6
+  version: 21.15.7
   manager: conda
   platform: win-64
   dependencies:
@@ -20076,10 +20059,10 @@ package:
     platformdirs: '>=4.4,<5'
     python: '>=3.11'
     python-discovery: '>=1.6.1'
-  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.6-pyh5ded981_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/virtualenv-21.15.7-pyh5ded981_0.conda
   hash:
-    md5: 142dd4402cc0e7f0c9582f9a4fddf3b8
-    sha256: c872747c69862b7275053ed8140687c1c6fe39023e864feaca2bb414c5ab1851
+    md5: a1e4090dc7c9fe38478fe9d37562372d
+    sha256: 5542ab85ffbc658aa939b6a0191f1378bbdcae0b64765d81b0bbafcefc041e30
   category: dev
   optional: true
 - name: wayland

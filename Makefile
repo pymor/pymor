@@ -70,7 +70,7 @@ ci_current_requirements:
 ci_oldest_requirements:
 	uv pip compile  \
 		$(CI_EXTRAS) \
-		--python-version 3.11 \
+		--python-version 3.12 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
@@ -85,7 +85,7 @@ ci_fenics_requirements:
 		--extra ann \
 		--extra ipyparallel \
 		--extra scikit-learn \
-		--python-version 3.11 \
+		--python-version 3.12 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
