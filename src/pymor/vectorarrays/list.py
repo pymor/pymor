@@ -211,6 +211,7 @@ class ComplexifiedVector(Vector):
         result = self.real_part.norm()
         if self.imag_part is not None:
             result = np.linalg.norm([result, self.imag_part.norm()])
+        assert isinstance(result, float)
         return result
 
     def norm2(self) -> float:
@@ -314,7 +315,7 @@ class NumpyVector(CopyOnWriteVector):
         return np.sum(self._array.conj() * other._array)
 
     def norm(self) -> float:
-        return np.linalg.norm(self._array)
+        return np.linalg.norm(self._array).item()
 
     def norm2(self):
         return np.sum((self._array * self._array.conj()).real)
