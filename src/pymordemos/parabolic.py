@@ -7,6 +7,8 @@ from cyclopts import App
 
 from pymor.basic import *
 
+TAGS = ('instationary', 'linear', 'parametric', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.command

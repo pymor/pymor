@@ -14,6 +14,8 @@ from pymor.reductors.bt import FDBTReductor
 from pymor.reductors.h2 import GapIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
+TAGS = ('instationary', 'linear', 'system-theoretic')
+
 app = App(help_on_error=True, help_format='plaintext')
 
 @app.default

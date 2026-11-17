@@ -8,6 +8,8 @@ from cyclopts import App
 
 from pymor.core.config import config
 
+TAGS = ('stationary', 'nonlinear', 'parametric', 'pod', 'empirical-interpolation', 'fenics')
+
 app = App(help_on_error=True)
 
 @app.default

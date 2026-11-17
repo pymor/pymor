@@ -17,6 +17,8 @@ from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
 
+TAGS = ('instationary', 'linear', 'system-theoretic', 'structure-preserving')
+
 app = App(help_on_error=True)
 
 @app.default

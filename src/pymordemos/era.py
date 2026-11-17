@@ -66,6 +66,8 @@ def compute_markov_parameters(sys, n=100):
         x = A @ x
     return mp
 
+TAGS = ('instationary', 'linear', 'system-theoretic', 'data-driven', 'system-identification')
+
 app = App(help_on_error=True)
 
 @app.default

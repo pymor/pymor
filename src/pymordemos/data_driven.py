@@ -16,6 +16,8 @@ from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.reductors.data_driven import DataDrivenReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'pod', 'data-driven', 'machine-learning', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

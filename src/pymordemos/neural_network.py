@@ -14,6 +14,8 @@ from pymor.algorithms.ml.nn import NeuralNetworkRegressor
 from pymor.core.config import config
 from pymor.tools.random import new_rng
 
+TAGS = ('machine-learning',)
+
 app = App(help_on_error=True)
 
 

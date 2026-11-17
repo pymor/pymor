@@ -17,6 +17,9 @@ from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.models.hierarchy import ModelHierarchy
 from pymor.reductors.data_driven import AdaptiveDataDrivenReductor
 
+TAGS = ('stationary', 'instationary', 'linear', 'parametric', 'reduced-basis', 'data-driven', 'machine-learning',
+        'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 

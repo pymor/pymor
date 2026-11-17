@@ -12,6 +12,8 @@ from cyclopts.types import ExistingPath, PositiveInt
 
 from pymor.core.pickle import load
 
+TAGS = ('reduced-basis', 'error-estimation')
+
 app = App(help_on_error=True, help="""
 This demo loads a pickled reduced model, solves for random
 parameters, estimates the reduction errors and then visualizes these

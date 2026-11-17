@@ -12,6 +12,8 @@ from cyclopts import App
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

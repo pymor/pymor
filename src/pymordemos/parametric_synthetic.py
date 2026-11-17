@@ -15,6 +15,8 @@ from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
+TAGS = ('instationary', 'linear', 'parametric', 'system-theoretic')
+
 app = App(help_on_error=True, help_format='rst')
 
 @app.default

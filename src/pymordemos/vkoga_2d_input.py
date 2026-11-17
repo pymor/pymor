@@ -10,6 +10,8 @@ from cyclopts import App
 
 from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 
+TAGS = ('machine-learning',)
+
 app = App(help_on_error=True)
 
 @app.default

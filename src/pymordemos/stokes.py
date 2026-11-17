@@ -15,6 +15,8 @@ from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesR
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'scikit-fem')
+
 app = App(help_on_error=True)
 
 @app.default

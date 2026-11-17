@@ -15,6 +15,9 @@ from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.reductors.data_driven import DataDrivenPODReductor, DataDrivenReductor
 from pymor.tools import mpi
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'pod', 'data-driven', 'machine-learning', 'builtin-discretizer',
+        'fenics')
+
 app = App(help_on_error=True)
 
 @app.default

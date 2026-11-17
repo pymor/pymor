@@ -10,6 +10,9 @@ from cyclopts import App
 
 from pymor.basic import *
 
+TAGS = ('stationary', 'instationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'error-estimation',
+        'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

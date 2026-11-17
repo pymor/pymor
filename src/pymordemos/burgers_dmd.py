@@ -14,6 +14,8 @@ from pymor.algorithms.dmd import dmd
 from pymor.analyticalproblems.burgers import burgers_problem
 from pymor.discretizers.builtin import discretize_instationary_fv
 
+TAGS = ('instationary', 'nonlinear', 'data-driven', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

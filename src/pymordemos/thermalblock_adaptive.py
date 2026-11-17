@@ -16,6 +16,8 @@ from pymor.parallel.default import new_parallel_pool
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

@@ -23,6 +23,8 @@ from pymor.reductors.sobt import (
 from pymor.reductors.sor_irka import SORIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
+TAGS = ('instationary', 'linear', 'system-theoretic')
+
 app = App(help_on_error=True)
 
 @app.default

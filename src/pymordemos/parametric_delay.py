@@ -11,6 +11,8 @@ from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
 from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
+TAGS = ('instationary', 'linear', 'parametric', 'system-theoretic')
+
 app = App(help_on_error=True)
 
 @app.default

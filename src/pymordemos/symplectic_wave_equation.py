@@ -20,6 +20,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 SYMPLECTIC_METHODS = ['cotangent_lift', 'complex_svd', 'svd_like']
 METHODS = ['pod'] + SYMPLECTIC_METHODS
 
+TAGS = ('instationary', 'linear', 'pod', 'structure-preserving')
+
 app = App(help_on_error=True)
 
 @app.default

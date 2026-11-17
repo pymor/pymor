@@ -12,6 +12,8 @@ from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunct
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.parameters.functionals import ProjectionParameterFunctional
 
+TAGS = ('stationary', 'linear', 'parametric', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

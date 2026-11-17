@@ -8,6 +8,8 @@ from cyclopts import App
 
 from pymor.basic import *
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'optimization', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

@@ -20,6 +20,8 @@ GRID_INTERVALS = 10     # pyMOR/FEniCS
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('stationary', 'linear', 'parametric', 'error-estimation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

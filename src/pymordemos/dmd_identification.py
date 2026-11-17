@@ -8,6 +8,8 @@ from cyclopts import App
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.basic import *
 
+TAGS = ('instationary', 'linear', 'data-driven', 'system-identification')
+
 app = App(help_on_error=True)
 
 @app.default
