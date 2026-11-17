@@ -268,7 +268,7 @@ class NumpyVectorSpace(VectorSpace):
         assert reserve >= 0
         return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve)), order='F'), count))
 
-    def full(self, value, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
+    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         return NumpyVectorArray(self,
@@ -291,17 +291,17 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # type: ignore # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False) -> NumpyVectorArray:  # type: ignore # noqa: N805
         return cls._array_factory(data.copy(order='F') if ensure_copy else data)
 
     @from_numpy.instancemethod
-    def _(self, data: np.ndarray, ensure_copy: bool = False):
+    def _(self, data: np.ndarray, ensure_copy: bool = False) -> NumpyVectorArray:
         """:noindex:"""  # noqa: D400
         return self._array_factory(data.copy(order='F') if ensure_copy else data, space=self)
 
     @classinstancemethod
     def from_file(cls, path: str | Path, key: str | None = None, single_vector: bool = False, # noqa: N805
-                  transpose: bool = False):
+                  transpose: bool = False) -> NumpyVectorArray:
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
