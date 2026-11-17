@@ -2,15 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typing import Generic, Self, TypeVar
+from typing import Self
 
 import numpy as np
 
 from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
-
-R = TypeVar('R', bound='Vector')
-V = TypeVar('V', bound='Vector')
 
 
 class Vector(BasicObject):
@@ -517,7 +514,7 @@ class ListVectorArray(VectorArray):
         return self.impl._indexed(self.ind)
 
 
-class ListVectorSpace(VectorSpace, Generic[V]):
+class ListVectorSpace[V: Vector](VectorSpace):
     """|VectorSpace| of |ListVectorArrays|."""
 
     vector_type: type[V]
@@ -602,7 +599,7 @@ class ListVectorSpace(VectorSpace, Generic[V]):
         )
 
 
-class ComplexifiedListVectorSpace(ListVectorSpace, Generic[R]):
+class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace):
 
     real_vector_type: type[R]
     vector_type = ComplexifiedVector
