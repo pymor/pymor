@@ -28,12 +28,12 @@ dependencies = [
   "cyclopts",
   "diskcache",
   "matplotlib>=3.5.0",
-  "numpy>=1.21,!=1.25.0", # 1.25.0 crashes CI
+  "numpy>=1.23.2,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
+  "scipy>=1.9.2,!=1.15.0,!=1.15.1,!=1.15.2",
   "threadpoolctl",
 ]
 
@@ -75,7 +75,7 @@ dev = [
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
 ann = [
-  "torch>=1.11.0",
+  "torch>=1.13.0",
 ]
 # dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler
