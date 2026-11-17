@@ -238,7 +238,7 @@ class ComplexifiedVector(Vector):
             return self.real_part.amax()
         else:
             A = np.abs(self.real_part.to_numpy() + self.imag_part.to_numpy() * 1j)
-            max_ind = np.argmax(A)
+            max_ind = np.argmax(A).item()
             return max_ind, A[max_ind]
 
     def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
