@@ -325,7 +325,7 @@ class NumpyVector(CopyOnWriteVector):
 
     def amax(self) -> tuple[int, float]:
         A = np.abs(self._array)
-        max_ind = np.argmax(A)
+        max_ind = np.argmax(A).item()
         max_val = A[max_ind]
         return max_ind, np.abs(max_val)
 
