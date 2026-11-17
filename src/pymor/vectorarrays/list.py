@@ -351,10 +351,12 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def _indexed(self, ind: Ind) -> list[Vector]:
         if ind is None:
             return self._list
-        elif type(ind) is slice:
+        elif isinstance(ind, slice):
             return self._list[ind]
-        elif hasattr(ind, '__len__'):
+        elif isinstance(ind, list):
             return [self._list[i] for i in ind]
+        else:
+            assert False
 
     def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
         del ensure_copy # unused
@@ -370,7 +372,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def delete(self, ind: Ind) -> None:
         if ind is None:
             del self._list[:]
-        elif hasattr(ind, '__len__'):
+        elif isinstance(ind, list):
             thelist = self._list
             l = len(thelist)
             remaining = sorted(set(range(l)) - {i if 0 <= i else l+i for i in ind})
@@ -386,7 +388,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
             other.delete(oind)
 
     def copy(self, deep: bool, ind: Ind) -> Self:
-        return ListVectorArrayImpl([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
+        return type(self)([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
 
     def scal(self, alpha: float | complex, ind: Ind) -> None:
         if type(alpha) is np.ndarray:
