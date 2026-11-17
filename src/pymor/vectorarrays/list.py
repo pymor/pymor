@@ -2,10 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typing import Generic, TypeVar
+from typing import Generic, Self, TypeVar
 
 import numpy as np
-from typing_extensions import Self
 
 from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
