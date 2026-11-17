@@ -5,9 +5,9 @@
 from collections.abc import Sequence
 from functools import reduce
 from numbers import Number
+from typing import Self
 
 import numpy as np
-from typing_extensions import Self
 
 from pymor.core.base import classinstancemethod
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace

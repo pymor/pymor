@@ -4,10 +4,10 @@
 
 from numbers import Integral, Number
 from pathlib import Path
+from typing import Self
 
 import numpy as np
 from scipy.sparse import issparse
-from typing_extensions import Self
 
 from pymor.core.base import classinstancemethod
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
