@@ -2,13 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
 from typing import TYPE_CHECKING, Self
 
 import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
+from pymor.core.typing import Complex
 from pymor.tools.random import get_rng
 
 if TYPE_CHECKING:
@@ -145,7 +145,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         return self.space.full(1., count, reserve)
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> 'VectorArray':
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
@@ -342,7 +342,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         del memo  # memo is unused
         return self.copy(deep=True)
 
-    def scal(self, alpha: float | complex | np.ndarray) -> None:
+    def scal(self, alpha: Complex | np.ndarray) -> None:
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
@@ -360,12 +360,12 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             with which the vectors in `self` are multiplied.
         """
         assert self.base is None or self.base.check_ind_unique(self.ind)
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, Complex) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         self._copy_impl_if_multiple_refs()
         self.impl.scal(alpha, self.ind)
 
-    def axpy(self, alpha: float | complex | np.ndarray, x: 'VectorArray') -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: 'VectorArray') -> None:
         """BLAS AXPY operation.
 
         This method forms the sum ::
@@ -387,7 +387,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             A |VectorArray| containing the x-summands.
         """
         assert self.base is None or self.base.check_ind_unique(self.ind)
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, Complex) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         assert x in self.space
         assert len(self) == len(x) or len(x) == 1
@@ -699,8 +699,8 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         else:
             return type(self)(self.space, impl)
 
-    def __add__(self, other: 'float | complex | VectorArray') -> 'VectorArray':
-        if isinstance(other, int | float | complex):
+    def __add__(self, other: 'Complex | VectorArray') -> 'VectorArray':
+        if isinstance(other, Complex):
             assert other == 0
             return self.copy()
         assert other in self.space
@@ -722,14 +722,14 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other: 'float | complex | VectorArray') -> 'VectorArray':
-        assert isinstance(other, int | float | complex) \
+    def __mul__(self, other: 'Complex | np.ndarray | VectorArray') -> 'VectorArray':
+        assert isinstance(other, Complex) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return type(self)(self.space, self.impl.scal_copy(other, self.ind))
 
     __rmul__ = __mul__
 
-    def __imul__(self, other: 'float | complex') -> Self:
+    def __imul__(self, other: 'Complex | np.ndarray') -> Self:
         self.scal(other)
         return self
 
@@ -898,7 +898,7 @@ class VectorSpace[A: VectorArray](ImmutableObject):
         """
         return self.full(1., count, reserve)
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> A:
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> A:
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         Parameters
@@ -1053,17 +1053,17 @@ class VectorArrayImpl(BasicObject):
     def copy(self, deep: bool, ind: Ind) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None: ...
+    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None: ...
 
-    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
         result = self.copy(True, ind)
         result.scal(alpha, None)
         return result
 
     @abstractmethod
-    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None: ...
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None: ...
 
-    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         result = self.copy(True, ind)
         result.axpy(alpha, x, None, xind)
         return result

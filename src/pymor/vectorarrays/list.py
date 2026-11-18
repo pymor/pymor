@@ -7,6 +7,7 @@ from typing import Self
 import numpy as np
 
 from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
+from pymor.core.typing import Complex, Real
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -22,12 +23,12 @@ class Vector(BasicObject):
     def copy(self, deep: bool = False) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha: float | complex) -> None: ...
+    def scal(self, alpha: Complex) -> None: ...
 
     @abstractmethod
-    def axpy(self, alpha: float | complex, x: Self) -> None: ...
+    def axpy(self, alpha: Complex, x: Self) -> None: ...
 
-    def inner(self, other: Self) -> float | complex:
+    def inner(self, other: Self) -> Complex:
         raise NotImplementedError
 
     @abstractmethod
@@ -69,12 +70,12 @@ class Vector(BasicObject):
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other: float | complex) -> Self:
+    def __mul__(self, other: Complex) -> Self:
         result = self.copy()
         result.scal(other)
         return result
 
-    def __imul__(self, other: float | complex) -> Self:
+    def __imul__(self, other: Complex) -> Self:
         self.scal(other)
         return self
 
@@ -104,10 +105,10 @@ class CopyOnWriteVector(Vector):
     def _copy_data(self) -> None: ...
 
     @abstractmethod
-    def _scal(self, alpha: float | complex) -> None: ...
+    def _scal(self, alpha: Complex) -> None: ...
 
     @abstractmethod
-    def _axpy(self, alpha: float | complex, x: Self) -> None: ...
+    def _axpy(self, alpha: Complex, x: Self) -> None: ...
 
     def copy(self, deep: bool = False) -> Self:
         c = self.from_instance(self)
@@ -121,11 +122,11 @@ class CopyOnWriteVector(Vector):
             c._refcount = self._refcount
         return c
 
-    def scal(self, alpha: float | complex) -> None:
+    def scal(self, alpha: Complex) -> None:
         self._copy_data_if_needed()
         self._scal(alpha)
 
-    def axpy(self, alpha: float | complex, x: Self) -> None:
+    def axpy(self, alpha: Complex, x: Self) -> None:
         self._copy_data_if_needed()
         self._axpy(alpha, x)
 
@@ -155,7 +156,7 @@ class ComplexifiedVector(Vector):
         imag_part = self.imag_part.copy(deep=deep) if self.imag_part is not None else None
         return type(self)(real_part, imag_part)
 
-    def scal(self, alpha: float | complex) -> None:
+    def scal(self, alpha: Complex) -> None:
         if self.imag_part is None:
             if alpha.imag != 0:
                 self.imag_part = self.real_part * alpha.imag
@@ -171,7 +172,7 @@ class ComplexifiedVector(Vector):
                 self.imag_part.scal(alpha.real)
                 self.imag_part.axpy(alpha.imag, old_real_part)
 
-    def axpy(self, alpha: float | complex, x: Self) -> None:
+    def axpy(self, alpha: Complex, x: Self) -> None:
         if x is self:
             self.scal(1. + alpha)
             return
@@ -193,7 +194,7 @@ class ComplexifiedVector(Vector):
             else:
                 self.imag_part.axpy(alpha.real, x.imag_part)
 
-    def inner(self, other: Self) -> float | complex:
+    def inner(self, other: Self) -> Complex:
         result = self.real_part.inner(other.real_part)
         if self.imag_part is not None:
             result += self.imag_part.inner(other.real_part) * (-1j)
@@ -280,13 +281,13 @@ class NumpyVector(CopyOnWriteVector):
     def _copy_data(self) -> None:
         self._array = self._array.copy()
 
-    def _scal(self, alpha: float | complex) -> None:
+    def _scal(self, alpha: Complex) -> None:
         try:
             self._array *= alpha
         except TypeError:  # e.g. when scaling real array by complex alpha
             self._array = self._array * alpha
 
-    def _axpy(self, alpha: float | complex, x: Self) -> None:
+    def _axpy(self, alpha: Complex, x: Self) -> None:
         assert self.dim == x.dim
         if alpha == 0:
             return
@@ -306,7 +307,7 @@ class NumpyVector(CopyOnWriteVector):
             except TypeError:
                 self._array = self._array + x._array * alpha
 
-    def inner(self, other: Self) -> float | complex:
+    def inner(self, other: Self) -> Complex:
         assert self.dim == other.dim
         return np.sum(self._array.conj() * other._array)
 
@@ -387,7 +388,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def copy(self, deep: bool, ind: Ind) -> Self:
         return type(self)([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
 
-    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
         if isinstance(alpha, np.ndarray):
             for a, v in zip(alpha, self._indexed(ind), strict=True):
                 v.scal(a)
@@ -395,7 +396,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
             for v in self._indexed(ind):
                 v.scal(alpha)
 
-    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         if np.all(alpha == 0):
             return
 
@@ -406,14 +407,14 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
         if x.len_ind(xind) == 1:
             xx = next(iter(x_list))
-            if type(alpha) is np.ndarray:
+            if isinstance(alpha, np.ndarray):
                 for a, y in zip(alpha, self._indexed(ind), strict=True):
                     y.axpy(a, xx)
             else:
                 for y in self._indexed(ind):
                     y.axpy(alpha, xx)
         else:
-            if type(alpha) is np.ndarray:
+            if isinstance(alpha, np.ndarray):
                 for a, xx, y in zip(alpha, x_list, self._indexed(ind), strict=True):
                     y.axpy(a, xx)
             else:
@@ -432,7 +433,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         l = len(self_list)
         if l == 0:
             return np.zeros((0,0))
-        R: list[list[float | complex]] = [[0.] * l for _ in range(l)]
+        R: list[list[Complex]] = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
                 R[i][j] = self_list[i].inner(self_list[j])
@@ -526,7 +527,7 @@ class ListVectorSpace[V: Vector](VectorSpace):
     def ones_vector(self) -> V:
         return self.full_vector(1.)
 
-    def full_vector(self, value: float | complex) -> V:
+    def full_vector(self, value: Complex) -> V:
         return self.vector_from_numpy(np.full(self.dim, value))
 
     def random_vector(self, distribution: 'str', **kwargs) -> V:
@@ -557,7 +558,7 @@ class ListVectorSpace[V: Vector](VectorSpace):
         assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.ones_vector() for _ in range(count)], self))
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> ListVectorArray:
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> ListVectorArray:
         assert count >= 0
         assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.full_vector(value) for _ in range(count)], self))
@@ -610,10 +611,10 @@ class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace):
     def zero_vector(self) -> ComplexifiedVector:
         return self.vector_type(self.real_zero_vector(), None)
 
-    def real_full_vector(self, value: float) -> R:
+    def real_full_vector(self, value: Real) -> R:
         return self.real_vector_from_numpy(np.full(self.dim, value))
 
-    def full_vector(self, value: float | complex) -> ComplexifiedVector:
+    def full_vector(self, value: Complex) -> ComplexifiedVector:
         real_part = self.real_full_vector(value.real)
         imag_part = self.real_full_vector(value.imag) if value.imag != 0. else None
         return self.vector_type(real_part, imag_part)
@@ -671,7 +672,7 @@ class NumpyListVectorSpace(ListVectorSpace):
     def ones_vector(self) -> NumpyVector:
         return NumpyVector(np.ones(self.dim))
 
-    def full_vector(self, value: float | complex) -> NumpyVector:
+    def full_vector(self, value: Complex) -> NumpyVector:
         return NumpyVector(np.full(self.dim, value))
 
     def make_vector(self, obj) -> NumpyVector:

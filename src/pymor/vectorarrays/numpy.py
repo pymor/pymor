@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Integral, Number
 from pathlib import Path
 from typing import Self
 
@@ -10,6 +9,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
+from pymor.core.typing import Complex
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -85,7 +85,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if remove_from_other:
             other.delete(oind)
 
-    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -101,17 +101,17 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] *= alpha
 
-    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
 
-        if isinstance(alpha, Number) and alpha == -1:
+        if isinstance(alpha, Complex) and alpha == -1:
             return type(self)(- self._array[:, ind])
 
         return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
-    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -125,7 +125,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
 
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == 1:
                 self._array[:, ind] += B
                 return
@@ -138,14 +138,14 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] += B * alpha
 
-    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
 
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == 1:
                 return type(self)(np.add(self._array[:, ind],  B, order='F'))
             elif alpha == -1:
@@ -253,8 +253,8 @@ class NumpyVectorSpace(VectorSpace):
     array_type = NumpyVectorArray
 
     def __init__(self, dim: int):
-        assert isinstance(dim, Integral)
-        self.dim = dim = int(dim)
+        assert isinstance(dim, int)
+        self.dim = dim
         self.is_scalar = (dim == 1)
 
     def __eq__(self, other) -> bool:
@@ -268,7 +268,7 @@ class NumpyVectorSpace(VectorSpace):
         assert reserve >= 0
         return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve)), order='F'), count))
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         return NumpyVectorArray(self,

@@ -4,12 +4,12 @@
 
 from collections.abc import Sequence
 from functools import reduce
-from numbers import Number
 from typing import Self
 
 import numpy as np
 
 from pymor.core.base import classinstancemethod
+from pymor.core.typing import Complex
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace
 
 
@@ -63,28 +63,28 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).copy(deep) for block in self._blocks], self.space)
 
-    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
         assert self._blocks_are_valid()
         for block in self._blocks:
             _indexed(block, ind).scal(alpha)
 
-    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
         assert self._blocks_are_valid()
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == -1:
                 return type(self)([-_indexed(block, ind) for block in self._blocks], self.space)
         return super().scal_copy(alpha, ind)
 
-    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         for block, x_block in zip(self._blocks, x._blocks, strict=True):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
-    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == 1:
                 return type(self)([_indexed(block, ind) + _indexed(x_block, xind)
                                    for block, x_block in zip(self._blocks, x._blocks, strict=True)],
@@ -236,7 +236,7 @@ class BlockVectorSpace(VectorSpace):
             BlockVectorArrayImpl([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
         )
 
-    def full(self, value: float | complex, count: int = 1, reserve: int = 0) -> BlockVectorArray:
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> BlockVectorArray:
         # these asserts make sure we also trigger if the subspace list is empty
         assert count >= 0
         assert reserve >= 0
