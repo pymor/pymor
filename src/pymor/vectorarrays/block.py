@@ -63,25 +63,25 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).copy(deep) for block in self._blocks], self.space)
 
-    def scal(self, alpha: float | complex, ind: Ind) -> None:
+    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
         assert self._blocks_are_valid()
         for block in self._blocks:
             _indexed(block, ind).scal(alpha)
 
-    def scal_copy(self, alpha: float | complex, ind: Ind) -> Self:
+    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         if isinstance(alpha, Number):
             if alpha == -1:
                 return type(self)([-_indexed(block, ind) for block in self._blocks], self.space)
         return super().scal_copy(alpha, ind)
 
-    def axpy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         for block, x_block in zip(self._blocks, x._blocks, strict=True):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
-    def axpy_copy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         if isinstance(alpha, Number):

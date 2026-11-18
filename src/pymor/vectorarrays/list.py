@@ -387,15 +387,15 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def copy(self, deep: bool, ind: Ind) -> Self:
         return type(self)([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
 
-    def scal(self, alpha: float | complex, ind: Ind) -> None:
-        if type(alpha) is np.ndarray:
+    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
+        if isinstance(alpha, np.ndarray):
             for a, v in zip(alpha, self._indexed(ind), strict=True):
                 v.scal(a)
         else:
             for v in self._indexed(ind):
                 v.scal(alpha)
 
-    def axpy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         if np.all(alpha == 0):
             return
 

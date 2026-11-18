@@ -342,7 +342,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         del memo  # memo is unused
         return self.copy(deep=True)
 
-    def scal(self, alpha: float | complex) -> None:
+    def scal(self, alpha: float | complex | np.ndarray) -> None:
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
@@ -365,7 +365,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         self._copy_impl_if_multiple_refs()
         self.impl.scal(alpha, self.ind)
 
-    def axpy(self, alpha: float | complex, x: 'VectorArray') -> None:
+    def axpy(self, alpha: float | complex | np.ndarray, x: 'VectorArray') -> None:
         """BLAS AXPY operation.
 
         This method forms the sum ::
@@ -1053,17 +1053,17 @@ class VectorArrayImpl(BasicObject):
     def copy(self, deep: bool, ind: Ind) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha: float | complex, ind: Ind) -> None: ...
+    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None: ...
 
-    def scal_copy(self, alpha: float | complex, ind: Ind) -> Self:
+    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
         result = self.copy(True, ind)
         result.scal(alpha, None)
         return result
 
     @abstractmethod
-    def axpy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> None: ...
+    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None: ...
 
-    def axpy_copy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         result = self.copy(True, ind)
         result.axpy(alpha, x, None, xind)
         return result
