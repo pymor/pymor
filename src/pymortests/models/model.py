@@ -135,5 +135,18 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert all(len(Xi) == len(X) for Xi in X_step)
 
 
+@pytest.mark.parametrize('T', [2, 5])
+def test_discrete_lti_output_time_varying_input(T):
+    # x_{k+1} = 0.5 * x_k + u_k, y_k = x_k + u_k with x_0 = 0 and u_k = k
+    lti = LTIModel.from_matrices(np.array([[0.5]]), np.eye(1), np.eye(1), D=np.eye(1), sampling_time=1, T=T)
+    y = lti.output(input='[t[0]]')
+
+    x, y_expected = 0., []
+    for k in range(T + 1):
+        y_expected.append(x + k)
+        x = 0.5 * x + k
+    assert np.allclose(y.ravel(), y_expected)
+
+
 if __name__ == '__main__':
     runmodule(filename=__file__)
