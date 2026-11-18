@@ -1,6 +1,7 @@
-FROM docker.io/debian:bookworm
+FROM docker.io/ubuntu:24.04
 
-ENV DOCKER_PYMOR=1 \
+ENV DEBIAN_FRONTEND=noninteractive \
+    DOCKER_PYMOR=1 \
     OPENBLAS_NUM_THREADS=1 \
     GOTO_NUM_THREADS=1 \
     OMP_NUM_THREADS=1
@@ -12,7 +13,7 @@ RUN apt-get -q update && \
 # gmsh requirements
     	libglu1-mesa libxcursor1 libxinerama1 && \
     apt-get -qy install libpetsc-real-dev git && \
-    apt-get -qy install fenics python3.11-venv && \
+    apt-get -qy install python3-dolfin python3.12-venv && \
 # avoid mpl_toolkits being imported from system site packages
     apt-get -qy remove python3-matplotlib && \
     python3 -m venv --system-site-packages /venv && \

@@ -1,11 +1,11 @@
 # pin some packages to oldest supported version
-numpy==1.21.6
-scipy==1.8.0
-matplotlib==3.6.2  # older mpl cannot be tested due to incompatibility with
+numpy==1.26.0
+scipy==1.11.2
+matplotlib==3.7.3  # older mpl cannot be tested due to incompatibility with
                    # pyside6>=6.4
 matplotlib-inline<0.2
 pillow<10.4        # 10.4 fails on import due to np.typing not having NDArray attr
-torch==1.11.0+cpu
+torch==2.2.0+cpu
 k3d==2.15.2
 scikit-fem==8.0.0
 slycot==0.5.4
