@@ -23,7 +23,26 @@ app = App(help_on_error=True)
 
 @app.default
 def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
-    """MOR for a port-Hamiltonian system.
+    r"""MOR for a port-Hamiltonian system.
+
+    In this demo, several model order reduction methods for a port-Hamiltonian
+    mass-spring-damper system (see :func:`~pymor.models.examples.msd_example`) of order
+    :math:`n` with :math:`m` inputs and outputs are compared. The compared methods are
+
+    - balanced truncation (BT, :class:`~pymor.reductors.bt.BTReductor`),
+    - positive-real balanced truncation (PRBT, :class:`~pymor.reductors.bt.PRBTReductor`),
+    - the iterative rational Krylov algorithm (IRKA, :class:`~pymor.reductors.h2.IRKAReductor`),
+    - port-Hamiltonian IRKA (pH-IRKA, :class:`~pymor.reductors.ph.ph_irka.PHIRKAReductor`)
+      in its standard and energy-stable variants, and
+    - passivity-preserving reduction via spectral factorization
+      (:class:`~pymor.reductors.spectral_factor.SpectralFactorReductor`).
+
+    For each method, the relative :math:`\mathcal{H}_2`-error of the reduced models is plotted
+    against the reduced order, and the computation times are printed.
+
+    See :doc:`/tutorial_ph` for an introduction to port-Hamiltonian systems and
+    structure-preserving model order reduction. For structure-preserving model order reduction
+    of Hamiltonian systems without ports, see :ref:`cyclopts-pymor-demo-symplectic_wave_equation`.
 
     Parameters
     ----------
