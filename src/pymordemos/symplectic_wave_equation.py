@@ -28,8 +28,8 @@ app = App(help_on_error=True)
 def main(final_time: float = 10., rbsize: int = 80):
     """Symplectic MOR for a linear wave equation discretized with finite differences.
 
-    In this demo, structure-preserving model order reduction for Hamiltonian systems
-    (symplectic MOR) is compared with classical, non-structure-preserving MOR. The full-order
+    This demo compares structure-preserving model order reduction for Hamiltonian systems
+    (symplectic MOR) with classical, non-structure-preserving MOR. The full-order
     model is a finite difference discretization of a one-dimensional linear wave equation,
     given as a :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`. The experiment
     closely follows the one described in :cite:`PM16`: the reduced bases are computed from the

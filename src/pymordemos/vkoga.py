@@ -31,7 +31,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          num_points_plotting: int = 200):
     r"""Approximates a function with 2d output from training data using VKOGA.
 
-    In this demo, kernel methods are used to approximate
+    This demo uses kernel methods to approximate
 
     .. math::
 

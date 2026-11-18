@@ -23,7 +23,7 @@ def main(num_training_points: int = 100,
          length_scale: float = 1.0):
     r"""Approximates a function with 2d input from training data using VKOGA.
 
-    In this demo, kernel methods are used to approximate
+    This demo uses kernel methods to approximate
 
     .. math::
 

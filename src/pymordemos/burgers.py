@@ -32,8 +32,8 @@ def main(
 ):
     r"""Solves a two-dimensional Burgers-type equation.
 
-    In this demo, a two-dimensional Burgers-type equation is solved for a given exponent
-    :math:`\mu` in the flux. The analytical problem is given by
+    This demo solves a two-dimensional Burgers-type equation for a given exponent :math:`\mu`
+    in the flux. The analytical problem is given by
     :func:`~pymor.analyticalproblems.burgers.burgers_problem_2d`, where the initial data can be
     chosen as a sine or a bump function. It is discretized with finite volumes using
     :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv` on a rectangular

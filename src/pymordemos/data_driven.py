@@ -33,8 +33,8 @@ def main(
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
 
-    In this demo, reduced order models for a parametric diffusion problem are built using
-    machine learning methods. The full-order model is given by
+    This demo builds reduced order models for a parametric diffusion problem using machine
+    learning methods. The full-order model is given by
     :func:`~pymor.models.examples.two_dimensional_parametric_diffusion`. First, the full-order
     solutions and outputs are computed for randomly sampled training parameters, and a reduced
     basis is computed from the solution snapshots by POD (:func:`~pymor.algorithms.pod.pod`).

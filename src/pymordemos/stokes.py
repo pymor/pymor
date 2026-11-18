@@ -23,8 +23,8 @@ app = App(help_on_error=True)
 def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: int = 10):
     r"""MOR for a parametric Stokes equation on the unit disk.
 
-    In this demo, three projection methods for the reduced basis approximation of a
-    stationary Stokes equation are compared. The full-order model is a
+    This demo compares three projection methods for the reduced basis approximation of a
+    stationary Stokes equation. The full-order model is a
     :class:`~pymor.models.saddle_point.SaddlePointModel` given by
     :func:`~pymor.models.examples.stokes_2Dexample` with the body force
     :math:`f(x) = (0, x_1)^\top`, where the dynamic viscosity :math:`\mu` is the parameter.

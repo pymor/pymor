@@ -25,9 +25,9 @@ app = App(help_on_error=True)
 def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
     r"""MOR for a port-Hamiltonian system.
 
-    In this demo, several model order reduction methods for a port-Hamiltonian
+    This demo compares several model order reduction methods for a port-Hamiltonian
     mass-spring-damper system (see :func:`~pymor.models.examples.msd_example`) of order
-    :math:`n` with :math:`m` inputs and outputs are compared. The compared methods are
+    :math:`n` with :math:`m` inputs and outputs. The compared methods are
 
     - balanced truncation (BT, :class:`~pymor.reductors.bt.BTReductor`),
     - positive-real balanced truncation (PRBT, :class:`~pymor.reductors.bt.PRBTReductor`),
