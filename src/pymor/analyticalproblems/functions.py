@@ -428,6 +428,97 @@ class ProductFunction(Function):
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 
+class TimeDiscreteFunction(Function):
+    """A |Function| of time given by its values at discrete time points.
+
+    Given time points `t_0 < t_1 < ... < t_{n-1}` and values `v_0, ..., v_{n-1}`,
+    the function is defined on `[t_0, t_{n-1}]` by interpolating the values.
+    With `interpolation='linear'`, it is the piecewise linear interpolant ::
+
+        f(t) = v_i + (t - t_i) / (t_{i+1} - t_i) * (v_{i+1} - v_i),    t_i <= t <= t_{i+1}.
+
+    With `interpolation='constant'`, it is piecewise constant, holding each value
+    until the next time point (zero-order hold) ::
+
+        f(t) = v_i,    t_i <= t < t_{i+1},        f(t_{n-1}) = v_{n-1}.
+
+    Evaluating the function outside of `[t_0, t_{n-1}]` raises a :exc:`ValueError`.
+    To account for round-off errors in the time points computed by time-stepping
+    schemes, time points within `eps = (t_{n-1} - t_0) * machine_eps * n * 10` of a
+    given time point are treated as equal to it.
+
+    A typical use case is to pass time series data as input to a |Model|::
+
+        t = np.linspace(0, T, nt + 1)
+        u = np.stack([np.sin(4 * t), np.sin(6 * t)], axis=1)  # shape (nt + 1, dim_input)
+        y = fom.output(input=TimeDiscreteFunction(t, u))
+
+    Parameters
+    ----------
+    times
+        One-dimensional array of at least two strictly increasing time points.
+    values
+        |NumPy array| of shape `(len(times),) + shape_range` with the function
+        values at the given time points. To be used as a |Model| input,
+        `values` needs to have shape `(len(times), dim_input)`.
+    interpolation
+        Either `'linear'` or `'constant'`.
+    name
+        The name of the function.
+    """
+
+    dim_domain = 1
+
+    def __init__(self, times, values, interpolation='linear', name=None):
+        times = np.array(times, dtype=float)
+        values = np.array(values)
+        assert times.ndim == 1
+        assert len(times) >= 2
+        assert np.all(np.diff(times) > 0), 'times have to be strictly increasing'
+        assert values.ndim >= 1
+        assert len(values) == len(times)
+        assert interpolation in ('linear', 'constant')
+
+        self.times = times
+        self.values = values
+        self.interpolation = interpolation
+        self.name = name
+
+        self.shape_range = values.shape[1:]
+
+    def _cache_key_reduce(self):
+        return ('TimeDiscreteFunction', self.times, self.values, self.interpolation)
+
+    def __str__(self):
+        return f'{self.name}: t -> {self.interpolation} interpolation of values at {len(self.times)} time points'
+
+    def evaluate(self, x, mu=None):
+        x = np.asarray(x)
+        if x.ndim == 0:
+            x = x.reshape((1,))
+        assert x.ndim > 0
+        assert x.shape[-1] == 1
+        t = x[..., 0]
+
+        times, values = self.times, self.values
+        eps = (times[-1] - times[0]) * np.finfo(np.float64).eps * len(times) * 10
+        if np.any(t < times[0] - eps) or np.any(t > times[-1] + eps):
+            raise ValueError(f'{type(self).__name__} evaluated outside of its time range '
+                             f'[{times[0]}, {times[-1]}]')
+        t = np.clip(t, times[0], times[-1])
+
+        # index i of the interval [t_i, t_{i+1}] containing t, where time points within eps
+        # of t_{i+1} are already assigned to the next interval
+        i = np.searchsorted(times, t + eps, side='right') - 1
+        if self.interpolation == 'constant':
+            return values[i]
+
+        i = np.minimum(i, len(times) - 2)
+        weight = (t - times[i]) / (times[i+1] - times[i])
+        weight = weight.reshape(weight.shape + (1,) * len(self.shape_range))
+        return (1 - weight) * values[i] + weight * values[i+1]
+
+
 class BitmapFunction(Function):
     """Define a piecewise constant 2D |Function| via a bitmap array.
 

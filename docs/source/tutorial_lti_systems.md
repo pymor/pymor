@@ -155,6 +155,21 @@ _ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
 _ = ax.legend()
 ```
 
+If the input is only known at discrete time points, e.g., from measurements,
+it can be passed as a {{ TimeDiscreteFunction }},
+which interpolates the given values linearly (or piecewise constantly) in time.
+Here, we sample the same input as above at the time points of the time-stepper,
+so the output does not change.
+
+```{code-cell} ipython3
+from pymor.analyticalproblems.functions import TimeDiscreteFunction
+
+t = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
+u = np.stack([np.sin(4 * t), np.sin(6 * t)], axis=1)
+Y_data = fom.output(input=TimeDiscreteFunction(t, u))
+print(np.max(np.abs(Y_data - Y)))
+```
+
 Additionally, there are the `impulse_resp` and `step_resp` methods for computing
 the impulse and step responses, respectively.
 

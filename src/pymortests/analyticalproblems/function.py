@@ -5,7 +5,13 @@
 import numpy as np
 import pytest
 
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
+from pymor.analyticalproblems.functions import (
+    ConstantFunction,
+    ExpressionFunction,
+    GenericFunction,
+    TimeDiscreteFunction,
+)
+from pymor.core.cache import build_cache_key
 from pymor.core.pickle import dumps, loads
 from pymor.parameters.base import Mu
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
@@ -97,3 +103,66 @@ def test_random_bitmap_function():
             assert (f([i/10., j/10.]) != f([(i+1)/10., (j+1)/10.]))
             # values in same cell are equal
             assert (f([i/10., j/10.]) == f([(i+0.3)/10., (j+0.3)/10.]))
+
+
+def test_time_discrete_function_linear():
+    times = np.array([0., 1., 3.])
+    values = np.array([[0., 1.], [2., 3.], [6., 11.]])
+    f = TimeDiscreteFunction(times, values)
+    assert f.dim_domain == 1
+    assert f.shape_range == (2,)
+    # values at the time points are reproduced
+    assert np.allclose(f(times[:, np.newaxis]), values)
+    # linear interpolation in between
+    assert np.allclose(f(np.array([0.5])), [1., 2.])
+    assert np.allclose(f(np.array([[2.], [2.5]])), [[4., 7.], [5., 9.]])
+
+
+def test_time_discrete_function_constant():
+    times = np.array([0., 1., 3.])
+    values = np.array([10., 20., 30.])
+    f = TimeDiscreteFunction(times, values, interpolation='constant')
+    assert f.shape_range == ()
+    t = np.array([0., 0.5, 1., 2.9, 3.])[:, np.newaxis]
+    assert np.all(f(t) == [10., 10., 20., 20., 30.])
+
+
+@pytest.mark.parametrize('interpolation', ['linear', 'constant'])
+def test_time_discrete_function_round_off(interpolation):
+    # time points computed by time steppers may be slightly off due to round-off errors
+    nt = 7
+    times = np.linspace(0, 0.7, nt + 1)
+    values = np.arange(nt + 1.)
+    f = TimeDiscreteFunction(times, values, interpolation=interpolation)
+    t, dt = 0., 0.1
+    for n in range(nt + 1):
+        assert np.isclose(f(np.array([t])), n)
+        t += dt
+
+
+@pytest.mark.parametrize('interpolation', ['linear', 'constant'])
+def test_time_discrete_function_outside_time_range(interpolation):
+    f = TimeDiscreteFunction([1., 2.], [1., 2.], interpolation=interpolation)
+    for t in [0.9, 2.1]:
+        with pytest.raises(ValueError):
+            f(np.array([t]))
+    with pytest.raises(ValueError):
+        f(np.array([[1.5], [2.5]]))
+
+
+def test_time_discrete_function_invalid_arguments():
+    with pytest.raises(AssertionError):
+        TimeDiscreteFunction([0.], [1.])
+    with pytest.raises(AssertionError):
+        TimeDiscreteFunction([0., 1., 1.], [1., 2., 3.])
+    with pytest.raises(AssertionError):
+        TimeDiscreteFunction([0., 1.], [1., 2., 3.])
+    with pytest.raises(AssertionError):
+        TimeDiscreteFunction([0., 1.], [1., 2.], interpolation='cubic')
+
+
+def test_time_discrete_function_cache_key():
+    f = TimeDiscreteFunction([0., 1.], [[0.], [1.]])
+    assert build_cache_key(f) == build_cache_key(TimeDiscreteFunction([0., 1.], [[0.], [1.]]))
+    assert build_cache_key(f) != build_cache_key(TimeDiscreteFunction([0., 1.], [[0.], [2.]]))
+    assert build_cache_key(f) != build_cache_key(f.with_(interpolation='constant'))

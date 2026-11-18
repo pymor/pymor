@@ -109,6 +109,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
         kwargs
             Additional keyword arguments to select further quantities that should
@@ -250,6 +251,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed solution.
@@ -284,6 +286,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed output.
@@ -324,6 +327,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
 
         Returns
@@ -349,6 +353,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
 
         Returns
@@ -388,6 +393,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
 
         Returns
@@ -425,6 +431,7 @@ class Model(CacheableObject, ParametricObject):
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
+            For inputs given at discrete time points, use a |TimeDiscreteFunction|.
             Can be `None` if `self.dim_input == 0`.
 
         Returns

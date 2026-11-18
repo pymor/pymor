@@ -68,6 +68,7 @@ common = """
 .. |ConstantFunctions| replace:: :class:`ConstantFunctions <pymor.analyticalproblems.functions.ConstantFunction>`
 .. |ExpressionFunction| replace:: :class:`~pymor.analyticalproblems.functions.ExpressionFunction`
 .. |ExpressionFunctions| replace:: :class:`ExpressionFunctions <pymor.analyticalproblems.functions.ExpressionFunction>`
+.. |TimeDiscreteFunction| replace:: :class:`~pymor.analyticalproblems.functions.TimeDiscreteFunction`
 .. |LincombFunction| replace:: :class:`~pymor.analyticalproblems.functions.LincombFunction`
 .. |LincombFunctions| replace:: :class:`LincombFunctions <pymor.analyticalproblems.functions.LincombFunction>`
 
