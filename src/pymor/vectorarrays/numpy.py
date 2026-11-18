@@ -85,7 +85,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if remove_from_other:
             other.delete(oind)
 
-    def scal(self, alpha: float | complex, ind: Ind) -> None:
+    def scal(self, alpha: float | complex | np.ndarray, ind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -101,7 +101,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] *= alpha
 
-    def scal_copy(self, alpha: float | complex, ind: Ind) -> Self:
+    def scal_copy(self, alpha: float | complex | np.ndarray, ind: Ind) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -111,7 +111,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
-    def axpy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -138,7 +138,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] += B * alpha
 
-    def axpy_copy(self, alpha: float | complex, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: float | complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
