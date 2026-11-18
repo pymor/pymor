@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
-from pymor.core.typing import Complex
+from pymor.core.typing import Complex, Integer
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -47,7 +47,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             return
         if isinstance(ind, slice):
             ind_set = set(range(*ind.indices(self._len)))
-        elif isinstance(ind, int):
+        elif isinstance(ind, Integer):
             ind_set = {ind if 0 <= ind else self._len + ind}
         else:
             l = self._len
@@ -252,9 +252,9 @@ class NumpyVectorSpace(VectorSpace):
 
     array_type = NumpyVectorArray
 
-    def __init__(self, dim: int):
-        assert isinstance(dim, int)
-        self.dim = dim
+    def __init__(self, dim: Integer):
+        assert isinstance(dim, Integer)
+        self.dim = int(dim)
         self.is_scalar = (dim == 1)
 
     def __eq__(self, other) -> bool:

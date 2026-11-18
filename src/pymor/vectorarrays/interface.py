@@ -8,14 +8,14 @@ import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
-from pymor.core.typing import Complex
+from pymor.core.typing import Complex, Integer
 from pymor.tools.random import get_rng
 
 if TYPE_CHECKING:
     from pymor.operators.interface import Operator
 
 type Ind = list[int] | slice | None
-type IndLike = Ind | int | np.ndarray
+type IndLike = Ind | Integer | np.ndarray
 
 
 class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
@@ -229,7 +229,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
 
         # normalize ind s.t. the length of the view does not change when
         # the array is appended to
-        if isinstance(ind, int):
+        if isinstance(ind, Integer):
             if 0 <= ind < l:
                 ind = slice(ind, ind+1)
             elif ind >= l or ind < -l:
@@ -744,7 +744,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int) and -l <= ind < l
+                or isinstance(ind, Integer) and bool(-l <= ind < l)
                 or isinstance(ind, list | np.ndarray) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind) -> bool:
@@ -755,7 +755,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int) and -l <= ind < l
+                or isinstance(ind, Integer) and bool(-l <= ind < l)
                 or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
@@ -770,7 +770,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             return l
         elif type(ind) is slice:
             return len(range(*ind.indices(l)))
-        elif isinstance(ind, int):
+        elif isinstance(ind, Integer):
             return 1
         else:
             return len({i if i >= 0 else l+i for i in ind})
@@ -1106,6 +1106,6 @@ class VectorArrayImpl(BasicObject):
             return len(self)
         if type(ind) is slice:
             return len(range(*ind.indices(len(self))))
-        if isinstance(ind, int):
+        if isinstance(ind, Integer):
             return 1
         return len(ind)

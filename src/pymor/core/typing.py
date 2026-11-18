@@ -5,5 +5,6 @@
 import numpy as np
 
 # don't use type Real = ... to allow using Real/Complex with isinstance
+Integer = int | np.integer
 Real    = int | float | np.floating
 Complex = int | float | complex | np.number
