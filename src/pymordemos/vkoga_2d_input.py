@@ -12,7 +12,7 @@ from pymor.algorithms.ml.vkoga import GaussianKernel, VKOGARegressor
 
 TAGS = ('machine-learning',)
 
-app = App(help_on_error=True)
+app = App(help_on_error=True, help_format='plaintext')
 
 @app.default
 def main(num_training_points: int = 100,

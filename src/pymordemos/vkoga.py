@@ -14,7 +14,7 @@ from pymor.tools.random import new_rng
 
 TAGS = ('machine-learning',)
 
-app = App(help_on_error=True)
+app = App(help_on_error=True, help_format='plaintext')
 
 
 @app.default
@@ -35,7 +35,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
 
     .. math::
 
-        f(x) = (\\sin(2\\pi x), \\cos(2\\pi x))^\top, \\qquad x \\in [0, 1],
+        f(x) = (\sin(2\pi x), \cos(2\pi x))^\top, \qquad x \in [0, 1],
 
     from randomly or uniformly sampled training data. The vectorial kernel orthogonal
     greedy algorithm (VKOGA) selects centers from the training points in a greedy fashion
@@ -43,7 +43,7 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
 
     .. math::
 
-        s_n(x) = \\sum_{j=1}^n k(x, x_j)c_j.
+        s_n(x) = \sum_{j=1}^n k(x, x_j)c_j.
 
     The plots show the approximation, training data and selected centers for each component.
     Optionally, a grid search selects kernel and greedy parameters by cross-validation.
