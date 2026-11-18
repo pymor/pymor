@@ -5,7 +5,13 @@
 import numpy as np
 import pytest
 
-from pymor.analyticalproblems.functions import BitmapFunction, ConstantFunction, ExpressionFunction, GenericFunction
+from pymor.analyticalproblems.functions import (
+    BitmapFunction,
+    ConstantFunction,
+    ExpressionFunction,
+    GenericFunction,
+    TimeDiscreteFunction,
+)
 
 constant_functions = [
     BitmapFunction.random((3,3)),
@@ -54,12 +60,21 @@ expression_functions = [
     ExpressionFunction('(0<x<=1)*c[0]*x', dim_domain=1, parameters={'c': 1}),
 ]
 
+time_discrete_functions = [
+    TimeDiscreteFunction([0., 1.], [0., 1.]),
+    TimeDiscreteFunction(np.linspace(0, 1, 5), np.arange(10.).reshape((5, 2))),
+    TimeDiscreteFunction(np.linspace(0, 1, 5), np.arange(10.).reshape((5, 2)), interpolation='constant'),
+    TimeDiscreteFunction([0., 0.3, 1.], np.arange(12.).reshape((3, 2, 2))),
+]
 
-@pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions)
+
+@pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions
+                + time_discrete_functions)
 def function(request):
     return request.param
 
 
-@pytest.fixture(params=constant_functions + picklable_generic_functions + expression_functions)
+@pytest.fixture(params=constant_functions + picklable_generic_functions + expression_functions
+                + time_discrete_functions)
 def picklable_function(request):
     return request.param

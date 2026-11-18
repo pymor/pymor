@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitMidpointTimeStepper
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, TimeDiscreteFunction
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dumps, loads
 from pymor.discretizers.builtin import discretize_stationary_cg
@@ -134,6 +134,23 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert all(Xi.dim == 2 for Xi in X_step)
     assert all(len(Xi) == len(X) for Xi in X_step)
 
+
+
+@pytest.mark.parametrize('sampling_time', [0, 1])
+def test_lti_output_time_discrete_input(sampling_time):
+    # sampling an input at the time points of the time stepper must not change the output
+    T, nt = 4, 4
+    time_stepper = ExplicitEulerTimeStepper(nt) if sampling_time == 0 else None
+    lti = LTIModel.from_matrices(np.diag([-0.1, -0.2]), np.ones((2, 2)), np.ones((1, 2)), D=np.ones((1, 2)),
+                                 sampling_time=sampling_time, T=T, initial_data=np.array([1, 2]),
+                                 time_stepper=time_stepper)
+    t = np.linspace(0, T, nt + 1)
+    u = np.stack([np.sin(t), np.cos(2 * t)], axis=1)
+
+    y_expression = lti.output(input='[sin(t[0]), cos(2*t[0])]')
+    for interpolation in ['linear', 'constant']:
+        y = lti.output(input=TimeDiscreteFunction(t, u, interpolation=interpolation))
+        assert np.allclose(y, y_expression)
 
 if __name__ == '__main__':
     runmodule(filename=__file__)

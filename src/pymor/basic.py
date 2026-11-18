@@ -39,6 +39,7 @@ from pymor.analyticalproblems.functions import (
     ExpressionFunction,
     GenericFunction,
     LincombFunction,
+    TimeDiscreteFunction,
 )
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
