@@ -155,7 +155,10 @@ def discretize_fenics(dim, n, order):
 def discretize_fenicsx(dim, n, order):
     # ### problem definition
     import numpy as np
-    import ufl
+    try:
+        import ufl
+    except ImportError:
+        import ufl_legacy as ufl
     from dolfinx import fem, mesh
     from mpi4py import MPI
 
