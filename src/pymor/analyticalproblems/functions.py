@@ -152,6 +152,48 @@ class Function(ParametricObject):
         return LincombFunction([self], [-1.])
 
 
+class TimeDiscreteFunction(Function):
+    '''A function defined by time-discrete data.
+
+    Parameters
+    ----------
+    time
+        The time points.
+    values
+        The values at the time points.
+    interpolation
+        The interpolation type. Either `'constant'` or `'linear'`.
+    '''
+
+    def __init__(self, time, values, interpolation='linear'):
+        self.time = np.asarray(time)
+        self.values = np.asarray(values)
+        if self.time.ndim != 1:
+            raise ValueError('time must be a one-dimensional array')
+        if self.values.shape[0] != len(self.time):
+            raise ValueError('values must have the same length as time')
+        if interpolation not in ('constant', 'linear'):
+            raise ValueError(f'Unknown interpolation type: {interpolation}')
+        self.interpolation = interpolation
+        self.dim_domain = 1
+        self.shape_range = self.values.shape[1:]
+
+    def __call__(self, mu=None):
+        t = np.asarray(mu)
+        if np.any(t < self.time[0]) or np.any(t > self.time[-1]):
+            raise ValueError('t out of range')
+        if self.interpolation == 'constant':
+            idx = np.searchsorted(self.time, t, side='right') - 1
+            return self.values[idx]
+        idx = np.searchsorted(self.time, t, side='right') - 1
+        idx = np.minimum(idx, len(self.time) - 2)
+        t0 = self.time[idx]
+        t1 = self.time[idx + 1]
+        w = (t - t0) / (t1 - t0)
+        w = w.reshape(w.shape + (1,) * (self.values.ndim - 1))
+        return (1 - w) * self.values[idx] + w * self.values[idx + 1]
+
+
 class ConstantFunction(Function):
     """A constant |Function|.
 
