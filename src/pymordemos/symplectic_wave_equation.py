@@ -26,27 +26,39 @@ app = App(help_on_error=True)
 
 @app.default
 def main(final_time: float = 10., rbsize: int = 80):
-    """Symplectic MOR experiment for linear wave equation discretized with FD.
+    """Symplectic MOR for a linear wave equation discretized with finite differences.
 
-    The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
-    trained on the trajectory of one parameter and try to reproduce this solution in the reduced
-    simulation (reproduction experiment).
+    In this demo, structure-preserving model order reduction for Hamiltonian systems
+    (symplectic MOR) is compared with classical, non-structure-preserving MOR. The full-order
+    model is a finite difference discretization of a one-dimensional linear wave equation,
+    given as a :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`. The experiment
+    closely follows the one described in :cite:`PM16`: the reduced bases are computed from the
+    full-order solution trajectory, and the reduced models try to reproduce this trajectory
+    (reproduction experiment). The compared reduced bases are
 
-    It compares structure-preserving MOR for Hamiltonian systems (known as symplectic MOR) with
-    classical (non-structure-preserving) MOR. Different symplectic basis generation techniques are
-    compared ('cotangent_lift', 'complex_svd', 'svd_like') to a non-symplectic basis ('pod').
-    The experiment shows: Although 'pod' has the best projection error, its reduction error is
-    comparably high. In contrast to this, the reduction error of all symplectic bases is close to
-    their respective projection error.
+    - a non-symplectic POD basis ('pod', :func:`~pymor.algorithms.pod.pod`), used with
+      :class:`~pymor.reductors.basic.InstationaryRBReductor`, and
+    - the symplectic bases 'cotangent_lift', 'complex_svd' and 'svd_like'
+      (:func:`~pymor.algorithms.symplectic.psd_cotangent_lift`,
+      :func:`~pymor.algorithms.symplectic.psd_complex_svd`,
+      :func:`~pymor.algorithms.symplectic.psd_svd_like_decomp`), used with
+      :class:`~pymor.reductors.symplectic.QuadraticHamiltonianRBReductor`.
 
-    Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
+    The plots show the relative projection error and the relative reduction error over the
+    reduced dimension. Although 'pod' has the smallest projection error, its reduction error is
+    comparably large. In contrast, the reduction error of all symplectic bases is close to their
+    respective projection error. Note that compared to the experiments in :cite:`PM16`, the POD
+    gives better results here.
+
+    For structure-preserving model order reduction of port-Hamiltonian systems, see
+    :ref:`cyclopts-pymor-demo-phlti`.
 
     Parameters
     ----------
     final_time
-        Final time of the simulation
+        Final time of the simulation.
     rbsize
-        Maximal reduced basis size
+        Maximum reduced basis size.
     """
     from matplotlib import pyplot as plt
 
