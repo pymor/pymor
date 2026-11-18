@@ -53,7 +53,7 @@ import inspect
 import uuid
 from collections.abc import Callable
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Concatenate, Generic, ParamSpec, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Concatenate, TypeVar, overload
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
@@ -184,12 +184,7 @@ abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
 
 
-P = ParamSpec('P')
-
-R = TypeVar('R')
-
-
-class classinstancemethod(Generic[P, R]): # noqa: N801
+class classinstancemethod[**P, R]: # noqa: N801
 
     def __init__(self, cls_meth: Callable[Concatenate[Any, P], R]):
         self.cls_meth: Callable[Concatenate[Any, P], R] = cls_meth

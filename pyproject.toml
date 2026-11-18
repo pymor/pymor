@@ -9,7 +9,7 @@ description = "Library for building model order reduction applications with Pyth
 readme = "README.md"
 license = "BSD-2-Clause AND BSD-3-Clause"
 license-files = ["LICENSE.txt", "LICENSES_bundled.txt"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
   { name = "pyMOR developers", email = "main.developers@pymor.org" },
 ]
@@ -18,8 +18,6 @@ maintainers = [
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -28,13 +26,13 @@ classifiers = [
 dependencies = [
   "cyclopts",
   "diskcache",
-  "matplotlib>=3.5.0",
-  "numpy>=1.21,!=1.25.0", # 1.25.0 crashes CI
+  "matplotlib>=3.7.3",
+  "numpy>=1.26.0",
   "packaging",
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
+  "scipy>=1.11.2,!=1.15.0,!=1.15.1,!=1.15.2",
   "threadpoolctl",
 ]
 
@@ -69,14 +67,14 @@ dev = [
   "pytest-datadir",
   "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail due to wrong paths in co_filename
   "ruff==0.16.10", # our linter of choice
-  "conda_lock==2.5.7", # needed for make ci_conda_requirements
+  "conda_lock==4.1.0", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
   "uv", # to build requirements files
 ]
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
 ann = [
-  "torch>=1.11.0",
+  "torch>=2.2.0",
 ]
 # dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler

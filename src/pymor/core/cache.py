@@ -74,7 +74,7 @@ from copy import deepcopy
 from numbers import Number
 from textwrap import wrap
 from types import MethodType
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 import diskcache
 import numpy as np
@@ -438,9 +438,7 @@ class CacheableObject(ImmutableObject):
 
 _CACHED_METHODS = []
 
-F = TypeVar('F', bound=Callable[..., Any])
-
-def cached(function: F) -> F:
+def cached[F: Callable[..., Any]](function: F) -> F:
     """Decorator to make a method of `CacheableObject` actually cached."""
     params = inspect.signature(function).parameters
     if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
