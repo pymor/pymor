@@ -21,7 +21,28 @@ def main(num_training_points: int = 100,
          tol: float = 1e-6,
          reg: float = 1e-12,
          length_scale: float = 1.0):
-    """Approximates a function with 2d input and 2d output from training data using VKOGA.
+    r"""Approximates a function with 2d input from training data using VKOGA.
+
+    In this demo, kernel methods are used to approximate
+
+    .. math::
+
+        f(x_1, x_2) = \sin(2\pi x_1)\cos(2\pi x_2), \qquad (x_1, x_2) \in [0, 1]^2,
+
+    from training data sampled on a uniform 10 by 10 grid. The vectorial kernel orthogonal
+    greedy algorithm (VKOGA) selects centers from the training points in a greedy fashion
+    and constructs an approximant of the form
+
+    .. math::
+
+        s_n(x) = \sum_{j=1}^n k(x, x_j)c_j,
+
+    where :math:`k` is a Gaussian kernel. The plots show the approximation, the exact function
+    and the pointwise absolute error, each together with the selected centers.
+
+    See :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` for the implementation
+    and :doc:`/tutorial_mor_with_ml` for background on kernel methods and their use in
+    model order reduction. For a function with 2d output, see :ref:`cyclopts-pymor-demo-vkoga`.
 
     Parameters
     ----------
@@ -36,7 +57,7 @@ def main(num_training_points: int = 100,
     reg
         Regularization parameter for the kernel interpolation.
     length_scale
-        The length scale parameter of the kernel. Only used when `kernel = diagonal`.
+        The length scale parameter of the Gaussian kernel.
     """
     # define kernel
     kernel = GaussianKernel(length_scale)
