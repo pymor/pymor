@@ -29,7 +29,31 @@ def main(training_points_sampling: Literal['random', 'uniform'] = 'random',
          test_extend: bool = True,
          grid_search_parameter_optimization: bool = False,
          num_points_plotting: int = 200):
-    """Approximates a function with 2d output from training data using VKOGA.
+    r"""Approximates a function with 2d output from training data using VKOGA.
+
+    In this demo, we use kernel methods to approximate
+
+    .. math::
+
+        f(x) = (\\sin(2\\pi x), \\cos(2\\pi x))^\top, \\qquad x \\in [0, 1],
+
+    from randomly or uniformly sampled training data. The vectorial kernel orthogonal
+    greedy algorithm (VKOGA) selects centers from the training points in a greedy fashion
+    and constructs an approximant of the form
+
+    .. math::
+
+        s_n(x) = \\sum_{j=1}^n k(x, x_j)c_j.
+
+    The plots show the approximation, training data and selected centers for each component.
+    Optionally, a grid search selects kernel and greedy parameters by cross-validation.
+    The demo also compares fitting all data at once with adding training data incrementally
+    using ``extend``.
+
+    See :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor` for the implementation
+    and :doc:`/tutorial_mor_with_ml` for a background on kernel methods and their use in
+    model order reduction. For a function of two variables, see
+    :ref:`cyclopts-pymor-demo-vkoga_2d_input`.
 
     Parameters
     ----------
