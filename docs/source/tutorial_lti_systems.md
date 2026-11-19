@@ -47,6 +47,9 @@ but parametric LTI systems can be handled similarly
 by constructing {math}`A, B, C, D, E` as parametric {{ Operators }} and
 passing {{ parameter_values }} via the `mu` argument to the methods of the
 {{ LTIModel }}.
+System operators and initial data must not depend on the time parameter `t`.
+Their parameter values must remain constant during a simulation; time-dependent
+parameter values are rejected. The input {math}`u(t)` may still vary with time.
 
 ::: {note}
 
