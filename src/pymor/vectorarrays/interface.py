@@ -712,7 +712,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other: 'Complex | np.ndarray | VectorArray') -> 'VectorArray':
+    def __mul__(self, other: 'Complex | np.ndarray') -> 'VectorArray':
         assert isinstance(other, Complex) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return type(self)(self.space, self.impl.scal_copy(other, self.ind))
