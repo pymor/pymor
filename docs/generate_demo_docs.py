@@ -46,19 +46,15 @@ def tag_links(tags, href=''):
 
 
 def source_lines(module, command):
-    """Lines of the demo source to show, omitting the long description of the docstring."""
+    """Lines of the demo source to show, omitting the docstring of the command."""
     if command is None:
         return '5-'
-    source = Path(module.__file__).read_text().splitlines()
-    func = next(n for n in ast.walk(ast.parse('\n'.join(source)))
+    func = next(n for n in ast.walk(ast.parse(Path(module.__file__).read_text()))
                 if isinstance(n, ast.FunctionDef) and n.name == command.__name__)
     if ast.get_docstring(func) is None:
         return '5-'
     doc = func.body[0]
-    doc_lines = [line.strip() for line in source[doc.lineno - 1:doc.end_lineno]]
-    end = doc.lineno + (doc_lines.index('Parameters') if 'Parameters' in doc_lines else len(doc_lines) - 1)
-    # keep the summary line, the following blank line and everything from `end` on
-    return f'5-{doc.lineno + 1},{end}-' if end > doc.lineno + 2 else '5-'
+    return f'5-{doc.lineno - 1},{doc.end_lineno + 1}-'
 
 
 rows, used_tags = [], set()
