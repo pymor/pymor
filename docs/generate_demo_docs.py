@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import ast
 from html import escape
 from importlib import import_module
 from inspect import getdoc
@@ -44,6 +45,22 @@ def tag_links(tags, href=''):
     return ''.join(f'<a class="demo-tag" href="{href}#tag={t}">{t}</a>' for t in tags)
 
 
+def source_lines(module, command):
+    """Lines of the demo source to show, omitting the long description of the docstring."""
+    if command is None:
+        return '5-'
+    source = Path(module.__file__).read_text().splitlines()
+    func = next(n for n in ast.walk(ast.parse('\n'.join(source)))
+                if isinstance(n, ast.FunctionDef) and n.name == command.__name__)
+    if ast.get_docstring(func) is None:
+        return '5-'
+    doc = func.body[0]
+    doc_lines = [line.strip() for line in source[doc.lineno - 1:doc.end_lineno]]
+    end = doc.lineno + (doc_lines.index('Parameters') if 'Parameters' in doc_lines else len(doc_lines) - 1)
+    # keep the summary line, the following blank line and everything from `end` on
+    return f'5-{doc.lineno + 1},{end}-' if end > doc.lineno + 2 else '5-'
+
+
 rows, used_tags = [], set()
 with open(OUT_DIR / 'demos.rst', 'w') as index:
     print("""
@@ -57,9 +74,10 @@ Demo Scripts
 
 """[1:-1], file=index)
     for demo in demos:
-        app = import_module('pymordemos.' + demo).app
+        module = import_module('pymordemos.' + demo)
+        app = module.app
         app._name = 'pymor-demo ' + demo
-        tags = getattr(import_module('pymordemos.' + demo), 'TAGS', ())
+        tags = getattr(module, 'TAGS', ())
         if unknown := set(tags) - set(TAG_VOCABULARY):
             raise ValueError(f'Unknown tags in demo {demo}: {", ".join(sorted(unknown))}')
         used_tags.update(tags)
@@ -85,7 +103,7 @@ Source code
 
    .. literalinclude:: ../../../src/pymordemos/{demo}.py
       :language: python
-      :lines: 5-
+      :lines: {source_lines(module, app.default_command)}
 """, file=f)
         print('   ' + demo, file=index)
 
