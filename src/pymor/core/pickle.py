@@ -18,7 +18,6 @@ import marshal
 import opcode
 import pickle
 import platform
-import sys
 from io import BytesIO as IOtype
 from types import CodeType, FunctionType, ModuleType
 
@@ -27,7 +26,6 @@ from pymor.core.exceptions import UnpicklableError
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
 PROTOCOL = pickle.HIGHEST_PROTOCOL
-PYTHON_311_OR_NEWER = int(sys.version_info.minor) >= 3.11
 
 
 class PyMORPickler(pickle.Pickler):
@@ -109,10 +107,7 @@ def _generate_opcode(code_object):
 def _global_names(code_object):
     """Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement."""
     LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
-    if not PYTHON_311_OR_NEWER:
-        indices = {i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
-    else:
-        indices = {i>>1 for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
+    indices = {i>>1 for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
 
     names = code_object.co_names
     result = {names[i] for i in indices}

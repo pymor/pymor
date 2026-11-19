@@ -217,7 +217,10 @@ class Expression(ParametricObject):
         # sanity check for dolfin before running code
         config.require('FENICS')
         from dolfin import Constant
-        from ufl import SpatialCoordinate
+        try:
+            from ufl import SpatialCoordinate
+        except ImportError:
+            from ufl_legacy import SpatialCoordinate
         assert variable not in self.parameters or self.parameters[variable] == mesh.topology().dim()
         params = {p: SpatialCoordinate(mesh) if p == variable else [Constant(0.) for _ in range(dim)]
                   for p, dim in self.parameters.items()}
@@ -305,7 +308,10 @@ class BaseConstant(Expression):
         return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy={NUMPY_COPY_IF_NEEDED})'
 
     def fenics_expr(self, params):
-        import ufl
+        try:
+            import ufl
+        except ImportError:
+            import ufl_legacy as ufl
         if self.fenics_symbol is None:
             raise NotImplementedError('No FEniCS symbol was given!')
 
@@ -447,7 +453,10 @@ class BinaryOp(Expression):
         return f'({self.first.numpy_expr()}{first_ind} {self.numpy_symbol} {self.second.numpy_expr()}{second_ind})'
 
     def fenics_expr(self, params):
-        import ufl
+        try:
+            import ufl
+        except ImportError:
+            import ufl_legacy as ufl
         if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
@@ -545,7 +554,10 @@ class UnaryFunctionCall(Expression):
         return f'{self.numpy_symbol}({self.arg.numpy_expr()})'
 
     def fenics_expr(self, params):
-        import ufl
+        try:
+            import ufl
+        except ImportError:
+            import ufl_legacy as ufl
         if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support function {self.numpy_symbol}')
         ufl_op = getattr(ufl, self.fenics_symbol)
@@ -584,7 +596,10 @@ class UnaryReductionCall(UnaryFunctionCall):
         r = None
         op = self.fenics_op
         if isinstance(op, str):
-            import ufl
+            try:
+                import ufl
+            except ImportError:
+                import ufl_legacy as ufl
             op = getattr(ufl, op)
         for el in self.arg.fenics_expr(params).flat:
             r = el if r is None else op(r, el)
@@ -656,7 +671,10 @@ class exp2(UnaryFunctionCall):
     numpy_symbol = 'exp2'
 
     def fenics_expr(self, params):
-        from ufl import elem_pow
+        try:
+            from ufl import elem_pow
+        except ImportError:
+            from ufl_legacy import elem_pow
         return np.vectorize(lambda x: elem_pow(2, x))(self.arg.fenics_expr(params))
 
 
@@ -680,7 +698,10 @@ class abs(UnaryFunctionCall):
     numpy_symbol = 'abs'
 
     def fenics_expr(self, params):
-        from ufl.algebra import Abs
+        try:
+            from ufl.algebra import Abs
+        except ImportError:
+            from ufl_legacy.algebra import Abs
         return np.vectorize(lambda x: Abs(x))(self.arg.fenics_expr(params))
 
 
@@ -698,7 +719,10 @@ class angle(UnaryFunctionCall):
         if len(self.shape) > 1:
             raise NotImplementedError
         import dolfin
-        import ufl
+        try:
+            import ufl
+        except ImportError:
+            import ufl_legacy as ufl
         arg = self.arg.fenics_expr(params)
         assert arg.shape == (2,)
         return np.array(

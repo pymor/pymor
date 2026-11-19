@@ -80,8 +80,8 @@ def is_scipy_mkl():
 def _get_threadpool_internal_api(module):
     from subprocess import run
     result = run(
-        [sys.executable, '-c', f'from threadpoolctl import threadpool_info as tpi; import {module};\n'
-                                'for d in tpi(): print(d["internal_api"])'],
+        [sys.executable, '-c', (f'from threadpoolctl import threadpool_info as tpi; import {module};\n'
+                                'for d in tpi(): print(d["internal_api"])')],
         capture_output=True
     )
     return {x.strip() for x in result.stdout.decode().split('\n') if x.strip()}

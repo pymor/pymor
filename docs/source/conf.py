@@ -135,6 +135,7 @@ nitpick_ignore = [
     ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
     ('py:obj', 'qtpy.QtWidgets.QWidget'),
     ('py:class', 'F'),
+    ('py:class', 'cached.F'),
     ('py:class', 'P'),
     ('py:class', 'R'),
 ]
