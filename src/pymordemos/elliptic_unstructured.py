@@ -10,6 +10,8 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.discretizers.builtin import discretize_stationary_cg
 
+TAGS = ('stationary', 'linear', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

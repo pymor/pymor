@@ -15,6 +15,9 @@ from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaPa
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'error-estimation', 'optimization',
+        'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

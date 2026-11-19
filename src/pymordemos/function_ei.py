@@ -17,6 +17,8 @@ from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'empirical-interpolation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

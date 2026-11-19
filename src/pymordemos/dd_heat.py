@@ -53,6 +53,8 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, reductor_kwarg
     ax.legend()
 
 
+TAGS = ('instationary', 'linear', 'system-theoretic', 'data-driven', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

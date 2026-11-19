@@ -19,6 +19,8 @@ DIM = 2
 GRID_INTERVALS = 50
 FENICS_ORDER = 1
 
+TAGS = ('stationary', 'nonlinear', 'parametric', 'pod', 'data-driven', 'machine-learning', 'fenics')
+
 app = App(help_on_error=True)
 
 @app.default

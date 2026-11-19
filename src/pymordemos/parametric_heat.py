@@ -256,6 +256,8 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
     plt.show()
 
+TAGS = ('instationary', 'linear', 'parametric', 'system-theoretic', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

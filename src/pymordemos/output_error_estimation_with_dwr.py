@@ -11,6 +11,8 @@ from cyclopts import App
 from pymor.basic import *
 from pymor.reductors.dwr import DWRCoerciveRBReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'error-estimation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

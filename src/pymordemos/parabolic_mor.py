@@ -21,6 +21,8 @@ DT = 1. / NT
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('instationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'builtin-discretizer', 'fenics')
+
 app = App(help_on_error=True, result_action='return_value')
 
 @app.default

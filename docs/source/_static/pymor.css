@@ -162,6 +162,6 @@ li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
     display: none;
 }
 
-.active {
+li[class*="toctree-l"] ul.active, li[class^="toctree-l"] ul.active {
     display: block !important;
 }

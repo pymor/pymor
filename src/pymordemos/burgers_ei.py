@@ -18,6 +18,8 @@ from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.tools.progress import track
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'reduced-basis', 'empirical-interpolation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

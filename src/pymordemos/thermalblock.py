@@ -13,6 +13,8 @@ from pymor.algorithms.error import plot_reduction_error_analysis, reduction_erro
 from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'builtin-discretizer', 'fenics')
+
 app = App(help_on_error=True)
 
 @app.default

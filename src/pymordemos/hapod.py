@@ -15,6 +15,8 @@ from pymor.discretizers.builtin import RectGrid, discretize_instationary_fv
 from pymor.tools.mpi import parallel
 from pymor.tools.table import format_table
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'pod', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
