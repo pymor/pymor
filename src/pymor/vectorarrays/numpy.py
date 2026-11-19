@@ -316,6 +316,7 @@ class NumpyVectorSpace(VectorSpace):
             array = array.T
         return cls.make_array(np.asfortranarray(array))
 
+    @from_file.instancemethod
     def _(self, path: str | Path, key: str | None = None, single_vector: bool = False,
           transpose: bool = False):
         """:noindex:"""  # noqa: D400
