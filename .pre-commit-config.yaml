@@ -57,6 +57,3 @@ repos:
           - text
         files: \.yaml|\.yml|\.cff$
         exclude: ^conda
-ci:
-  autofix_prs: false
-  autoupdate_schedule: quarterly

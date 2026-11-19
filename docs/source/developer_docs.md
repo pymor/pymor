@@ -138,11 +138,25 @@ changes it introduces. See the [labels' descriptions](https://github.com/pymor/p
 
 pyMOR ships a config for the [pre-commit](https://pre-commit.com/) hook management system.
 Using this setup can be a good way to find code style errors before pushing to GitHub, but using
-it is not required. Once you have `pre-commit` installed in your environment, run
+it is not required.
+
+We recommend running the hooks with [prek](https://github.com/j178/prek), a faster drop-in
+replacement for `pre-commit` which uses the same `.pre-commit-config.yaml`.
+It can be installed with [uv](https://github.com/astral-sh/uv) by running
 
 ```
-pre-commit install
+uv tool install prek
 ```
+
+To activate the hooks for your local clone of pyMOR, run
+
+```
+prek install
+```
+
+If you have previously activated the hooks with `pre-commit`, use `prek install -f` instead
+to overwrite the existing Git hook.
+Alternatively, you can still use `pre-commit` itself by running `pre-commit install`.
 
 Afterwards, the hooks configured in `.pre-commit-config.yaml` will run on all changed
 files prior to committing changes. Errors will block the commit, some
@@ -280,13 +294,23 @@ This includes Conda-based MacOS and Windows test suite runs and management of Gi
 Further, for PRs from external repositories, a local mirror branch is created and updated.
 This enables GitLab CI runs for those PRs.
 
-### pre-commit.ci
+### prek
 
-The main pyMOR repository has the `pre-commit.ci` GitHub App installed. This runs the pre-commit hooks
-defined in `.pre-commit-config.yaml` on every pull request.
-If the hooks change files, the changes are pushed back to the PR branch.
-[Configuration](https://pre-commit.ci/#configuration) is done
-via the `.pre-commit-config.yaml` file.
+The `prek` GitHub Actions workflow uses [prek-action](https://github.com/j178/prek-action) to run
+the hooks defined in `.pre-commit-config.yaml` on all files for every pull request and in the merge
+queue.
+The workflow does not push any changes, so reported errors have to be fixed locally, e.g., by running
+`prek run --all-files`.
+
+Once per quarter, the `prek update` workflow runs `prek update` to update the hook revisions in
+`.pre-commit-config.yaml` and opens a pull request with the changes.
+It also syncs the version of `ruff` in the `dev` extra in `pyproject.toml` with the revision of the
+`ruff-pre-commit` hook.
+In that case, the CI requirement files have to be updated by running `make ci_requirements`.
+The workflow can also be triggered manually from the Actions tab on GitHub.
+The pull request is created using the `PREK_UPDATE_TOKEN` repository secret, if it is set.
+Otherwise, the default `GITHUB_TOKEN` is used, in which case no CI workflows are triggered for the
+pull request until it is closed and reopened.
 
 ### Performance tests
 
