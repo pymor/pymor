@@ -129,6 +129,8 @@ common = """
 .. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
+.. |LQOModel| replace:: :class:`~pymor.models.iosys.LQOModel`
+.. |LQOModels| replace:: :class:`LQOModels <pymor.models.iosys.LQOModel>`
 .. |QuadraticHamiltonianModel| replace:: :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`
 .. |SaddlePointModel| replace:: :class:`~pymor.models.saddle_point.SaddlePointModel`
 
