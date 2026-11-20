@@ -159,7 +159,7 @@ class MPIVectorSpace(VectorSpace[MPIVectorArray]):
         return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
 
     def __eq__(self, other) -> bool:
-        return type(other) is MPIVectorSpace and \
+        return type(other) is type(self) and \
             len(self.local_spaces) == len(other.local_spaces) and \
             all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces, strict=True))
 
