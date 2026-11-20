@@ -846,7 +846,7 @@ class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
     """Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`."""
 
     @abstractmethod
-    def make_array(*args, **kwargs) -> A:
+    def make_array(self, *args, **kwargs) -> A:
         """Create a |VectorArray| from raw data.
 
         This method is used in the implementation of |Operators|
