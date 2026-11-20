@@ -255,6 +255,14 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         if self.is_view:
             raise ValueError('Cannot delete items from VectorArray view')
         assert self.check_ind(ind)
+
+        # normalize ind to the format expected by VectorArrayImpl
+        l = self._len
+        if isinstance(ind, Integer):
+            ind = [int(ind) if 0 <= ind else int(l+ind)]
+        elif isinstance(ind, list | np.ndarray):
+            ind = [i if 0 <= i else l+i for i in ind]
+
         self._copy_impl_if_multiple_refs()
         self.impl.delete(ind)
         self._len = len(self.impl)
