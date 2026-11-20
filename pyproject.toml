@@ -199,6 +199,10 @@ packages = [
 [tool.hatch.version]
 path = "src/pymor/__init__.py"
 
+[tool.mypy]
+# allow redefining unannotated variables with a different type (same as pyrefly)
+allow_redefinition = true
+
 [tool.pytest.ini_options]
 pythonpath = "src"
 testpaths = "src/pymortests"
