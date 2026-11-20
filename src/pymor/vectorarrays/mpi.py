@@ -400,7 +400,7 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
 
 def _MPIVectorSpaceAutoComm_dim(local_spaces: LocalSpaces) -> list[int] | None:
     local_space = _get_local_space(local_spaces)
-    dims = mpi.comm.gather(local_space, root=0)
+    dims = mpi.comm.gather(local_space.dim, root=0)
     if mpi.rank0:
         return dims
 
