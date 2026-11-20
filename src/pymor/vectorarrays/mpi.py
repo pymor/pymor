@@ -163,6 +163,9 @@ class MPIVectorSpace(VectorSpace[MPIVectorArray]):
             len(self.local_spaces) == len(other.local_spaces) and \
             all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces, strict=True))
 
+    def __hash__(self):
+        return hash(self.local_spaces)
+
     def __repr__(self) -> str:
         return f'{self.__class__}({self.local_spaces})'
 
