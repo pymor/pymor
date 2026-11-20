@@ -215,6 +215,7 @@ def _MPIVectorSpace_check_local_spaces(local_spaces: LocalSpaces, obj_id: mpi.Ob
     results = mpi.comm.gather(U in local_space, root=0)
     if mpi.rank0:
         return bool(np.all(results))
+    return None
 
 
 def _MPIVectorArray_append(self: VectorArray, other: VectorArray, remove_from_other: bool, oind: Ind) -> None:
@@ -406,6 +407,7 @@ def _MPIVectorSpaceAutoComm_dim(local_spaces: LocalSpaces) -> list[int] | None:
     dims = mpi.comm.gather(local_space.dim, root=0)
     if mpi.rank0:
         return dims
+    return None
 
 
 def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: Ind, oind: Ind) -> np.ndarray | None:
@@ -415,6 +417,7 @@ def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: In
     mpi.comm.Gather(local_results, results, root=0)
     if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
 def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray, ind: Ind,
@@ -425,6 +428,7 @@ def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray
     mpi.comm.Gather(local_results, results, root=0)
     if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
 def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Ind) -> np.ndarray | None:
@@ -434,6 +438,7 @@ def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Ind) -> np.ndarray | N
     mpi.comm.Gather(local_results, results, root=0)
     if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
 def _MPIVectorArrayAutoComm_dofs(self: VectorArray, offsets: np.ndarray, dof_indices: np.ndarray,
@@ -449,6 +454,7 @@ def _MPIVectorArrayAutoComm_dofs(self: VectorArray, offsets: np.ndarray, dof_ind
     mpi.comm.Gather(local_results, results, root=0)
     if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
 def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Ind) -> tuple[np.ndarray, np.ndarray] | None:
@@ -462,6 +468,7 @@ def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Ind) -> tuple[np.ndarra
     mpi.comm.Gather(local_vals, vals, root=0)
     if inds is not None and vals is not None:  # only on rank 0
         return inds, vals
+    return None
 
 
 def _indexed[T: VectorArray](array: T, ind: Ind) -> T:
