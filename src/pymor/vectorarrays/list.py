@@ -6,7 +6,7 @@ from typing import Self
 
 import numpy as np
 
-from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractmethod, classinstancemethod
 from pymor.core.typing import Complex, Real
 from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
@@ -98,8 +98,11 @@ class Vector(BasicObject):
 
 class CopyOnWriteVector(Vector):
 
-    @abstractclassmethod
-    def from_instance(cls, instance: Self) -> Self: ...  # noqa: N805
+    _refcount: list[int]
+
+    @classmethod
+    @abstractmethod
+    def from_instance(cls, instance: Self) -> Self: ...
 
     @abstractmethod
     def _copy_data(self) -> None: ...
