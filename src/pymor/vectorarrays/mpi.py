@@ -338,19 +338,19 @@ class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_norm2, self.obj_id, ind)
 
     def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
-        offsets = getattr(self, '_offsets', None)
+        space = self.space
+        assert isinstance(space, MPIVectorSpaceAutoComm)
+        offsets = getattr(space, '_offsets', None)
         if offsets is None:
-            space = self.space
-            assert isinstance(space, MPIVectorSpaceAutoComm)
             offsets = space._get_dims()[1]
         dof_indices = np.array(dof_indices)
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices, ind)
 
     def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
-        offsets = getattr(self, '_offsets', None)
+        space = self.space
+        assert isinstance(space, MPIVectorSpaceAutoComm)
+        offsets = getattr(space, '_offsets', None)
         if offsets is None:
-            space = self.space
-            assert isinstance(space, MPIVectorSpaceAutoComm)
             offsets = space._get_dims()[1]
         inds, vals = mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_amax, self.obj_id, ind)
         inds += offsets[:, np.newaxis]
