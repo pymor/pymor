@@ -195,7 +195,7 @@ class BlockVectorArray(VectorArray):
             return self._blocks
 
 
-class BlockVectorSpace(VectorSpace):
+class BlockVectorSpace(VectorSpace[BlockVectorArray]):
     """|VectorSpace| of :class:`BlockVectorArrays <BlockVectorArray>`.
 
     A :class:`BlockVectorSpace` is defined by the |VectorSpaces| of the

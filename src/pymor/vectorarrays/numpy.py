@@ -241,7 +241,7 @@ class NumpyVectorArray(VectorArray):
         return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy())})
 
 
-class NumpyVectorSpace(VectorSpace):
+class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
     """|VectorSpace| of |NumpyVectorArrays|.
 
     Parameters

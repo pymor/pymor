@@ -515,7 +515,7 @@ class ListVectorArray(VectorArray):
         return self.impl._indexed(self.ind)
 
 
-class ListVectorSpace[V: Vector](VectorSpace):
+class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
     """|VectorSpace| of |ListVectorArrays|."""
 
     vector_type: type[V]
