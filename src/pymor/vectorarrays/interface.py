@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 import numpy as np
 
@@ -18,7 +18,7 @@ type Ind = list[int] | slice | None
 type IndLike = Ind | Integer | np.ndarray
 
 
-class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
+class VectorArray[I: 'VectorArrayImpl'](BasicObject):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
@@ -82,7 +82,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
 
     impl_type: type[I]
     is_view = False
-    space: S
+    space: 'VectorSpace[Self]'
     _impl: 'I | None' = None
     base: 'Self | None' = None
     ind: Ind = None
@@ -91,7 +91,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
     def impl(self) -> I:
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
-    def __init__(self, space: S, impl: 'I | None', base: 'Self | None' = None,
+    def __init__(self, space: 'VectorSpace[Self]', impl: 'I | None', base: 'Self | None' = None,
                  ind: Ind = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
@@ -109,7 +109,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             self.ind = ind
             self._len = _len
 
-    def zeros(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
+    def zeros(self, count: int = 1, reserve: int = 0) -> Self:
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
@@ -127,7 +127,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         return self.space.zeros(count, reserve=reserve)
 
-    def ones(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
+    def ones(self, count: int = 1, reserve: int = 0) -> Self:
         """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
 
         This is a shorthand for `self.space.full(1., count, reserve)`.
@@ -145,7 +145,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         return self.space.full(1., count, reserve)
 
-    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> 'VectorArray':
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> Self:
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
@@ -165,7 +165,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         return self.space.full(value, count, reserve=reserve)
 
-    def random(self, count:int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> 'VectorArray':
+    def random(self, count:int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> Self:
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
@@ -200,7 +200,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         """
         return self.space.random(count, distribution, reserve, **kwargs)
 
-    def empty(self, reserve: int = 0) -> 'VectorArray':
+    def empty(self, reserve: int = 0) -> Self:
         """Create an empty |VectorArray| of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(0, reserve)`.
@@ -223,7 +223,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
     def __len__(self) -> int:
         return self._len
 
-    def __getitem__(self, ind: IndLike) -> 'VectorArray':
+    def __getitem__(self, ind: IndLike) -> Self:
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
         l = self._len
 
@@ -309,7 +309,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             else:
                 other._len = 0
 
-    def copy(self, deep: bool = False) -> 'VectorArray':
+    def copy(self, deep: bool = False) -> Self:
         """Returns a copy of the array.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
@@ -338,7 +338,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             self._refcount[0] += 1
             return C
 
-    def __deepcopy__(self, memo) -> 'VectorArray':
+    def __deepcopy__(self, memo) -> Self:
         del memo  # memo is unused
         return self.copy(deep=True)
 
@@ -505,7 +505,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             assert len(self) == len(other)
             return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
 
-    def lincomb(self, coefficients: np.ndarray) -> 'VectorArray':
+    def lincomb(self, coefficients: np.ndarray) -> Self:
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -679,7 +679,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             return self.impl.gramian(self.ind)
 
     @property
-    def real(self) -> 'VectorArray':
+    def real(self) -> Self:
         impl = self.impl.real(self.ind)
         if impl is self.impl:
             return self.copy()
@@ -687,11 +687,11 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             return type(self)(self.space, impl)
 
     @property
-    def imag(self) -> 'VectorArray':
+    def imag(self) -> Self:
         """Imaginary part."""
         return type(self)(self.space, self.impl.imag(self.ind))
 
-    def conj(self) -> 'VectorArray':
+    def conj(self) -> Self:
         """Complex conjugation."""
         impl = self.impl.conj(self.ind)
         if impl is self.impl:
@@ -699,7 +699,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         else:
             return type(self)(self.space, impl)
 
-    def __add__(self, other: 'Complex | VectorArray') -> 'VectorArray':
+    def __add__(self, other: 'Complex | VectorArray') -> Self:
         if isinstance(other, Complex):
             assert other == 0
             return self.copy()
@@ -713,7 +713,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
 
     __radd__ = __add__
 
-    def __sub__(self, other: 'VectorArray') -> 'VectorArray':
+    def __sub__(self, other: 'VectorArray') -> Self:
         assert other in self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(-1, other.impl, self.ind, other.ind))
@@ -722,7 +722,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other: 'Complex | np.ndarray') -> 'VectorArray':
+    def __mul__(self, other: 'Complex | np.ndarray') -> Self:
         assert isinstance(other, Complex) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return type(self)(self.space, self.impl.scal_copy(other, self.ind))
@@ -733,7 +733,7 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
         self.scal(other)
         return self
 
-    def __neg__(self) -> 'VectorArray':
+    def __neg__(self) -> Self:
         return type(self)(self.space, self.impl.scal_copy(-1, self.ind))
 
     def check_ind(self, ind) -> bool:
@@ -809,7 +809,11 @@ class VectorArray[S: 'VectorSpace', I: 'VectorArrayImpl'](BasicObject):
             self._refcount[0] -= 1
 
 
-class VectorSpace[A: VectorArray](ImmutableObject):
+# We need to use an old-style TypeVar here to mark A excplicityl as covariant.
+# In the future, we might use ReadOnly[ ] (PEP 767) on array_type.
+A = TypeVar('A', bound=VectorArray, covariant=True)
+
+class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
     """Class describing a vector space.
 
     Vector spaces act as factories for |VectorArrays| of vectors
