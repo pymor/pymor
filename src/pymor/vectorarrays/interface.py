@@ -705,7 +705,10 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(1, other.impl, self.ind, other.ind))
 
-    def __iadd__(self, other: 'VectorArray') -> Self:
+    def __iadd__(self, other: 'Complex | VectorArray') -> Self:
+        if isinstance(other, Complex):
+            assert other == 0
+            return self
         self.axpy(1, other)
         return self
 
