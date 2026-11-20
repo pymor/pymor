@@ -51,6 +51,7 @@ functionality:
 import abc
 import inspect
 import uuid
+from abc import abstractmethod as abstractmethod  # explicit re-export so that type checkers recognize it
 from collections.abc import Callable
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
@@ -167,7 +168,6 @@ class BasicObject(metaclass=UberMeta):
         return format_repr(self)
 
 
-abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
