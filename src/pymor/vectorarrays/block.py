@@ -2,86 +2,89 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from collections.abc import Sequence
 from functools import reduce
-from numbers import Number
+from typing import Self
 
 import numpy as np
 
 from pymor.core.base import classinstancemethod
-from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace
+from pymor.core.typing import Complex
+from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace
 
 
 class BlockVectorArrayImpl(VectorArrayImpl):
 
-    def __init__(self, blocks, space):
+    def __init__(self, blocks: Sequence[VectorArray], space: 'BlockVectorSpace'):
         self._blocks = tuple(blocks)
         self.space = space
         assert self._blocks_are_valid(False)
 
-    def __len__(self):
+    def __len__(self) -> int:
         try:
             return len(self._blocks[0])
         except IndexError:
             return 0
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
         assert self._blocks_are_valid()
+        del ensure_copy # ignored
         if len(self._blocks):
             # hstack will error out with empty input list
             return np.vstack([_indexed(block, ind).to_numpy(False) for block in self._blocks])
         else:
             return np.empty((0, 0))
 
-    def real(self, ind):
+    def real(self, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).real for block in self._blocks], self.space)
 
-    def imag(self, ind):
+    def imag(self, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).imag for block in self._blocks], self.space)
 
-    def conj(self, ind):
+    def conj(self, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).conj() for block in self._blocks], self.space)
 
-    def delete(self, ind):
+    def delete(self, ind: Ind) -> None:
         assert self._blocks_are_valid()
         ind = slice(None) if ind is None else ind
         for block in self._blocks:
             del block[ind]
 
-    def append(self, other, remove_from_other, oind):
+    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         for block, other_block in zip(self._blocks, other._blocks, strict=True):
             block.append(_indexed(other_block, oind), remove_from_other)
 
-    def copy(self, deep, ind):
+    def copy(self, deep: bool, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).copy(deep) for block in self._blocks], self.space)
 
-    def scal(self, alpha, ind):
+    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
         assert self._blocks_are_valid()
         for block in self._blocks:
             _indexed(block, ind).scal(alpha)
 
-    def scal_copy(self, alpha, ind):
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
         assert self._blocks_are_valid()
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == -1:
                 return type(self)([-_indexed(block, ind) for block in self._blocks], self.space)
         return super().scal_copy(alpha, ind)
 
-    def axpy(self, alpha, x, ind, xind):
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         for block, x_block in zip(self._blocks, x._blocks, strict=True):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
-    def axpy_copy(self, alpha, x, ind, xind):
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
-        if isinstance(alpha, Number):
+        if isinstance(alpha, Complex):
             if alpha == 1:
                 return type(self)([_indexed(block, ind) + _indexed(x_block, xind)
                                    for block, x_block in zip(self._blocks, x._blocks, strict=True)],
@@ -92,7 +95,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
                                   self.space)
         return super().axpy_copy(alpha, x, ind, xind)
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).inner(_indexed(other_block, oind))
@@ -104,7 +107,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             ret += prod
         return ret
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).pairwise_inner(_indexed(other_block, oind))
@@ -116,16 +119,16 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             ret += prod
         return ret
 
-    def lincomb(self, coefficients, ind):
+    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
         assert self._blocks_are_valid()
         lincombs = [_indexed(block, ind).lincomb(coefficients) for block in self._blocks]
         return type(self)(lincombs, self.space)
 
-    def norm2(self, ind):
+    def norm2(self, ind: Ind) -> np.ndarray:
         assert self._blocks_are_valid()
         return np.sum(np.array([_indexed(block, ind).norm2() for block in self._blocks]), axis=0)
 
-    def dofs(self, dof_indices, ind):
+    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
         assert self._blocks_are_valid()
         if not len(dof_indices):
             return np.zeros((0, self.len_ind(ind)))
@@ -138,7 +141,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return np.array([blocks[bi].dofs([ci])[0, :]
                          for bi, ci in zip(block_inds, dof_indices, strict=True)])
 
-    def amax(self, ind):
+    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
         assert self._blocks_are_valid()
         self._compute_bins()
         blocks = [_indexed(b, ind) for b in self._blocks]
@@ -149,7 +152,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         ar = np.arange(inds.shape[1])
         return inds[block_inds, ar], vals[block_inds, ar]
 
-    def _blocks_are_valid(self, after_creation=True):
+    def _blocks_are_valid(self, after_creation: bool = True) -> bool:
         assert all(len(block) == len(self._blocks[0]) for block in self._blocks), \
             (f'All blocks in a BlockVectorArray must be of the same length '
              f'(lengths: {[len(block) for block in self._blocks]})'
@@ -157,7 +160,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
                 if after_creation else ''))
         return True
 
-    def _compute_bins(self):
+    def _compute_bins(self) -> None:
         if not hasattr(self, '_bins'):
             dims = np.array([subspace.dim for subspace in self.space.subspaces])
             self._bin_map = bin_map = np.where(dims > 0)[0]
@@ -179,15 +182,16 @@ class BlockVectorArray(VectorArray):
 
     @property
     def blocks(self):
+        impl = self.impl
         if self.ind is None:
-            return self.impl._blocks
+            return impl._blocks
         else:
             try:
                 return self._blocks
             except AttributeError:
                 pass
             ind = self.ind
-            self._blocks = tuple(b[ind] for b in self.impl._blocks)
+            self._blocks = tuple(b[ind] for b in impl._blocks)
             return self._blocks
 
 
@@ -206,12 +210,15 @@ class BlockVectorSpace(VectorSpace):
         The tuple defined above.
     """
 
-    def __init__(self, subspaces):
+    array_type = BlockVectorArray
+
+    def __init__(self, subspaces: Sequence[VectorSpace]):
         subspaces = tuple(subspaces)
         assert all(isinstance(subspace, VectorSpace) for subspace in subspaces)
         self.subspaces = subspaces
+        self.dim = sum(subspace.dim for subspace in self.subspaces)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (type(other) is BlockVectorSpace
                 and len(self.subspaces) == len(other.subspaces)
                 and all(space == other_space
@@ -220,11 +227,7 @@ class BlockVectorSpace(VectorSpace):
     def __hash__(self):
         return sum(hash(s) for s in self.subspaces)
 
-    @property
-    def dim(self):
-        return sum(subspace.dim for subspace in self.subspaces)
-
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> BlockVectorArray:
         # these asserts make sure we also trigger if the subspace list is empty
         assert count >= 0
         assert reserve >= 0
@@ -233,19 +236,29 @@ class BlockVectorSpace(VectorSpace):
             BlockVectorArrayImpl([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
         )
 
+    def full(self, value: Complex, count: int = 1, reserve: int = 0) -> BlockVectorArray:
+        # these asserts make sure we also trigger if the subspace list is empty
+        assert count >= 0
+        assert reserve >= 0
+        return BlockVectorArray(
+            self,
+            BlockVectorArrayImpl([subspace.full(value, count=count, reserve=reserve) for subspace in self.subspaces],
+                                 self)
+        )
+
     @classinstancemethod
-    def make_array(cls, obj):  # noqa: N805
+    def make_array(cls, obj: Sequence[VectorArray]) -> BlockVectorArray:  # type: ignore # noqa: N805
         assert len(obj) > 0
-        return cls(tuple(o.space for o in obj)).make_array(obj)
+        return BlockVectorSpace(tuple(o.space for o in obj)).make_array(obj)
 
     @make_array.instancemethod
-    def _(self, obj):
+    def _(self, obj: Sequence[VectorArray]) -> BlockVectorArray:
         """:noindex:"""  # noqa: D400
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces, strict=True))
         return BlockVectorArray(self, BlockVectorArrayImpl(obj, self))
 
-    def make_block_diagonal_array(self, obj):
+    def make_block_diagonal_array(self, obj: Sequence[VectorArray]) -> BlockVectorArray:
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces, strict=True))
         U = self.empty(reserve=sum(len(UU) for UU in obj))
@@ -253,7 +266,7 @@ class BlockVectorSpace(VectorSpace):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
 
-    def from_numpy(self, data, ensure_copy=False):
+    def from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> BlockVectorArray:
         if data.ndim == 1:
             data = data.reshape((-1, 1))
         data = data.T

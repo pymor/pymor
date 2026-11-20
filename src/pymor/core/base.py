@@ -53,16 +53,11 @@ import inspect
 import uuid
 from collections.abc import Callable
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Concatenate, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Concatenate, Self, overload
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
 from pymor.tools.formatrepr import _format_generic, format_repr
-
-try:
-    from typing import Self
-except ImportError:
-    Self = TypeVar('Self', bound='classinstancemethod')
 
 NoneType = type(None)
 

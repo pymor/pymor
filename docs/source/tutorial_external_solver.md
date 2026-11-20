@@ -290,6 +290,8 @@ of {{ VectorSpace }} are implemented in {class}`~pymor.vectorarrays.list.ListVec
 ```{code-cell} ipython3
 class WrappedVectorSpace(ListVectorSpace):
 
+    vector_type = WrappedVector
+
     def __init__(self, dim):
         self.dim = dim
 

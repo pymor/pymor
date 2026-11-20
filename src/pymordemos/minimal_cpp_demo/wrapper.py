@@ -57,6 +57,8 @@ class WrappedVector(CopyOnWriteVector):
 
 class WrappedVectorSpace(ListVectorSpace):
 
+    vector_type = WrappedVector
+
     def __init__(self, dim):
         self.dim = dim
 
