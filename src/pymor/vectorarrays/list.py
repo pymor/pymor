@@ -490,7 +490,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         return type(self)([v.conj() for v in self._indexed(ind)], self.space)
 
 
-class ListVectorArray(VectorArray):
+class ListVectorArray(VectorArray[ListVectorArrayImpl]):
     """|VectorArray| implemented as a Python list of vectors.
 
     This |VectorArray| implementation is the first choice when

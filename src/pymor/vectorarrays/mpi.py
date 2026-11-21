@@ -82,7 +82,7 @@ class MPIVectorArrayImpl(VectorArrayImpl):
 
 
 @unpicklable
-class MPIVectorArray(VectorArray):
+class MPIVectorArray(VectorArray[MPIVectorArrayImpl]):
     """MPI distributed |VectorArray|.
 
     Given a local |VectorArray| on each MPI rank, this wrapper class

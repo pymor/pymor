@@ -167,7 +167,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             self._bins = np.cumsum(np.hstack(([0], dims[bin_map])))
 
 
-class BlockVectorArray(VectorArray):
+class BlockVectorArray(VectorArray[BlockVectorArrayImpl]):
     """|VectorArray| where each vector is a direct sum of sub-vectors.
 
     Given a list of equal length |VectorArrays| `blocks`, this |VectorArray|

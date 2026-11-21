@@ -212,7 +212,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return max_ind, max_val
 
 
-class NumpyVectorArray(VectorArray):
+class NumpyVectorArray(VectorArray[NumpyVectorArrayImpl]):
     """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
