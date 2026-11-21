@@ -590,7 +590,7 @@ class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False) -> ListVectorArray:  # noqa: N805
         return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
