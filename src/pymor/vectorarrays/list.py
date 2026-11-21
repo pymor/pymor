@@ -576,7 +576,7 @@ class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
         )
 
     @classinstancemethod
-    def make_array(cls, obj) -> ListVectorArray:  # noqa: N805
+    def make_array(cls, obj) -> ListVectorArray:  # pyrefly: ignore[bad-override]  # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0]).make_array(obj)

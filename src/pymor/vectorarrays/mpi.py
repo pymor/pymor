@@ -127,7 +127,7 @@ class MPIVectorSpace(VectorSpace[MPIVectorArray]):
     def __init__(self, local_spaces: Iterable['VectorSpace | RegisteredLocalSpace']):
         self.local_spaces = tuple(local_spaces)
 
-    def make_array(self, obj_id: mpi.ObjectId) -> MPIVectorArray:
+    def make_array(self, obj_id: mpi.ObjectId) -> MPIVectorArray:  # pyrefly: ignore[bad-override]
         """Create array from rank-local |VectorArray| instances.
 
         Parameters

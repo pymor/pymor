@@ -282,7 +282,7 @@ class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj) -> NumpyVectorArray:  # noqa: N805
+    def make_array(cls, obj) -> NumpyVectorArray:  # pyrefly: ignore[bad-override]  # noqa: N805
         return cls._array_factory(obj)
 
     @make_array.instancemethod
