@@ -247,7 +247,7 @@ class BlockVectorSpace(VectorSpace[BlockVectorArray]):
         )
 
     @classinstancemethod
-    def make_array(cls, obj: Sequence[VectorArray]) -> BlockVectorArray:  # type: ignore # noqa: N805
+    def make_array(cls, obj: Sequence[VectorArray]) -> BlockVectorArray:  # noqa: N805
         assert len(obj) > 0
         return BlockVectorSpace(tuple(o.space for o in obj)).make_array(obj)
 

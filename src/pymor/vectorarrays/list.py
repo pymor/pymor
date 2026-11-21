@@ -576,7 +576,7 @@ class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
         )
 
     @classinstancemethod
-    def make_array(cls, obj) -> ListVectorArray:  # type: ignore # noqa: N805
+    def make_array(cls, obj) -> ListVectorArray:  # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0]).make_array(obj)
@@ -590,7 +590,7 @@ class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # type: ignore # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False):  # noqa: N805
         return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod

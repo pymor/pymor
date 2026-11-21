@@ -282,7 +282,7 @@ class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj) -> NumpyVectorArray:  # type: ignore # noqa: N805
+    def make_array(cls, obj) -> NumpyVectorArray:  # noqa: N805
         return cls._array_factory(obj)
 
     @make_array.instancemethod
@@ -291,7 +291,7 @@ class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False) -> NumpyVectorArray:  # type: ignore # noqa: N805
+    def from_numpy(cls, data: np.ndarray, ensure_copy: bool = False) -> NumpyVectorArray:  # noqa: N805
         return cls._array_factory(data.copy(order='F') if ensure_copy else data)
 
     @from_numpy.instancemethod
@@ -327,7 +327,7 @@ class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
-            array = array.toarray() # type: ignore
+            array = array.toarray()
         else:
             array = np.array(array, ndmin=2)
         if array.ndim != 2:
