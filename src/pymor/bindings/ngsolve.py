@@ -104,9 +104,8 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace[NGSolveVector]):
         else:
             return u.dim
 
-    # VectorSpace declares dim as a plain attribute, but the space is immutable
     @property
-    def dim(self) -> int:  # type: ignore
+    def dim(self) -> int:
         return self.V.ndofglobal * self.value_dim
 
     @classmethod

@@ -147,9 +147,8 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace[FenicsVector]):
     def __init__(self, V):
         self.V = V
 
-    # VectorSpace declares dim as a plain attribute, but the space is immutable
     @property
-    def dim(self) -> int:  # type: ignore
+    def dim(self) -> int:
         return df.Function(self.V).vector().size()
 
     def __eq__(self, other) -> bool:

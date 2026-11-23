@@ -153,9 +153,8 @@ class MPIVectorSpace(VectorSpace[MPIVectorArray]):
             )
         )
 
-    # VectorSpace declares dim as a plain attribute, but MPIVectorSpace is immutable
     @property
-    def dim(self) -> int:  # type: ignore
+    def dim(self) -> int:
         return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
 
     def __eq__(self, other) -> bool:

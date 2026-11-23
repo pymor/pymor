@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Self, TypeVar
 
 import numpy as np
@@ -839,11 +840,13 @@ class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
     """
 
     array_type: type[A]
-    dim: int
-    """The dimension (number of degrees of freedom) of the vectors contained in the space."""
-
     is_scalar = False
     """Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`."""
+
+    @cached_property
+    def dim(self) -> int:
+        """The dimension (number of degrees of freedom) of the vectors contained in the space."""
+        raise NotImplementedError
 
     @abstractmethod
     def make_array(self, *args, **kwargs) -> A:
