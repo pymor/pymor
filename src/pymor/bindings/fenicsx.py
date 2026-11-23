@@ -111,7 +111,7 @@ class ComplexifiedFenicsxVector(ComplexifiedVector):
 
     def amax(self):
         A = np.abs(self.to_numpy())
-        max_ind = np.argmax(A)
+        max_ind = int(np.argmax(A))
         max_val = A[max_ind]
         return max_ind, max_val
 

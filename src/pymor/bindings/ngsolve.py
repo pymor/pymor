@@ -25,7 +25,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class NGSolveVectorCommon:
     def amax(self):
         A = np.abs(self.to_numpy())
-        max_ind = np.argmax(A)
+        max_ind = int(np.argmax(A))
         max_val = A[max_ind]
         return max_ind, max_val
 
@@ -55,10 +55,12 @@ class NGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
         return self.impl.vec.FV().NumPy()
 
     def _scal(self, alpha):
-        self.impl.vec.data = float(alpha) * self.impl.vec
+        assert alpha.imag == 0  # NGSolveVector is always real, see ComplexifiedNGSolveVector
+        self.impl.vec.data = float(alpha.real) * self.impl.vec
 
     def _axpy(self, alpha, x):
-        self.impl.vec.data = self.impl.vec + float(alpha) * x.impl.vec
+        assert alpha.imag == 0  # NGSolveVector is always real, see ComplexifiedNGSolveVector
+        self.impl.vec.data = self.impl.vec + float(alpha.real) * x.impl.vec
 
     def inner(self, other):
         return self.impl.vec.InnerProduct(other.impl.vec)

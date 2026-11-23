@@ -120,7 +120,7 @@ class ComplexifiedFenicsVector(ComplexifiedVector):
         max_val_on_rank = A[max_ind_on_rank]
         from pymor.tools import mpi
         if not mpi.parallel:
-            return max_ind_on_rank, max_val_on_rank
+            return int(max_ind_on_rank), max_val_on_rank
         else:
             max_global_ind_on_rank = max_ind_on_rank + self.real_part.impl.local_range()[0]
             comm = self.real_part.impl.mpi_comm()
@@ -133,7 +133,7 @@ class ComplexifiedFenicsVector(ComplexifiedVector):
             comm.Allgather(np.array(max_val_on_rank), max_vals)
 
             i = np.argmax(max_vals)
-            return max_inds[i], max_vals[i]
+            return int(max_inds[i]), max_vals[i]
 
 
 class FenicsVectorSpace(ComplexifiedListVectorSpace):
