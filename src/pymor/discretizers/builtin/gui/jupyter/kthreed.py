@@ -23,6 +23,11 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class VectorArrayPlot(K3DPlot):
+    """K3D plot of scalar data associated to a two-dimensional |Grid|.
+
+    Used by :func:`visualize_k3d`.
+    """
+
     def __init__(self, grid, U, codim, color_range, color_map, warp, bounding_box, show_mesh, *args, **kwargs):
         bounding_box = grid.bounding_box() if bounding_box is None else np.asarray(bounding_box)
         assert bounding_box.shape == (2, 2)
