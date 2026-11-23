@@ -88,7 +88,6 @@ class VectorArrayPlot(K3DPlot):
         self.idx = 0
         self.mesh = k3d.mesh(vertices=self.vertices,
                              indices=indices,
-                             color=0x0000FF,
                              opacity=1.0,
                              color_range=color_range,
                              color_map=np.array(color_map, np.float32),
