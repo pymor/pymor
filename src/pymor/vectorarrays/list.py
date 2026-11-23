@@ -661,6 +661,9 @@ class NumpyListVectorSpace(ListVectorSpace):
     def __eq__(self, other) -> bool:
         return type(other) is NumpyListVectorSpace and self.dim == other.dim
 
+    def __hash__(self) -> int:
+        return hash(self.dim)
+
     @classmethod
     def space_from_vector_obj(cls, vec) -> Self:
         return cls(len(vec))
