@@ -1,5 +1,8 @@
 import re
 
+from sphinx import addnodes
+from sphinx.transforms.post_transforms import SphinxPostTransform
+
 MANUAL_SKIPS = ('RENDER_FRAGMENT_SHADER',
                 'RENDER_VERTEX_SHADER',
                 'pymor.analyticalproblems.domaindescriptions.DomainDescription.boundary_types',
@@ -72,6 +75,71 @@ def skip(app, what, name, obj, skip, options):
     return SKIPS_RE.search(name)
 
 
+def _class_type_params(objects, name, seen=None):
+    """Type parameters of the class `name` and of all its base classes."""
+    seen = set() if seen is None else seen
+    obj = objects.get(name.split('[', 1)[0])
+    if obj is None or obj.id in seen or obj.type != 'class':
+        return set()
+    seen.add(obj.id)
+    names = {param[1] for param in obj.obj.get('type_params', ())}
+    module = obj.id.rsplit('.', 1)[0]
+    for base in obj.bases:
+        # autoapi does not qualify bases defined in the same module if they are decorated.
+        # imported bases are always qualified, so an unqualified base refers to this module
+        if base.split('[', 1)[0] not in objects:
+            base = f'{module}.{base}'
+        names |= _class_type_params(objects, base, seen)
+    return names
+
+
+def _type_params_in_scope(node, objects):
+    """Names of the PEP 695 type parameters declared by the descriptions enclosing `node`.
+
+    For classes, this includes the type parameters of the base classes, as autoapi
+    shows the inherited signature of `__init__` for classes without their own `__init__`.
+    """
+    names = set()
+    while node is not None:
+        if isinstance(node, addnodes.desc):
+            for sig in (c for c in node.children if isinstance(c, addnodes.desc_signature)):
+                for param in sig.findall(addnodes.desc_type_parameter):
+                    names.update(n.astext() for n in param.findall(addnodes.desc_sig_name))
+                if node.get('objtype') == 'class' and sig.get('fullname'):
+                    # recursively look up class type parameters
+                    names |= _class_type_params(objects, f"{sig['module']}.{sig['fullname']}")
+        node = node.parent
+    return names
+
+
+class PythonTypeReferences(SphinxPostTransform):
+    """Make type parameter references plain text and expand `np` to `numpy`.
+
+    Type parameters are not documented objects, so references to them cause warnings or
+    even links to unrelated objects of the same name.
+
+    See https://github.com/sphinx-doc/sphinx/issues/14462 and proposed fix in
+    https://github.com/sphinx-doc/sphinx/pull/14518.
+
+    `np.` reference targets are expanded to `numpy.`, as autoapi does not resolve module aliases in
+    the values of type aliases.
+    """
+
+    default_priority = 5  # before ReferencesResolver
+
+    def run(self, **kwargs):
+        objects = getattr(self.env, 'autoapi_all_objects', {})
+        for ref in list(self.document.findall(addnodes.pending_xref)):
+            if ref.get('refdomain') != 'py':
+                continue
+            target = ref['reftarget']
+            if target.startswith('np.'):
+                ref['reftarget'] = 'numpy.' + target[3:]
+            elif target in _type_params_in_scope(ref, objects):
+                ref.replace_self(ref.children)
+
+
 def setup(app):
     app.connect('autoapi-skip-member', skip)
+    app.add_post_transform(PythonTypeReferences)
     return {'parallel_read_safe': True}
