@@ -363,7 +363,8 @@ def _static_html(plots, frames, title, legend, columns, height):
 def _static_animation_controls(frames):
     """HTML counterpart of |AnimationWidget| for static k3d snapshots.
 
-    Consists of a play/pause button, a frame slider with frame counter and a delay slider.
+    Consists of a play/pause button, a stop button, a repeat toggle, a frame slider with
+    frame counter and a delay slider.
     """
     import html
 
@@ -373,17 +374,34 @@ def _static_animation_controls(frames):
                 "f => f.contentWindow.postMessage({k3dTime: Number(this.value)}, '*'));")
     on_play = ("var b = this, c = b.closest('.pymor-k3d');"
                "var s = c.querySelector('.pymor-k3d-frame'), d = c.querySelector('.pymor-k3d-delay');"
+               "var r = c.querySelector('.pymor-k3d-repeat');"
                "if (b._playing) { b._playing = false; b.textContent = '▶'; return; }"
                "if (Number(s.value) >= Number(s.max)) { s.value = 0; s.dispatchEvent(new Event('input')); }"
                "b._playing = true; b.textContent = '⏸';"
                "(function step() {"
                "  if (!b._playing) return;"
-               "  if (Number(s.value) >= Number(s.max)) { b._playing = false; b.textContent = '▶'; return; }"
-               "  s.value = Number(s.value) + 1; s.dispatchEvent(new Event('input'));"
+               "  if (Number(s.value) >= Number(s.max)) {"
+               "    if (r.getAttribute('aria-pressed') !== 'true') { b._playing = false; b.textContent = '▶'; return; }"
+               "    s.value = 0;"
+               "  } else {"
+               "    s.value = Number(s.value) + 1;"
+               "  }"
+               "  s.dispatchEvent(new Event('input'));"
                "  setTimeout(step, Number(d.value));"
                "})();")
+    on_stop = ("var c = this.closest('.pymor-k3d'), b = c.querySelector('.pymor-k3d-play');"
+               "var s = c.querySelector('.pymor-k3d-frame');"
+               "b._playing = false; b.textContent = '▶';"
+               "s.value = 0; s.dispatchEvent(new Event('input'));")
+    on_repeat = ("var p = this.getAttribute('aria-pressed') !== 'true';"
+                 "this.setAttribute('aria-pressed', p); this.style.background = p ? '#bbb' : '';")
     return ('<div style="display: flex; justify-content: center; align-items: center; gap: 8px;">'
-            f'<button type="button" style="min-width: 2.5em;" onclick="{html.escape(on_play, quote=True)}">▶</button>'
+            '<button type="button" class="pymor-k3d-play" title="play/pause" style="min-width: 2.5em;" '
+            f'onclick="{html.escape(on_play, quote=True)}">▶</button>'
+            '<button type="button" title="stop" style="min-width: 2.5em;" '
+            f'onclick="{html.escape(on_stop, quote=True)}">⏹</button>'
+            '<button type="button" class="pymor-k3d-repeat" title="repeat" aria-pressed="false" '
+            f'style="min-width: 2.5em;" onclick="{html.escape(on_repeat, quote=True)}">↻</button>'
             f'<input class="pymor-k3d-frame" type="range" min="0" max="{frames - 1}" step="1" value="0" '
             f'style="flex: 1; max-width: 50%;" oninput="{html.escape(on_frame, quote=True)}">'
             '<span class="pymor-k3d-counter" style="min-width: 2.5em;">0</span>'
