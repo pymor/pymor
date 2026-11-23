@@ -13,6 +13,7 @@ if parallel:
     warnings.warn('MPI parallel run detected. FEniCSx bindings have only been tested for serial execution.')
 
 import sys
+from typing import Self
 
 import numpy as np
 from dolfinx.fem import Constant, Function, IntegralType, create_interpolation_data, dirichletbc, form, functionspace
@@ -25,6 +26,7 @@ from ufl import Argument, Form, derivative, replace
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
+from pymor.core.typing import Complex, Real
 from pymor.operators.constructions import VectorFunctional, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
@@ -43,80 +45,80 @@ class FenicsxVector(CopyOnWriteVector):
         self.impl = impl
 
     @classmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance: Self) -> Self:
         return cls(instance.impl)
 
-    def _copy_data(self):
+    def _copy_data(self) -> None:
         self.impl = self.impl.copy()
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
         return self.impl.array.copy() if ensure_copy else self.impl.array  # TODO: what happens here in parallel)
 
-    def _scal(self, alpha):
+    def _scal(self, alpha: Complex) -> None:
         self.impl *= alpha
 
-    def _axpy(self, alpha, x):
+    def _axpy(self, alpha: Complex, x: Self) -> None:
         if x is self:
             self.scal(1. + alpha)
         else:
             self.impl.axpy(alpha, x.impl)
 
-    def inner(self, other):
+    def inner(self, other: Self) -> Complex:
         return self.impl.dot(other.impl)
 
-    def norm(self):
+    def norm(self) -> float:
         return self.impl.norm(PETSc.NormType.NORM_2)  # TODO: parallel?
 
-    def norm2(self):
+    def norm2(self) -> float:
         return self.impl.norm(PETSc.NormType.NORM_2) ** 2
 
-    def sup_norm(self):
+    def sup_norm(self) -> float:
         return self.impl.norm(PETSc.NormType.NORM_INFINITY)  # TODO: parallel?
 
-    def dofs(self, dof_indices):
+    def dofs(self, dof_indices: list[int] | np.ndarray) -> np.ndarray:
         dof_indices = np.array(dof_indices, dtype=np.intc)
         if len(dof_indices) == 0:
             return np.array([], dtype=np.intc)
         return self.impl.getValues(dof_indices)  # TODO: Global indices but only for local processor allowd
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         raise NotImplementedError  # is implemented for complexified vector
 
-    def __add__(self, other):
-        return FenicsxVector(self.impl + other.impl)
+    def __add__(self, other: Self) -> Self:
+        return type(self)(self.impl + other.impl)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Self) -> Self:
         self._copy_data_if_needed()
         self.impl += other.impl
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
-        return FenicsxVector(self.impl - other.impl)
+    def __sub__(self, other: Self) -> Self:
+        return type(self)(self.impl - other.impl)
 
-    def __isub__(self, other):
+    def __isub__(self, other: Self) -> Self:
         self._copy_data_if_needed()
         self.impl -= other.impl
         return self
 
-    def __mul__(self, other):
-        return FenicsxVector(self.impl * other)
+    def __mul__(self, other: Complex) -> Self:
+        return type(self)(self.impl * other)
 
-    def __neg__(self):
-        return FenicsxVector(-self.impl)
+    def __neg__(self) -> Self:
+        return type(self)(-self.impl)
 
 
-class ComplexifiedFenicsxVector(ComplexifiedVector):
+class ComplexifiedFenicsxVector(ComplexifiedVector[FenicsxVector]):
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         A = np.abs(self.to_numpy())
         max_ind = int(np.argmax(A))
         max_val = A[max_ind]
         return max_ind, max_val
 
 
-class FenicsxVectorSpace(ComplexifiedListVectorSpace):
+class FenicsxVectorSpace(ComplexifiedListVectorSpace[FenicsxVector]):
 
     real_vector_type = FenicsxVector
     vector_type = ComplexifiedFenicsxVector
@@ -124,38 +126,40 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
     def __init__(self, V):
         self.V = V
 
+    # VectorSpace declares dim as a plain attribute, but the space is immutable
     @property
-    def dim(self):
+    def dim(self) -> int:  # type: ignore
         return self.V.dofmap.index_map.size_global * self.V.dofmap.index_map_bs
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return type(other) is FenicsxVectorSpace \
             and getattr(self.V, '_cpp_object', self.V) == getattr(other.V, '_cpp_object', other.V)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self.V)
 
-    def real_zero_vector(self):
+    def real_zero_vector(self) -> FenicsxVector:
         impl = create_vector(self.V)
         return FenicsxVector(impl)
 
-    def real_full_vector(self, value):
+    def real_full_vector(self, value: Real) -> FenicsxVector:
         v = self.real_zero_vector()
         v.impl.set(value)
         return v
 
-    def real_random_vector(self, distribution, **kwargs):
+    def real_random_vector(self, distribution: str, **kwargs) -> FenicsxVector:
         v = self.real_zero_vector()
         values = _create_random_values(self.dim, distribution, **kwargs)  # TODO: parallel?
         v.to_numpy()[:] = values
         return v
 
-    def real_vector_from_numpy(self, data, ensure_copy=False):
+    def real_vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> FenicsxVector:
+        del ensure_copy  # data is always copied
         v = self.real_zero_vector()
         v.to_numpy()[:] = data
         return v
 
-    def real_make_vector(self, obj):
+    def real_make_vector(self, obj) -> FenicsxVector:
         return FenicsxVector(obj)
 
 
