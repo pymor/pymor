@@ -26,6 +26,10 @@ from pymor.discretizers.builtin.gui.matplotlib_base import Matplotlib1DAxes, Mat
 
 
 class Matplotlib1DWidget(FigureCanvas):
+    """Qt widget plotting data on a |OnedGrid|.
+
+    Uses :class:`~pymor.discretizers.builtin.gui.matplotlib_base.Matplotlib1DAxes`.
+    """
 
     def __init__(self, U, parent, grid, count, legend=None, codim=1,
                  separate_plots=False, columns=2, dpi=100):
@@ -48,6 +52,10 @@ class Matplotlib1DWidget(FigureCanvas):
 
 
 class MatplotlibPatchWidget(FigureCanvas):
+    """Qt widget plotting data on a two-dimensional |Grid|.
+
+    Uses :class:`~pymor.discretizers.builtin.gui.matplotlib_base.MatplotlibPatchAxes`.
+    """
 
     def __init__(self, parent, grid, bounding_box=None, codim=2, dpi=100):
         assert grid.reference_element in (triangle, square)
