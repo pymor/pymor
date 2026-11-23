@@ -224,7 +224,7 @@ class BlockVectorSpace(VectorSpace[BlockVectorArray]):
                 and all(space == other_space
                         for space, other_space in zip(self.subspaces, other.subspaces, strict=True)))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return sum(hash(s) for s in self.subspaces)
 
     def zeros(self, count: int = 1, reserve: int = 0) -> BlockVectorArray:

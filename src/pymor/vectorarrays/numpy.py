@@ -260,7 +260,7 @@ class NumpyVectorSpace(VectorSpace[NumpyVectorArray]):
     def __eq__(self, other) -> bool:
         return type(other) is type(self) and self.dim == other.dim
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.dim)
 
     def zeros(self, count: int = 1, reserve: int = 0) -> NumpyVectorArray:

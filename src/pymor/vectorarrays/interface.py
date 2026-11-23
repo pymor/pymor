@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from typing import TYPE_CHECKING, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Generic, Literal, Self, TypeVar
 
 import numpy as np
 
@@ -278,7 +278,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         """
         return self.impl.to_numpy(ensure_copy, self.ind)
 
-    def append(self, other: 'VectorArray', remove_from_other=False) -> None:
+    def append(self, other: 'VectorArray', remove_from_other: bool = False) -> None:
         """Append vectors to the array.
 
         Parameters
@@ -913,7 +913,7 @@ class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
         del reserve  # reserve unused
         return self.from_numpy(np.full((self.dim, count), value))
 
-    def random(self, count=1, distribution='uniform', reserve=0, **kwargs) -> A:
+    def random(self, count: int = 1, distribution: str = 'uniform', reserve: int = 0, **kwargs) -> A:
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -947,7 +947,7 @@ class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
         values = _create_random_values((self.dim, count), distribution, **kwargs)
         return self.from_numpy(values)
 
-    def empty(self, reserve=0) -> A:
+    def empty(self, reserve: int = 0) -> A:
         """Create an empty |VectorArray|.
 
         This is a shorthand for `self.zeros(0, reserve)`.
@@ -994,10 +994,11 @@ class VectorSpace(ImmutableObject, Generic[A]):  # noqa: UP046
         return self == getattr(other, 'space', None)
 
     @abstractmethod
-    def __hash__(self): ...
+    def __hash__(self) -> int: ...
 
 
-def _create_random_values(shape, distribution, order='F', **kwargs):
+def _create_random_values(shape: int | tuple[int, ...], distribution: str, order: Literal['C', 'F'] = 'F', /,
+                          **kwargs) -> np.ndarray:
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
