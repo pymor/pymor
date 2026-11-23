@@ -13,6 +13,7 @@ if parallel:
     warnings.warn('MPI parallel run detected. FEniCSx bindings have only been tested for serial execution.')
 
 import sys
+from functools import cached_property
 from typing import Self
 
 import numpy as np
@@ -126,7 +127,7 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace[FenicsxVector]):
     def __init__(self, V):
         self.V = V
 
-    @property
+    @cached_property
     def dim(self) -> int:
         return self.V.dofmap.index_map.size_global * self.V.dofmap.index_map_bs
 

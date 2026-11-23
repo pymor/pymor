@@ -14,6 +14,7 @@ by :mod:`pymor.tools.mpi`.
 """
 
 from collections.abc import Iterable, Sequence
+from functools import cached_property
 from typing import Self
 
 import numpy as np
@@ -153,7 +154,7 @@ class MPIVectorSpace(VectorSpace[MPIVectorArray]):
             )
         )
 
-    @property
+    @cached_property
     def dim(self) -> int:
         return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
 
@@ -319,7 +320,7 @@ class MPIVectorSpaceNoComm(MPIVectorSpace):
 
     array_type = MPIVectorArrayNoComm
 
-    @property
+    @cached_property
     def dim(self) -> int:
         raise NotImplementedError
 
@@ -341,18 +342,14 @@ class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
     def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         space = self.space
         assert isinstance(space, MPIVectorSpaceAutoComm)
-        offsets = getattr(space, '_offsets', None)
-        if offsets is None:
-            offsets = space._get_dims()[1]
+        offsets = space._offsets
         dof_indices = np.array(dof_indices)
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices, ind)
 
     def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         space = self.space
         assert isinstance(space, MPIVectorSpaceAutoComm)
-        offsets = getattr(space, '_offsets', None)
-        if offsets is None:
-            offsets = space._get_dims()[1]
+        offsets = space._offsets
         inds, vals = mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_amax, self.obj_id, ind)
         inds += offsets[:, np.newaxis]
         max_inds = np.argmax(vals, axis=0)
@@ -385,21 +382,17 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
 
     array_type = MPIVectorArrayAutoComm
 
-    _dim: int
-    _offsets: np.ndarray
-
-    @property
+    @cached_property
     def dim(self) -> int:
-        dim = getattr(self, '_dim', None)
-        if dim is None:
-            dim = self._get_dims()[0]
-        return dim
+        return sum(self._dims)
 
-    def _get_dims(self) -> tuple[int, np.ndarray]:
-        dims = mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
-        self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
-        self._dim = dim = sum(dims)
-        return dim, offsets
+    @cached_property
+    def _dims(self) -> list[int]:
+        return mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
+
+    @cached_property
+    def _offsets(self) -> np.ndarray:
+        return np.cumsum(np.concatenate(([0], self._dims)))[:-1]
 
 
 def _MPIVectorSpaceAutoComm_dim(local_spaces: LocalSpaces) -> list[int] | None:

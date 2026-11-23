@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from collections.abc import Sequence
-from functools import reduce
+from functools import cached_property, reduce
 from typing import Self
 
 import numpy as np
@@ -216,7 +216,10 @@ class BlockVectorSpace(VectorSpace[BlockVectorArray]):
         subspaces = tuple(subspaces)
         assert all(isinstance(subspace, VectorSpace) for subspace in subspaces)
         self.subspaces = subspaces
-        self.dim = sum(subspace.dim for subspace in self.subspaces)
+
+    @cached_property
+    def dim(self) -> int:
+        return sum(subspace.dim for subspace in self.subspaces)
 
     def __eq__(self, other) -> bool:
         return (type(other) is BlockVectorSpace

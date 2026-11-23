@@ -8,6 +8,7 @@ config.require('FENICS')
 
 
 import sys
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
@@ -147,7 +148,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace[FenicsVector]):
     def __init__(self, V):
         self.V = V
 
-    @property
+    @cached_property
     def dim(self) -> int:
         return df.Function(self.V).vector().size()
 

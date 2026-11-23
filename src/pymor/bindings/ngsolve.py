@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from functools import cached_property
 from pathlib import Path
 from typing import Protocol, Self
 
@@ -104,7 +105,7 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace[NGSolveVector]):
         else:
             return u.dim
 
-    @property
+    @cached_property
     def dim(self) -> int:
         return self.V.ndofglobal * self.value_dim
 
