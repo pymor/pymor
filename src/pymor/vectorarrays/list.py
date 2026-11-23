@@ -149,9 +149,9 @@ class CopyOnWriteVector(Vector):
             self._refcount = [1]
 
 
-class ComplexifiedVector(Vector):
+class ComplexifiedVector[R: Vector](Vector):
 
-    def __init__(self, real_part: Vector, imag_part: Vector | None):
+    def __init__(self, real_part: R, imag_part: R | None):
         self.real_part, self.imag_part = real_part, imag_part
 
     def copy(self, deep: bool = False) -> Self:
@@ -603,21 +603,21 @@ class ListVectorSpace[V: Vector](VectorSpace[ListVectorArray]):
         )
 
 
-class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace[ComplexifiedVector]):
+class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace[ComplexifiedVector[R]]):
 
     real_vector_type: type[R]
-    vector_type = ComplexifiedVector
+    vector_type: type[ComplexifiedVector[R]] = ComplexifiedVector
 
     @abstractmethod
     def real_zero_vector(self) -> R: ...
 
-    def zero_vector(self) -> ComplexifiedVector:
+    def zero_vector(self) -> ComplexifiedVector[R]:
         return self.vector_type(self.real_zero_vector(), None)
 
     def real_full_vector(self, value: Real) -> R:
         return self.real_vector_from_numpy(np.full(self.dim, value))
 
-    def full_vector(self, value: Complex) -> ComplexifiedVector:
+    def full_vector(self, value: Complex) -> ComplexifiedVector[R]:
         real_part = self.real_full_vector(value.real)
         imag_part = self.real_full_vector(value.imag) if value.imag != 0. else None
         return self.vector_type(real_part, imag_part)
@@ -626,13 +626,13 @@ class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace[ComplexifiedVector]
         values = _create_random_values(self.dim, distribution, **kwargs)
         return self.real_vector_from_numpy(values)
 
-    def random_vector(self, distribution: str, **kwargs) -> ComplexifiedVector:
+    def random_vector(self, distribution: str, **kwargs) -> ComplexifiedVector[R]:
         return self.vector_type(self.real_random_vector(distribution, **kwargs), None)
 
     @abstractmethod
     def real_make_vector(self, obj) -> R: ...
 
-    def make_vector(self, obj) -> ComplexifiedVector:
+    def make_vector(self, obj) -> ComplexifiedVector[R]:
         if isinstance(obj, self.real_vector_type):
             return self.vector_type(obj, None)
         else:
@@ -641,7 +641,7 @@ class ComplexifiedListVectorSpace[R: Vector](ListVectorSpace[ComplexifiedVector]
     def real_vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> R:
         raise NotImplementedError
 
-    def vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> ComplexifiedVector:
+    def vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> ComplexifiedVector[R]:
         if np.iscomplexobj(data):
             real_part = self.real_vector_from_numpy(data.real)
             imag_part = self.real_vector_from_numpy(data.imag)
