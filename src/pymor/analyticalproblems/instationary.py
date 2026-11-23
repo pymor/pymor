@@ -29,13 +29,6 @@ class InstationaryProblem(ParametricObject):
         Ranges of interest for the |Parameters| of the problem.
     name
         Name of the problem.
-
-    Attributes
-    ----------
-    T
-    stationary_part
-    parameter_ranges
-    name
     """
 
     def __init__(self, stationary_part, initial_data, T=1., parameter_ranges=None, name=None):

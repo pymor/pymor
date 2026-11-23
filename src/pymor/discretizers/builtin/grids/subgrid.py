@@ -23,13 +23,6 @@ class SubGrid(Grid):
     parent_entities
         |NumPy array| of global indices of the codim-0 entities which
         are to be contained in the subgrid.
-
-    Attributes
-    ----------
-    parent_grid
-        The |Grid| from which the subgrid was constructed. :class:`SubGrid`
-        only stores a :mod:`weakref` to the grid, so accessing this property
-        might return `None` if the original grid has been destroyed.
     """
 
     reference_element = None
@@ -63,6 +56,12 @@ class SubGrid(Grid):
 
     @property
     def parent_grid(self):
+        """The |Grid| from which the subgrid was constructed.
+
+        :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` only stores a :mod:`weakref` to
+        the grid, so accessing this property might return `None` if the original grid has been
+        destroyed.
+        """
         return self.__parent_grid()
 
     def parent_indices(self, codim):

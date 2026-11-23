@@ -63,22 +63,6 @@ class StationaryProblem(ParametricObject):
         Ranges of interest for the |Parameters| of the problem.
     name
         Name of the problem.
-
-    Attributes
-    ----------
-    domain
-    rhs
-    diffusion
-    advection
-    nonlinear_advection
-    nonlinear_advection_derivative
-    reaction
-    nonlinear_reaction
-    nonlinear_reaction_derivative
-    dirichlet_data
-    neumann_data
-    robin_data
-    outputs
     """
 
     def __init__(self, domain,

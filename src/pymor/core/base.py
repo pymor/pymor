@@ -126,30 +126,19 @@ class UberMeta(abc.ABCMeta):
 
 
 class BasicObject(metaclass=UberMeta):
-    """Base class for most classes in pyMOR.
-
-    Attributes
-    ----------
-    logger
-        A per-class instance of :class:`logging.Logger` with the class
-        name as prefix.
-    logging_disabled
-        `True` if logging has been disabled.
-    uid
-        A unique id for each instance. The uid is obtained by using
-        :class:`UID` and is unique for all pyMOR objects ever created.
-    name
-        Name of the object.
-    """
+    """Base class for most classes in pyMOR."""
 
     name = None
+    """Name of the object."""
 
     @property
     def logging_disabled(self):
+        """`True` if logging has been disabled."""
         return self._logger is logger.dummy_logger
 
     @property
     def logger(self):
+        """A per-class instance of :class:`logging.Logger` with the class name as prefix."""
         return self._logger
 
     def disable_logging(self, doit=True):
@@ -167,6 +156,11 @@ class BasicObject(metaclass=UberMeta):
 
     @property
     def uid(self):
+        """A unique id for each instance.
+
+        The uid is obtained by using :class:`~pymor.core.base.UID` and is unique for all pyMOR
+        objects ever created.
+        """
         if self._uid is None:
             self._uid = UID()
         return self._uid.uid

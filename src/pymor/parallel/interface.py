@@ -201,14 +201,10 @@ class RemoteObject:
     Remote objects can be used as a context manager: when leaving the
     context, the remote object's :meth:`~RemoteObject.remove`
     method is called to ensure proper cleanup of remote resources.
-
-    Attributes
-    ----------
-    removed
-        `True`, after :meth:`remove` has been called.
     """
 
     removed = False
+    """`True`, after :meth:`~pymor.parallel.interface.RemoteObject.remove` has been called."""
 
     @abstractmethod
     def _remove(self):

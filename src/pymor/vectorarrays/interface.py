@@ -48,25 +48,6 @@ class VectorArray(BasicObject):
         advisable to make a :meth:`~VectorArray.copy` of a view for long
         term storage. Since :meth:`~VectorArray.copy` has copy-on-write
         semantics, this will usually cause little overhead.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the vectors in the array.
-    is_view
-        `True` if the array is a view obtained by indexing another array.
-    space
-        The |VectorSpace| the array belongs to.
-    base
-        In case the array is a view, the |VectorArray| this array refers to. `None`
-        otherwise.
-    ind
-        In case the array is a view, the indices with which the :attr:`~VectorArray.base`
-        array is indexed with.
-    real
-        The real part of the vectors in the array.
-    imag
-        The imaginary part of the vectors in the array.
     """
 
     # override NumPy binary operations and ufuncs
@@ -75,9 +56,21 @@ class VectorArray(BasicObject):
 
     impl_type = None
     is_view = False
+    """`True` if the array is a view obtained by indexing another array."""
+
     _impl = None
     base = None
+    """In case the array is a view, the |VectorArray| this array refers to. `None`
+    otherwise.
+    """
+
     ind = None
+    """In case the array is a view, the indices with which the :attr:`~VectorArray.base`
+    array is indexed with.
+    """
+
+    space: 'VectorSpace'
+    """The |VectorSpace| the array belongs to."""
 
     @property
     def impl(self):
@@ -207,6 +200,7 @@ class VectorArray(BasicObject):
 
     @property
     def dim(self):
+        """The dimension of the vectors in the array."""
         return self.space.dim
 
     def __len__(self):
@@ -667,6 +661,7 @@ class VectorArray(BasicObject):
 
     @property
     def real(self):
+        """The real part of the vectors in the array."""
         impl = self.impl.real(self.ind)
         if impl is self.impl:
             return self.copy()
@@ -675,7 +670,7 @@ class VectorArray(BasicObject):
 
     @property
     def imag(self):
-        """Imaginary part."""
+        """The imaginary part of the vectors in the array."""
         return type(self)(self.space, self.impl.imag(self.ind))
 
     def conj(self):
@@ -815,22 +810,15 @@ class VectorSpace(ImmutableObject):
     operators. To test if a given |VectorArray| is an element of
     the space, the `in` operator can be used.
 
-
-    Attributes
-    ----------
-    id
-        None, or a string describing the mathematical identity
-        of the vector space (for instance to distinguish different
-        components in an equation system).
-    dim
-        The dimension (number of degrees of freedom) of the
-        vectors contained in the space.
-    is_scalar
-        Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
     """
 
     dim = None
+    """The dimension (number of degrees of freedom) of the
+    vectors contained in the space.
+    """
+
     is_scalar = False
+    """Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`."""
 
     @abstractmethod
     def make_array(*args, **kwargs):

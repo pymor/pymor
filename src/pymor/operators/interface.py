@@ -11,7 +11,7 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import LinAlgError
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
-from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -25,17 +25,27 @@ class Operator(ParametricObject):
     Note that there is no special distinction between functionals
     and operators in pyMOR. A functional is simply an operator with
     |NumpyVectorSpace| `(1)` as its `range` |VectorSpace|.
+    """
 
-    Attributes
-    ----------
-    linear
-        `True` if the operator is linear.
-    source
-        The source |VectorSpace|.
-    range
-        The range |VectorSpace|.
-    H
-        Adjoint |Operator|.
+    # override NumPy binary operations and ufuncs
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
+
+    linear: bool
+    """`True` if the operator is linear."""
+
+    source: VectorSpace
+    """The source |VectorSpace|."""
+
+    range: VectorSpace
+    """The range |VectorSpace|."""
+
+    solver = None
+    """The |Solver| to use for `apply_inverse` and `apply_inverse_adjoint`."""
+
+    @property
+    def H(self):
+        """Adjoint |Operator|.
 
         It holds that ::
 
@@ -45,17 +55,7 @@ class Operator(ParametricObject):
 
         If the operator has a |Solver|, the adjoint operator will be equipped
         with its :attr:`~pymor.solvers.interface.Solver.adjoint_solver`.
-    """
-
-    # override NumPy binary operations and ufuncs
-    __array_priority__ = 100.0
-    __array_ufunc__ = None
-
-    solver = None
-    """The |Solver| to use for `apply_inverse` and `apply_inverse_adjoint`."""
-
-    @property
-    def H(self):
+        """
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self, solver=self._adjoint_solver)
 
