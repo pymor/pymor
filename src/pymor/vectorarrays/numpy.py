@@ -10,7 +10,7 @@ from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.core.typing import Complex, Integer
-from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import Indices, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
 class NumpyVectorArrayImpl(VectorArrayImpl):
@@ -19,20 +19,20 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         self._array = array
         self._len = array.shape[1] if l is None else l
 
-    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray:
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if ensure_copy and not A.flags['OWNDATA']:
             return A.copy(order='F')
         else:
             return A
 
-    def real(self, ind: Ind) -> Self:
+    def real(self, ind: Indices) -> Self:
         return type(self)(self.to_numpy(False, ind).real.copy(order='F'))
 
-    def imag(self, ind: Ind) -> Self:
+    def imag(self, ind: Indices) -> Self:
         return type(self)(self.to_numpy(False, ind).imag.copy(order='F'))
 
-    def conj(self, ind: Ind) -> Self:
+    def conj(self, ind: Indices) -> Self:
         if np.isrealobj(self._array):
             return self.copy(False, ind)
         return type(self)(np.conj(self.to_numpy(False, ind), order='F'))
@@ -40,7 +40,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
     def __len__(self) -> int:
         return self._len
 
-    def delete(self, ind: Ind) -> None:
+    def delete(self, ind: Indices) -> None:
         if ind is None:
             self._array = np.empty((self._array.shape[0], 0))
             self._len = 0
@@ -58,14 +58,14 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy(order='F')
 
-    def copy(self, deep: bool, ind: Ind) -> Self:
+    def copy(self, deep: bool, ind: Indices) -> Self:
         del deep # unused
         new_array = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if not new_array.flags['OWNDATA']:
             new_array = new_array.copy(order='F')
         return type(self)(new_array)
 
-    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None:
         other_array = other.to_numpy(False, oind)
         len_other = other_array.shape[1]
         if len_other == 0:
@@ -85,7 +85,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if remove_from_other:
             other.delete(oind)
 
-    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -101,7 +101,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] *= alpha
 
-    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Indices) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -111,7 +111,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
-    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -138,7 +138,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         self._array[:, ind] += B * alpha
 
-    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> Self:
         ind = slice(None, self._len) if ind is None else ind
         B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
@@ -153,7 +153,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(np.add(self._array[:, ind], B * alpha, order='F'))
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -163,7 +163,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.matmul(A.conj().T, B, order='F')
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
@@ -173,35 +173,35 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.sum(A.conj() * B, axis=0)
 
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return type(self)(np.matmul(A, coefficients, order='F'))
 
-    def norm(self, ind: Ind) -> np.ndarray:
+    def norm(self, ind: Indices) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.linalg.norm(A, axis=0)
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.sum((A * A.conj()).real, axis=0)
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 
         ind = slice(None, self._len) if ind is None else ind
         return np.asfortranarray(self._array[dof_indices, :][:, ind])
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         if ind is not None and not self._array.flags.f_contiguous:
             self._array = self._array.copy(order='F')
 

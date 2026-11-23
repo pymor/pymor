@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, classinstancemethod
 from pymor.core.typing import Complex, Real
-from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import Indices, VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
 class Vector(BasicObject):
@@ -349,7 +349,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         self._list = vectors
         self.space = space
 
-    def _indexed(self, ind: Ind) -> list[Vector]:
+    def _indexed(self, ind: Indices) -> list[Vector]:
         if ind is None:
             return self._list
         elif isinstance(ind, slice):
@@ -359,7 +359,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         else:
             assert False
 
-    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray:
         del ensure_copy # unused
         vectors = [v.to_numpy() for v in self._indexed(ind)]
         if vectors:
@@ -370,7 +370,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def __len__(self) -> int:
         return len(self._list)
 
-    def delete(self, ind: Ind) -> None:
+    def delete(self, ind: Indices) -> None:
         if ind is None:
             del self._list[:]
         elif isinstance(ind, list):
@@ -381,17 +381,17 @@ class ListVectorArrayImpl(VectorArrayImpl):
         else:
             del self._list[ind]
 
-    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None:
         if not remove_from_other:
             self._list.extend([v.copy() for v in other._indexed(oind)])
         else:
             self._list.extend(other._indexed(oind))
             other.delete(oind)
 
-    def copy(self, deep: bool, ind: Ind) -> Self:
+    def copy(self, deep: bool, ind: Indices) -> Self:
         return type(self)([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
 
-    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None:
         if isinstance(alpha, np.ndarray):
             for a, v in zip(alpha, self._indexed(ind), strict=True):
                 v.scal(a)
@@ -399,7 +399,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
             for v in self._indexed(ind):
                 v.scal(alpha)
 
-    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None:
         if np.all(alpha == 0):
             return
 
@@ -424,14 +424,14 @@ class ListVectorArrayImpl(VectorArrayImpl):
                 for xx, y in zip(x_list, self._indexed(ind), strict=True):
                     y.axpy(alpha, xx)
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return (np.array([[a.inner(b) for b in other._indexed(oind)] for a in self._indexed(ind)])
                   .reshape((self.len_ind(ind), other.len_ind(oind))))
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind), strict=True)])
 
-    def gramian(self, ind: Ind) -> np.ndarray:
+    def gramian(self, ind: Indices) -> np.ndarray:
         self_list = self._indexed(ind)
         l = len(self_list)
         if l == 0:
@@ -446,7 +446,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
                     R[j][i] = R[i][j].conjugate()
         return np.array(R)
 
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self:
         RL = []
         for coeffs in coefficients.T:
             R = self.space.zero_vector()
@@ -456,17 +456,17 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
         return type(self)(RL, self.space)
 
-    def norm(self, ind: Ind) -> np.ndarray:
+    def norm(self, ind: Indices) -> np.ndarray:
         return np.array([v.norm() for v in self._indexed(ind)])
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         return np.array([v.norm2() for v in self._indexed(ind)])
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
                   .reshape((self.len_ind(ind), len(dof_indices)))).T
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         l = self.len_ind(ind)
         MI = np.empty(l, dtype=int)
         MV = np.empty(l)
@@ -476,17 +476,17 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
         return MI, MV
 
-    def real(self, ind: Ind) -> Self:
+    def real(self, ind: Indices) -> Self:
         return type(self)([v.real for v in self._indexed(ind)], self.space)
 
-    def imag(self, ind: Ind) -> Self:
+    def imag(self, ind: Indices) -> Self:
         # note that Vector.imag is allowed to return None in case
         # of a real vector, so we have to check for that.
         # returning None is allowed as ComplexifiedVector does not know
         # how to create a new zero vector.
         return type(self)([v.imag or self.space.zero_vector() for v in self._indexed(ind)], self.space)
 
-    def conj(self, ind: Ind) -> Self:
+    def conj(self, ind: Indices) -> Self:
         return type(self)([v.conj() for v in self._indexed(ind)], self.space)
 
 

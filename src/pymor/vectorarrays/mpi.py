@@ -21,12 +21,12 @@ import numpy as np
 from pymor.core.pickle import unpicklable
 from pymor.core.typing import Complex
 from pymor.tools import mpi
-from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace
+from pymor.vectorarrays.interface import Indices, VectorArray, VectorArrayImpl, VectorSpace
 
 
 class MPIVectorArrayImpl(VectorArrayImpl):
 
-    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
     def __init__(self, obj_id: mpi.ObjectId, space: 'MPIVectorSpace'):
@@ -36,48 +36,48 @@ class MPIVectorArrayImpl(VectorArrayImpl):
     def __len__(self) -> int:
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
-    def delete(self, ind: Ind) -> None:
+    def delete(self, ind: Indices) -> None:
         mpi.call(mpi.method_call, self.obj_id, '__delitem__', ind)
 
-    def copy(self, deep: bool, ind: Ind) -> Self:
+    def copy(self, deep: bool, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_copy, self.obj_id, deep, ind),
                           self.space)
 
-    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None:
         mpi.call(mpi.function_call, _MPIVectorArray_append, self.obj_id, other.obj_id, remove_from_other, oind)
 
-    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None:
         mpi.call(mpi.function_call, _MPIVectorArray_scal, self.obj_id, alpha, ind)
 
-    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None:
         mpi.call(mpi.function_call_manage, _MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id, ind, xind)
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self:
         return type(self)(
             mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb, self.obj_id, coefficients, ind), self.space)
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_norm2, self.obj_id, ind)
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_dofs, self.obj_id, dof_indices, ind)
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         return mpi.call(mpi.function_call, _MPIVectorArray_amax, self.obj_id, ind)
 
-    def real(self, ind: Ind) -> Self:
+    def real(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_real, self.obj_id, ind), self.space)
 
-    def imag(self, ind: Ind) -> Self:
+    def imag(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_imag, self.obj_id, ind), self.space)
 
-    def conj(self, ind: Ind) -> Self:
+    def conj(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_conj, self.obj_id, ind), self.space)
 
 
@@ -218,80 +218,81 @@ def _MPIVectorSpace_check_local_spaces(local_spaces: LocalSpaces, obj_id: mpi.Ob
     return None
 
 
-def _MPIVectorArray_append(self: VectorArray, other: VectorArray, remove_from_other: bool, oind: Ind) -> None:
+def _MPIVectorArray_append(self: VectorArray, other: VectorArray, remove_from_other: bool, oind: Indices) -> None:
     self.append(_indexed(other, oind), remove_from_other)
 
 
-def _MPIVectorArray_copy(self: VectorArray, deep: bool, ind: Ind) -> VectorArray:
+def _MPIVectorArray_copy(self: VectorArray, deep: bool, ind: Indices) -> VectorArray:
     return _indexed(self, ind).copy(deep)
 
 
-def _MPIVectorArray_scal(self: VectorArray, alpha: Complex | np.ndarray, ind: Ind) -> None:
+def _MPIVectorArray_scal(self: VectorArray, alpha: Complex | np.ndarray, ind: Indices) -> None:
     _indexed(self, ind).scal(alpha)
 
 
-def _MPIVectorArray_axpy(self: VectorArray, alpha: Complex | np.ndarray, x: VectorArray, ind: Ind, xind: Ind) -> None:
+def _MPIVectorArray_axpy(self: VectorArray, alpha: Complex | np.ndarray, x: VectorArray, ind: Indices,
+                         xind: Indices) -> None:
     _indexed(self, ind).axpy(alpha, _indexed(x, xind))
 
 
-def _MPIVectorArray_inner(self: VectorArray, other: VectorArray, ind: Ind, oind: Ind) -> np.ndarray:
+def _MPIVectorArray_inner(self: VectorArray, other: VectorArray, ind: Indices, oind: Indices) -> np.ndarray:
     return _indexed(self, ind).inner(_indexed(other, oind))
 
 
-def _MPIVectorArray_pairwise_inner(self: VectorArray, other: VectorArray, ind: Ind, oind: Ind) -> np.ndarray:
+def _MPIVectorArray_pairwise_inner(self: VectorArray, other: VectorArray, ind: Indices, oind: Indices) -> np.ndarray:
     return _indexed(self, ind).pairwise_inner(_indexed(other, oind))
 
 
-def _MPIVectorArray_lincomb(self: VectorArray, coefficients: np.ndarray, ind: Ind) -> VectorArray:
+def _MPIVectorArray_lincomb(self: VectorArray, coefficients: np.ndarray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).lincomb(coefficients)
 
 
-def _MPIVectorArray_norm(self: VectorArray, ind: Ind) -> np.ndarray:
+def _MPIVectorArray_norm(self: VectorArray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).norm()
 
 
-def _MPIVectorArray_norm2(self: VectorArray, ind: Ind) -> np.ndarray:
+def _MPIVectorArray_norm2(self: VectorArray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).norm2()
 
 
-def _MPIVectorArray_dofs(self: VectorArray, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+def _MPIVectorArray_dofs(self: VectorArray, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).dofs(dof_indices)
 
 
-def _MPIVectorArray_amax(self: VectorArray, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+def _MPIVectorArray_amax(self: VectorArray, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
     return _indexed(self, ind).amax()
 
 
-def _MPIVectorArray_real(self: VectorArray, ind: Ind) -> VectorArray:
+def _MPIVectorArray_real(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).real
 
 
-def _MPIVectorArray_imag(self: VectorArray, ind: Ind) -> VectorArray:
+def _MPIVectorArray_imag(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).imag
 
 
-def _MPIVectorArray_conj(self: VectorArray, ind: Ind) -> VectorArray:
+def _MPIVectorArray_conj(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).conj()
 
 
 class MPIVectorArrayNoCommImpl(MPIVectorArrayImpl):
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def norm(self, ind: Ind) -> np.ndarray:
+    def norm(self, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
 
 
@@ -326,19 +327,19 @@ class MPIVectorSpaceNoComm(MPIVectorSpace):
 
 class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def norm(self, ind: Ind) -> np.ndarray:
+    def norm(self, ind: Indices) -> np.ndarray:
         return np.sqrt(self.norm2(ind))
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_norm2, self.obj_id, ind)
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         space = self.space
         assert isinstance(space, MPIVectorSpaceAutoComm)
         offsets = getattr(space, '_offsets', None)
@@ -347,7 +348,7 @@ class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
         dof_indices = np.array(dof_indices)
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices, ind)
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         space = self.space
         assert isinstance(space, MPIVectorSpaceAutoComm)
         offsets = getattr(space, '_offsets', None)
@@ -410,7 +411,8 @@ def _MPIVectorSpaceAutoComm_dim(local_spaces: LocalSpaces) -> list[int] | None:
     return None
 
 
-def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: Ind, oind: Ind) -> np.ndarray | None:
+def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: Indices,
+                                  oind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).inner(_indexed(other, oind))
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
@@ -420,8 +422,8 @@ def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: In
     return None
 
 
-def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray, ind: Ind,
-                                           oind: Ind) -> np.ndarray | None:
+def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray, ind: Indices,
+                                           oind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).pairwise_inner(_indexed(other, oind))
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
@@ -431,7 +433,7 @@ def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray
     return None
 
 
-def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Ind) -> np.ndarray | None:
+def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).norm2()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
@@ -442,7 +444,7 @@ def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Ind) -> np.ndarray | N
 
 
 def _MPIVectorArrayAutoComm_dofs(self: VectorArray, offsets: np.ndarray, dof_indices: np.ndarray,
-                                 ind: Ind) -> np.ndarray | None:
+                                 ind: Indices) -> np.ndarray | None:
     self = _indexed(self, ind)
     offset = offsets[mpi.rank]
     dim = self.dim
@@ -457,7 +459,7 @@ def _MPIVectorArrayAutoComm_dofs(self: VectorArray, offsets: np.ndarray, dof_ind
     return None
 
 
-def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Ind) -> tuple[np.ndarray, np.ndarray] | None:
+def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Indices) -> tuple[np.ndarray, np.ndarray] | None:
     self = _indexed(self, ind)
     local_inds, local_vals = self.amax()
     assert local_inds.dtype == np.int64
@@ -471,5 +473,5 @@ def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Ind) -> tuple[np.ndarra
     return None
 
 
-def _indexed[T: VectorArray](array: T, ind: Ind) -> T:
+def _indexed[T: VectorArray](array: T, ind: Indices) -> T:
     return array if ind is None else array[ind]

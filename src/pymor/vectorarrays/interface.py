@@ -14,8 +14,8 @@ from pymor.tools.random import get_rng
 if TYPE_CHECKING:
     from pymor.operators.interface import Operator
 
-type Ind = list[int] | slice | None
-type IndLike = Ind | Integer | np.ndarray
+type Indices = list[int] | slice | None
+type IndicesLike = Indices | Integer | np.ndarray
 
 
 class VectorArray[I: 'VectorArrayImpl'](BasicObject):
@@ -69,7 +69,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
     base: 'Self | None' = None
     """In case the array is a view, the |VectorArray| this array refers to. `None` otherwise."""
 
-    ind: Ind = None
+    ind: Indices = None
     """In case the array is a view, the indices with which :attr:`~VectorArray.base` is indexed."""
 
     space: 'VectorSpace[Self]'
@@ -80,7 +80,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         return self.base._impl if self.is_view else self._impl  # type: ignore
 
     def __init__(self, space: 'VectorSpace[Self]', impl: 'I | None', base: 'Self | None' = None,
-                 ind: Ind = None, _len: int | None = None):
+                 ind: Indices = None, _len: int | None = None):
         assert impl is None or isinstance(impl, self.impl_type)
         self.space = space
         if base is None:
@@ -212,7 +212,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
     def __len__(self) -> int:
         return self._len
 
-    def __getitem__(self, ind: IndLike) -> Self:
+    def __getitem__(self, ind: IndicesLike) -> Self:
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
         l = self._len
 
@@ -250,7 +250,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         else:
             return type(self)(self.space, None, self, ind, view_len)
 
-    def __delitem__(self, ind: IndLike) -> None:
+    def __delitem__(self, ind: IndicesLike) -> None:
         """Remove vectors from the array."""
         if self.is_view:
             raise ValueError('Cannot delete items from VectorArray view')
@@ -760,11 +760,11 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
                 or isinstance(ind, list | np.ndarray)
                 and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
-    def len_ind(self, ind: IndLike) -> int:
+    def len_ind(self, ind: IndicesLike) -> int:
         """Return the number of given indices."""
         return self.impl.len_ind(ind)
 
-    def len_ind_unique(self, ind: IndLike) -> int:
+    def len_ind_unique(self, ind: IndicesLike) -> int:
         """Return the number of specified unique indices."""
         l = len(self)
         if ind is None:
@@ -785,7 +785,7 @@ class VectorArray[I: 'VectorArrayImpl'](BasicObject):
         array._refcount = [1]                       # create new reference counter
 
     @staticmethod
-    def _sub_index(l, ind, ind_ind) -> Ind:
+    def _sub_index(l, ind, ind_ind) -> Indices:
         if type(ind) is slice:
             ind = range(*ind.indices(l))
             if type(ind_ind) is slice:
@@ -1038,67 +1038,67 @@ class VectorArrayImpl(BasicObject):
     def __len__(self) -> int: ...
 
     @abstractmethod
-    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray: ...
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray: ...
 
     @abstractmethod
-    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None: ...
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None: ...
 
     @abstractmethod
-    def delete(self, ind: Ind) -> None: ...
+    def delete(self, ind: Indices) -> None: ...
 
     @abstractmethod
-    def copy(self, deep: bool, ind: Ind) -> Self: ...
+    def copy(self, deep: bool, ind: Indices) -> Self: ...
 
     @abstractmethod
-    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None: ...
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None: ...
 
-    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Indices) -> Self:
         result = self.copy(True, ind)
         result.scal(alpha, None)
         return result
 
     @abstractmethod
-    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None: ...
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None: ...
 
-    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> Self:
         result = self.copy(True, ind)
         result.axpy(alpha, x, None, xind)
         return result
 
     @abstractmethod
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray: ...
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray: ...
 
     @abstractmethod
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray: ...
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray: ...
 
-    def gramian(self, ind: Ind) -> np.ndarray:
+    def gramian(self, ind: Indices) -> np.ndarray:
         return self.inner(self, ind, ind)
 
     @abstractmethod
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self: ...
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self: ...
 
-    def norm(self, ind: Ind) -> np.ndarray:
+    def norm(self, ind: Indices) -> np.ndarray:
         return np.sqrt(self.norm2(ind))
 
     @abstractmethod
-    def norm2(self, ind: Ind) -> np.ndarray: ...
+    def norm2(self, ind: Indices) -> np.ndarray: ...
 
     @abstractmethod
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray: ...
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray: ...
 
     @abstractmethod
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]: ...
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]: ...
 
     @abstractmethod
-    def real(self, ind: Ind) -> Self: ...
+    def real(self, ind: Indices) -> Self: ...
 
     @abstractmethod
-    def imag(self, ind: Ind) -> Self: ...
+    def imag(self, ind: Indices) -> Self: ...
 
     @abstractmethod
-    def conj(self, ind: Ind) -> Self: ...
+    def conj(self, ind: Indices) -> Self: ...
 
-    def len_ind(self, ind: IndLike) -> int:
+    def len_ind(self, ind: IndicesLike) -> int:
         if ind is None:
             return len(self)
         if type(ind) is slice:

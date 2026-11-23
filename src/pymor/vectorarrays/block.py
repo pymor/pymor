@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.core.base import classinstancemethod
 from pymor.core.typing import Complex
-from pymor.vectorarrays.interface import Ind, VectorArray, VectorArrayImpl, VectorSpace
+from pymor.vectorarrays.interface import Indices, VectorArray, VectorArrayImpl, VectorSpace
 
 
 class BlockVectorArrayImpl(VectorArrayImpl):
@@ -26,7 +26,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         except IndexError:
             return 0
 
-    def to_numpy(self, ensure_copy: bool, ind: Ind) -> np.ndarray:
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray:
         assert self._blocks_are_valid()
         del ensure_copy # ignored
         if len(self._blocks):
@@ -35,53 +35,53 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         else:
             return np.empty((0, 0))
 
-    def real(self, ind: Ind) -> Self:
+    def real(self, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).real for block in self._blocks], self.space)
 
-    def imag(self, ind: Ind) -> Self:
+    def imag(self, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).imag for block in self._blocks], self.space)
 
-    def conj(self, ind: Ind) -> Self:
+    def conj(self, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).conj() for block in self._blocks], self.space)
 
-    def delete(self, ind: Ind) -> None:
+    def delete(self, ind: Indices) -> None:
         assert self._blocks_are_valid()
         ind = slice(None) if ind is None else ind
         for block in self._blocks:
             del block[ind]
 
-    def append(self, other: Self, remove_from_other: bool, oind: Ind) -> None:
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         for block, other_block in zip(self._blocks, other._blocks, strict=True):
             block.append(_indexed(other_block, oind), remove_from_other)
 
-    def copy(self, deep: bool, ind: Ind) -> Self:
+    def copy(self, deep: bool, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).copy(deep) for block in self._blocks], self.space)
 
-    def scal(self, alpha: Complex | np.ndarray, ind: Ind) -> None:
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None:
         assert self._blocks_are_valid()
         for block in self._blocks:
             _indexed(block, ind).scal(alpha)
 
-    def scal_copy(self, alpha: Complex | np.ndarray, ind: Ind) -> Self:
+    def scal_copy(self, alpha: Complex | np.ndarray, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         if isinstance(alpha, Complex):
             if alpha == -1:
                 return type(self)([-_indexed(block, ind) for block in self._blocks], self.space)
         return super().scal_copy(alpha, ind)
 
-    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> None:
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         for block, x_block in zip(self._blocks, x._blocks, strict=True):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
-    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Ind, xind: Ind) -> Self:
+    def axpy_copy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> Self:
         assert self._blocks_are_valid()
         assert x._blocks_are_valid()
         if isinstance(alpha, Complex):
@@ -95,7 +95,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
                                   self.space)
         return super().axpy_copy(alpha, x, ind, xind)
 
-    def inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).inner(_indexed(other_block, oind))
@@ -107,7 +107,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             ret += prod
         return ret
 
-    def pairwise_inner(self, other: Self, ind: Ind, oind: Ind) -> np.ndarray:
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         assert self._blocks_are_valid()
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).pairwise_inner(_indexed(other_block, oind))
@@ -119,16 +119,16 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             ret += prod
         return ret
 
-    def lincomb(self, coefficients: np.ndarray, ind: Ind) -> Self:
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self:
         assert self._blocks_are_valid()
         lincombs = [_indexed(block, ind).lincomb(coefficients) for block in self._blocks]
         return type(self)(lincombs, self.space)
 
-    def norm2(self, ind: Ind) -> np.ndarray:
+    def norm2(self, ind: Indices) -> np.ndarray:
         assert self._blocks_are_valid()
         return np.sum(np.array([_indexed(block, ind).norm2() for block in self._blocks]), axis=0)
 
-    def dofs(self, dof_indices: np.ndarray, ind: Ind) -> np.ndarray:
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         assert self._blocks_are_valid()
         if not len(dof_indices):
             return np.zeros((0, self.len_ind(ind)))
@@ -141,7 +141,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return np.array([blocks[bi].dofs([ci])[0, :]
                          for bi, ci in zip(block_inds, dof_indices, strict=True)])
 
-    def amax(self, ind: Ind) -> tuple[np.ndarray, np.ndarray]:
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         assert self._blocks_are_valid()
         self._compute_bins()
         blocks = [_indexed(b, ind) for b in self._blocks]
