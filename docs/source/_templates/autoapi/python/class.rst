@@ -1,46 +1,55 @@
-{% if False %}
-Ideally we'd only override the "methods" block below.
-This is currently not possible, see https://github.com/readthedocs/sphinx-autoapi/issues/288
-{% endif %}
+{#
+  Copy of the class template of sphinx-autoapi 3.9.0 with one addition: a "Methods" admonition
+  with a summary table of all visible methods of the class, shown after the class docstring.
+  autoapi templates do not provide blocks which could be overridden selectively
+  (see https://github.com/readthedocs/sphinx-autoapi/issues/288), so the entire template is copied.
+  When updating sphinx-autoapi, update this file from the new version of the original template.
+#}
 {% if obj.display %}
-.. py:{{ obj.type }}:: {{ obj.short_name }}{% if obj.args %}({{ obj.args }}){% endif %}
-{% for (args, return_annotation) in obj.overloads %}
-   {{ " " * (obj.type | length) }}   {{ obj.short_name }}{% if args %}({{ args }}){% endif %}
-{% endfor %}
+   {% if is_own_page %}
+{{ obj.id }}
+{{ "=" * obj.id | length }}
 
-
-   {% if obj.bases %}
-   {% if "show-inheritance" in autoapi_options %}
-   Bases: {% for base in obj.bases %}{{ base|link_objs }}{% if not loop.last %}, {% endif %}{% endfor %}
    {% endif %}
+   {% set visible_children = obj.children|selectattr("display")|list %}
+   {% set own_page_children = visible_children|selectattr("type", "in", own_page_types)|list %}
+   {% if is_own_page and own_page_children %}
+.. toctree::
+   :hidden:
 
+      {% for child in own_page_children %}
+   {{ child.include_path }}
+      {% endfor %}
 
-   {% if "show-inheritance-diagram" in autoapi_options and obj.bases != ["object"] %}
-   .. autoapi-inheritance-diagram:: {{ obj.obj["full_name"] }}
-      :parts: 1
-      {% if "private-members" in autoapi_options %}
-      :private-bases:
+   {% endif %}
+.. py:{{ obj.type }}:: {% if is_own_page %}{{ obj.id }}{% else %}{{ obj.short_name }}{% endif %}{% if obj.type_params %}[{{ obj.type_params }}]{% endif %}{% if obj.args %}({{ obj.args }}){% endif %}
+
+   {% for (args, return_annotation) in obj.overloads %}
+      {{ " " * (obj.type | length) }}   {{ obj.short_name }}{% if args %}({{ args }}){% endif %}
+
+   {% endfor %}
+   {% if obj.bases %}
+      {% if "show-inheritance" in autoapi_options %}
+
+   Bases: {% for base in obj.bases %}{{ base|link_objs }}{% if not loop.last %}, {% endif %}{% endfor %}
       {% endif %}
 
-   {% endif %}
+
+      {% if "show-inheritance-diagram" in autoapi_options and obj.bases != ["object"] %}
+   .. autoapi-inheritance-diagram:: {{ obj.obj["full_name"] }}
+      :parts: 1
+         {% if "private-members" in autoapi_options %}
+      :private-bases:
+         {% endif %}
+
+      {% endif %}
    {% endif %}
    {% if obj.docstring %}
+
    {{ obj.docstring|indent(3) }}
    {% endif %}
-   {% if "inherited-members" in autoapi_options %}
-   {% set visible_classes = obj.classes|selectattr("display")|list %}
-   {% else %}
-   {% set visible_classes = obj.classes|rejectattr("inherited")|selectattr("display")|list %}
-   {% endif %}
-
-   {% block methods %}
-
-   {% if "inherited-members" in autoapi_options %}
-   {% set visible_overview_methods = obj.methods|selectattr("display")|list %}
-   {% else %}
-   {% set visible_overview_methods = obj.methods|rejectattr("inherited")|selectattr("display")|list %}
-   {% endif %}
-
+   {# pyMOR addition: summary of methods #}
+   {% set visible_overview_methods = visible_children|selectattr("type", "equalto", "method")|list %}
    {% if visible_overview_methods %}
 
    .. admonition:: Methods
@@ -54,26 +63,65 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
       {% endfor %}
 
    {% endif %}
-   {% endblock %}
+   {# end of pyMOR addition #}
+   {% for obj_item in visible_children %}
+      {% if obj_item.type not in own_page_types %}
 
-   {% for klass in visible_classes %}
-   {{ klass.render()|indent(3) }}
+   {{ obj_item.render()|indent(3) }}
+      {% endif %}
    {% endfor %}
+   {% if is_own_page and own_page_children %}
+      {% set visible_attributes = own_page_children|selectattr("type", "equalto", "attribute")|list %}
+      {% if visible_attributes %}
+Attributes
+----------
 
-   {% if "inherited-members" in autoapi_options %}
-   {% set visible_attributes = obj.attributes|selectattr("display")|list %}
-   {% else %}
-   {% set visible_attributes = obj.attributes|rejectattr("inherited")|selectattr("display")|list %}
+.. autoapisummary::
+
+         {% for attribute in visible_attributes %}
+   {{ attribute.id }}
+         {% endfor %}
+
+
+      {% endif %}
+      {% set visible_exceptions = own_page_children|selectattr("type", "equalto", "exception")|list %}
+      {% if visible_exceptions %}
+Exceptions
+----------
+
+.. autoapisummary::
+
+         {% for exception in visible_exceptions %}
+   {{ exception.id }}
+         {% endfor %}
+
+
+      {% endif %}
+      {% set visible_classes = own_page_children|selectattr("type", "equalto", "class")|list %}
+      {% if visible_classes %}
+Classes
+-------
+
+.. autoapisummary::
+
+         {% for klass in visible_classes %}
+   {{ klass.id }}
+         {% endfor %}
+
+
+      {% endif %}
+      {% set visible_methods = own_page_children|selectattr("type", "equalto", "method")|list %}
+      {% if visible_methods %}
+Methods
+-------
+
+.. autoapisummary::
+
+            {% for method in visible_methods %}
+   {{ method.id }}
+            {% endfor %}
+
+
+      {% endif %}
    {% endif %}
-   {% for attribute in visible_attributes %}
-   {{ attribute.render()|indent(3) }}
-   {% endfor %}
-   {% if "inherited-members" in autoapi_options %}
-   {% set visible_methods = obj.methods|selectattr("display")|list %}
-   {% else %}
-   {% set visible_methods = obj.methods|rejectattr("inherited")|selectattr("display")|list %}
-   {% endif %}
-   {% for method in visible_methods %}
-   {{ method.render()|indent(3) }}
-   {% endfor %}
 {% endif %}
