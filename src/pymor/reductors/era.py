@@ -21,32 +21,38 @@ class ERAReductorBase(CacheableObject):
     This class implements ROM construction from an orthogonal factorization of the Hankel matrix, as
     well as tangential projections of inputs and outputs. The actual factorization and error
     bounds/estimators are implemented by the subclasses.
-
-    Attributes
-    ----------
-    data
-        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
-        Has to be one- or three-dimensional with either::
-
-            data.shape == (n,)
-
-        for scalar-valued Markov parameters or::
-
-            data.shape == (n, p, m)
-
-        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
-        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
-    sampling_time
-        A number that denotes the sampling time of the system (in seconds).
-    force_stability
-        Whether the Markov parameters are zero-padded to double the length in order to enforce
-        Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
-    feedthrough
-        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
-        defines the feedthrough of the realization. Defaults to `None`.
     """
 
     cache_region = 'memory'
+
+    data: np.ndarray
+    r"""|NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
+    Has to be one- or three-dimensional with either::
+
+        data.shape == (n,)
+
+    for scalar-valued Markov parameters or::
+
+        data.shape == (n, p, m)
+
+    for matrix-valued Markov parameters of dimension :math:`p\times m`, where
+    :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
+    """
+
+    sampling_time: float
+    """A number that denotes the sampling time of the system (in seconds)."""
+
+    force_stability: bool
+    """Whether the Markov parameters are zero-padded to double the length in order to enforce
+    Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
+    """
+
+    feedthrough: Operator | np.ndarray | None
+    """(Optional) |Operator| or |NumPy array| of shape `(p, m)`.
+
+    The zeroth Markov parameter that defines the feedthrough of the realization.
+    Defaults to `None`.
+    """
 
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
         assert sampling_time >= 0
@@ -155,29 +161,6 @@ class ERAReductor(ERAReductorBase):
     directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` and
     :math:`W_R \in \mathbb{R}^{m \times n_R}` are the left and right projectors, respectively.
     See :cite:`KG16`.
-
-    Attributes
-    ----------
-    data
-        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
-        Has to be one- or three-dimensional with either::
-
-            data.shape == (n,)
-
-        for scalar-valued Markov parameters or::
-
-            data.shape == (n, p, m)
-
-        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
-        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
-    sampling_time
-        A number that denotes the sampling time of the system (in seconds).
-    force_stability
-        Whether the Markov parameters are zero-padded to double the length in order to enforce
-        Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
-    feedthrough
-        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
-        defines the feedthrough of the realization. Defaults to `None`.
     """
 
     @cached
@@ -316,46 +299,30 @@ class RandomizedERAReductor(ERAReductorBase):
     error estimator is implemented which enables an adaptive refinement of the ROM that reuses
     previous computations. The heuristic error estimator, as well as the adaptive numerical
     algorithm, are described in detail in :cite:`PS26`.
-
-    Attributes
-    ----------
-    data
-        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
-        Has to be one- or three-dimensional with either::
-
-            data.shape == (n,)
-
-        for scalar-valued Markov parameters or::
-
-            data.shape == (n, p, m)
-
-        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
-        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
-    sampling_time
-        A number that denotes the sampling time of the system (in seconds).
-    force_stability
-        Whether the Markov parameters are zero-padded to double the length in order to enforce
-        Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
-    feedthrough
-        (Optional) |Operator| or |NumPy array| of shape `(p, m)`. The zeroth Markov parameter that
-        defines the feedthrough of the realization. Defaults to `None`.
-    allow_transpose
-        Whether to allow the computation of the transposed problem, i.e., the randomized SVD of
-        :math:`\mathcal{H}^\top`. This can be computationally beneficial if the number of inputs is
-        larger than the number of outputs, as it reduces the second dimension of the Hankel matrix.
-        The transposition only happens internally and is resolved after randomized SVD such that the
-        in- and output dimensionality of the ROM is not affected. Defaults to `True`.
-    power_iterations
-        Number of power iterations used by the randomized SVD. Defaults to `2`.
-    rrf_args
-        Additional options passed to the underlying |RandomizedRangeFinder|. In particular,
-        `qr_method` defaults to `'shifted_chol_qr'` but can be overridden. The error estimator is
-        always `'loo'`, as required by the adaptive ERA algorithm, see :cite:`PS26`.
-    num_left
-        Number of left (output) directions for tangential projection.
-    num_right
-        Number of right (input) directions for tangential projection.
     """
+
+    allow_transpose: bool
+    r"""Whether to allow the computation of the transposed problem, i.e., the randomized SVD of
+    :math:`\mathcal{H}^\top`. This can be computationally beneficial if the number of inputs is
+    larger than the number of outputs, as it reduces the second dimension of the Hankel matrix.
+    The transposition only happens internally and is resolved after randomized SVD such that the
+    in- and output dimensionality of the ROM is not affected. Defaults to `True`.
+    """
+
+    power_iterations: int
+    """Number of power iterations used by the randomized SVD. Defaults to `2`."""
+
+    rrf_args: dict | None
+    """Additional options passed to the underlying |RandomizedRangeFinder|. In particular,
+    `qr_method` defaults to `'shifted_chol_qr'` but can be overridden. The error estimator is
+    always `'loo'`, as required by the adaptive ERA algorithm, see :cite:`PS26`.
+    """
+
+    num_left: int | None
+    """Number of left (output) directions for tangential projection."""
+
+    num_right: int | None
+    """Number of right (input) directions for tangential projection."""
 
     @defaults('power_iterations')
     def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True,

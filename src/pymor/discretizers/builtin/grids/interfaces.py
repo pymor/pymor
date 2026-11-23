@@ -18,17 +18,14 @@ class ReferenceElement(CacheableObject):
     All reference elements have the property that all subentities of a given codimension are of the
     same type. I.e. a three-dimensional reference element cannot have triangles and rectangles as
     faces at the same time.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the reference element
-    volume
-        The volume of the reference element
     """
 
     dim = None
+    """The dimension of the reference element"""
+
     volume = None
+    """The volume of the reference element"""
+
     cache_region = 'memory'
 
     @abstractmethod
@@ -569,14 +566,11 @@ class BoundaryInfo(CacheableObject):
 
     For every boundary type and codimension a mask is provided, marking grid entities of the
     respective type and codimension by their global index.
-
-    Attributes
-    ----------
-    boundary_types
-        set of all boundary types the grid has.
     """
 
     boundary_types = frozenset()
+    """set of all boundary types the grid has."""
+
     cache_region = 'memory'
 
     def mask(self, boundary_type, codim):

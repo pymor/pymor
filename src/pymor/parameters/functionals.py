@@ -422,11 +422,6 @@ class LincombParameterFunctional(ParameterFunctional):
         A list of scalar coefficients.
     name
         Name of the functional.
-
-    Attributes
-    ----------
-    functionals
-    coefficients
     """
 
     def __init__(self, functionals, coefficients, name=None):

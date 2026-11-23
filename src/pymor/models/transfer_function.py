@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from collections.abc import Callable
 from itertools import chain
 
 import numpy as np
@@ -42,20 +43,21 @@ class TransferFunction(CacheableObject, ParametricObject):
         attributes of |TransferFunction| such as `h2_norm`.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    tf
-        The transfer function.
-    dtf
-        The complex derivative of the transfer function.
     """
 
     cache_region = 'memory'
+
+    dim_input: int
+    """The number of inputs."""
+
+    dim_output: int
+    """The number of outputs."""
+
+    tf: Callable
+    """The transfer function."""
+
+    dtf: Callable | None
+    """The complex derivative of the transfer function."""
 
     def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
         sampling_time = float(sampling_time)
