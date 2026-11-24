@@ -4,6 +4,8 @@
 
 """IRKA-type reductor for |SecondOrderModels|."""
 
+from functools import partial
+
 from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.h2 import GenericIRKAReductor, IRKAReductor
 from pymor.reductors.interpolation import SOBHIReductor
@@ -38,12 +40,12 @@ class SORIRKAReductor(GenericIRKAReductor):
             Can be:
 
             - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_output)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -88,36 +90,20 @@ class SORIRKAReductor(GenericIRKAReductor):
         rom
             Reduced-order |SecondOrderModel|.
         """
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
-
-        self._clear_lists()
-        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
-        self._store_sigma_b_c(sigma, b, c)
-        self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth')
         assert irka_options is None or isinstance(irka_options, dict)
         if not irka_options:
             irka_options = {}
 
-        self.logger.info('Starting SOR-IRKA')
-        self._conv_data = (num_prev + 1) * [None]
-        if conv_crit == 'sigma':
-            self._conv_data[0] = sigma
-        self._pg_reductor = SOBHIReductor(self.fom, mu=self.mu)
-        for it in range(maxit):
-            rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
+        rom_to_sigma_b_c = partial(self._rom_to_sigma_b_c, force_sigma_in_rhp=force_sigma_in_rhp)
+
+        def update(rom):
             with self.logger.block('Intermediate reduction ...'):
                 irka_reductor = IRKAReductor(rom.to_lti())
                 rom_r = irka_reductor.reduce(rom.order, **irka_options)
-            sigma, b, c = self._rom_to_sigma_b_c(rom_r, force_sigma_in_rhp)
-            self._store_sigma_b_c(sigma, b, c)
-            self._update_conv_data(sigma, rom, conv_crit)
-            self._compute_conv_crit(rom, conv_crit, it)
-            self._compute_error(rom, it, compute_errors)
-            if self.conv_crit[-1] < tol:
-                break
+            return rom_to_sigma_b_c(rom_r)
 
-        self.V = self._pg_reductor.V
-        self.W = self._pg_reductor.W
-        return rom
+        data = self._rom0_params_to_sigma_b_c(rom0_params, rom_to_sigma_b_c)
+        step = partial(self._bhi_step, SOBHIReductor(self.fom, mu=self.mu), projection=projection)
+        return self._iterate('SOR-IRKA', data, step, update,
+                             tol, maxit, num_prev, conv_crit, compute_errors)

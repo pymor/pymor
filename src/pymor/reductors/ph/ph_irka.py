@@ -2,10 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from functools import partial
+
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.h2 import GenericIRKAReductor
+from pymor.reductors.interpolation import _assemble_fom
 from pymor.reductors.ph.basic import PHLTIPGReductor
 
 
@@ -42,7 +45,7 @@ class PHIRKAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
               `(len(sigma), fom.dim_input)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
+              (|NumPy array| of shape `(len(sigma), fom.dim_output)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -83,47 +86,21 @@ class PHIRKAReductor(GenericIRKAReductor):
         rom
             Reduced-order |PHLTIModel|.
         """
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
-
-        self._clear_lists()
-        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, False)
-        self._store_sigma_b_c(sigma, b, c)
-        self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'QTEorth')
 
-        self.logger.info('Starting pH-IRKA')
-        self._conv_data = (num_prev + 1) * [None]
-        if conv_crit == 'sigma':
-            self._conv_data[0] = sigma
-        for it in range(maxit):
-            self._set_V_reductor(sigma, b, projection, pg_projection)
-            rom = self._pg_reductor.reduce()
-            sigma, b, c = self._rom_to_sigma_b_c(rom, False)
-            self._store_sigma_b_c(sigma, b, c)
-            self._update_conv_data(sigma, rom, conv_crit)
-            self._compute_conv_crit(rom, conv_crit, it)
-            self._compute_error(rom, it, compute_errors)
-            if self.conv_crit[-1] < tol:
-                break
+        rom_to_sigma_b_c = partial(self._rom_to_sigma_b_c, force_sigma_in_rhp=False)
+        data = self._rom0_params_to_sigma_b_c(rom0_params, rom_to_sigma_b_c)
+        fom = _assemble_fom(self.fom, self.mu, ('J', 'R', 'G', 'P', 'S', 'N', 'E', 'Q'))
+        step = partial(self._krylov_step, fom, projection=projection, pg_projection=pg_projection)
+        return self._iterate('pH-IRKA', data, step, rom_to_sigma_b_c,
+                             tol, maxit, num_prev, conv_crit, compute_errors)
 
-        return rom
-
-    def _assemble_fom(self):
-        return (
-            self.fom.with_(
-                **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in 'JRGPSNEQ'}
-            )
-            if self.fom.parametric
-            else self.fom
-        )
-
-    def _set_V_reductor(self, sigma, b, projection, pg_projection):
-        fom = self._assemble_fom()
+    def _krylov_step(self, fom, data, projection, pg_projection):
+        sigma, b, _ = data
         self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b.T), sigma, orth=False,
                                             shifted_system_solver=fom.shifted_system_solver)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
         self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth', pg_projection)
         self.W = self._pg_reductor.bases['W']
+        return self._pg_reductor.reduce()

@@ -75,3 +75,20 @@ def test_ph_irka_E_and_Q():
     err1 = (rom1 - fom).h2_norm()
     err2 = (rom2 - fom).h2_norm()
     assert abs(err1 - err2) < 1e-12
+
+
+def test_ph_irka_energy_stable_QTEorth():
+    J = np.array([[0, 1], [-1, 0]])
+    R = np.array([[1, 0], [0, 1]])
+    G = np.array([[1], [0]])
+    E = np.array([[2, 0], [0, 1]])
+    Q = np.array([[5, 0], [0, 3]])
+    fom = PHLTIModel.from_matrices(J, R, G, E=E, Q=Q)
+    phirka = PHIRKAReductor(fom)
+
+    rom1 = phirka.reduce(1, pg_projection='energy_stable')
+    rom2 = phirka.reduce(1, projection='QTEorth', pg_projection='energy_stable')
+
+    assert isinstance(rom2, LTIModel)
+    assert isinstance(rom2.A, IdentityOperator)
+    assert abs((rom1 - fom).h2_norm() - (rom2 - fom).h2_norm()) < 1e-12
