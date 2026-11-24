@@ -1,6 +1,7 @@
 {#
-  Copy of the class template of sphinx-autoapi 3.9.0 with one addition: a "Methods" admonition
-  with a summary table of all visible methods of the class, shown after the class docstring.
+  Copy of the class template of sphinx-autoapi 3.9.0 with one addition: "Methods" and "Attributes"
+  admonitions with summary tables of all visible methods and attributes/properties of the class,
+  shown after the class docstring.
   autoapi templates do not provide blocks which could be overridden selectively
   (see https://github.com/readthedocs/sphinx-autoapi/issues/288), so the entire template is copied.
   When updating sphinx-autoapi, update this file from the new version of the original template.
@@ -60,6 +61,19 @@
 
       {% for method in visible_overview_methods %}
          {{ method.id }}
+      {% endfor %}
+
+   {% endif %}
+   {% set visible_overview_attributes = visible_children|selectattr("type", "in", ["attribute", "property"])|list %}
+   {% if visible_overview_attributes %}
+
+   .. admonition:: Attributes
+      :class: admonition-attributes
+
+      .. autoapisummary::
+
+      {% for attribute in visible_overview_attributes|sort(attribute="name") %}
+         {{ attribute.id }}
       {% endfor %}
 
    {% endif %}
