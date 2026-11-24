@@ -24,9 +24,7 @@ class Model(CacheableObject, ParametricObject):
     """
 
     solution_space = None
-    """|VectorSpace| of the solution |VectorArrays| returned by
-    :meth:`~pymor.models.interface.Model.solve`.
-    """
+    """|VectorSpace| of the solutions returned by :meth:`~pymor.models.interface.Model.solve`."""
 
     dim_output = 0
     """The number of outputs."""

@@ -103,9 +103,7 @@ class CacheRegion:
     """Base class for all pyMOR cache regions."""
 
     persistent = False
-    """If `True`, cache entries are kept between multiple
-    program runs.
-    """
+    """If `True`, cache entries are kept between multiple program runs."""
 
     def get(self, key):
         """Return cache entry for given key.
@@ -247,9 +245,10 @@ class CacheableObject(ImmutableObject):
     """Base class for anything that wants to use our built-in caching."""
 
     cache_region = None
-    """Name of the :class:`~pymor.core.cache.CacheRegion` to use. Must correspond to a key in
-    the :attr:`~pymor.core.cache.cache_regions` dict. If `None` or `'none'`, caching
-    is disabled.
+    """Name of the :class:`~pymor.core.cache.CacheRegion` to use.
+
+    Must correspond to a key in the :attr:`~pymor.core.cache.cache_regions` dict. If `None` or
+    `'none'`, caching is disabled.
     """
 
     cache_id = None

@@ -637,7 +637,9 @@ class ParameterSpace(ParametricObject):
     """
 
     constraints: Callable | None
-    """If not `None`, a function `constraints(mu) -> bool`
+    """Additional constraints on the space.
+
+    If not `None`, a function `constraints(mu) -> bool`
     defining additional (inequality) constraints on the space.
     For each given |parameter values| that lies within the given
     `ranges`, `constraints` is called to check if the constraints

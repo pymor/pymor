@@ -68,7 +68,9 @@ class PAAAReductor(BasicObject):
     generate_samples = staticmethod(sample_transfer_function)
 
     itpl_part: list[list[int]]
-    """A nested list such that `itpl_part[i]` corresponds to indices of interpolated values
+    """Indices of the interpolated values for each variable.
+
+    A nested list such that `itpl_part[i]` corresponds to indices of interpolated values
     with respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
     represents a list of all interpolated samples of the `i`-th variable.
     """

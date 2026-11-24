@@ -27,6 +27,7 @@ class ERAReductorBase(CacheableObject):
 
     data: np.ndarray
     r"""|NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
+
     Has to be one- or three-dimensional with either::
 
         data.shape == (n,)
@@ -43,7 +44,9 @@ class ERAReductorBase(CacheableObject):
     """A number that denotes the sampling time of the system (in seconds)."""
 
     force_stability: bool
-    """Whether the Markov parameters are zero-padded to double the length in order to enforce
+    """Whether to enforce Kung's stability assumption.
+
+    If `True`, the Markov parameters are zero-padded to double the length in order to enforce
     Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     """
 
