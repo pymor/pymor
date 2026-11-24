@@ -21,9 +21,7 @@ argon2-cffi-bindings==26.1.0
 arrow==1.4.0
     # via isoduration
 astroid==3.3.11
-    # via
-    #   pymor (./pyproject.toml)
-    #   sphinx-autoapi
+    # via sphinx-autoapi
 asttokens==3.0.2
     # via stack-data
 async-lru==2.3.0
@@ -322,7 +320,7 @@ lxml==6.1.2
     # via
     #   pymor (./pyproject.toml)
     #   sphinx-material
-markdown-it-py==3.0.0
+markdown-it-py==4.3.0
     # via
     #   mdit-py-plugins
     #   myst-parser
@@ -339,7 +337,7 @@ matplotlib-inline==0.2.2
     # via
     #   ipykernel
     #   ipython
-mdit-py-plugins==0.6.1
+mdit-py-plugins==0.7.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
@@ -361,7 +359,7 @@ msgpack==1.2.2
     #   k3d
 myst-nb==1.4.0
     # via pymor (./pyproject.toml)
-myst-parser==4.0.1
+myst-parser==5.2.0
     # via myst-nb
 narwhals==2.25.0
     # via scikit-learn
@@ -602,6 +600,8 @@ rich==15.0.0
     #   rich-rst
 rich-rst==2.1.0
     # via cyclopts
+roman-numerals==4.1.0
+    # via sphinx
 rpds-py==2026.6.3
     # via
     #   jsonschema
@@ -647,7 +647,7 @@ sortedcontainers==2.4.0
     # via hypothesis
 soupsieve==2.9.2
     # via beautifulsoup4
-sphinx==7.3.7
+sphinx==9.1.1
     # via
     #   pymor (./pyproject.toml)
     #   myst-nb
@@ -655,7 +655,7 @@ sphinx==7.3.7
     #   sphinx-autoapi
     #   sphinx-material
     #   sphinxcontrib-bibtex
-sphinx-autoapi==3.1.2
+sphinx-autoapi==3.9.0
     # via pymor (./pyproject.toml)
 sphinx-material==0.0.36
     # via pymor (./pyproject.toml)
