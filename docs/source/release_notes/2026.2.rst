@@ -1,0 +1,17 @@
+pyMOR 2026.1 (December ??, 2026)
+--------------------------------
+
+We are proud to announce the release of pyMOR 2026.2!
+
+This release ... TODO.
+
+pyMOR 2022.2 contains contributions by Sven Ulmann and TODO.
+We are also happy to welcome Sven as a new main developer!
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
