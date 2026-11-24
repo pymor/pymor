@@ -29,10 +29,7 @@ class Model(CacheableObject, ParametricObject):
     """
 
     dim_output = 0
-    """Dimension of the model output returned by :meth:`~pymor.models.interface.Model.output`.
-
-    0 if the model has no output.
-    """
+    """The number of outputs."""
 
     linear = False
     """`True` if the model describes a linear problem."""

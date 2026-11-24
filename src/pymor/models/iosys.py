@@ -139,9 +139,6 @@ class LTIModel(Model):
 
     cache_region = 'memory'
 
-    dim_output: int
-    """The number of outputs."""
-
     A: Operator
     """The |Operator| A."""
 
@@ -2071,9 +2068,6 @@ class SecondOrderModel(Model):
 
     cache_region = 'memory'
 
-    dim_output: int
-    """The number of outputs."""
-
     M: Operator
     """The |Operator| M."""
 
@@ -2788,9 +2782,6 @@ class LinearDelayModel(Model):
 
     cache_region = 'memory'
 
-    dim_output: int
-    """The number of outputs."""
-
     q: int
     """The number of delay terms."""
 
@@ -3093,9 +3084,6 @@ class LinearStochasticModel(Model):
 
     cache_region = 'memory'
 
-    dim_output: int
-    """The number of outputs."""
-
     q: int
     """The number of stochastic processes."""
 
@@ -3241,9 +3229,6 @@ class BilinearModel(Model):
     """
 
     cache_region = 'memory'
-
-    dim_output: int
-    """The number of outputs."""
 
     A: Operator
     """The |Operator| A."""
