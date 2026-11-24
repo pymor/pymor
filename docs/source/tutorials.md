@@ -2,6 +2,7 @@
 
 ```{toctree}
 tutorial_builtin_discretizer
+tutorial_parameters
 tutorial_basis_generation
 tutorial_projection
 tutorial_lti_systems
