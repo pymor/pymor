@@ -13,6 +13,7 @@ from scipy.linalg import (
     solve,
     solve_continuous_are,
     solve_continuous_lyapunov,
+    solve_discrete_are,
     solve_discrete_lyapunov,
     solve_triangular,
 )
@@ -440,7 +441,8 @@ class ScipyLyapunovSolverLR(LyapunovSolverLR):
 class ScipyRiccatiSolver(RiccatiSolver):
     """Compute the dense solution of a |RiccatiEquation| using SciPy.
 
-    Uses :func:`scipy.linalg.solve_continuous_are`, which is a dense solver.
+    Uses :func:`scipy.linalg.solve_continuous_are` or
+    :func:`scipy.linalg.solve_discrete_are`, which are dense solvers.
 
     This solver has no tunable parameters.
     """
@@ -448,6 +450,7 @@ class ScipyRiccatiSolver(RiccatiSolver):
     def _solve(self, equation):
         A, E, B, C, R, Q, S = equation.to_matrices()
         trans = equation.trans
+        cont_time = equation.cont_time
 
         if R is None:
             R = np.eye(B.shape[1])
@@ -463,7 +466,11 @@ class ScipyRiccatiSolver(RiccatiSolver):
                 S = S.T
 
         CTQC = C.T @ Q @ C
-        return solve_continuous_are(A, B, CTQC, R, e=E, s=S)
+        if cont_time:
+            return solve_continuous_are(A, B, CTQC, R, e=E, s=S)
+        else:
+            # balancing the symplectic pencil can fail for E not None
+            return solve_discrete_are(A, B, CTQC, R, e=E, s=S, balanced=E is None)
 
 
 class ScipyRiccatiSolverLR(RiccatiSolverLR):

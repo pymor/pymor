@@ -56,6 +56,9 @@ class RADIRiccatiSolver(RiccatiSolverLR):
         A, E, B, C, R, Q, S = equation.A, equation.E, equation.B, equation.C, equation.R, equation.Q, equation.S
         trans = equation.trans
 
+        if not equation.cont_time:
+            raise NotImplementedError
+
         if R is None:
             R = np.eye(len(B))
         if Q is None:
@@ -440,6 +443,9 @@ class RADIPositiveRiccatiSolver(PositiveRiccatiSolverLR):
     def _solve(self, equation):
         A, E, B, C, R, S, Q = equation.A, equation.E, equation.B, equation.C, equation.R, equation.S, equation.Q
         trans = equation.trans
+
+        if not equation.cont_time:
+            raise NotImplementedError
 
         if R is None:
             R = np.eye(len(B))

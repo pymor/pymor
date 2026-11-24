@@ -76,8 +76,9 @@ class SlycotLyapunovSolverLR(LyapunovSolverLR):
 class SlycotRiccatiSolver(RiccatiSolver):
     """Compute the dense solution of a |RiccatiEquation| using slycot.
 
-    Uses `slycot.sb02md` (if E is `None` and S is `None`), which is based on the Schur
-    vector approach, or `slycot.sb02od` (if E is `None` and S is not `None`) or
+    Uses `slycot.sb02md` (if E is `None`, S is `None`, and the equation is
+    continuous-time), which is based on the Schur vector approach, or `slycot.sb02od`
+    (if E is `None` and S is not `None` or the equation is discrete-time) or
     `slycot.sg02ad` (if E is not `None`), which are both based on the method of
     deflating subspaces.
 
@@ -88,7 +89,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
         A, E, B, C, R, Q, S = equation.to_matrices()
         trans = equation.trans
 
-        dico = 'C'
+        dico = 'C' if equation.cont_time else 'D'
         n = A.shape[0]
         m = B.shape[1]
         p = C.shape[0]
@@ -124,7 +125,7 @@ class SlycotRiccatiSolver(RiccatiSolver):
             X = out[1]
             rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
-        elif S is not None:
+        elif S is not None or dico == 'D':
             if R is None:
                 R = np.eye(m)
             if Q is None:
@@ -134,9 +135,12 @@ class SlycotRiccatiSolver(RiccatiSolver):
                 B, C = C.T, B.T
                 R, Q = Q, R
                 m, p = p, m
-                S = S.T
+                if S is not None:
+                    S = S.T
 
-            R, S, C = R.copy(), S.copy(), C.copy()  # fix overwrite issue (#2200)
+            R, C = R.copy(), C.copy()  # fix overwrite issue (#2200)
+            if S is not None:
+                S = S.copy()
             CTQC = C.T @ Q @ C
             X, rcond = slycot.sb02od(n, m, A, B, CTQC, R, dico, L=S, fact='N')[:2]
             _ricc_rcond_check('slycot.sb02od', rcond)

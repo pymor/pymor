@@ -237,6 +237,18 @@ rom_bt = BTReductor(fom).reduce(10)
 
 from pymor.reductors.bt import LQGBTReductor
 rom_lqgbt = LQGBTReductor(fom).reduce(10)
+
+from pymor.reductors.bt import HinfBTReductor
+rom_hinfbt = HinfBTReductor(fom, gamma=10).reduce(10)
+
+from pymor.reductors.bt import FLBTReductor
+rom_flbt = FLBTReductor(fom, omega=(10, 1000)).reduce(10)
+
+from pymor.reductors.bt import TLBTReductor
+rom_tlbt = TLBTReductor(fom, time_interval=(0, 1)).reduce(10)
+
+from pymor.reductors.bt import TWBTReductor
+rom_twbt = TWBTReductor(fom, k=1).reduce(10)
 ```
 
 ### Interpolation-based MOR
