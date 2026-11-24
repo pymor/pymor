@@ -10,8 +10,8 @@ from pymor.core.logger import set_log_levels
 from pymor.models.examples import heat_equation_non_parametric_example
 from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
-from pymor.reductors.h2 import VectorFittingReductor
 from pymor.reductors.loewner import LoewnerReductor
+from pymor.reductors.vf import VectorFittingReductor
 
 
 def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, reductor_kwargs={}, reduce_args=(), reduce_kwargs={}):
@@ -78,7 +78,7 @@ def main(
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
-    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(20,), reduce_kwargs={'maxit': 30})
+    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(20,))
 
     plt.show()
 

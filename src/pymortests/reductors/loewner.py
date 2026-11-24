@@ -9,8 +9,8 @@ from pymor.algorithms.loewner import partition_frequencies, sample_transfer_func
 from pymor.models.examples import penzl_mimo_example
 from pymor.models.iosys import LTIModel
 from pymor.reductors.aaa import PAAAReductor
-from pymor.reductors.h2 import VectorFittingReductor
 from pymor.reductors.loewner import LoewnerReductor
+from pymor.reductors.vf import VectorFittingReductor
 
 pytestmark = pytest.mark.builtin
 
