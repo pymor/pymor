@@ -18,7 +18,7 @@ from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
-from pymor.models.transfer_function import FactorizedTransferFunction
+from pymor.models.transfer_function import FactorizedTransferFunction, _scalar_factor
 from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (
     BlockColumnOperator,
@@ -38,12 +38,17 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
-from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
+from pymor.parameters.functionals import (
+    ExpressionParameterFunctional,
+    LincombParameterFunctional,
+    ProjectionParameterFunctional,
+)
 from pymor.solvers.matrix_equations.default import MatrixEquationSolvers
 from pymor.solvers.matrix_equations.equations import LyapunovEquation, PositiveRiccatiEquation, RiccatiEquation
 from pymor.solvers.matrix_equations.utils import chol
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 @defaults('value')
@@ -158,6 +163,10 @@ class LTIModel(Model):
     """
 
     cache_region = 'memory'
+
+    # make NumPy defer binary operators (e.g., multiplication by a 0-d array) to this class
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
                  T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
@@ -796,7 +805,40 @@ class LTIModel(Model):
         return self.with_(C=-self.C, D=-self.D, new_type=LTIModel)  # ensure that __neg__ works in subclasses
 
     def __mul__(self, other):
-        """Postmultiply by an |LTIModel|."""
+        """Multiply by a real scalar or postmultiply by an |LTIModel|.
+
+        Multiplication by a nonzero real scalar `alpha` is balanced between `B` and `C`, i.e.,
+        `B` is multiplied by `sqrt(abs(alpha))` and `C` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension and the same
+        |Parameters|.
+        The scalar can be a real Python or |NumPy| number or a 0-d |NumPy| array;
+        complex scalars are not supported.
+        """
+        alpha = _scalar_factor(other)
+        if alpha is not None:
+            if alpha == 0:
+                X = NumpyVectorSpace(0)
+                presets = None if self.parametric else {
+                    'c_lr': X.empty(), 'o_lr': X.empty(),
+                    'c_dense': np.zeros((0, 0)), 'o_dense': np.zeros((0, 0)), 'hsv': np.zeros(0),
+                    'h2_norm': 0., 'hinf_norm': 0., 'l2_norm': 0., 'linf_norm': 0., 'fpeak': 0.}
+                return LTIModel(ZeroOperator(X, X), ZeroOperator(X, self.B.source), ZeroOperator(self.C.range, X),
+                                D=_zero_operator(self.C.range, self.B.source, self.parameters),
+                                sampling_time=self.sampling_time,
+                                T=self.T, time_stepper=self.time_stepper, num_values=self.num_values,
+                                presets=presets, matrix_equation_solvers=self.matrix_equation_solvers)
+
+            c = np.sqrt(abs(alpha))
+            # the state and Gramian factors are scaled by c, the remaining presets by abs(alpha)
+            preset_factors = {'c_lr': c, 'o_lr': c, 'c_dense': abs(alpha), 'o_dense': abs(alpha),
+                              'hsv': abs(alpha), 'h2_norm': abs(alpha), 'hinf_norm': abs(alpha),
+                              'l2_norm': abs(alpha), 'linf_norm': abs(alpha)}
+            presets = {k: v * preset_factors[k] if k in preset_factors else v for k, v in self.presets.items()}
+            initial_data = self.initial_data * c if self.initial_data is not None else None
+            return self.with_(B=self.B * c, C=self.C * (alpha / c), D=self.D * alpha,
+                              initial_data=initial_data, presets=presets,
+                              new_type=LTIModel)  # ensure that __mul__ works in subclasses
+
         if not isinstance(other, LTIModel):
             return NotImplemented
 
@@ -828,6 +870,12 @@ class LTIModel(Model):
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
                         T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         matrix_equation_solvers=self.matrix_equation_solvers)
+
+    def __rmul__(self, other):
+        """Multiply by a real scalar."""
+        if _scalar_factor(other) is not None:
+            return self.__mul__(other)
+        return NotImplemented
 
     def impulse_resp(self, mu=None, return_solution=False):
         """Compute impulse response from all inputs.
@@ -2101,6 +2149,10 @@ class SecondOrderModel(Model):
 
     cache_region = 'memory'
 
+    # make NumPy defer binary operators (e.g., multiplication by a 0-d array) to this class
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
+
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
 
@@ -2483,7 +2535,27 @@ class SecondOrderModel(Model):
         return self.with_(Cp=-self.Cp, Cv=-self.Cv, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
+        """Multiply by a real scalar or postmultiply by a |SecondOrderModel| or an |LTIModel|.
+
+        Multiplication by a nonzero real scalar `alpha` is balanced between `B` and `Cp`, `Cv`,
+        i.e., `B` is multiplied by `sqrt(abs(alpha))` and `Cp`, `Cv` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension and the same
+        |Parameters|.
+        The scalar can be a real Python or |NumPy| number or a 0-d |NumPy| array;
+        complex scalars are not supported.
+        """
+        alpha = _scalar_factor(other)
+        if alpha is not None:
+            if alpha == 0:
+                X = NumpyVectorSpace(0)
+                return SecondOrderModel(IdentityOperator(X), ZeroOperator(X, X), ZeroOperator(X, X),
+                                        ZeroOperator(X, self.B.source), ZeroOperator(self.Cp.range, X),
+                                        D=_zero_operator(self.Cp.range, self.B.source, self.parameters),
+                                        sampling_time=self.sampling_time,
+                                        matrix_equation_solvers=self.matrix_equation_solvers)
+            c = np.sqrt(abs(alpha))
+            return self.with_(B=self.B * c, Cp=self.Cp * (alpha / c), Cv=self.Cv * (alpha / c), D=self.D * alpha)
+
         if isinstance(other, LTIModel):
             return self.to_lti() * other
 
@@ -2505,7 +2577,9 @@ class SecondOrderModel(Model):
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
     def __rmul__(self, other):
-        """Premultiply by an |LTIModel|."""
+        """Multiply by a real scalar or premultiply by an |LTIModel|."""
+        if _scalar_factor(other) is not None:
+            return self.__mul__(other)
         if isinstance(other, LTIModel):
             return other * self.to_lti()
         else:
@@ -2818,6 +2892,10 @@ class LinearDelayModel(Model):
 
     cache_region = 'memory'
 
+    # make NumPy defer binary operators (e.g., multiplication by a 0-d array) to this class
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
+
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -2965,7 +3043,27 @@ class LinearDelayModel(Model):
         return self.with_(C=-self.C, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
+        """Multiply by a real scalar or postmultiply by a model.
+
+        Postmultiplication is supported for an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|.
+        Multiplication by a nonzero real scalar `alpha` is balanced between `B` and `C`, i.e.,
+        `B` is multiplied by `sqrt(abs(alpha))` and `C` by `alpha / sqrt(abs(alpha))`.
+        Multiplication by zero returns a zero model with zero state space dimension and the same
+        |Parameters|.
+        The scalar can be a real Python or |NumPy| number or a 0-d |NumPy| array;
+        complex scalars are not supported.
+        """
+        alpha = _scalar_factor(other)
+        if alpha is not None:
+            if alpha == 0:
+                X = NumpyVectorSpace(0)
+                return LinearDelayModel(ZeroOperator(X, X), tuple(ZeroOperator(X, X) for _ in self.tau), self.tau,
+                                        ZeroOperator(X, self.B.source), ZeroOperator(self.C.range, X),
+                                        D=_zero_operator(self.C.range, self.B.source, self.parameters),
+                                        sampling_time=self.sampling_time)
+            c = np.sqrt(abs(alpha))
+            return self.with_(B=self.B * c, C=self.C * (alpha / c), D=self.D * alpha)
+
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -3005,7 +3103,13 @@ class LinearDelayModel(Model):
         return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
 
     def __rmul__(self, other):
-        """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
+        """Multiply by a real scalar or premultiply by an |LTIModel| or a |SecondOrderModel|."""
+        if _scalar_factor(other) is not None:
+            return self.__mul__(other)
+
+        if not isinstance(other, LTIModel | SecondOrderModel):
+            return NotImplemented
+
         assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
@@ -3355,6 +3459,21 @@ def _lti_to_poles_b_c(lti, mu=None):
     b = spla.solve(EX, B)
     c = (C @ X).T
     return poles, b, c
+
+
+def _zero_operator(range, source, parameters):
+    """Return a |ZeroOperator| that formally depends on the given |Parameters|.
+
+    Used to ensure that multiplying a parametric model by zero gives a model with the same
+    |Parameters|.
+    """
+    op = ZeroOperator(range, source)
+    if not parameters:
+        return op
+    zero = LincombParameterFunctional(
+        [ProjectionParameterFunctional(name, size=size, index=0) for name, size in parameters.items()],
+        [0.] * len(parameters))
+    return LincombOperator([op], [zero])
 
 
 def _poles_b_c_to_lti(poles, b, c):
