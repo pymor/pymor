@@ -60,14 +60,10 @@ class VectorArray(BasicObject):
 
     _impl = None
     base = None
-    """In case the array is a view, the |VectorArray| this array refers to. `None`
-    otherwise.
-    """
+    """In case the array is a view, the |VectorArray| this array refers to. `None` otherwise."""
 
     ind = None
-    """In case the array is a view, the indices with which the :attr:`~VectorArray.base`
-    array is indexed with.
-    """
+    """In case the array is a view, the indices with which :attr:`~VectorArray.base` is indexed."""
 
     space: 'VectorSpace'
     """The |VectorSpace| the array belongs to."""
@@ -813,9 +809,7 @@ class VectorSpace(ImmutableObject):
     """
 
     dim = None
-    """The dimension (number of degrees of freedom) of the
-    vectors contained in the space.
-    """
+    """The dimension (number of degrees of freedom) of the vectors contained in the space."""
 
     is_scalar = False
     """Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`."""

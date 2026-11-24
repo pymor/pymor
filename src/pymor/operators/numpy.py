@@ -107,8 +107,9 @@ class NumpyMatrixBasedOperator(Operator):
 
     linear = True
     sparse = None
-    """`True` if the operator assembles into a sparse matrix, `False` if the
-    operator assembles into a dense matrix, `None` if unknown.
+    """`True` if the operator assembles into a sparse matrix.
+
+    `False` if the operator assembles into a dense matrix, `None` if unknown.
     """
 
     @property
