@@ -173,10 +173,10 @@ f(x, \mu) :\equiv 0 \quad\text{and}\quad
 and that we have the following mixed boundary conditions
 
 ```{math}
-\begin{align}
+\begin{aligned}
  -\sigma(x, \mu) \nabla u(x, \mu) \cdot n &= g_N(x), && x \in (0,1) \times \{0\} =: \Omega_N \\
  u(x, \mu) &= 0, && x \in \partial\Omega \setminus \Omega_N,
-\end{align}
+\end{aligned}
 ```
 
 with {math}`g_N(x) \equiv -1`.
