@@ -217,6 +217,7 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
 
 
 cache_regions = {}
+"""Dict of all cache regions, indexed by their names."""
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:

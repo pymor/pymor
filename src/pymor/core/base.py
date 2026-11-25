@@ -11,7 +11,7 @@ are the following:
     1. :class:`BasicObject` sets class :class:`UberMeta` as metaclass
        which itself inherits from :class:`abc.ABCMeta`. Thus it is possible
        to define interface classes with abstract methods using the
-       :func:`abstractmethod` decorator. There are also decorators for
+       :func:`~abc.abstractmethod` decorator. There are also decorators for
        abstract class methods, static methods, and properties.
     2. Using metaclass magic, each *class* deriving from :class:`BasicObject`
        comes with its own :mod:`~pymor.core.logger` instance accessible through its `logger`
