@@ -189,10 +189,10 @@ print(f't_fom: {toc-tic}  t_rom: {tac-toc}  speedup: {(toc-tic)/(tac-toc)}')
 Here we consider a synthetic linear time-invariant (LTI) system of the form
 
 $$
-\begin{align*}
+\begin{aligned}
   \dot{x}(t) & = A x(t) + B u(t), \\
   y(t) & = C x(t),
-\end{align*}
+\end{aligned}
 $$
 
 where $x$ is the state, $u$ is the input, and $y$ is the output.

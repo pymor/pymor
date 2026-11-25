@@ -25,10 +25,10 @@ we discuss finite-dimensional, continuous-time, linear time-invariant (LTI)
 systems of the form
 
 ```{math}
-\begin{align}
+\begin{aligned}
     E \dot{x}(t) & = A x(t) + B u(t), \\
     y(t) & = C x(t) + D u(t).
-\end{align}
+\end{aligned}
 ```
 
 where
@@ -61,7 +61,7 @@ We consider the following one-dimensional heat equation over {math}`(0, 1)` with
 two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_3`:
 
 ```{math}
-\begin{align}
+\begin{aligned}
     \partial_t T(\xi, t) & = \partial_{\xi \xi} T(\xi, t) + u_1(t),
     & 0 < \xi < 1,\ t > 0, \\
     -\partial_\xi T(0, t) & = -T(0, t) + u_2(t),
@@ -70,7 +70,7 @@ two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_3`:
     & t > 0, \\
     y_k(t) & = 3 \int_{\frac{k - 1}{3}}^{\frac{k}{3}} T(\xi, t) \, \mathrm{d}\xi,
     & t > 0,\ k = 1, 2, 3.
-\end{align}
+\end{aligned}
 ```
 
 There are many ways of building an {{ LTIModel }}.
@@ -218,10 +218,10 @@ The expression for {math}`H` can be found by applying the Laplace transform
 to the system equations to obtain
 
 ```{math}
-\begin{align}
+\begin{aligned}
     s E X(s) & = A X(s) + B U(s), \\
     Y(s) & = C X(s) + D U(s).
-\end{align}
+\end{aligned}
 ```
 
 using that {math}`s X(s)` is the Laplace transform of {math}`\dot{x}(t)`.
@@ -369,7 +369,7 @@ The controllability and observability Gramians of an asymptotically stable
 system with invertible {math}`E` are respectively
 
 ```{math}
-\begin{align*}
+\begin{aligned}
     P & =
     \int_0^\infty
     e^{t E^{-1} A} E^{-1} B
@@ -382,7 +382,7 @@ system with invertible {math}`E` are respectively
     C^{\operatorname{T}} C
     e^{t E^{-1} A}
     \operatorname{d}\!t.
-\end{align*}
+\end{aligned}
 ```
 
 From this,
@@ -391,7 +391,7 @@ Furthermore,
 it can be shown that {math}`P` and {math}`Q` are solutions to the Lyapunov equation
 
 ```{math}
-\begin{align*}
+\begin{aligned}
     A P E^{\operatorname{T}}
     + E P A^{\operatorname{T}}
     + B B^{\operatorname{T}}
@@ -400,7 +400,7 @@ it can be shown that {math}`P` and {math}`Q` are solutions to the Lyapunov equat
     + E^{\operatorname{T}} Q A
     + C^{\operatorname{T}} C
     & = 0.
-\end{align*}
+\end{aligned}
 ```
 
 The Gramians can be used to quantify how much the input influences the state

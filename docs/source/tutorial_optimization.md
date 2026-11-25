@@ -79,7 +79,7 @@ We consider a domain {math}`\Omega:= [-1, 1]^2`, a parameter set
 with data functions
 
 ```{math}
-\begin{align}
+\begin{aligned}
 l(x, y) &= \tfrac{1}{2} \pi^2 \cos(\tfrac{1}{2} \pi x) \cos(\tfrac{1}{2} \pi y),\\
 \lambda(\mu) &= \theta_0(\mu) \lambda_0 + \theta_1(\mu) \lambda_1,\\
 \theta_0(\mu) &= 1.1 + \sin(\mu_0)\mu_1,\\
@@ -87,7 +87,7 @@ l(x, y) &= \tfrac{1}{2} \pi^2 \cos(\tfrac{1}{2} \pi x) \cos(\tfrac{1}{2} \pi y),
 \lambda_0 &= \chi_{\Omega \backslash \omega},\\
 \lambda_1 &= \chi_\omega,\\
 \omega &:= [-\tfrac{2}{3}, -\tfrac{1}{3}]^2 \cup ([-\tfrac{2}{3}, -\tfrac{1}{3}] \times [\tfrac{1}{3}, \tfrac{2}{3}]).
-\end{align}
+\end{aligned}
 ```
 
 The diffusion is thus given as the linear combination of scaled
@@ -376,10 +376,10 @@ For computing the gradient of the linear objective functional
 {math}`i= 1, \dots, P`
 
 ```{math}
-\begin{align} \label{gradient:sens} \tag{1}
+\begin{aligned} \label{gradient:sens} \tag{1}
 d_{\mu_i} \mathcal{J}(\mu) = \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}]
    =   \partial_{\mu_i} J(u_{\mu}, \mu) + J(d_{\mu_i} u_{\mu}, \mu)
-\end{align}
+\end{aligned}
 ```
 
 Thus, we need to compute the derivative of the
@@ -429,11 +429,11 @@ using the solution of the dual problem, we can then derive the gradient of the o
 functional by
 
 ```{math}
-\begin{align}
+\begin{aligned}
 d_{\mu_i} \mathcal{J}(\mu) &= \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}] \\
    &=   \partial_{\mu_i} J(u_{\mu}, \mu) + a_\mu(d_{\mu_i} u_{\mu}, p_\mu) \\
    &=   \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_{\mu_i} r_\mu^{\text{pr}}(u_{\mu})[p_\mu]
-\end{align}
+\end{aligned}
 ```
 
 We conclude that we only need to solve for {math}`u_{\mu}` and

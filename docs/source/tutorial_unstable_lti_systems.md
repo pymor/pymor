@@ -23,10 +23,10 @@ kernelspec:
 In {doc}`tutorial_lti_systems` we introduced LTI systems of the form
 
 ```{math}
-\begin{align}
+\begin{aligned}
     E \dot{x}(t) & = A x(t) + B u(t), \\
     y(t) & = C x(t) + D u(t).
-\end{align}
+\end{aligned}
 ```
 
 If the system is asymptotically stable, i.e., all eigenvalues of the
@@ -49,7 +49,7 @@ We consider the following one-dimensional heat equation over {math}`(0, 1)` with
 one input {math}`u(t)` and one output {math}`y(t)`:
 
 ```{math}
-\begin{align}
+\begin{aligned}
     \partial_t T(\xi, t) & = \partial_{\xi \xi} T(\xi, t) + \lambda T(\xi, t),
     & 0 < \xi < 1,\ t > 0, \\
     -\partial_\xi T(0, t) & = -T(0, t) + u(t),
@@ -58,7 +58,7 @@ one input {math}`u(t)` and one output {math}`y(t)`:
     & t > 0, \\
     y(t) & = T(1, t),
     & t > 0.
-\end{align}
+\end{aligned}
 ```
 
 Depending on the choice of the parameter {math}`\lambda`, the discretization of
@@ -126,7 +126,7 @@ can follow a similar approach to the one from {doc}`tutorial_bt` but using the
 frequency domain representations of the controllability and observability Gramians
 
 ```{math}
-\begin{align*}
+\begin{aligned}
     P & =
     \frac{1}{2 \pi} \int_{-\infty}^\infty
     (\imath \omega E - A)^{-1}
@@ -139,7 +139,7 @@ frequency domain representations of the controllability and observability Gramia
     C^{\operatorname{T}} C
     (\imath \omega E - A)^{-1}
     \operatorname{d}\!\omega\, E.
-\end{align*}
+\end{aligned}
 ```
 
 Again, two Lyapunov equations have to be solved in order to obtain these Gramians.
