@@ -28,6 +28,12 @@ from file. Otherwise, a `:`-separated list of the paths to
 Python scripts containing defaults.
 ```
 
+```{envvar} PYMOR_DOCS_BUILD
+If set, {meth}`~pymor.core.config.Config.require` does not raise an exception
+for missing dependencies. This is used when building pyMOR's documentation,
+where missing dependencies are replaced by mock objects.
+```
+
 ```{envvar} PYMOR_FIXTURES_DISABLE_BUILTIN
 If set, {{ VectorArray }}, {{ Operator }} and related fixtures only use
 external solver backends.

@@ -177,6 +177,9 @@ class Config:
     def __init__(self):
         self.PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
         self.disabled = set(os.environ.get('PYMOR_CONFIG_DISABLE', '').upper().split())
+        # when building the docs, missing dependencies are mocked, so modules requiring them
+        # can still be imported and documented
+        self.building_docs = bool(os.environ.get('PYMOR_DOCS_BUILD'))
 
     @property
     def version(self):
@@ -185,7 +188,7 @@ class Config:
 
     def require(self, dependency):
         dependency = dependency.upper()
-        if not getattr(self, f'HAVE_{dependency}'):
+        if not getattr(self, f'HAVE_{dependency}') and not self.building_docs:
             if dependency == 'QT':
                 raise QtMissingError
             elif dependency == 'SKLEARN':
