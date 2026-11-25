@@ -53,7 +53,6 @@ docs-additional = [
   "myst-nb>=0.16",
   "pybind11[global]",
   "python-slugify",
-  "sphinx-autoapi==3.9.0",
   "sphinx-material",
   "sphinx==9.1.1", # newest version supporting Python 3.12
   "sphinxcontrib-bibtex",

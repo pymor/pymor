@@ -44,7 +44,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -f source/generated/*.rst
-	-rm -rf source/autoapi/
+	-rm -rf source/api/
 
 html:
 	cp -a source/*png .
