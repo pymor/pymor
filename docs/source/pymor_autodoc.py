@@ -34,11 +34,10 @@ def _own_members(cls):
             methods.add(name)
         else:
             attributes.add(name)
-    # autodoc ignores annotations for members inherited from a base class (i.e. found by dir())
-    inherited = set(dir(cls)) - cls.__dict__.keys()
-    attributes.update(name for name in getannotations(cls)
-                      if not name.startswith('_') and name not in inherited)
-    return methods, attributes - methods
+    # annotation-only attributes (members in cls.__dict__ have been handled above; autodoc
+    # ignores annotations of members inherited from a base class)
+    attributes.update(name for name in getannotations(cls) if not name.startswith('_') and name not in dir(cls))
+    return methods, attributes
 
 
 def _member_table(title, role, rows):
