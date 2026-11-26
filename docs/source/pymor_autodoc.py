@@ -110,22 +110,6 @@ def hide_members_from_toc(app, doctree):
             node['no-contents-entry'] = node['nocontentsentry'] = True
 
 
-def _format_type_param(param):
-    if isinstance(param, ParamSpec):
-        result = f'**{param.__name__}'
-    elif isinstance(param, TypeVarTuple):
-        result = f'*{param.__name__}'
-    else:
-        result = param.__name__
-        if param.__bound__ is not None:
-            result += f': {stringify_annotation(param.__bound__, 'smart')}'
-        elif param.__constraints__:
-            result += f': ({", ".join(stringify_annotation(c, 'smart') for c in param.__constraints__)})'
-    if param.has_default():
-        result += f' = {stringify_annotation(param.__default__, 'smart')}'
-    return result
-
-
 def _type_params(obj):
     # for classes, only consider the type parameters declared by the class itself
     if isinstance(obj, type) and '__type_params__' not in obj.__dict__:
@@ -138,10 +122,25 @@ def add_type_params(app, what, name, obj, options, signature, return_annotation)
 
     See https://github.com/sphinx-doc/sphinx/issues/10568.
     """
+    def format_param(param):
+        if isinstance(param, ParamSpec):
+            result = f'**{param.__name__}'
+        elif isinstance(param, TypeVarTuple):
+            result = f'*{param.__name__}'
+        else:
+            result = param.__name__
+            if param.__bound__ is not None:
+                result += f': {stringify_annotation(param.__bound__, 'smart')}'
+            elif param.__constraints__:
+                result += f': ({", ".join(stringify_annotation(c, 'smart') for c in param.__constraints__)})'
+        if param.has_default():
+            result += f' = {stringify_annotation(param.__default__, 'smart')}'
+        return result
+
     params = _type_params(obj)
     if signature is None or not params:
         return None
-    return f'[{", ".join(_format_type_param(p) for p in params)}]{signature}', return_annotation
+    return f'[{", ".join(format_param(p) for p in params)}]{signature}', return_annotation
 
 
 def remove_generic_base(app, name, obj, options, bases):
