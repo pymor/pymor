@@ -124,24 +124,6 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
     border-left: None;
 }
 
-.py.class > dd > .admonition.admonition-parameters {
-    border-left: .2rem solid #ffd042;
-}
-
-.py.class > dd > .admonition.admonition-parameters .admonition-title {
-    border-bottom: .05rem solid #ffd042;
-    background-color: #ffecb3;
-}
-
-.admonition-raises.admonition {
-    border-left: .2rem solid #ff7142 !important;
-}
-
-.admonition-raises.admonition .admonition-title {
-    border-bottom: .05rem solid #ff7142;
-    background-color: #ffc6b3;
-}
-
 .py.method, .py.function {
     border-left: .1rem solid #448aff !important;
 }
