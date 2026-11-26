@@ -7,7 +7,6 @@ import pkgutil
 from typing import Generic, ParamSpec, TypeVarTuple, get_origin
 
 from sphinx import addnodes
-from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util.inspect import getannotations, isproperty, safe_getattr
 from sphinx.util.typing import stringify_annotation
@@ -20,14 +19,6 @@ def _force_documented(obj):
 
 def skip(app, what, name, obj, skip, options):
     return False if _force_documented(obj) else None
-
-
-def _documented_instance_attributes(cls):
-    try:
-        attr_docs = ModuleAnalyzer.for_module(cls.__module__).find_attr_docs()
-    except PycodeError:
-        return set()
-    return {name for (namespace, name) in attr_docs if namespace == cls.__qualname__}
 
 
 def _own_members(cls):
@@ -43,10 +34,9 @@ def _own_members(cls):
             methods.add(name)
         else:
             attributes.add(name)
-    # autodoc ignores annotations and attribute docstrings for members inherited from a
-    # base class (i.e. found by dir())
+    # autodoc ignores annotations for members inherited from a base class (i.e. found by dir())
     inherited = set(dir(cls)) - cls.__dict__.keys()
-    attributes.update(name for name in getannotations(cls).keys() | _documented_instance_attributes(cls)
+    attributes.update(name for name in getannotations(cls)
                       if not name.startswith('_') and name not in inherited)
     return methods, attributes - methods
 
