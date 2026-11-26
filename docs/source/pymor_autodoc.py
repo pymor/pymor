@@ -11,21 +11,22 @@ from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util.inspect import getannotations, isproperty, safe_getattr
 from sphinx.util.typing import stringify_annotation
 
-
-def _force_documented(obj):
-    # private, but documented extension point
-    return getattr(obj, '__qualname__', None) == 'Operator._assemble_lincomb'
+# private members which are documented nevertheless
+DOCUMENTED_PRIVATE_MEMBERS = [
+    'pymor.operators.interface.Operator._assemble_lincomb',  # extension point
+]
 
 
 def skip(app, what, name, obj, skip, options):
-    return False if _force_documented(obj) else None
+    fullname = f"{getattr(obj, '__module__', None)}.{getattr(obj, '__qualname__', None)}"
+    return False if fullname in DOCUMENTED_PRIVATE_MEMBERS else None
 
 
 def _own_members(cls):
     """Methods and attributes documented by autodoc for the given class."""
     methods, attributes = set(), set()
     for name, value in cls.__dict__.items():
-        if name.startswith('_') and not _force_documented(value):
+        if name.startswith('_') and f'{cls.__module__}.{cls.__qualname__}.{name}' not in DOCUMENTED_PRIVATE_MEMBERS:
             continue
         if isinstance(value, type) and value.__qualname__ == f'{cls.__qualname__}.{name}':  # nested classes
             continue
