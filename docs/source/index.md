@@ -15,7 +15,7 @@ getting_started
 mor_methods
 tutorials
 demos/demos.rst
-api
+api/pymor
 technical_overview
 release_notes/all.rst
 developer_docs

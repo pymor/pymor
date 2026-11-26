@@ -267,7 +267,10 @@ latex_use_modindex = False
 # Autodoc / Autosummary
 # -----------------------------------------------------------------------------
 
-autosummary_generate = True
+# api.rst only triggers the generation of the API pages. It is not part of the docs, so that the
+# generated page of the pymor package (titled 'API Reference') is the top-level page of the API.
+autosummary_generate = ['api.rst']
+exclude_patterns = ['api.rst']
 autodoc_default_options = {
     'members': True,
     'undoc-members': True,

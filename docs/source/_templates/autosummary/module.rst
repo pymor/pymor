@@ -8,8 +8,14 @@
   - Submodules are listed directly after the module docstring instead of at the end.
   - Classes and exceptions share one summary table, summary tables have no signatures,
     and there is no summary table for module attributes.
+  - The page of the pymor package is the top-level page of the API docs and titled 'API Reference'.
 -#}
+{% if fullname == 'pymor' -%}
+API Reference
+=============
+{%- else -%}
 {{ fullname | escape | underline }}
+{%- endif %}
 
 .. automodule:: {{ fullname }}
    :no-members:
