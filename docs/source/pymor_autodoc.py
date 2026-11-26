@@ -134,7 +134,10 @@ def _type_params(obj):
 
 
 def add_type_params(app, what, name, obj, options, signature, return_annotation):
-    """Add PEP 695 type parameters to signatures, which autodoc does not show."""
+    """Add PEP 695 type parameters to signatures, which autodoc does not show.
+
+    See https://github.com/sphinx-doc/sphinx/issues/10568.
+    """
     params = _type_params(obj)
     if signature is None or not params:
         return None
