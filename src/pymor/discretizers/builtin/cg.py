@@ -7,7 +7,7 @@
 from functools import partial
 
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix
+from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
@@ -19,8 +19,8 @@ from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.referenceelements import line, square, triangle
 from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer, PatchVisualizer
 from pymor.models.basic import InstationaryModel, StationaryModel
-from pymor.operators.constructions import LincombOperator, QuadraticFunctional
-from pymor.operators.numpy import NumpyMatrixBasedOperator
+from pymor.operators.constructions import LincombOperator, QuadraticFunctional, VectorOperator
+from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 LagrangeShapeFunctions = {
@@ -1418,6 +1418,19 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
     else:
         I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
         I = m.solution_space.make_array(I)
+
+    bi = data['boundary_info']
+    if bi.has_dirichlet:
+        g = data['grid']
+        mask = np.ones(g.size(g.dim))
+        mask[bi.dirichlet_boundaries(g.dim)] = 0.
+        if not p.initial_data.parametric:
+            I = VectorOperator(I)
+        I = NumpyMatrixOperator(dia_matrix((mask, 0), shape=(mask.size, mask.size))) @ I
+        if p.stationary_part.dirichlet_data is not None:
+            I = I + BoundaryDirichletFunctional(g, p.stationary_part.dirichlet_data, bi)
+        if not I.parametric:
+            I = I.as_range_array()
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:
