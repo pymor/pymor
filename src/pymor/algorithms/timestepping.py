@@ -498,7 +498,7 @@ class DiscreteTimeStepper(TimeStepper):
             U = M.apply_inverse(rhs, mu=mu_t, initial_guess=U)
             while sign * (k - k0) + 1 + (min(sign*dt, sign*DT) * 0.5) >= sign * num_ret_values * DT:
                 num_ret_values += 1
-                yield U, k
+                yield U, k + sign
 
 
 def _depends_on_time(obj, mu):

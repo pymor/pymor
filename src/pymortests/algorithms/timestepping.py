@@ -4,6 +4,7 @@ import pytest
 from pymor.algorithms.timestepping import DiscreteTimeStepper, ImplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.models.examples import heat_equation_example, heat_equation_non_parametric_example
 from pymor.operators.constructions import vector_array_to_selection_operator
+from pymor.operators.numpy import NumpyMatrixOperator
 
 pytestmark = pytest.mark.builtin
 
@@ -107,3 +108,25 @@ def test_backward_stepping_discrete():
     U_backwards = time_stepper.solve(end_time, initial_time, initial_data, dt * operator, rhs=dt * rhs, mass=-mass,
                                      num_values=num_values)
     assert np.all((U - U_backwards).norm() <= tol)
+
+
+@pytest.mark.parametrize(('initial_time', 'end_time', 'num_values', 'expected_times'), [
+    (0, 4, None, [0, 1, 2, 3, 4]),
+    (2, 6, None, [2, 3, 4, 5, 6]),
+    (4, 0, None, [4, 3, 2, 1, 0]),
+    (0, 4, 3, [0, 2, 4]),
+])
+def test_discrete_time_stepper_timestamps(initial_time, end_time, num_values, expected_times):
+    # x_{k+1} = 0.5 * x_k, so the value returned for time t must be 0.5**|t - initial_time| * x_0
+    operator = NumpyMatrixOperator(np.array([[-0.5]]))
+    initial_data = operator.source.ones()
+    sign = np.sign(end_time - initial_time)
+    mass = NumpyMatrixOperator(np.array([[float(sign)]]))  # as in test_backward_stepping_discrete
+    time_stepper = DiscreteTimeStepper()
+
+    results = list(time_stepper.iterate(initial_time, end_time, initial_data, operator, mass=mass,
+                                        num_values=num_values))
+    times = [t for _, t in results]
+    assert times == expected_times
+    for U, t in results:
+        assert np.allclose(U.to_numpy(), (0.5 ** (sign * (t - initial_time))) * initial_data.to_numpy())
