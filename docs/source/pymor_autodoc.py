@@ -9,7 +9,7 @@ from typing import Generic, ParamSpec, TypeVarTuple, get_origin
 from sphinx import addnodes
 from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.transforms.post_transforms import SphinxPostTransform
-from sphinx.util.inspect import getannotations, safe_getattr
+from sphinx.util.inspect import getannotations, isproperty, safe_getattr
 from sphinx.util.typing import stringify_annotation
 
 
@@ -38,7 +38,8 @@ def _own_members(cls):
             continue
         if isinstance(value, type) and value.__qualname__ == f'{cls.__qualname__}.{name}':  # nested classes
             continue
-        if inspect.isroutine(safe_getattr(cls, name, None)):
+        # functools.cached_property is a routine according to inspect, but documented as property
+        if inspect.isroutine(safe_getattr(cls, name, None)) and not isproperty(value):
             methods.add(name)
         else:
             attributes.add(name)
