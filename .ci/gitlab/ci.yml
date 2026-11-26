@@ -35,10 +35,16 @@ stages:
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         PYMOR_CONFIG_DISABLE: "fenics fenicsx ngsolve scikit_fem dealii"
+        # local mirror of the SLICOT benchmark archives, see src/pymortests/models/slicot.py
+        PYMOR_SLICOT_MIRROR: "${CI_PROJECT_DIR}/.cache/slicot-mirror"
     cache:
-        key: same_db_on_all_runners
+      - key: same_db_on_all_runners
         paths:
           - .hypothesis
+      # bump the version when the list of SLICOT benchmarks changes
+      - key: slicot-mirror-v1
+        paths:
+          - .cache/slicot-mirror
     artifacts:
         when: always
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
@@ -163,6 +169,18 @@ vanilla oldest weekly:
         PYMOR_CONFIG_DISABLE: "fenics fenicsx ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
+
+# check that the SLICOT benchmark archives are still available upstream with the expected hashes
+slicot upstream weekly:
+    extends: .pytest_weekly
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    variables:
+        PYMOR_TEST_SLICOT_UPSTREAM: "1"
+    # neither the hypothesis database nor the SLICOT mirror are used
+    cache: []
+    script:
+        - source ./.ci/gitlab/common_test_setup.bash
+        - python -m pytest -r fEsx src/pymortests/models/examples_slicot.py -k upstream
 
 jupyter current:
     extends: .pytest
