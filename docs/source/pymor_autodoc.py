@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import inspect
-import sys
+import pkgutil
 from typing import Generic, ParamSpec, TypeVarTuple, get_origin
 
 from sphinx import addnodes
@@ -147,16 +147,6 @@ def remove_generic_base(app, name, obj, options, bases):
         bases[:] = [b for b in bases if get_origin(b) is not Generic] or [object]
 
 
-def _class_type_params(module, fullname):
-    """Names of the type parameters of the given class and of all its base classes."""
-    obj = sys.modules.get(module)
-    for part in fullname.split('.'):
-        obj = getattr(obj, part, None)
-    if not isinstance(obj, type):
-        return set()
-    return {param.__name__ for cls in obj.__mro__ for param in getattr(cls, '__type_params__', ())}
-
-
 def _type_params_in_scope(node):
     """Names of the PEP 695 type parameters declared by the descriptions enclosing `node`.
 
@@ -170,7 +160,12 @@ def _type_params_in_scope(node):
                 for param in sig.findall(addnodes.desc_type_parameter):
                     names.update(n.astext() for n in param.findall(addnodes.desc_sig_name))
                 if node.get('objtype') in ('class', 'exception') and sig.get('fullname'):
-                    names |= _class_type_params(sig.get('module'), sig['fullname'])
+                    try:
+                        cls = pkgutil.resolve_name(f"{sig.get('module')}:{sig['fullname']}")
+                    except (ImportError, AttributeError):
+                        continue
+                    if isinstance(cls, type):
+                        names.update(param.__name__ for c in cls.__mro__ for param in getattr(c, '__type_params__', ()))
         node = node.parent
     return names
 
