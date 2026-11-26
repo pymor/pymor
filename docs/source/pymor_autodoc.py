@@ -9,14 +9,8 @@ from typing import Generic, ParamSpec, TypeVarTuple, get_origin
 from sphinx import addnodes
 from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.transforms.post_transforms import SphinxPostTransform
-from sphinx.util.inspect import safe_getattr
+from sphinx.util.inspect import getannotations, safe_getattr
 from sphinx.util.typing import stringify_annotation
-
-try:
-    from annotationlib import Format, get_annotations
-except ImportError:  # Python < 3.14
-    Format = None
-    from inspect import get_annotations
 
 
 def _force_documented(obj):
@@ -26,15 +20,6 @@ def _force_documented(obj):
 
 def skip(app, what, name, obj, skip, options):
     return False if _force_documented(obj) else None
-
-
-def _class_annotations(cls):
-    try:
-        if Format is not None:
-            return get_annotations(cls, format=Format.FORWARDREF)
-        return get_annotations(cls)
-    except Exception:
-        return {}
 
 
 def _documented_instance_attributes(cls):
@@ -60,7 +45,7 @@ def _own_members(cls):
     # autodoc ignores annotations and attribute docstrings for members inherited from a
     # base class (i.e. found by dir())
     inherited = set(dir(cls)) - cls.__dict__.keys()
-    attributes.update(name for name in _class_annotations(cls).keys() | _documented_instance_attributes(cls)
+    attributes.update(name for name in getannotations(cls).keys() | _documented_instance_attributes(cls)
                       if not name.startswith('_') and name not in inherited)
     return methods, attributes - methods
 
