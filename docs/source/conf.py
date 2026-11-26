@@ -354,4 +354,3 @@ def linkcode_resolve(domain, info):
         filename = info['module'].replace('.', '/')
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
-
