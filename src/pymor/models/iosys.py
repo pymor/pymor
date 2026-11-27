@@ -1766,7 +1766,7 @@ class PHLTIModel(LTIModel):
     @classmethod
     def from_passive_LTIModel(cls, model):
         """
-        Convert a passive |LTIModel| to a |PHLTIModel|.
+        Convert a passive |LTIModel| to a |PHLTIModel| in Berlin form.
 
         .. note::
             The method uses dense computations and converts `model` to dense matrices.
@@ -1775,25 +1775,29 @@ class PHLTIModel(LTIModel):
         ----------
         model
             The passive |LTIModel| to convert.
+
+        Returns
+        -------
+        phlti
+            The |PHLTIModel| in Berlin form.
         """
         # Determine solution of KYP inequality
         X = model.gramian('pr_o_dense')
-        A, B, C, D, E = model.to_matrices()
+        A, B, C, D, E = model.to_matrices(format='dense')
 
-        Q = X if E is None else X @ E
+        ETX = X if E is None else E.T @ X
+        ETXA = ETX @ A
+        ETXB = ETX @ B
 
-        QinvTAT = np.linalg.solve(Q.T, A.T)
-        AQinv = QinvTAT.T
-        QinvTCT = np.linalg.solve(Q.T, C.T)
-
-        J = 0.5 * (AQinv - QinvTAT)
-        R = -0.5 * (AQinv + QinvTAT)
-        G = 0.5 * (QinvTCT + B)
-        P = 0.5 * (QinvTCT - B)
+        H = X if E is None else ETX @ E
+        J = 0.5 * (ETXA - ETXA.T)
+        R = -0.5 * (ETXA + ETXA.T)
+        G = 0.5 * (C.T + ETXB)
+        P = 0.5 * (C.T - ETXB)
         S = 0.5 * (D + D.T)
         N = 0.5 * (D.T - D)
 
-        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, sampling_time=model.sampling_time,
+        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=H, sampling_time=model.sampling_time,
                                         T=model.T, initial_data=model.initial_data, time_stepper=model.time_stepper,
                                         num_values=model.num_values,
                                         matrix_equation_solvers=model.matrix_equation_solvers,

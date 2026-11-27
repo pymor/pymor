@@ -29,9 +29,9 @@ def ph_properties(model):
     W = np.block([[R, P], [P.T, S]])
 
     assert np.allclose(np.abs(H - H.T).max(), 0), 'H is not symmetric'
-    assert np.linalg.eigvalsh((H + H.T) / 2).min() > -1e-11, 'H is not positive definite'
+    assert np.linalg.eigvalsh((H + H.T) / 2).min() > -1e-13, 'H is not positive definite'
     assert np.allclose(np.abs(Gamma + Gamma.T).max(), 0), 'Gamma is not skew-symmetric'
-    assert np.linalg.eigvalsh((W + W.T)/2).min() > -1e-11, 'W is not positive semidefinite'
+    assert np.linalg.eigvalsh((W + W.T)/2).min() > -1e-13, 'W is not positive semidefinite'
 
 
 @app.default
@@ -95,7 +95,7 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
 
             if name in ('PRBT', 'spectral_factor'):
                print('Converting ROM to PHLTIModel.')
-               rom = PHLTIModel.from_passive_LTIModel(rom).to_berlin_form()
+               rom = PHLTIModel.from_passive_LTIModel(rom)
 
             if name in ('PRBT', 'pH-IRKA', 'spectral_factor'):
                 print(name, r)
