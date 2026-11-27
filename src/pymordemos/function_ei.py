@@ -107,7 +107,7 @@ def main(
 
     print('RB generation ...')
 
-    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
+    coercivity_estimator = ExpressionParameterFunctional('0.1', fom.parameters)
     reductor = CoerciveRBReductor(fom_ei, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
                                   check_orthonormality=False)
 
