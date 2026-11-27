@@ -28,7 +28,6 @@ def main(
     time_steps: int,
     training_samples: int,
     /, *,
-    fv: bool = False,
     vis: bool = False,
     validation_ratio: float = 0.1,
     time_vectorized: bool = False,
@@ -79,8 +78,6 @@ def main(
         Number of time steps used for discretization.
     training_samples
         Number of samples used for computing the reduced basis and training the regressor.
-    fv
-        Use finite volume discretization instead of finite elements.
     vis
         Visualize full order solution and reduced solution for a test set.
     validation_ratio
