@@ -33,12 +33,7 @@ jobs:
           path: gh-pages
       - name: Update README.md
         # - drop the logo, which is already part of the website layout
-        # - turn relative links (e.g. LICENSE.txt) into links to the repository
-        run: |
-          sed -E \
-            -e '/^!\[pyMOR Logo\]\(/d' \
-            -e 's#\]\((\./)?([^):/\#][^):]*)\)#](https://github.com/pymor/pymor/blob/main/\2)#g' \
-            main/README.md > gh-pages/README.md
+        run: sed '/^!\[pyMOR Logo\](/d' main/README.md > gh-pages/README.md
       - name: Commit and push
         working-directory: gh-pages
         run: |-
