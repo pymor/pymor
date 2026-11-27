@@ -24,7 +24,7 @@ def main(l: float = 50., r: int = 10):
 
     .. math::
 
-        \begin{align}
+        \begin{aligned}
             \partial_t T(\xi, t) &= \partial_{\xi \xi} T(\xi, t) + \lambda T(\xi, t),
             & 0 < \xi < 1,\ t > 0, \\
             -\partial_\xi T(0, t) & = -T(0, t) + u(t),
@@ -33,7 +33,7 @@ def main(l: float = 50., r: int = 10):
             & t > 0, \\
             y(t) & = T(1, t),
             & t > 0
-        \end{align}
+        \end{aligned}
 
     Parameters
     ----------

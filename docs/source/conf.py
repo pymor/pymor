@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import glob
 import os
 import sys
 import sysconfig
+from importlib import import_module
 from pathlib import Path
 
 import slugify
@@ -38,8 +38,7 @@ extensions = ['sphinx.ext.autodoc',
               'try_on_binder',
               'myst_nb',
               'sphinx.ext.mathjax',
-              'autoapi.extension',
-              'autoapi_pymor',
+              'pymor_autodoc',
               'sphinxcontrib.bibtex',
               'IPython.sphinxext.ipython_console_highlighting',
               ]
@@ -88,8 +87,8 @@ copyright = 'pyMOR developers and contributors'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 # imports have to be delayed until after sys.path modification
+os.environ['PYMOR_DOCS_BUILD'] = '1'
 import pymor  # noqa: I001
-import autoapi_pymor  # noqa: F401
 version = pymor.__version__
 rst_epilog = substitutions.substitutions
 
@@ -130,18 +129,16 @@ pygments_style = 'sphinx'
 # Ensure all our internal links work
 nitpicky = True
 nitpick_ignore = [
-    ('py:obj', 'ipywidgets.HBox'),
-    ('py:obj', 'k3d.plot.Plot'),
-    ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
-    ('py:obj', 'qtpy.QtWidgets.QWidget'),
-    ('py:class', 'F'),
-    ('py:class', 'cached.F'),
-    ('py:class', 'P'),
-    ('py:class', 'R'),
+    ('py:class', 'ipywidgets.widgets.widget_box.HBox'),
+    ('py:class', 'k3d.plot.Plot'),
+    ('py:class', 'PyMORLogger'),  # only defined when type checking
+    ('py:class', 't.Any'),  # signature of ipywidgets.Widget.__init__
 ]
 nitpick_ignore_regex = [
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
-    ('py:class', r'Annotated\[.*')
+    ('py:.*', r'(qtpy|PySide6|PyQt6)\..*'),
+    ('py:class', r'Annotated\[.*'),
+    ('py:class', r'\w+=.*'),  # arguments in Annotated metadata (e.g. cyclopts Parameter)
 ]
 
 
@@ -267,10 +264,52 @@ latex_use_modindex = False
 
 
 # -----------------------------------------------------------------------------
-# Autosummary
+# Autodoc / Autosummary
 # -----------------------------------------------------------------------------
 
-autosummary_generate = glob.glob('generated/*.rst')
+# api.rst only triggers the generation of the API pages. It is not part of the docs, so that the
+# generated page of the pymor package (titled 'API Reference') is the top-level page of the API.
+autosummary_generate = ['api.rst']
+exclude_patterns = ['api.rst']
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+    'member-order': 'groupwise',
+}
+# show type annotations in the signature and in the description of documented parameters
+autodoc_typehints = 'both'
+autodoc_typehints_description_target = 'documented_params'
+napoleon_use_rtype = False
+# napoleon would add the types of class attribute annotations to all fields with the
+# same name in class docstrings (including parameters)
+napoleon_attr_annotations = False
+suppress_warnings = ['config.cache']
+# added to docstrings by pymor.core.defaults.defaults
+napoleon_custom_sections = ['Defaults']
+
+# Optional dependencies which are not installed are mocked, so that the modules requiring
+# them can be imported. config.require does not raise when PYMOR_DOCS_BUILD is set.
+from pymor.core.config import config
+
+# config determines the availability of dependencies lazily on first access by importing
+# them. If this happens while autodoc imports a module with mocked dependencies, the import
+# succeeds and the mocked dependency is reported as available (e.g. `if config.HAVE_MPI:`
+# in pymor.tools.mpi would then execute code using the mocked mpi4py). Hence, we access all
+# HAVE_* attributes before anything is mocked. (Parallel workers inherit the cached values.)
+for key in dir(config):
+    if key.startswith('HAVE_'):
+        getattr(config, key)
+autodoc_mock_imports = []
+for module in ['basix', 'dolfin', 'dolfinx', 'ipyparallel', 'meshio', 'mpi4py', 'ngsolve', 'OpenGL', 'petsc4py',
+               'pyevtk', 'pyvista', 'qtpy', 'scikits', 'skfem', 'sklearn', 'slycot', 'torch', 'ufl', 'ufl_legacy',
+               'xmljson']:
+    try:
+        import_module(module)
+    except Exception:
+        autodoc_mock_imports.append(module)
+if 'qtpy' in autodoc_mock_imports:
+    autodoc_mock_imports.append('matplotlib.backends.backend_qtagg')
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -318,15 +357,3 @@ def linkcode_resolve(domain, info):
         filename = info['module'].replace('.', '/')
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
-
-
-autoapi_dirs = [src_dir / 'pymor']
-autoapi_type = 'python'
-# allows incremental build
-autoapi_keep_files = True
-suppress_warnings = ['autoapi', 'config.cache']
-autoapi_template_dir = this_dir / '_templates' / 'autoapi'
-autoapi_member_order = 'groupwise'
-autoapi_options = ['show-inheritance', 'members', 'undoc-members']
-
-napoleon_use_rtype = False

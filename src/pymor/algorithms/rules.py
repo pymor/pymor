@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from weakref import WeakValueDictionary
 
 import numpy as np
@@ -24,12 +24,10 @@ class rule:
 
     If an action is decorated by multiple rules, all these rules
     must match for the action to apply.
-
-    Attributes
-    ----------
-    action
-        Method to call in case the rule matches.
     """
+
+    action: Callable
+    """Method to call in case the rule matches."""
 
     def __call__(self, action):
         if isinstance(action, rule):
@@ -196,12 +194,10 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
     ----------
     use_caching
         If `True`, cache results of :meth:`apply`.
-
-    Attributes
-    ----------
-    rules
-        `list` of all defined |rules|.
     """
+
+    rules: list[rule]
+    """`list` of all defined |rules|."""
 
     def __init__(self, use_caching=False):
         self.use_caching = use_caching

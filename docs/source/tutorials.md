@@ -1,6 +1,8 @@
 # Tutorials
 
 ```{toctree}
+:maxdepth: 1
+
 tutorial_builtin_discretizer
 tutorial_basis_generation
 tutorial_projection

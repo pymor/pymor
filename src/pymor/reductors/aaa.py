@@ -63,16 +63,17 @@ class PAAAReductor(BasicObject):
         Optional |Parameters| or parameter-dimension mapping for the resulting transfer function.
         Defaults to a single vector parameter named `p`. Parameter sampling axes follow the
         order used by :meth:`~pymor.parameters.base.Mu.to_numpy`.
-
-    Attributes
-    ----------
-    itpl_part
-        A nested list such that `itpl_part[i]` corresponds to indices of interpolated values
-        with respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
-        represents a list of all interpolated samples of the `i`-th variable.
     """
 
     generate_samples = staticmethod(sample_transfer_function)
+
+    itpl_part: list[list[int]]
+    """Indices of the interpolated values for each variable.
+
+    A nested list such that `itpl_part[i]` corresponds to indices of interpolated values
+    with respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
+    represents a list of all interpolated samples of the `i`-th variable.
+    """
 
     def __init__(self, sampling_values, samples, force_real=True, nsp_tol=1e-16, post_process=True,
                  L_rk_tol=1e-8, parameters=None):

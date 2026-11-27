@@ -36,6 +36,7 @@ from pymor.operators.constructions import (
     VectorOperator,
     ZeroOperator,
 )
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
 from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
@@ -134,30 +135,27 @@ class LTIModel(Model):
         the visualizer's `visualize` method.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system.
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    A
-        The |Operator| A.
-    B
-        The |Operator| B.
-    C
-        The |Operator| C.
-    D
-        The |Operator| D.
-    E
-        The |Operator| E.
-    transfer_function
-        The transfer function.
     """
 
     cache_region = 'memory'
+
+    A: Operator
+    """The |Operator| A."""
+
+    B: Operator
+    """The |Operator| B."""
+
+    C: Operator
+    """The |Operator| C."""
+
+    D: Operator
+    """The |Operator| D."""
+
+    E: Operator
+    """The |Operator| E."""
+
+    transfer_function: FactorizedTransferFunction
+    """The transfer function."""
 
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
                  T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
@@ -1678,36 +1676,30 @@ class PHLTIModel(LTIModel):
         The |Solver| for the shifted systems arising in transfer function evaluation.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system.
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    J
-        The |Operator| J.
-    R
-        The |Operator| R.
-    G
-        The |Operator| G.
-    P
-        The |Operator| P.
-    S
-        The |Operator| S.
-    N
-        The |Operator| N.
-    E
-        The |Operator| E.
-    Q
-        The |Operator| Q.
-    transfer_function
-        The transfer function.
     """
 
     cache_region = 'memory'
+
+    J: Operator
+    """The |Operator| J."""
+
+    R: Operator
+    """The |Operator| R."""
+
+    G: Operator
+    """The |Operator| G."""
+
+    P: Operator
+    """The |Operator| P."""
+
+    S: Operator
+    """The |Operator| S."""
+
+    N: Operator
+    """The |Operator| N."""
+
+    Q: Operator
+    """The |Operator| Q."""
 
     def __init__(self, J, R, G, P=None, S=None, N=None, E=None, Q=None,
                  sampling_time=0, T=None, initial_data=None, time_stepper=None,
@@ -2072,34 +2064,33 @@ class SecondOrderModel(Model):
         the model which forwards its arguments to the visualizer's `visualize` method.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system (equal to M.source.dim).
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    M
-        The |Operator| M.
-    E
-        The |Operator| E.
-    K
-        The |Operator| K.
-    B
-        The |Operator| B.
-    Cp
-        The |Operator| Cp.
-    Cv
-        The |Operator| Cv.
-    D
-        The |Operator| D.
-    transfer_function
-        The transfer function.
     """
 
     cache_region = 'memory'
+
+    M: Operator
+    """The |Operator| M."""
+
+    E: Operator
+    """The |Operator| E."""
+
+    K: Operator
+    """The |Operator| K."""
+
+    B: Operator
+    """The |Operator| B."""
+
+    Cp: Operator
+    """The |Operator| Cp."""
+
+    Cv: Operator
+    """The |Operator| Cv."""
+
+    D: Operator
+    """The |Operator| D."""
+
+    transfer_function: FactorizedTransferFunction
+    """The transfer function."""
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  matrix_equation_solvers=None, error_estimator=None, visualizer=None, name=None):
@@ -2787,36 +2778,36 @@ class LinearDelayModel(Model):
         the model which forwards its arguments to the visualizer's `visualize` method.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system (equal to A.source.dim).
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    q
-        The number of delay terms.
-    tau
-        The tuple of delay times.
-    A
-        The |Operator| A.
-    Ad
-        The tuple of |Operators| A_i.
-    B
-        The |Operator| B.
-    C
-        The |Operator| C.
-    D
-        The |Operator| D.
-    E
-        The |Operator| E.
-    transfer_function
-        The transfer function.
     """
 
     cache_region = 'memory'
+
+    q: int
+    """The number of delay terms."""
+
+    tau: tuple[float, ...]
+    """The tuple of delay times."""
+
+    A: Operator
+    """The |Operator| A."""
+
+    Ad: tuple[Operator, ...]
+    """The tuple of |Operators| A_i."""
+
+    B: Operator
+    """The |Operator| B."""
+
+    C: Operator
+    """The |Operator| C."""
+
+    D: Operator
+    """The |Operator| D."""
+
+    E: Operator
+    """The |Operator| E."""
+
+    transfer_function: FactorizedTransferFunction
+    """The transfer function."""
 
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
@@ -3089,32 +3080,30 @@ class LinearStochasticModel(Model):
         the model which forwards its arguments to the visualizer's `visualize` method.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system (equal to A.source.dim).
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    q
-        The number of stochastic processes.
-    A
-        The |Operator| A.
-    As
-        The tuple of |Operators| A_i.
-    B
-        The |Operator| B.
-    C
-        The |Operator| C.
-    D
-        The |Operator| D.
-    E
-        The |Operator| E.
     """
 
     cache_region = 'memory'
+
+    q: int
+    """The number of stochastic processes."""
+
+    A: Operator
+    """The |Operator| A."""
+
+    As: tuple[Operator, ...]
+    """The tuple of |Operators| A_i."""
+
+    B: Operator
+    """The |Operator| B."""
+
+    C: Operator
+    """The |Operator| C."""
+
+    D: Operator
+    """The |Operator| D."""
+
+    E: Operator
+    """The |Operator| E."""
 
     def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
@@ -3237,30 +3226,27 @@ class BilinearModel(Model):
         the model which forwards its arguments to the visualizer's `visualize` method.
     name
         Name of the system.
-
-    Attributes
-    ----------
-    order
-        The order of the system (equal to A.source.dim).
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    A
-        The |Operator| A.
-    N
-        The tuple of |Operators| N_i.
-    B
-        The |Operator| B.
-    C
-        The |Operator| C.
-    D
-        The |Operator| D.
-    E
-        The |Operator| E.
     """
 
     cache_region = 'memory'
+
+    A: Operator
+    """The |Operator| A."""
+
+    N: tuple[Operator, ...]
+    """The tuple of |Operators| N_i."""
+
+    B: Operator
+    """The |Operator| B."""
+
+    C: Operator
+    """The |Operator| C."""
+
+    D: Operator
+    """The |Operator| D."""
+
+    E: Operator
+    """The |Operator| E."""
 
     def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):

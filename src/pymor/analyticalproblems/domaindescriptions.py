@@ -13,18 +13,13 @@ KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 
 class DomainDescription(ImmutableObject):
-    """Describes a geometric domain along with its boundary.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the domain
-    boundary_types
-        Set of boundary types the domain has.
-    """
+    """Describes a geometric domain along with its boundary."""
 
     dim = None
+    """The dimension of the domain"""
+
     boundary_types = frozenset()
+    """Set of boundary types the domain has."""
 
     @property
     def has_dirichlet(self):
@@ -57,14 +52,6 @@ class RectDomain(DomainDescription):
         The boundary type of the top edge.
     bottom
         The boundary type of the bottom edge.
-
-    Attributes
-    ----------
-    domain
-    left
-    right
-    top
-    bottom
     """
 
     dim = 2
@@ -125,12 +112,6 @@ class CylindricalDomain(DomainDescription):
         The boundary type of the top edge.
     bottom
         The boundary type of the bottom edge.
-
-    Attributes
-    ----------
-    domain
-    top
-    bottom
     """
 
     dim = 2
@@ -183,10 +164,6 @@ class TorusDomain(DomainDescription):
         List of two points defining the lower-left and upper-right corner
         of the domain. The left and right edge are identified, as well as the
         bottom and top edge
-
-    Attributes
-    ----------
-    domain
     """
 
     dim = 2
@@ -235,12 +212,6 @@ class LineDomain(DomainDescription):
         The boundary type of the left endpoint.
     right
         The boundary type of the right endpoint.
-
-    Attributes
-    ----------
-    domain
-    left
-    right
     """
 
     dim = 1
@@ -270,10 +241,6 @@ class CircleDomain(DomainDescription):
     ----------
     domain
         List [x_l, x_r] providing the left and right endpoint.
-
-    Attributes
-    ----------
-    domain
     """
 
     dim = 1
@@ -302,12 +269,6 @@ class PolygonalDomain(DomainDescription):
     holes
         List of 2D |NumPy arrays| of points that describe the polygonal chains that bound the holes
         inside the domain.
-
-    Attributes
-    ----------
-    points
-    boundary_types
-    holes
     """
 
     dim = 2
@@ -364,14 +325,6 @@ class CircularSectorDomain(PolygonalDomain):
     num_points
         The number of points of the polygonal chain approximating the circular
         boundary.
-
-    Attributes
-    ----------
-    angle
-    radius
-    arc
-    radii
-    num_points
     """
 
     def __init__(self, angle, radius, arc='dirichlet', radii='dirichlet', num_points=100):
@@ -412,12 +365,6 @@ class DiscDomain(PolygonalDomain):
         The boundary type of the boundary.
     num_points
         The number of points of the polygonal chain approximating the boundary.
-
-    Attributes
-    ----------
-    radius
-    boundary
-    num_points
     """
 
     def __init__(self, radius, boundary='dirichlet', num_points=100):

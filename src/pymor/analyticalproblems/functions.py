@@ -37,14 +37,13 @@ class Function(ParametricObject):
        f(x, μ)[i0, i1, ..., i(k-2)] == f(x[i0, i1, ..., i(k-2)], μ).
 
     In particular, `f(x, μ).shape == x.shape[:-1] + shape_range`.
-
-    Attributes
-    ----------
-    dim_domain
-        The dimension d > 0.
-    shape_range
-        The shape of the function values.
     """
+
+    dim_domain: int
+    """The dimension d > 0."""
+
+    shape_range: tuple[int, ...]
+    """The shape of the function values."""
 
     @abstractmethod
     def evaluate(self, x, mu=None):
@@ -361,11 +360,6 @@ class LincombFunction(Function):
         either be a fixed number or a |ParameterFunctional|.
     name
         Name of the function.
-
-    Attributes
-    ----------
-    functions
-    coefficients
     """
 
     def __init__(self, functions, coefficients, name=None):
@@ -405,10 +399,6 @@ class ProductFunction(Function):
         List of |Functions| whose product is formed.
     name
         Name of the function.
-
-    Attributes
-    ----------
-    functions
     """
 
     def __init__(self, functions, name=None):

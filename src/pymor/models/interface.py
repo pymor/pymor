@@ -21,26 +21,22 @@ class Model(CacheableObject, ParametricObject):
     Furthermore, models can be
     :meth:`solved <Model.solve>` for given
     |parameter values| resulting in a solution |VectorArray|.
-
-    Attributes
-    ----------
-    solution_space
-        |VectorSpace| of the solution |VectorArrays| returned by :meth:`solve`.
-    dim_output
-        Dimension of the model output returned by :meth:`output`. 0 if the
-        model has no output.
-    linear
-        `True` if the model describes a linear problem.
-    products
-        Dict of inner product operators associated with the model.
-    order
-        Dimension of the `solution_space`.
     """
 
     solution_space = None
+    """|VectorSpace| of the solutions returned by :meth:`~pymor.models.interface.Model.solve`."""
+
     dim_output = 0
+    """The number of outputs."""
+
     linear = False
+    """`True` if the model describes a linear problem."""
+
     products = FrozenDict()
+    """Dict of inner product operators associated with the model."""
+
+    dim_input: int
+    """The number of inputs."""
 
     def __init__(self, dim_input=0, products=None, error_estimator=None, visualizer=None,
                  name=None):
@@ -60,6 +56,7 @@ class Model(CacheableObject, ParametricObject):
 
     @property
     def order(self):
+        """Dimension of the `solution_space`."""
         return self.solution_space.dim
 
     @cached_property

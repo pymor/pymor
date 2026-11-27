@@ -100,16 +100,10 @@ def _safe_filename(old_name):
 
 
 class CacheRegion:
-    """Base class for all pyMOR cache regions.
-
-    Attributes
-    ----------
-    persistent
-        If `True`, cache entries are kept between multiple
-        program runs.
-    """
+    """Base class for all pyMOR cache regions."""
 
     persistent = False
+    """If `True`, cache entries are kept between multiple program runs."""
 
     def get(self, key):
         """Return cache entry for given key.
@@ -223,6 +217,7 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
 
 
 cache_regions = {}
+"""Dict of all cache regions, indexed by their names."""
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
@@ -248,20 +243,17 @@ def clear_caches():
 
 
 class CacheableObject(ImmutableObject):
-    """Base class for anything that wants to use our built-in caching.
-
-    Attributes
-    ----------
-    cache_region
-        Name of the :class:`CacheRegion` to use. Must correspond to a key in
-        the :attr:`cache_regions` dict. If `None` or `'none'`, caching
-        is disabled.
-    cache_id
-        Identifier for the object instance on which a cached method is called.
-    """
+    """Base class for anything that wants to use our built-in caching."""
 
     cache_region = None
+    """Name of the :class:`~pymor.core.cache.CacheRegion` to use.
+
+    Must correspond to a key in the :attr:`~pymor.core.cache.cache_regions` dict. If `None` or
+    `'none'`, caching is disabled.
+    """
+
     cache_id = None
+    """Identifier for the object instance on which a cached method is called."""
 
     def disable_caching(self):
         """Disable caching for this instance."""

@@ -74,7 +74,7 @@ Pipfile.lock
 .ci/create_conda_env.log
 src/pymortests/testdata/check_results/test_check_check_results_miss*
 docs/_build/
-docs/source/autoapi/
+docs/source/api/
 docs/source/demos/
 docs/coverage
 docs/*.png

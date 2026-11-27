@@ -63,10 +63,10 @@ realizations.
 For example, starting from a realization
 
 ```{math}
-\begin{align}
+\begin{aligned}
     E \dot{x}(t) & = A x(t) + B u(t), \\
     y(t) & = C x(t) + D u(t),
-\end{align}
+\end{aligned}
 ```
 
 another realization can be obtained by replacing {math}`x(t)` with
@@ -113,12 +113,12 @@ possibly after orthonormalization,
 giving a reduced-order model
 
 ```{math}
-\begin{align}
+\begin{aligned}
     \hat{E} \dot{\hat{x}}(t)
     & = \hat{A} \hat{x}(t) + \hat{B} u(t), \\
     \hat{y}(t)
     & = \hat{C} \hat{x}(t) + D u(t),
-\end{align}
+\end{aligned}
 ```
 
 with
@@ -202,7 +202,7 @@ Also, we can plot the magnitude plot of the error system,
 which is again an LTI system.
 
 ```{math}
-\begin{align}
+\begin{aligned}
     \begin{bmatrix}
         E & 0 \\
         0 & \hat{E}
@@ -235,7 +235,7 @@ which is again an LTI system.
         x(t) \\
         \hat{x}(t)
     \end{bmatrix}.
-\end{align}
+\end{aligned}
 ```
 
 ```{code-cell} ipython3

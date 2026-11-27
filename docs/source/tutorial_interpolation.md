@@ -53,16 +53,16 @@ print(fom)
 Given an LTI system
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   \dot{x}(t) & = A x(t) + B u(t), \\
   y(t) & = C x(t) + D u(t),
-\end{align*}
+\end{aligned}
 ```
 
 the most straightforward interpolatory method is using Krylov subspaces
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   V
   & =
   \begin{bmatrix}
@@ -73,7 +73,7 @@ the most straightforward interpolatory method is using Krylov subspaces
   \begin{bmatrix}
     C^T & A^T C^T & \cdots & {\left(A^T\right)}^{r - 1} C^T
   \end{bmatrix}
-\end{align*}
+\end{aligned}
 ```
 
 to perform a (Petrov-)Galerkin projection.
@@ -83,7 +83,7 @@ The moments at infinity, also called *Markov parameters*,
 are the coefficients in the Laurent series expansion:
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   H(s)
   & = C {(s I - A)}^{-1} B + D \\
   & = C \frac{1}{s} {\left(I - \frac{1}{s} A \right)}^{-1} B + D \\
@@ -92,7 +92,7 @@ are the coefficients in the Laurent series expansion:
     B + D \\
   & = D + \sum_{k = 0}^{\infty} C A^k B \frac{1}{s^{k + 1}} \\
   & = D + \sum_{k = 1}^{\infty} C A^{k - 1} B \frac{1}{s^{k}}.
-\end{align*}
+\end{aligned}
 ```
 
 The moments at infinity are thus
@@ -105,10 +105,10 @@ M_k(\infty) = C A^{k - 1} B,  \text{ for } k \geqslant 1.
 A reduced-order model
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   \dot{\widehat{x}}(t) & = \widehat{A} \widehat{x}(t) + \widehat{B} u(t), \\
   \widehat{y}(t) & = \widehat{C} \widehat{x}(t) + \widehat{D} u(t),
-\end{align*}
+\end{aligned}
 ```
 
 where
@@ -201,7 +201,7 @@ The next option is using inverse Krylov subspaces
 (more commonly called the Padé approximation).
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   V
   & =
   \begin{bmatrix}
@@ -215,14 +215,14 @@ The next option is using inverse Krylov subspaces
     & \cdots
     & {\left(A^{-T}\right)}^{r} C^T
   \end{bmatrix}
-\end{align*}
+\end{aligned}
 ```
 
 This will achieve interpolation of the first $2 r$ moments at zero of the
 transfer function.
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   H(s)
   & = C {(s I - A)}^{-1} B + D \\
   & = C {\left(A \left(s A^{-1} - I\right)\right)}^{-1} B + D \\
@@ -232,13 +232,13 @@ transfer function.
     \sum_{k = 0}^{\infty} {\left(s A^{-1} \right)}^{k}
     A^{-1} B + D \\
   & = D - \sum_{k = 0}^{\infty} C A^{-(k + 1)} B s^k.
-\end{align*}
+\end{aligned}
 ```
 
 The moments at zero are
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   M_0(0)
   & = D - C A^{-1} B
   = H(0), \\
@@ -246,7 +246,7 @@ The moments at zero are
   & = -C A^{-(k + 1)} B
   = \frac{1}{k!} H^{(k)}(0),
   \text{ for } k \ge 1.
-\end{align*}
+\end{aligned}
 ```
 
 We can again use the {func}`~pymor.algorithms.krylov.arnoldi` function
@@ -315,7 +315,7 @@ A more general approach is using rational Krylov subspaces
 (also known as the shifted Padé approximation).
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   V
   & =
   \begin{bmatrix}
@@ -332,7 +332,7 @@ A more general approach is using rational Krylov subspaces
     & \cdots
     & {\left((\sigma I - A)^{-H}\right)}^{r} C^T
   \end{bmatrix},
-\end{align*}
+\end{aligned}
 ```
 
 for some $\sigma \in \mathbb{C}$ that is not an eigenvalue of $A$.
@@ -341,7 +341,7 @@ This will achieve interpolation of the first $2 r$ moments at {math}`\sigma` of
 the transfer function.
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   H(s)
   & = C {(s I - A)}^{-1} B + D \\
   & = C {((s - \sigma) I + \sigma I - A)}^{-1} B + D \\
@@ -362,13 +362,13 @@ the transfer function.
     {(\sigma I - A)}^{-1}
     B + D \\
   & = D - \sum_{k = 0}^{\infty} C (A - \sigma I)^{-(k + 1)} B (s - \sigma)^{k}.
-\end{align*}
+\end{aligned}
 ```
 
 The moments at {math}`\sigma` are
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   M_0(\sigma)
   & = C {(\sigma I - A)}^{-1} B + D
   = H(\sigma), \\
@@ -376,7 +376,7 @@ The moments at {math}`\sigma` are
   & = -C {(A - \sigma I)}^{-(k + 1)} B
   = \frac{1}{k!} H^{(k)}(\sigma),
   \text{ for } k \ge 1.
-\end{align*}
+\end{aligned}
 ```
 
 To preserve realness in the ROMs,
@@ -464,11 +464,11 @@ pyMOR implements bitangential Hermite interpolation (BHI) for different types of
 i.e., methods to construct a reduced-order transfer function $\widehat{H}$ such that
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
   c_i^H H(\sigma_i) & = c_i^H \widehat{H}(\sigma_i), \\
   c_i^H H'(\sigma_i) b_i & = c_i^H \widehat{H}'(\sigma_i) b_i,
-\end{align*}
+\end{aligned}
 ```
 
 for given interpolation points $\sigma_i$,
@@ -479,10 +479,10 @@ Such interpolation is relevant for systems with multiple inputs and outputs,
 where interpolation of matrices
 
 ```{math}
-\begin{align*}
+\begin{aligned}
   H(\sigma_i) & = \widehat{H}(\sigma_i), \\
   H'(\sigma_i) & = \widehat{H}'(\sigma_i),
-\end{align*}
+\end{aligned}
 ```
 
 may be too restrictive.

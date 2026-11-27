@@ -166,16 +166,10 @@ class TransformChainedComparison(ast.NodeTransformer):
 
 
 class Expression(ParametricObject):
-    """A symbolic math expression.
-
-    Attributes
-    ----------
-    shape
-        The shape of the object this expression evaluates to
-        in the sense of |NumPy|.
-    """
+    """A symbolic math expression."""
 
     shape = None
+    """The shape of the object this expression evaluates to in the sense of |NumPy|."""
 
     def to_numpy(self, variables):
         """Convert expression to a |NumPy|-vectorized callable.

@@ -13,6 +13,7 @@ class FrozenDict(dict):
 
     @property
     def _blocked_attribute(self):
+        """Not available, as the dictionary is immutable."""
         raise AttributeError(f'A {type(self).__name__} cannot be modified.')
 
     __delitem__ = __setitem__ = clear = _blocked_attribute

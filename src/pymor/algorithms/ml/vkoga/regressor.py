@@ -294,55 +294,55 @@ class VKOGASurrogate(WeakGreedySurrogate):
         evaluated at :math:`\mu` (the definitions of these quantities are given below):
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                z_{n+1} = \frac{r_n(\mu)}{P_n(\mu)}.
-            \end{align*}
+            \end{aligned}
 
         The residual :math:`r_n=f-s_f^n` is defined as the difference between the target function
         :math:`f` and the current kernel interpolant :math:`s_f^n` and can be updated via
         the following recursion:
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 r_n(x) = r_{n-1}(x) - z_n V_n(x)
-            \end{align*}
+            \end{aligned}
 
         with initial residual :math:`r_0 = f`. Here, :math:`V_n` denotes the Newton basis for
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 V(X_n) := \mathrm{span}\{k(\,\cdot\,,x_1), \dots, k(\,\cdot\,,x_n)\}.
-            \end{align*}
+            \end{aligned}
 
         The first Newton basis is given as
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 V_{1}(x)= \frac{k(x, x_1)}{\sqrt{k(x_1, x_1)}}.
-            \end{align*}
+            \end{aligned}
 
         The subsequent Newton basis functions are computed via the Gram-Schmidt algorithm as
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 V_{n+1}(x) = \frac{k(x, \mu) - \sum_{j=1}^n V_j(x) V_j(\mu)}{P_n(\mu)}.
-            \end{align*}
+            \end{aligned}
 
         Regarding the power function (measuring for  :math:`x\in\mathbb{R}^d` how well the current
         subspace can represent  :math:`k(\,\cdot\,,x)`, i.e. the projection error in the
         reproducing kernel  Hilbert space): The initial squared power function is given as
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 P_0^2(x) = k(x, x)
-            \end{align*}
+            \end{aligned}
 
         and the incremental update of the squared power function :math:`P_n^2` can be computed by
 
         .. math::
-            \begin{align*}
+            \begin{aligned}
                 P_n^2(x) = P_{n-1}^2(x) - V_n(x)^2.
-            \end{align*}
+            \end{aligned}
 
         We are going to track this quantity evaluated at all training points during the
         iterations of the greedy algorithm.

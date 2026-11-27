@@ -103,17 +103,14 @@ class NumpyGenericOperator(Operator):
 
 
 class NumpyMatrixBasedOperator(Operator):
-    """Base class for operators which assemble into a |NumpyMatrixOperator|.
-
-    Attributes
-    ----------
-    sparse
-        `True` if the operator assembles into a sparse matrix, `False` if the
-        operator assembles into a dense matrix, `None` if unknown.
-    """
+    """Base class for operators which assemble into a |NumpyMatrixOperator|."""
 
     linear = True
     sparse = None
+    """`True` if the operator assembles into a sparse matrix.
+
+    `False` if the operator assembles into a dense matrix, `None` if unknown.
+    """
 
     @property
     def H(self):

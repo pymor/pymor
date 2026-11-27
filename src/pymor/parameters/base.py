@@ -12,6 +12,7 @@ are treated as parameter vectors of dimension 1. Mappings of |Parameters| to
 To sample |parameter values| within a given range, |ParameterSpace| objects can be used.
 """
 
+from collections.abc import Callable
 from itertools import chain, product
 from numbers import Number
 
@@ -368,14 +369,12 @@ class Mu(ImmutableObject):
         values. Unless the Python interpreter runs with the `-O` flag,
         the arrays are made immutable.
 
-
-    Attributes
-    ----------
-    time_dependent_values
-        Immutable mapping from parameter names to |Functions| of time.
     """
 
     _hash = None
+
+    time_dependent_values: FrozenDict
+    """Immutable mapping from parameter names to |Functions| of time."""
 
     def __init__(self, *args, **kwargs):
         values = {}
@@ -525,31 +524,11 @@ class ParametricObject(ImmutableObject):
     the :attr:`parameters` attribute by setting :attr:`parameters_internal`.
 
     Alternatively, :attr:`parameters` can be initialized manually in `__init__`.
-
-    Attributes
-    ----------
-    parameters
-        The |Parameters| the object depends on.
-    parameters_own
-        The |Parameters| the object depends on which are not inherited from a child
-        object the object depends on. Each item of :attr:`parameters_own` is also an
-        item of :attr:`parameters`.
-    parameters_inherited
-        The |Parameters| the object depends on because some child object depends on them.
-        Each item of :attr:`parameters_inherited` is also an item of :attr:`parameters`.
-    parameters_internal
-        The |Parameters| some of the object's child objects may depend on, but which are
-        fixed to a concrete value by this object. All items of :attr:`parameters_internal`
-        are removed from :attr:`parameters` and :attr:`parameters_inherited`. When
-        initializing :attr:`parameters_own` and :attr:`parameters_internal`, it has to be
-        ensured that both dicts are disjoint.
-    parametric:
-        `True` if the object really depends on a parameter, i.e. :attr:`parameters`
-        is not empty.
     """
 
     @property
     def parameters(self):
+        """The |Parameters| the object depends on."""
         if self._parameters is not None:
             return self._parameters
         assert self._locked, 'parameters attribute can only be accessed after class initialization'
@@ -573,6 +552,11 @@ class ParametricObject(ImmutableObject):
 
     @property
     def parameters_own(self):
+        """The |Parameters| the object depends on which are not inherited from a child object.
+
+        Each item of :attr:`~pymor.parameters.base.ParametricObject.parameters_own` is also an item
+        of :attr:`~pymor.parameters.base.ParametricObject.parameters`.
+        """
         return self._parameters_own or Parameters({})
 
     @parameters_own.setter
@@ -582,6 +566,15 @@ class ParametricObject(ImmutableObject):
 
     @property
     def parameters_internal(self):
+        """The |Parameters| child objects depend on which are fixed to a value by this object.
+
+        All items of :attr:`~pymor.parameters.base.ParametricObject.parameters_internal` are removed
+        from :attr:`~pymor.parameters.base.ParametricObject.parameters` and
+        :attr:`~pymor.parameters.base.ParametricObject.parameters_inherited`. When initializing
+        :attr:`~pymor.parameters.base.ParametricObject.parameters_own` and
+        :attr:`~pymor.parameters.base.ParametricObject.parameters_internal`, it has to be ensured
+        that both dicts are disjoint.
+        """
         return self._parameters_internal or Parameters({})
 
     @parameters_internal.setter
@@ -591,10 +584,19 @@ class ParametricObject(ImmutableObject):
 
     @property
     def parameters_inherited(self):
+        """The |Parameters| the object depends on because some child object depends on them.
+
+        Each item of :attr:`~pymor.parameters.base.ParametricObject.parameters_inherited` is also an
+        item of :attr:`~pymor.parameters.base.ParametricObject.parameters`.
+        """
         return self.parameters - self.parameters_own
 
     @property
     def parametric(self):
+        """`True` if the object really depends on a parameter.
+
+        I.e., :attr:`~pymor.parameters.base.ParametricObject.parameters` is not empty.
+        """
         return bool(self.parameters)
 
     def __check_parameter_consistency(self):
@@ -619,25 +621,29 @@ class ParameterSpace(ParametricObject):
     |ParameterSpaces| are mostly used to create sample set of
     |parameter values| for given |Parameters| within a specified
     range.
+    """
 
-    Attributes
-    ----------
-    parameters
-        The |Parameters| which are part of the space.
-    ranges
-        Allowed ranges for the |parameter values|. Either:
+    parameters: Parameters
+    """The |Parameters| which are part of the space."""
 
-        - two numbers specifying the lower and upper bound
-          for all parameter value components,
-        - a list/tuple of two numbers specifying these bounds,
-        - or a dict of those tuples, specifying upper and lower
-          bounds individually for each parameter of the space.
-    constraints
-        If not `None`, a function `constraints(mu) -> bool`
-        defining additional (inequality) constraints on the space.
-        For each given |parameter values| that lies within the given
-        `ranges`, `constraints` is called to check if the constraints
-        are satisfied.
+    ranges: SortedFrozenDict
+    """Allowed ranges for the |parameter values|. Either:
+
+    - two numbers specifying the lower and upper bound
+      for all parameter value components,
+    - a list/tuple of two numbers specifying these bounds,
+    - or a dict of those tuples, specifying upper and lower
+      bounds individually for each parameter of the space.
+    """
+
+    constraints: Callable | None
+    """Additional constraints on the space.
+
+    If not `None`, a function `constraints(mu) -> bool`
+    defining additional (inequality) constraints on the space.
+    For each given |parameter values| that lies within the given
+    `ranges`, `constraints` is called to check if the constraints
+    are satisfied.
     """
 
     def __init__(self, parameters, *ranges, constraints=None):
