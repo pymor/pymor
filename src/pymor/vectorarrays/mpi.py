@@ -13,72 +13,77 @@ The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
 
+from collections.abc import Iterable, Sequence
+from functools import cached_property
+from typing import Self
+
 import numpy as np
 
 from pymor.core.pickle import unpicklable
+from pymor.core.typing import Complex
 from pymor.tools import mpi
-from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace
+from pymor.vectorarrays.interface import Indices, VectorArray, VectorArrayImpl, VectorSpace
 
 
 class MPIVectorArrayImpl(VectorArrayImpl):
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy: bool, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def __init__(self, obj_id, space):
+    def __init__(self, obj_id: mpi.ObjectId, space: 'MPIVectorSpace'):
         self.obj_id = obj_id
         self.space = space
 
-    def __len__(self):
+    def __len__(self) -> int:
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
-    def delete(self, ind):
+    def delete(self, ind: Indices) -> None:
         mpi.call(mpi.method_call, self.obj_id, '__delitem__', ind)
 
-    def copy(self, deep, ind):
+    def copy(self, deep: bool, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_copy, self.obj_id, deep, ind),
                           self.space)
 
-    def append(self, other, remove_from_other, oind):
+    def append(self, other: Self, remove_from_other: bool, oind: Indices) -> None:
         mpi.call(mpi.function_call, _MPIVectorArray_append, self.obj_id, other.obj_id, remove_from_other, oind)
 
-    def scal(self, alpha, ind):
+    def scal(self, alpha: Complex | np.ndarray, ind: Indices) -> None:
         mpi.call(mpi.function_call, _MPIVectorArray_scal, self.obj_id, alpha, ind)
 
-    def axpy(self, alpha, x, ind, xind):
+    def axpy(self, alpha: Complex | np.ndarray, x: Self, ind: Indices, xind: Indices) -> None:
         mpi.call(mpi.function_call_manage, _MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id, ind, xind)
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def lincomb(self, coefficients, ind):
+    def lincomb(self, coefficients: np.ndarray, ind: Indices) -> Self:
         return type(self)(
             mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb, self.obj_id, coefficients, ind), self.space)
 
-    def norm2(self, ind):
+    def norm2(self, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_norm2, self.obj_id, ind)
 
-    def dofs(self, dof_indices, ind):
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArray_dofs, self.obj_id, dof_indices, ind)
 
-    def amax(self, ind):
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         return mpi.call(mpi.function_call, _MPIVectorArray_amax, self.obj_id, ind)
 
-    def real(self, ind):
+    def real(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_real, self.obj_id, ind), self.space)
 
-    def imag(self, ind):
+    def imag(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_imag, self.obj_id, ind), self.space)
 
-    def conj(self, ind):
+    def conj(self, ind: Indices) -> Self:
         return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_conj, self.obj_id, ind), self.space)
 
 
 @unpicklable
-class MPIVectorArray(VectorArray):
+class MPIVectorArray(VectorArray[MPIVectorArrayImpl]):
     """MPI distributed |VectorArray|.
 
     Given a local |VectorArray| on each MPI rank, this wrapper class
@@ -106,7 +111,7 @@ class MPIVectorArray(VectorArray):
     impl_type = MPIVectorArrayImpl
 
 
-class MPIVectorSpace(VectorSpace):
+class MPIVectorSpace(VectorSpace[MPIVectorArray]):
     """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
 
     Parameters
@@ -120,10 +125,10 @@ class MPIVectorSpace(VectorSpace):
 
     array_type = MPIVectorArray
 
-    def __init__(self, local_spaces):
+    def __init__(self, local_spaces: Iterable['VectorSpace | RegisteredLocalSpace']):
         self.local_spaces = tuple(local_spaces)
 
-    def make_array(self, obj_id):
+    def make_array(self, obj_id: mpi.ObjectId) -> MPIVectorArray:  # pyrefly: ignore[bad-override]
         """Create array from rank-local |VectorArray| instances.
 
         Parameters
@@ -140,7 +145,7 @@ class MPIVectorSpace(VectorSpace):
                         self.local_spaces, obj_id)
         return self.array_type(self, self.array_type.impl_type(obj_id, self))
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> MPIVectorArray:
         return self.array_type(
             self,
             self.array_type.impl_type(
@@ -149,30 +154,35 @@ class MPIVectorSpace(VectorSpace):
             )
         )
 
-    @property
-    def dim(self):
+    @cached_property
+    def dim(self) -> int:
         return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
 
-    def __eq__(self, other):
-        return type(other) is MPIVectorSpace and \
+    def __eq__(self, other) -> bool:
+        return type(other) is type(self) and \
             len(self.local_spaces) == len(other.local_spaces) and \
             all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces, strict=True))
 
-    def __repr__(self):
+    def __hash__(self) -> int:
+        return hash(self.local_spaces)
+
+    def __repr__(self) -> str:
         return f'{self.__class__}({self.local_spaces})'
 
 
 class RegisteredLocalSpace(int):
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{_local_space_registry[self]} (id: {int(self)})'
 
 
-_local_space_registry = {}
-_local_space_to_id = {}
+_local_space_registry: dict[RegisteredLocalSpace, VectorSpace] = {}
+_local_space_to_id: dict[VectorSpace, RegisteredLocalSpace] = {}
+
+type _LocalSpaces = Sequence[VectorSpace | RegisteredLocalSpace]
 
 
-def _register_local_space(local_space):
+def _register_local_space(local_space: VectorSpace) -> RegisteredLocalSpace:
     local_space_id = _local_space_to_id.get(local_space)
     if local_space_id is None:
         local_space_id = RegisteredLocalSpace(len(_local_space_registry))
@@ -181,106 +191,108 @@ def _register_local_space(local_space):
     return local_space_id
 
 
-def _get_local_space(local_spaces):
+def _get_local_space(local_spaces: _LocalSpaces) -> VectorSpace:
     local_space = local_spaces[mpi.rank] if len(local_spaces) > 1 else local_spaces[0]
-    if type(local_space) is RegisteredLocalSpace:
+    if isinstance(local_space, RegisteredLocalSpace):
         local_space = _local_space_registry[local_space]
     return local_space
 
 
-def _MPIVectorSpace_zeros(local_spaces=(None,), count=0, reserve=0):
+def _MPIVectorSpace_zeros(local_spaces: _LocalSpaces, count: int = 0, reserve: int = 0) -> mpi.ObjectId:
     local_space = _get_local_space(local_spaces)
     obj = local_space.zeros(count=count, reserve=reserve)
     return mpi.manage_object(obj)
 
 
-def _MPIVectorSpace_dim(local_spaces):
+def _MPIVectorSpace_dim(local_spaces: _LocalSpaces) -> int:
     local_space = _get_local_space(local_spaces)
     return local_space.dim
 
 
-def _MPIVectorSpace_check_local_spaces(local_spaces, obj_id):
+def _MPIVectorSpace_check_local_spaces(local_spaces: _LocalSpaces, obj_id: mpi.ObjectId) -> bool | None:
     U = mpi.get_object(obj_id)
     local_space = _get_local_space(local_spaces)
     results = mpi.comm.gather(U in local_space, root=0)
     if mpi.rank0:
-        return np.all(results)
+        return bool(np.all(results))
+    return None
 
 
-def _MPIVectorArray_append(self, other, remove_from_other, oind):
+def _MPIVectorArray_append(self: VectorArray, other: VectorArray, remove_from_other: bool, oind: Indices) -> None:
     self.append(_indexed(other, oind), remove_from_other)
 
 
-def _MPIVectorArray_copy(self, deep, ind):
+def _MPIVectorArray_copy(self: VectorArray, deep: bool, ind: Indices) -> VectorArray:
     return _indexed(self, ind).copy(deep)
 
 
-def _MPIVectorArray_scal(self, alpha, ind):
+def _MPIVectorArray_scal(self: VectorArray, alpha: Complex | np.ndarray, ind: Indices) -> None:
     _indexed(self, ind).scal(alpha)
 
 
-def _MPIVectorArray_axpy(self, alpha, x, ind, xind):
+def _MPIVectorArray_axpy(self: VectorArray, alpha: Complex | np.ndarray, x: VectorArray, ind: Indices,
+                         xind: Indices) -> None:
     _indexed(self, ind).axpy(alpha, _indexed(x, xind))
 
 
-def _MPIVectorArray_inner(self, other, ind, oind):
+def _MPIVectorArray_inner(self: VectorArray, other: VectorArray, ind: Indices, oind: Indices) -> np.ndarray:
     return _indexed(self, ind).inner(_indexed(other, oind))
 
 
-def _MPIVectorArray_pairwise_inner(self, other, ind, oind):
+def _MPIVectorArray_pairwise_inner(self: VectorArray, other: VectorArray, ind: Indices, oind: Indices) -> np.ndarray:
     return _indexed(self, ind).pairwise_inner(_indexed(other, oind))
 
 
-def _MPIVectorArray_lincomb(self, coefficients, ind):
+def _MPIVectorArray_lincomb(self: VectorArray, coefficients: np.ndarray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).lincomb(coefficients)
 
 
-def _MPIVectorArray_norm(self, ind):
+def _MPIVectorArray_norm(self: VectorArray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).norm()
 
 
-def _MPIVectorArray_norm2(self, ind):
+def _MPIVectorArray_norm2(self: VectorArray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).norm2()
 
 
-def _MPIVectorArray_dofs(self, dof_indices, ind):
+def _MPIVectorArray_dofs(self: VectorArray, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
     return _indexed(self, ind).dofs(dof_indices)
 
 
-def _MPIVectorArray_amax(self, ind):
+def _MPIVectorArray_amax(self: VectorArray, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
     return _indexed(self, ind).amax()
 
 
-def _MPIVectorArray_real(self, ind):
+def _MPIVectorArray_real(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).real
 
 
-def _MPIVectorArray_imag(self, ind):
+def _MPIVectorArray_imag(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).imag
 
 
-def _MPIVectorArray_conj(self, ind):
+def _MPIVectorArray_conj(self: VectorArray, ind: Indices) -> VectorArray:
     return _indexed(self, ind).conj()
 
 
 class MPIVectorArrayNoCommImpl(MPIVectorArrayImpl):
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def norm(self, ind):
+    def norm(self, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def norm2(self, ind):
+    def norm2(self, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def dofs(self, dof_indices, ind):
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
         raise NotImplementedError
 
-    def amax(self, ind):
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
 
 
@@ -308,36 +320,36 @@ class MPIVectorSpaceNoComm(MPIVectorSpace):
 
     array_type = MPIVectorArrayNoComm
 
-    @property
-    def dim(self):
+    @cached_property
+    def dim(self) -> int:
         raise NotImplementedError
 
 
 class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
 
-    def inner(self, other, ind, oind):
+    def inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def pairwise_inner(self, other, ind, oind):
+    def pairwise_inner(self, other: Self, ind: Indices, oind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def norm(self, ind):
+    def norm(self, ind: Indices) -> np.ndarray:
         return np.sqrt(self.norm2(ind))
 
-    def norm2(self, ind):
+    def norm2(self, ind: Indices) -> np.ndarray:
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_norm2, self.obj_id, ind)
 
-    def dofs(self, dof_indices, ind):
-        offsets = getattr(self, '_offsets', None)
-        if offsets is None:
-            offsets = self.space._get_dims()[1]
+    def dofs(self, dof_indices: np.ndarray, ind: Indices) -> np.ndarray:
+        space = self.space
+        assert isinstance(space, MPIVectorSpaceAutoComm)
+        offsets = space._offsets
         dof_indices = np.array(dof_indices)
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices, ind)
 
-    def amax(self, ind):
-        offsets = getattr(self, '_offsets', None)
-        if offsets is None:
-            offsets = self.space._get_dims()[1]
+    def amax(self, ind: Indices) -> tuple[np.ndarray, np.ndarray]:
+        space = self.space
+        assert isinstance(space, MPIVectorSpaceAutoComm)
+        offsets = space._offsets
         inds, vals = mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_amax, self.obj_id, ind)
         inds += offsets[:, np.newaxis]
         max_inds = np.argmax(vals, axis=0)
@@ -370,55 +382,61 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
 
     array_type = MPIVectorArrayAutoComm
 
-    @property
-    def dim(self):
-        dim = getattr(self, '_dim', None)
-        if dim is None:
-            dim = self._get_dims()[0]
-        return dim
+    @cached_property
+    def dim(self) -> int:
+        return sum(self._dims)
 
-    def _get_dims(self):
-        dims = mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
-        self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
-        self._dim = dim = sum(dims)
-        return dim, offsets
+    @cached_property
+    def _dims(self) -> list[int]:
+        return mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
+
+    @cached_property
+    def _offsets(self) -> np.ndarray:
+        return np.cumsum(np.concatenate(([0], self._dims)))[:-1]
 
 
-def _MPIVectorSpaceAutoComm_dim(local_spaces):
+def _MPIVectorSpaceAutoComm_dim(local_spaces: _LocalSpaces) -> list[int] | None:
     local_space = _get_local_space(local_spaces)
-    dims = mpi.comm.gather(local_space, root=0)
+    dims = mpi.comm.gather(local_space.dim, root=0)
     if mpi.rank0:
         return dims
+    return None
 
 
-def _MPIVectorArrayAutoComm_inner(self, other, ind, oind):
+def _MPIVectorArrayAutoComm_inner(self: VectorArray, other: VectorArray, ind: Indices,
+                                  oind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).inner(_indexed(other, oind))
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
+    if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
-def _MPIVectorArrayAutoComm_pairwise_inner(self, other, ind, oind):
+def _MPIVectorArrayAutoComm_pairwise_inner(self: VectorArray, other: VectorArray, ind: Indices,
+                                           oind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).pairwise_inner(_indexed(other, oind))
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
+    if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
-def _MPIVectorArrayAutoComm_norm2(self, ind):
+def _MPIVectorArrayAutoComm_norm2(self: VectorArray, ind: Indices) -> np.ndarray | None:
     local_results = _indexed(self, ind).norm2()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
+    if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
-def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices, ind):
+def _MPIVectorArrayAutoComm_dofs(self: VectorArray, offsets: np.ndarray, dof_indices: np.ndarray,
+                                 ind: Indices) -> np.ndarray | None:
     self = _indexed(self, ind)
     offset = offsets[mpi.rank]
     dim = self.dim
@@ -428,11 +446,12 @@ def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices, ind):
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
+    if results is not None:  # only on rank 0
         return np.sum(results, axis=0)
+    return None
 
 
-def _MPIVectorArrayAutoComm_amax(self, ind):
+def _MPIVectorArrayAutoComm_amax(self: VectorArray, ind: Indices) -> tuple[np.ndarray, np.ndarray] | None:
     self = _indexed(self, ind)
     local_inds, local_vals = self.amax()
     assert local_inds.dtype == np.int64
@@ -441,9 +460,10 @@ def _MPIVectorArrayAutoComm_amax(self, ind):
     vals = np.empty((mpi.size,) + local_inds.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_inds, inds, root=0)
     mpi.comm.Gather(local_vals, vals, root=0)
-    if mpi.rank0:
+    if inds is not None and vals is not None:  # only on rank 0
         return inds, vals
+    return None
 
 
-def _indexed(array, ind):
+def _indexed[T: VectorArray](array: T, ind: Indices) -> T:
     return array if ind is None else array[ind]

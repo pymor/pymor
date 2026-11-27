@@ -52,6 +52,8 @@ first argument.
 """
 
 import sys
+from collections.abc import Callable
+from typing import Any
 
 from packaging.version import Version
 
@@ -130,7 +132,7 @@ def event_loop():
             traceback.print_exception(*sys.exc_info())
 
 
-def call(method, *args, **kwargs):
+def call[**P, R](method: Callable[P, R | None], *args: P.args, **kwargs: P.kwargs) -> R:
     """Execute method on all MPI ranks.
 
     Assuming :func:`event_loop` is running on all MPI ranks
@@ -151,11 +153,15 @@ def call(method, *args, **kwargs):
     -------
     The return value of `method` on rank 0.
     """
+    # Functions executed via `call` usually only return a meaningful value on rank 0
+    # and `None` on all other ranks. Hence, `None` is stripped from the return type.
+    # The early return below only happens when MPI is not in use or the event loop
+    # has already been quit, in which case no result can be computed anyway.
     assert rank0
     if finished:
-        return
+        return  # type: ignore
     comm.bcast((method, args, kwargs), root=0)
-    return method(*args, **kwargs)
+    return method(*args, **kwargs)  # type: ignore
 
 
 def quit():
@@ -206,7 +212,7 @@ def import_module(path):
     __import__(path)
 
 
-def function_call(f, *args, **kwargs):
+def function_call[R](f: Callable[..., R], *args: Any, **kwargs: Any) -> R:
     """Execute the function `f` with given arguments.
 
     Intended to be used in conjunction with :func:`call`.

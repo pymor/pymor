@@ -8,7 +8,9 @@ config.require('FENICS')
 
 
 import sys
+from functools import cached_property
 from pathlib import Path
+from typing import Self
 
 import dolfin as df
 import numpy as np
@@ -21,6 +23,7 @@ except ImportError:
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
+from pymor.core.typing import Complex, Real
 from pymor.operators.constructions import VectorFunctional, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
@@ -39,37 +42,38 @@ class FenicsVector(CopyOnWriteVector):
         self.impl = impl
 
     @classmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance: Self) -> Self:
         return cls(instance.impl)
 
-    def _copy_data(self):
+    def _copy_data(self) -> None:
         self.impl = self.impl.copy()
 
-    def to_numpy(self, ensure_copy=False):
-        return self.impl.get_local()  # always returns a copy
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
+        del ensure_copy  # get_local always returns a copy
+        return self.impl.get_local()
 
-    def _scal(self, alpha):
+    def _scal(self, alpha: Complex) -> None:
         self.impl *= alpha
 
-    def _axpy(self, alpha, x):
+    def _axpy(self, alpha: Complex, x: Self) -> None:
         if x is self:
             self.scal(1. + alpha)
         else:
             self.impl.axpy(alpha, x.impl)
 
-    def inner(self, other):
+    def inner(self, other: Self) -> Complex:
         return self.impl.inner(other.impl)
 
-    def norm(self):
+    def norm(self) -> float:
         return self.impl.norm('l2')
 
-    def norm2(self):
+    def norm2(self) -> float:
         return self.impl.norm('l2') ** 2
 
-    def sup_norm(self):
+    def sup_norm(self) -> float:
         return self.impl.norm('linf')
 
-    def dofs(self, dof_indices):
+    def dofs(self, dof_indices: list[int] | np.ndarray) -> np.ndarray:
         dof_indices = np.array(dof_indices, dtype=np.intc)
         if len(dof_indices) == 0:
             return np.array([], dtype=np.intc)
@@ -80,37 +84,37 @@ class FenicsVector(CopyOnWriteVector):
         # at the *global* dof_indices on each rank
         return dofs
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         raise NotImplementedError  # is implemented for complexified vector
 
-    def __add__(self, other):
-        return FenicsVector(self.impl + other.impl)
+    def __add__(self, other: Self) -> Self:
+        return type(self)(self.impl + other.impl)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Self) -> Self:
         self._copy_data_if_needed()
         self.impl += other.impl
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
-        return FenicsVector(self.impl - other.impl)
+    def __sub__(self, other: Self) -> Self:
+        return type(self)(self.impl - other.impl)
 
-    def __isub__(self, other):
+    def __isub__(self, other: Self) -> Self:
         self._copy_data_if_needed()
         self.impl -= other.impl
         return self
 
-    def __mul__(self, other):
-        return FenicsVector(self.impl * other)
+    def __mul__(self, other: Complex) -> Self:
+        return type(self)(self.impl * other)
 
-    def __neg__(self):
-        return FenicsVector(-self.impl)
+    def __neg__(self) -> Self:
+        return type(self)(-self.impl)
 
 
-class ComplexifiedFenicsVector(ComplexifiedVector):
+class ComplexifiedFenicsVector(ComplexifiedVector[FenicsVector]):
 
-    def amax(self):
+    def amax(self) -> tuple[int, float]:
         if self.imag_part is None:
             A = np.abs(self.real_part.impl.get_local())
         else:
@@ -120,7 +124,7 @@ class ComplexifiedFenicsVector(ComplexifiedVector):
         max_val_on_rank = A[max_ind_on_rank]
         from pymor.tools import mpi
         if not mpi.parallel:
-            return max_ind_on_rank, max_val_on_rank
+            return int(max_ind_on_rank), max_val_on_rank
         else:
             max_global_ind_on_rank = max_ind_on_rank + self.real_part.impl.local_range()[0]
             comm = self.real_part.impl.mpi_comm()
@@ -133,10 +137,10 @@ class ComplexifiedFenicsVector(ComplexifiedVector):
             comm.Allgather(np.array(max_val_on_rank), max_vals)
 
             i = np.argmax(max_vals)
-            return max_inds[i], max_vals[i]
+            return int(max_inds[i]), max_vals[i]
 
 
-class FenicsVectorSpace(ComplexifiedListVectorSpace):
+class FenicsVectorSpace(ComplexifiedListVectorSpace[FenicsVector]):
 
     real_vector_type = FenicsVector
     vector_type = ComplexifiedFenicsVector
@@ -144,38 +148,39 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
     def __init__(self, V):
         self.V = V
 
-    @property
-    def dim(self):
+    @cached_property
+    def dim(self) -> int:
         return df.Function(self.V).vector().size()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return type(other) is FenicsVectorSpace and self.V == other.V
 
     # since we implement __eq__, we also need to implement __hash__
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self.V)
 
-    def real_zero_vector(self):
+    def real_zero_vector(self) -> FenicsVector:
         impl = df.Function(self.V).vector()
         return FenicsVector(impl)
 
-    def real_full_vector(self, value):
+    def real_full_vector(self, value: Real) -> FenicsVector:
         impl = df.Function(self.V).vector()
         impl += value
         return FenicsVector(impl)
 
-    def real_random_vector(self, distribution, **kwargs):
+    def real_random_vector(self, distribution: str, **kwargs) -> FenicsVector:
         impl = df.Function(self.V).vector()
         values = _create_random_values(impl.local_size(), distribution, **kwargs)
         impl[:] = np.ascontiguousarray(values)
         return FenicsVector(impl)
 
-    def real_vector_from_numpy(self, data, ensure_copy=False):
+    def real_vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> FenicsVector:
+        del ensure_copy  # data is always copied
         impl = df.Function(self.V).vector()
         impl[:] = np.ascontiguousarray(data)
         return FenicsVector(impl)
 
-    def real_make_vector(self, obj):
+    def real_make_vector(self, obj) -> FenicsVector:
         return FenicsVector(obj)
 
 

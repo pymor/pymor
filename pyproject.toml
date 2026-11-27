@@ -199,6 +199,10 @@ packages = [
 [tool.hatch.version]
 path = "src/pymor/__init__.py"
 
+[tool.mypy]
+# allow redefining unannotated variables with a different type (same as pyrefly)
+allow_redefinition = true
+
 [tool.pytest.ini_options]
 pythonpath = "src"
 testpaths = "src/pymortests"
@@ -270,6 +274,7 @@ ignore = [
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
+  "PGH003", # Use specific rule codes when ignoring type issues
   "PT011", # pytest.raises(Exception) is too broad
   "PT012", # pytest.raises() block should contain a single simple statement
   "PT015", # assertion always fails, replace with `pytest.fail()`

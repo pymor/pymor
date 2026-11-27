@@ -1,7 +1,9 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from functools import cached_property
 from pathlib import Path
+from typing import Protocol, Self
 
 from pymor.core.config import config
 from pymor.core.exceptions import LinAlgError
@@ -14,6 +16,7 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
+from pymor.core.typing import Complex
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.solvers.list import ComplexifiedListVectorArrayBasedSolver
 from pymor.tools.io import change_to_directory
@@ -22,14 +25,18 @@ from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVec
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
+class _HasToNumpy(Protocol):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray: ...
+
+
 class NGSolveVectorCommon:
-    def amax(self):
+    def amax(self: _HasToNumpy) -> tuple[int, float]:
         A = np.abs(self.to_numpy())
-        max_ind = np.argmax(A)
+        max_ind = int(np.argmax(A))
         max_val = A[max_ind]
         return max_ind, max_val
 
-    def dofs(self, dof_indices):
+    def dofs(self: _HasToNumpy, dof_indices: list[int] | np.ndarray) -> np.ndarray:
         return self.to_numpy()[dof_indices]
 
 
@@ -40,41 +47,43 @@ class NGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
         self.impl = impl
 
     @classmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance: Self) -> Self:
         return cls(instance.impl)
 
-    def _copy_data(self):
+    def _copy_data(self) -> None:
         new_impl = ngs.GridFunction(self.impl.space)
         new_impl.vec.data = self.impl.vec
         self.impl = new_impl
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> np.ndarray:
         if ensure_copy:
             return self.impl.vec.FV().NumPy().copy()
         self._copy_data_if_needed()
         return self.impl.vec.FV().NumPy()
 
-    def _scal(self, alpha):
-        self.impl.vec.data = float(alpha) * self.impl.vec
+    def _scal(self, alpha: Complex) -> None:
+        assert alpha.imag == 0  # NGSolveVector is always real, see ComplexifiedNGSolveVector
+        self.impl.vec.data = float(alpha.real) * self.impl.vec
 
-    def _axpy(self, alpha, x):
-        self.impl.vec.data = self.impl.vec + float(alpha) * x.impl.vec
+    def _axpy(self, alpha: Complex, x: Self) -> None:
+        assert alpha.imag == 0  # NGSolveVector is always real, see ComplexifiedNGSolveVector
+        self.impl.vec.data = self.impl.vec + float(alpha.real) * x.impl.vec
 
-    def inner(self, other):
+    def inner(self, other: Self) -> Complex:
         return self.impl.vec.InnerProduct(other.impl.vec)
 
-    def norm(self):
+    def norm(self) -> float:
         return self.impl.vec.Norm()
 
-    def norm2(self):
+    def norm2(self) -> float:
         return self.impl.vec.Norm() ** 2
 
 
-class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector):
+class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector[NGSolveVector]):
     pass
 
 
-class NGSolveVectorSpace(ComplexifiedListVectorSpace):
+class NGSolveVectorSpace(ComplexifiedListVectorSpace[NGSolveVector]):
 
     real_vector_type = NGSolveVector
     vector_type = ComplexifiedNGSolveVector
@@ -82,36 +91,37 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
     def __init__(self, V):
         self.V = V
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return type(other) is NGSolveVectorSpace and self.V == other.V
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.V)
 
     @property
-    def value_dim(self):
+    def value_dim(self) -> int:
         u = self.V.TrialFunction()
         if isinstance(u, list):
             return u[0].dim
         else:
             return u.dim
 
-    @property
-    def dim(self):
+    @cached_property
+    def dim(self) -> int:
         return self.V.ndofglobal * self.value_dim
 
     @classmethod
-    def space_from_vector_obj(cls, vec):
+    def space_from_vector_obj(cls, vec) -> Self:
         return cls(vec.space)
 
-    def real_zero_vector(self):
+    def real_zero_vector(self) -> NGSolveVector:
         impl = ngs.GridFunction(self.V)
         return NGSolveVector(impl)
 
-    def real_make_vector(self, obj):
+    def real_make_vector(self, obj) -> NGSolveVector:
         return NGSolveVector(obj)
 
-    def real_vector_from_numpy(self, data, ensure_copy=False):
+    def real_vector_from_numpy(self, data: np.ndarray, ensure_copy: bool = False) -> NGSolveVector:
+        del ensure_copy  # data is always copied
         v = self.real_zero_vector()
         v.to_numpy()[:] = data
         return v
