@@ -42,7 +42,8 @@ def histogram(
     detailed_data
         File containing the high-dimensional model and the reductor.
     error_norm
-        Name of norm in which to compute the errors.
+        Name of norm in which to compute the errors. If not given, the norm of the
+        reductor's product is used, in which the error estimator bounds the error.
     """
     print('Loading reduced model ...')
     with open(reduced_data, 'rb') as f:
@@ -58,7 +59,7 @@ def histogram(
 
     print()
 
-    if hasattr(rom, 'estimate_error'):
+    if rom.error_estimator is not None:
         ests = []
         for mu in mus:
             print(f'Estimating error for {mu} ... ', end='')
@@ -79,7 +80,7 @@ def histogram(
             if error_norm:
                 errs.append(np.max(getattr(fom, error_norm + '_norm')(err)))
             else:
-                errs.append(np.max(err.norm()))
+                errs.append(np.max(err.norm(reductor.products.get('RB'))))
             print('done')
 
         print()
@@ -89,7 +90,7 @@ def histogram(
     except AttributeError:
         pass  # plt.style is only available in newer matplotlib versions
 
-    if hasattr(rom, 'estimate_error') and detailed_data:
+    if rom.error_estimator is not None and detailed_data:
 
         # setup axes
         left, width = 0.1, 0.65
@@ -131,7 +132,7 @@ def histogram(
 
         plt.show()
 
-    elif hasattr(rom, 'estimate_error'):
+    elif rom.error_estimator is not None:
 
         total_min = np.min(ests) * 0.9
         total_max = np.max(ests) * 1.1
@@ -146,8 +147,8 @@ def histogram(
 
     elif detailed_data:
 
-        total_min = np.min(ests) * 0.9
-        total_max = np.max(ests) * 1.1
+        total_min = np.min(errs) * 0.9
+        total_max = np.max(errs) * 1.1
 
         hist, bin_edges = np.histogram(errs, bins=_bins(total_min, total_max))
         plt.bar(bin_edges[1:], hist, width=bin_edges[:-1] - bin_edges[1:], color='blue')
@@ -181,7 +182,8 @@ def convergence(
     samples
         Number of parameter samples to test with.
     error_norm
-        Name of norm in which to compute the errors.
+        Name of norm in which to compute the errors. If not given, the norm of the
+        reductor's product is used, in which the error estimator bounds the error.
     ndim
         Number of reduced basis dimensions for which to estimate the error.
     """
@@ -219,7 +221,7 @@ def convergence(
 
         print('estimate ', end='')
         sys.stdout.flush()
-        if hasattr(rom, 'estimate'):
+        if rom.error_estimator is not None:
             ests = []
             start = time.perf_counter()
             for mu in mus:
@@ -237,7 +239,7 @@ def convergence(
             if error_norm:
                 errs.append(np.max(getattr(fom, error_norm + '_norm')(err)))
             else:
-                errs.append(np.max(err.norm()))
+                errs.append(np.max(err.norm(reductor.products.get('RB'))))
         ERRS.append(max(errs))
 
         print()
@@ -250,7 +252,7 @@ def convergence(
         pass  # plt.style is only available in newer matplotlib versions
 
     plt.subplot(1, 2, 1)
-    if hasattr(rom, 'estimate'):
+    if rom.error_estimator is not None:
         plt.semilogy(dims, ESTS, label='max. estimate')
     plt.semilogy(dims, ERRS, label='max. error')
     plt.xlabel('dimension')
@@ -258,7 +260,7 @@ def convergence(
 
     plt.subplot(1, 2, 2)
     plt.plot(dims, T_SOLVES, label='avg. solve time')
-    if hasattr(rom, 'estimate'):
+    if rom.error_estimator is not None:
         plt.plot(dims, T_ESTS, label='avg. estimate time')
     plt.xlabel('dimension')
     plt.ylabel('milliseconds')
