@@ -150,14 +150,6 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
     float: left;
 }
 
-.k3d-target canvas {
-    z-index: 0 !important;
-}
-
-.colorMapLegend {
-    z-index: 0 !important;
-}
-
 li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
     display: none;
 }
