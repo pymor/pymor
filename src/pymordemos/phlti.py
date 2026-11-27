@@ -98,7 +98,6 @@ def main(n: int = 100, m: int = 2, max_reduced_order: int = 20):
                rom = PHLTIModel.from_passive_LTIModel(rom)
 
             if name in ('PRBT', 'pH-IRKA', 'spectral_factor'):
-                print(name, r)
                 ph_properties(rom)
 
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
