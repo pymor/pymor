@@ -99,14 +99,21 @@ def hide_members_from_toc(app, doctree):
 
 
 def _type_params(obj):
-    # for classes, only consider the type parameters declared by the class itself
-    if isinstance(obj, type) and '__type_params__' not in obj.__dict__:
-        return ()
+    # for classes, only consider the type parameters declared by the class itself, including
+    # old-style type parameters (e.g. Generic[T] with T = TypeVar('T', covariant=True))
+    if isinstance(obj, type):
+        # Read the class's own __dict__ to get only the parameters the class declares itself.
+        # Only accept tuples: for type itself (e.g. in the MRO of a metaclass), __dict__ contains
+        # the descriptor that implements __type_params__ for all classes.
+        params = obj.__dict__.get('__type_params__') or obj.__dict__.get('__parameters__')
+        return params if isinstance(params, tuple) else ()
     return getattr(obj, '__type_params__', ())
 
 
 def add_type_params(app, what, name, obj, options, signature, return_annotation):
-    """Add PEP 695 type parameters to signatures, which autodoc does not show.
+    """Add type parameters to signatures, which autodoc does not show.
+
+    Old-style type parameters of classes (`Generic[T]`) are shown in PEP 695 syntax as well.
 
     See https://github.com/sphinx-doc/sphinx/issues/10568.
     """
@@ -132,16 +139,22 @@ def add_type_params(app, what, name, obj, options, signature, return_annotation)
 
 
 def remove_generic_base(app, name, obj, options, bases):
-    """Remove the implicit `Generic[...]` base of classes with PEP 695 type parameters."""
+    """Remove the `Generic[...]` base of classes with type parameters.
+
+    For PEP 695 type parameters, this base is implicit. For old-style type parameters, the
+    parameters are shown in the signature instead (see `add_type_params`).
+    """
     if isinstance(obj, type) and _type_params(obj):
         bases[:] = [b for b in bases if get_origin(b) is not Generic] or [object]
 
 
 def _type_params_in_scope(node):
-    """Names of the PEP 695 type parameters declared by the descriptions enclosing `node`.
+    """Names of the type parameters declared by the descriptions enclosing `node`.
 
     For classes, this includes the type parameters of the base classes, as autodoc
     shows the inherited signature of `__init__` for classes without their own `__init__`.
+    Old-style type parameters (module-level TypeVars) are also included with their
+    qualified name, which is used as reference target.
     """
     names = set()
     while node is not None:
@@ -155,7 +168,8 @@ def _type_params_in_scope(node):
                     except (ImportError, AttributeError):
                         continue
                     if isinstance(cls, type):
-                        names.update(param.__name__ for c in cls.__mro__ for param in getattr(c, '__type_params__', ()))
+                        for param in (p for c in cls.__mro__ for p in _type_params(c)):
+                            names.update((param.__name__, f'{param.__module__}.{param.__name__}'))
         node = node.parent
     return names
 
