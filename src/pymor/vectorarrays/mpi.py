@@ -179,7 +179,7 @@ class RegisteredLocalSpace(int):
 _local_space_registry: dict[RegisteredLocalSpace, VectorSpace] = {}
 _local_space_to_id: dict[VectorSpace, RegisteredLocalSpace] = {}
 
-type LocalSpaces = Sequence[VectorSpace | RegisteredLocalSpace]
+type _LocalSpaces = Sequence[VectorSpace | RegisteredLocalSpace]
 
 
 def _register_local_space(local_space: VectorSpace) -> RegisteredLocalSpace:
@@ -191,25 +191,25 @@ def _register_local_space(local_space: VectorSpace) -> RegisteredLocalSpace:
     return local_space_id
 
 
-def _get_local_space(local_spaces: LocalSpaces) -> VectorSpace:
+def _get_local_space(local_spaces: _LocalSpaces) -> VectorSpace:
     local_space = local_spaces[mpi.rank] if len(local_spaces) > 1 else local_spaces[0]
     if isinstance(local_space, RegisteredLocalSpace):
         local_space = _local_space_registry[local_space]
     return local_space
 
 
-def _MPIVectorSpace_zeros(local_spaces: LocalSpaces, count: int = 0, reserve: int = 0) -> mpi.ObjectId:
+def _MPIVectorSpace_zeros(local_spaces: _LocalSpaces, count: int = 0, reserve: int = 0) -> mpi.ObjectId:
     local_space = _get_local_space(local_spaces)
     obj = local_space.zeros(count=count, reserve=reserve)
     return mpi.manage_object(obj)
 
 
-def _MPIVectorSpace_dim(local_spaces: LocalSpaces) -> int:
+def _MPIVectorSpace_dim(local_spaces: _LocalSpaces) -> int:
     local_space = _get_local_space(local_spaces)
     return local_space.dim
 
 
-def _MPIVectorSpace_check_local_spaces(local_spaces: LocalSpaces, obj_id: mpi.ObjectId) -> bool | None:
+def _MPIVectorSpace_check_local_spaces(local_spaces: _LocalSpaces, obj_id: mpi.ObjectId) -> bool | None:
     U = mpi.get_object(obj_id)
     local_space = _get_local_space(local_spaces)
     results = mpi.comm.gather(U in local_space, root=0)
@@ -395,7 +395,7 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
         return np.cumsum(np.concatenate(([0], self._dims)))[:-1]
 
 
-def _MPIVectorSpaceAutoComm_dim(local_spaces: LocalSpaces) -> list[int] | None:
+def _MPIVectorSpaceAutoComm_dim(local_spaces: _LocalSpaces) -> list[int] | None:
     local_space = _get_local_space(local_spaces)
     dims = mpi.comm.gather(local_space.dim, root=0)
     if mpi.rank0:
