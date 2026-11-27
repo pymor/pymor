@@ -37,13 +37,34 @@ def main(
 ):
     """Model order reduction with machine learning methods for instationary problems.
 
-    Problem number 0 considers the incompressible Navier-Stokes equations in
-    a two-dimensional cavity with the Reynolds number as parameter.
-    The discretization is based on FEniCS.
+    This demo builds reduced order models for instationary nonlinear problems using machine
+    learning methods. Problem number 0 considers the incompressible Navier-Stokes equations in a
+    two-dimensional lid-driven cavity with the Reynolds number in :math:`[1, 50]` as parameter,
+    discretized with Taylor-Hood finite elements using FEniCS. Problem number 1 considers a
+    one-dimensional Burgers-type equation given by
+    :func:`~pymor.analyticalproblems.burgers.burgers_problem` with the exponent in the flux as
+    parameter, discretized with finite volumes using
+    :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv`. First, the full-order
+    solutions and outputs are computed for uniformly sampled training parameters. Then, a
+    :class:`~pymor.reductors.data_driven.DataDrivenPODReductor` computes a reduced basis by POD
+    and trains a regressor to predict the reduced coefficients. A separate
+    :class:`~pymor.reductors.data_driven.DataDrivenReductor` is trained to predict the output.
+    One of the following regressors can be selected:
 
-    Problem number 1 considers a parametrized Burgers equation on a
-    one-dimensional domain. The discretization is based on pyMOR's built-in
-    functionality.
+    - a fully connected neural network using PyTorch
+      ('fcnn', :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`),
+    - the vectorial kernel orthogonal greedy algorithm
+      ('vkoga', :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`), or
+    - Gaussian process regression using scikit-learn ('gpr').
+
+    The regressors either predict the whole time trajectory at once or each time step
+    separately (see `time_vectorized`). Optionally, the inputs and outputs of the regressors
+    are scaled using scikit-learn's ``MinMaxScaler``. Finally, the reduced order models are
+    evaluated on random test parameters, and the average absolute and relative errors and the
+    median speedups of the solution and output approximations are printed.
+
+    See :doc:`/tutorial_mor_with_ml` for background on machine learning methods for model order
+    reduction. For a stationary problem, see :ref:`cyclopts-pymor-demo-data_driven`.
 
     Parameters
     ----------

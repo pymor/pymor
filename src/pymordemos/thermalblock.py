@@ -42,7 +42,37 @@ def main(
     reductor: Literal['traditional', 'residual_basis'] = 'residual_basis',
     test: int = 10
 ):
-    """Thermalblock demo.
+    """Reduced basis approximation of the thermal block problem.
+
+    This demo constructs reduced order models for the thermal block problem given by
+    :func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`, where the diffusion
+    coefficient on each of the XBLOCKS x YBLOCKS blocks is a parameter in :math:`[0.1, 1]`.
+    The problem is discretized with linear finite elements using either pyMOR's builtin
+    discretizer or FEniCS. The reduced basis is computed using one of the following algorithms:
+
+    - solution snapshots for randomly sampled parameters ('naive'),
+    - the weak greedy algorithm on a uniform training set
+      ('greedy', :func:`~pymor.algorithms.greedy.rb_greedy`),
+    - the weak greedy algorithm with adaptively refined training set
+      ('adaptive_greedy', :func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`), or
+    - POD of solution snapshots on a uniform training set
+      ('pod', :func:`~pymor.algorithms.pod.pod`).
+
+    The reduced order model is constructed by Galerkin projection using
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor` or
+    :class:`~pymor.reductors.coercive.SimpleCoerciveRBReductor`, which differ in how the
+    residual-based a posteriori error estimator is computed. The greedy algorithms can use
+    this error estimator or the true error for selecting parameters. Finally, the reduced
+    order model is evaluated on random test parameters using
+    :func:`~pymor.algorithms.error.reduction_error_analysis`, and the maximum errors, the error
+    estimator effectivities and the condition numbers of the reduced systems are printed.
+    Optionally, the computation can be parallelized using IPython, and the reduced model can
+    be pickled for later analysis with :ref:`cyclopts-pymor-demo-analyze_pickle`.
+
+    See :doc:`/tutorial_basis_generation` for an introduction to reduced basis generation. For a
+    simplified version of this demo, see :ref:`cyclopts-pymor-demo-thermalblock_simple`, and for
+    a closer look at the adaptive greedy algorithm, see
+    :ref:`cyclopts-pymor-demo-thermalblock_adaptive`.
 
     Parameters
     ----------
@@ -58,11 +88,14 @@ def main(
     rbsize
         Size of the reduced basis.
     adaptive_greedy_gamma
-        See pymor.algorithms.adaptivegreedy.
+        Weight factor for age penalty term in refinement indicators
+        (see :func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`).
     adaptive_greedy_rho
-        See pymor.algorithms.adaptivegreedy.
+        Maximum allowed ratio between error on validation set and on training set
+        (see :func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`).
     adaptive_greedy_theta
-        See pymor.algorithms.adaptivegreedy.
+        Ratio of elements to refine
+        (see :func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`).
     alg
         The model reduction algorithm to use.
     cache_region
@@ -74,8 +107,8 @@ def main(
     greedy_with_error_estimator
         Use error estimator for basis generation.
     grid
-        Use grid with 4*NI*NI elements
-    ipython_engines:
+        Use grid with 4*NI*NI elements.
+    ipython_engines
         If positive, the number of IPython cluster engines to use for
         parallel greedy search. If zero, no parallelization is performed.
     ipython_profile
