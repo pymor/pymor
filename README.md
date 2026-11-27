@@ -1,9 +1,9 @@
-![pyMOR Logo](./logo/pymor_logo.svg)
+![pyMOR Logo](https://raw.githubusercontent.com/pymor/pymor/main/logo/pymor_logo.svg)
 
 [![PyPI](https://img.shields.io/pypi/pyversions/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/)
-[![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.592992-blue.svg)](https://doi.org/10.5281/zenodo.592992)
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/main/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/main)
 [![Conda Tests](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml/badge.svg)](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml)
 [![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
@@ -34,7 +34,7 @@ from NumPy/SciPy to external partial differential equation solver packages.
 ## License
 
 pyMOR is licensed under BSD-2-clause.
-See [LICENSE.txt](LICENSE.txt).
+See [LICENSE.txt](https://raw.githubusercontent.com/pymor/pymor/main/LICENSE.txt).
 
 ## Citing
 
