@@ -16,17 +16,29 @@ DOCUMENTED_PRIVATE_MEMBERS = [
     'pymor.operators.interface.Operator._assemble_lincomb',  # extension point
 ]
 
+# public members which are not documented
+UNDOCUMENTED_PUBLIC_MEMBERS = [
+    'pymor.auto_load_jupyter_extension',  # internal, called on import
+]
+
 
 def skip(app, what, name, obj, skip, options):
     fullname = f"{getattr(obj, '__module__', None)}.{getattr(obj, '__qualname__', None)}"
-    return False if fullname in DOCUMENTED_PRIVATE_MEMBERS else None
+    if fullname in DOCUMENTED_PRIVATE_MEMBERS:
+        return False
+    if fullname in UNDOCUMENTED_PUBLIC_MEMBERS:
+        return True
+    return None
 
 
 def _own_members(cls):
     """Methods and attributes documented by autodoc for the given class."""
     methods, attributes = set(), set()
     for name, value in cls.__dict__.items():
-        if name.startswith('_') and f'{cls.__module__}.{cls.__qualname__}.{name}' not in DOCUMENTED_PRIVATE_MEMBERS:
+        fullname = f'{cls.__module__}.{cls.__qualname__}.{name}'
+        if name.startswith('_') and fullname not in DOCUMENTED_PRIVATE_MEMBERS:
+            continue
+        if fullname in UNDOCUMENTED_PUBLIC_MEMBERS:
             continue
         if isinstance(value, type) and value.__qualname__ == f'{cls.__qualname__}.{name}':  # nested classes
             continue
