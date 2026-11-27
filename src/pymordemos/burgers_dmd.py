@@ -32,30 +32,50 @@ def main(
     rtol: float | None = None,
     v: float = 10.
 ):
-    """Burgers demo with different applications of Dynamic Mode Decomposition.
+    r"""Dynamic mode decomposition of a one-dimensional Burgers-type equation.
 
-    See pymor.analyticalproblems.burgers for more details.
+    This demo computes the dynamic mode decomposition (DMD) of the solution trajectory of the
+    one-dimensional Burgers-type equation
+
+    .. math::
+
+        \partial_t u + \partial_x (v u^\mu) = 0, \qquad x \in [0, 2],\ t \in [0, 0.3],
+
+    given by :func:`~pymor.analyticalproblems.burgers.burgers_problem` for a fixed exponent
+    :math:`\mu`. The problem is discretized with finite volumes using the Engquist-Osher flux
+    (:func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv`). The full-order solution
+    is computed and visualized, and its DMD is computed using
+    :func:`~pymor.algorithms.dmd.dmd` (:cite:`TRLBK14`) in the standard and the exact variant,
+    where the number of modes is determined by truncating the singular values of the snapshot
+    matrix. The plots show the real and imaginary parts of the standard and exact DMD modes, as
+    well as the DMD eigenvalues, either as discrete-time eigenvalues together with the unit
+    circle or as continuous-time eigenvalues.
+
+    For the identification of a linear system from trajectory data using DMD, see
+    :ref:`cyclopts-pymor-demo-dmd_identification`. For the two-dimensional Burgers-type
+    equation, see :ref:`cyclopts-pymor-demo-burgers`.
 
     Parameters
     ----------
     exp
-        Exponent.
+        Exponent :math:`\mu` in the flux.
     atol
-        Absolute tolerance.
+        Absolute truncation tolerance for the singular values of the snapshot matrix.
     continuous_time
         Show continuous time system eigenvalues.
     grid
-        Use grid with this number of elements.
+        Use grid with 2*NI elements.
     initial_data
-        Select the initial data.
+        Select the initial data (sin, bump).
     modes
-        Number of DMD modes
+        Maximum number of DMD modes.
     nt
         Number of time steps.
     periodic
-        If not, solve with dirichlet boundary conditions on left and bottom boundary.
+        If `False`, use Dirichlet boundary conditions on the left and outflow boundary
+        conditions on the right boundary.
     rtol
-        Relative tolerance
+        Relative truncation tolerance for the singular values of the snapshot matrix.
     v
         Speed in x-direction.
     """

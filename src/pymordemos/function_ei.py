@@ -33,7 +33,33 @@ def main(
     plot_solutions: bool = False,
     test: int = 10
 ):
-    """Reduction of a problem without parameter separability using empirical interpolation.
+    r"""Reduction of a problem without parameter separability using empirical interpolation.
+
+    This demo constructs a reduced order model for the stationary diffusion problem
+
+    .. math::
+
+        -\nabla \cdot \big(d(x, \mu) \nabla u\big) = 1, \qquad
+        d(x, \mu) = \begin{cases} x_1^\mu + 0.1, & x_2 > 0.5, \\ 0.1, & \text{else}, \end{cases}
+
+    on the unit square with homogeneous Dirichlet boundary conditions, where
+    :math:`\mu \in [1, 10]` is the parameter. Since the diffusion coefficient does not depend
+    affinely on :math:`\mu`, it is approximated by a parameter-separable function using
+    empirical interpolation (:func:`~pymor.algorithms.ei.interpolate_function`, :cite:`BMNP04`)
+    based on evaluations of :math:`d` at the grid elements for uniformly sampled parameters.
+    Both the original and the interpolated problem are discretized with linear finite elements
+    using :func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`. The reduced basis is
+    computed for the interpolated model using the weak greedy algorithm
+    (:func:`~pymor.algorithms.greedy.rb_greedy`) and
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor`. Finally, the reduced order model is
+    compared with the original full-order model on random test parameters using
+    :func:`~pymor.algorithms.error.reduction_error_analysis`, so that the errors include the
+    empirical interpolation error. The results are printed and plotted, and the solution with
+    the largest error is visualized. Optionally, some full-order solutions and the errors caused
+    by the empirical interpolation are visualized as well.
+
+    See :doc:`/tutorial_basis_generation` for an introduction to reduced basis generation. For
+    empirical interpolation of a nonlinear operator, see :ref:`cyclopts-pymor-demo-burgers_ei`.
 
     Parameters
     ----------
@@ -46,7 +72,7 @@ def main(
     rb_size
         Size of the reduced basis.
     grid
-        Use grid with 4*NI*NI elements
+        Use grid with 4*NI*NI elements.
     plot_ei_err
         Plot empirical interpolation error.
     plot_solutions
