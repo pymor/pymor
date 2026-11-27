@@ -33,11 +33,11 @@ def main(
     snap: int = 20,
     threads: int = 0
 ):
-    r"""Compression of snapshot data with the HAPOD algorithm from :cite:`HLR18`.
+    r"""Compression of snapshot data with the HAPOD algorithm.
 
     This demo compares the hierarchical approximate proper orthogonal decomposition (HAPOD)
-    with the standard POD for compressing solution snapshots. The snapshots are the solution
-    trajectories of a two-dimensional Burgers-type equation
+    :cite:`HLR18` with the standard POD for compressing solution snapshots. The snapshots
+    are the solution trajectories of a two-dimensional Burgers-type equation
     (:func:`~pymor.analyticalproblems.burgers.burgers_problem_2d`) for randomly sampled
     parameters, discretized with finite volumes using
     :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv`. The snapshot data is
