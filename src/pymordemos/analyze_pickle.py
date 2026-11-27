@@ -15,14 +15,14 @@ from pymor.core.pickle import load
 TAGS = ('reduced-basis', 'error-estimation')
 
 app = App(help_on_error=True, help="""
-This demo loads a pickled reduced model, solves for random
-parameters, estimates the reduction errors and then visualizes these
-estimates. If the detailed model and the reductor are
-also provided, the estimated error is visualized in comparison to
-the real reduction error.
-
-The needed data files are created by the thermal block demo, by
-setting the '--pickle' option.
+This demo analyzes a pickled reduced order model by evaluating it for random parameters
+and comparing its error estimates with the actual reduction errors. The required files are
+created by :ref:`cyclopts-pymor-demo-thermalblock` or
+:ref:`cyclopts-pymor-demo-thermalblock_adaptive` with the `--pickle` option, which writes the
+reduced model and the parameter space to `<prefix>_reduced` and the full-order model and the
+reductor to `<prefix>_detailed`. The command `histogram` shows the distribution of the
+estimated and actual errors, and the command `convergence` shows how the errors and the
+solve times depend on the size of the reduced basis.
 """[1:])
 
 @app.command
@@ -35,6 +35,12 @@ def histogram(
 ):
     """Generate histogram.
 
+    Solves the reduced model and evaluates its error estimator for randomly sampled parameters.
+    If `detailed_data` is given, the full-order model is solved as well, and the actual
+    reduction errors are computed. The plot shows the estimated errors over the actual errors
+    together with histograms of both, or only a histogram of the estimated errors if no
+    detailed data is given.
+
     Parameters
     ----------
     reduced_data
@@ -44,7 +50,8 @@ def histogram(
     detailed_data
         File containing the high-dimensional model and the reductor.
     error_norm
-        Name of norm in which to compute the errors.
+        Name of the norm in which to compute the errors (e.g. `h1_0_semi`).
+        If not given, the Euclidean norm is used.
     """
     print('Loading reduced model ...')
     with open(reduced_data, 'rb') as f:
@@ -174,6 +181,10 @@ def convergence(
 ):
     """Generate convergence plot.
 
+    Reduces the full-order model to reduced bases of different sizes using the pickled reductor
+    and solves the reduced models for randomly sampled parameters. The plots show the maximum
+    reduction error over the reduced basis size, as well as the average solve time.
+
     Parameters
     ----------
     reduced_data
@@ -183,7 +194,8 @@ def convergence(
     samples
         Number of parameter samples to test with.
     error_norm
-        Name of norm in which to compute the errors.
+        Name of the norm in which to compute the errors (e.g. `h1_0_semi`).
+        If not given, the Euclidean norm is used.
     ndim
         Number of reduced basis dimensions for which to estimate the error.
     """
