@@ -1789,14 +1789,15 @@ class PHLTIModel(LTIModel):
         return self.with_(E=E, J=J, R=R, G=G, P=P, Q=None)
 
     @classmethod
-    def from_interconnection(cls, models, connections, **kwargs):
+    def from_interconnection(cls, models, connections, external=None, **kwargs):
         r"""Connect continuous-time |PHLTIModels| through lossless gyrators.
 
         Parameters
         ----------
         models
-            Sequence of at least two continuous-time |PHLTIModels|. All models must have
-            :math:`P = S = N = 0`.
+            Sequence of at least two continuous-time |PHLTIModels|. Currently, only
+            models without feedthrough are supported, i.e., `P`, `S` and `N` must be
+            |ZeroOperators| for all models.
         connections
             Sequence of triples ``(endpoint_a, endpoint_b, K)``. An endpoint is
             ``(model_index, (kind, indices))``, where ``kind`` is either
@@ -1809,17 +1810,25 @@ class PHLTIModel(LTIModel):
             Each connection imposes :math:`u_a = K y_b`,
             :math:`u_b = -K^H y_a`. The coupling :math:`K` is a |NumPy array|,
             |SciPy spmatrix|, or linear |Operator| between NumPy vector spaces.
+        external
+            If `None`, all unconnected ports remain external inputs. Otherwise, a
+            sequence of endpoints (see `connections`) that become the external
+            inputs, in the given order. Ports occurring in `connections` must not
+            be listed. Unconnected ports that are not listed are fixed to zero,
+            i.e., removed from the model, which preserves the port-Hamiltonian
+            structure.
         kwargs
             Additional arguments passed to the |PHLTIModel| constructor.
 
         Returns
         -------
         model
-            The interconnected continuous-time |PHLTIModel|. All operators have an outer
-            block structure with one state block and one external-input block
-            per subsystem. Unconnected ports remain external, ordered by
-            model index and then by scalar input index. A subsystem without
-            external ports retains a zero-dimensional input block.
+            The interconnected continuous-time |PHLTIModel|. The state has one block
+            per subsystem. If `external` is `None`, the input has one block per
+            subsystem, containing its unconnected ports ordered by scalar input
+            index. A subsystem without external ports retains a zero-dimensional
+            input block. Otherwise, the input has one block per entry of
+            `external`.
 
         Examples
         --------
@@ -1830,22 +1839,23 @@ class PHLTIModel(LTIModel):
                 [model0, model1],
                 [((0, ('blocks', [1])), (1, ('idx', [0, 2])), np.eye(2))],
             )
+
+        Additionally, use only scalar input 1 of the second model and input
+        block 0 of the first model as external inputs, in this order, and fix
+        all other unconnected ports to zero::
+
+            PHLTIModel.from_interconnection(
+                [model0, model1],
+                [((0, ('blocks', [1])), (1, ('idx', [0, 2])), np.eye(2))],
+                external=[(1, ('idx', [1])), (0, ('blocks', [0]))],
+            )
         """
         models = tuple(models)
         assert len(models) >= 2
         assert all(isinstance(model, PHLTIModel) for model in models)
         assert all(model.sampling_time == 0 for model in models)
         assert kwargs.get('sampling_time', 0) == 0
-
-        for i, model in enumerate(models):
-            for key in ('P', 'S', 'N'):
-                op = getattr(model, key)
-                if isinstance(op, ZeroOperator):
-                    continue
-                assert not op.parametric
-                matrix = to_matrix(op)
-                nonzero = matrix.count_nonzero() if sps.issparse(matrix) else np.count_nonzero(matrix)
-                assert not nonzero
+        assert all(isinstance(op, ZeroOperator) for model in models for op in (model.P, model.S, model.N))
 
         used_ports = [set() for _ in models]
 
@@ -1882,16 +1892,20 @@ class PHLTIModel(LTIModel):
             assert len(indices) > 0
             assert used_ports[i].isdisjoint(indices)
             used_ports[i].update(indices)
-            return i, models[i].G @ embedding(space, indices)
+            return i, indices
+
+        def port_operator(i, indices):
+            return models[i].G @ embedding(models[i].G.source, indices)
 
         J = [[model.J if i == j else None for j in range(len(models))] for i, model in enumerate(models)]
         for connection in connections:
             assert isinstance(connection, tuple | list)
             assert len(connection) == 3
             endpoint_a, endpoint_b, K = connection
-            i, G_a = resolve_endpoint(endpoint_a)
-            j, G_b = resolve_endpoint(endpoint_b)
+            i, indices_a = resolve_endpoint(endpoint_a)
+            j, indices_b = resolve_endpoint(endpoint_b)
             assert i != j
+            G_a, G_b = port_operator(i, indices_a), port_operator(j, indices_b)
 
             if not isinstance(K, Operator):
                 assert isinstance(K, np.ndarray | sps.spmatrix | sparray)
@@ -1905,11 +1919,26 @@ class PHLTIModel(LTIModel):
             J[i][j] = coupling if J[i][j] is None else J[i][j] + coupling
             J[j][i] = -coupling.H if J[j][i] is None else J[j][i] - coupling.H
 
-        G = BlockDiagonalOperator([
-            model.G @ embedding(model.G.source, [j for j in range(model.dim_input) if j not in used_ports[i]])
-            for i, model in enumerate(models)
-        ])
-        P = BlockDiagonalOperator([ZeroOperator(block.range, block.source) for block in G.blocks.diagonal()])
+        if external is None:
+            G = BlockDiagonalOperator([
+                port_operator(i, [j for j in range(model.dim_input) if j not in used_ports[i]])
+                for i, model in enumerate(models)
+            ])
+            P = BlockDiagonalOperator([ZeroOperator(block.range, block.source) for block in G.blocks.diagonal()])
+        else:
+            assert isinstance(external, tuple | list)
+            assert len(external) > 0
+            external = [resolve_endpoint(endpoint) for endpoint in external]
+            G = [[None for _ in external] for _ in models]
+            for k, (i, indices) in enumerate(external):
+                G[i][k] = port_operator(i, indices)
+            range_spaces = [model.G.range for model in models]
+            source_spaces = [G[i][k].source for k, (i, _) in enumerate(external)]
+            G = BlockOperator(G, range_spaces=range_spaces, source_spaces=source_spaces)
+            P = BlockOperator([[None for _ in external] for _ in models],
+                              range_spaces=range_spaces, source_spaces=source_spaces)
+        # P, S, N are zero, but need block structure: ZeroOperators with a BlockVectorSpace
+        # as source do not support as_range_array, which is needed to evaluate the transfer function
         S = BlockDiagonalOperator([ZeroOperator(space, space) for space in G.source.subspaces])
 
         return cls(J=BlockOperator(J), R=BlockDiagonalOperator([model.R for model in models]),
