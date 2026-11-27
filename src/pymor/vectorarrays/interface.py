@@ -16,7 +16,10 @@ if TYPE_CHECKING:
     from pymor.operators.interface import Operator
 
 type Indices = list[int] | slice | None
+"""Vector indices used by :class:`~pymor.vectorarrays.interface.VectorArrayImpl.`"""
+
 type IndicesLike = Indices | Integer | np.ndarray
+"""Admissible indices for indexing a |VectorArray|."""
 
 
 class VectorArray[I: 'VectorArrayImpl'](BasicObject):
