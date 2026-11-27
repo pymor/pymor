@@ -208,8 +208,8 @@ def gram_schmidt_biorth(V, W, product=None,
             # strongly during projection.
             while True:
                 for j in range(i):
-                    # project by (I - W[j] * V[j]^H * E^H)
-                    p = np.conj(W[i].pairwise_inner(V[j], product)[0])
+                    # project by (I - W[j] * V[j]^T * E)
+                    p = V[j].pairwise_inner(W[i], product)[0]
                     W[i].axpy(-p, W[j])
 
                 # calculate new norm
