@@ -25,6 +25,33 @@ def main(
 ):
     """Example script for using output error estimation.
 
+    This demo illustrates the a posteriori error estimation for outputs of reduced basis
+    models. The following full-order models can be selected:
+
+    - a 2x2 thermal block problem
+      (:func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`) with a scalar
+      output (0),
+    - the same problem with a vector-valued output (1),
+    - the same problem with a vector-valued output given by a linear combination of random
+      matrices (2),
+    - the heat equation from :ref:`cyclopts-pymor-demo-parabolic_mor` with a scalar output
+      given by the right-hand side (3), or
+    - the same heat equation with a vector-valued output given by a random matrix (4).
+
+    The thermal block problems are discretized with linear finite elements using pyMOR's
+    builtin discretizer. A reduced basis is computed by POD (:func:`~pymor.algorithms.pod.pod`)
+    from the solution snapshots for uniformly sampled training parameters. The reduced order
+    model is constructed by Galerkin projection using
+    :class:`~pymor.reductors.coercive.SimpleCoerciveRBReductor` or
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor` for the stationary problems and by
+    :class:`~pymor.reductors.parabolic.ParabolicRBReductor` for the instationary problems.
+    The plots show the output error and its estimate for each training parameter, as well as
+    the maximum and minimum output errors and estimates over the training set for increasing
+    reduced basis sizes.
+
+    For output error estimation using the dual-weighted residual approach, see
+    :ref:`cyclopts-pymor-demo-output_error_estimation_with_dwr`.
+
     Parameters
     ----------
     fom_number
@@ -35,9 +62,9 @@ def main(
     training_samples
         Number of samples used for training the reduced basis.
     modes
-        Number of basis functions for the RB space (generated with POD)
+        Number of basis functions for the RB space (generated with POD).
     reductor_count
-        Reductor type for elliptic problems: 0: SimpleCoerciveReductor; 1: CoerciveRBReductor.
+        Reductor type for elliptic problems: 0: SimpleCoerciveRBReductor; 1: CoerciveRBReductor.
         For parabolic FOMs [3, 4] ParabolicRBReductor is used.
     """
     set_log_levels({'pymor': 'WARN'})
