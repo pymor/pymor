@@ -9,7 +9,13 @@ from pymor.basic import *
 
 TAGS = ('instationary', 'linear', 'parametric', 'builtin-discretizer')
 
-app = App(help_on_error=True)
+app = App(help_on_error=True, help="""
+This demo solves instationary problems using pyMOR's builtin discretization toolkit. The
+command `heat` solves a heat conduction problem and the command `dar` solves a
+diffusion-advection-reaction problem. Both problems are discretized with finite elements
+or finite volumes on a triangular or rectangular grid using implicit Euler time stepping,
+and the solution trajectory is visualized.
+"""[1:])
 
 @app.command
 def heat(
@@ -21,6 +27,13 @@ def heat(
     rect: bool = False,
 ):
     """Heat conduction problem.
+
+    Solves the heat equation on the unit square with a high-conductivity bar in the middle and
+    two bars at the top, whose conductivity is given by the parameter `top`. The initial
+    temperature is 10 on the middle bar and 0 elsewhere. A heat flux is prescribed on the bottom
+    boundary below the middle bar, and homogeneous Dirichlet boundary conditions are imposed on
+    the remaining edges. For a reduced basis approximation of a similar problem, see
+    :ref:`cyclopts-pymor-demo-parabolic_mor`.
 
     Parameters
     ----------
@@ -79,6 +92,12 @@ def dar(
     rect: bool = False,
 ):
     """Diffusion advection reaction problem.
+
+    Solves a diffusion-advection-reaction equation on the unit square with diffusion coefficient
+    0.01, reaction coefficient 0.5 and an advection field pointing in the negative
+    :math:`x_1`-direction, whose speed is the parameter. The initial data is 10 on the square
+    :math:`[0.3, 0.7]^2` and 0 elsewhere, and homogeneous Dirichlet boundary conditions are
+    imposed.
 
     Parameters
     ----------

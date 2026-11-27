@@ -24,17 +24,26 @@ app = App(help_on_error=True)
 def main(output_number: Literal[0, 1], grid_intervals: int, training_samples: int):
     """Error aware trust-region method for PDE-constrained parameter optimization problems.
 
-    This demo compares three different approaches for solving PDE-constrained parameter
-    optimization problems with linear and quadratic output functionals.
-    As optimization method we compare:
+    This demo compares three approaches for solving the PDE-constrained parameter optimization
+    problem from :ref:`cyclopts-pymor-demo-linear_optimization` with a linear or quadratic
+    output functional:
 
-    1. The reference method: Projected BFGS, only based on the FOM.
-    2. The classical RB method: First standard Greedy for building a ROM, then projected BFGS
-       with ROM.
-    3. The error aware trust-region method proposed in :cite:`KMOSV21`.
+    - projected BFGS using only the full-order model
+      (:func:`~pymor.algorithms.bfgs.error_aware_bfgs`), which serves as reference,
+    - the classical reduced basis approach, where a reduced basis is first computed by the weak
+      greedy algorithm (:func:`~pymor.algorithms.greedy.rb_greedy`) using
+      :class:`~pymor.reductors.coercive.CoerciveRBReductor` and the optimization is then
+      performed by projected BFGS with the reduced order model, and
+    - the error aware trust-region reduced basis method
+      (:func:`~pymor.algorithms.tr.coercive_rb_trust_region`, :cite:`KMOSV21`), which enriches
+      the reduced basis adaptively during the optimization and uses a posteriori error
+      estimates to control the trust region.
 
-    The methods are compared in terms of computational time, iterations,
-    optimization error, and FOM/ROM evaluations.
+    The methods are compared in terms of computation time, iterations, optimization error, and
+    numbers of full-order and reduced-order model evaluations.
+
+    See :doc:`/tutorial_optimization` for an introduction to PDE-constrained optimization with
+    pyMOR, including the trust-region method.
 
     Parameters
     ----------

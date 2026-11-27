@@ -17,7 +17,31 @@ def main(
     grid_intervals: int,
     training_samples: int
 ):
-    """Example script for solving linear PDE-constrained parameter optimization problems.
+    r"""Example script for solving linear PDE-constrained parameter optimization problems.
+
+    This demo solves a PDE-constrained parameter optimization problem of the form
+
+    .. math::
+
+        \min_{\mu \in [0, \pi]^2} J(\mu),
+
+    where :math:`J(\mu)` is a linear output of the solution of a parametric elliptic problem on
+    :math:`[-1, 1]^2`. The diffusion coefficient takes two different parameter-dependent values
+    on two small squares and on the rest of the domain. The problem is discretized with linear
+    finite elements using :func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`. The
+    optimization problem is solved using the L-BFGS-B method from SciPy, where the gradient of
+    :math:`J` is computed using :meth:`~pymor.models.interface.Model.output_d_mu`. First, the
+    optimization is performed with the full-order model, which yields the reference solution.
+    Then, a reduced basis is computed with the weak greedy algorithm
+    (:func:`~pymor.algorithms.greedy.rb_greedy`) using
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor`, and the optimization is performed
+    with the reduced order model. For both approaches, the computed optimum, the objective
+    value, the error with respect to the reference solution, the numbers of iterations and
+    function evaluations, and the computation times are printed.
+
+    See :doc:`/tutorial_optimization` for an introduction to PDE-constrained optimization with
+    pyMOR. For an adaptive approach using a trust-region method, see
+    :ref:`cyclopts-pymor-demo-trust_region`.
 
     Parameters
     ----------

@@ -25,15 +25,38 @@ def main(
     /, *,
     fv: bool = False
 ):
-    """Solves the Poisson equation in 2D using pyMOR's builtin discretization toolkit.
+    r"""Solves a parametric elliptic problem in 2D using pyMOR's builtin discretization toolkit.
+
+    This demo solves the parametric elliptic problem
+
+    .. math::
+
+        -\nabla \cdot \big(((1 - x_1)\mu + x_1) \nabla u\big) = f
+
+    on the unit square, where :math:`\mu \in [0.1, 1]` is the parameter. Problem number 0 uses
+    :math:`f = 10` and homogeneous Dirichlet boundary conditions. In problem number 1, the
+    right-hand side as well as the Dirichlet data on the left and top edges, the Neumann data on
+    the right edge and the Robin data on the bottom edge depend affinely on :math:`\mu`. The
+    problem is discretized with finite elements
+    (:func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`) or finite volumes
+    (:func:`~pymor.discretizers.builtin.fv.discretize_stationary_fv`) and solved for ten
+    uniformly sampled parameters, and the solutions are visualized. For finite elements, the
+    :math:`H^1_0`-seminorm, the :math:`L^2`-norm or the energy norm induced by the operator for
+    a fixed parameter value of the last solution is printed.
+
+    See :doc:`/tutorial_builtin_discretizer` for an introduction to pyMOR's builtin
+    discretization toolkit. For the non-parametric Poisson equation, see
+    :ref:`cyclopts-pymor-demo-elliptic`, and for a one-dimensional parametric problem, see
+    :ref:`cyclopts-pymor-demo-elliptic_oned`.
 
     Parameters
     ----------
     problem_number
         Selects the problem to solve [0 or 1].
     n
-        Triangle count per direction
+        Triangle count per direction.
     norm
+        Only used for finite elements.
         h1: compute the h1-norm of the last snapshot;
         l2: compute the l2-norm of the last snapshot;
         k: compute the energy norm of the last snapshot, where the energy-product is constructed

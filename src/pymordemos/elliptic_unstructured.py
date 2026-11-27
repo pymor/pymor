@@ -20,9 +20,22 @@ def main(
     num_points: int,
     clscale: float
 ):
-    """Solves the 2D-Poisson equation on a circular sector of radius 1 with an unstructured mesh.
+    r"""Solves the 2D-Poisson equation on a circular sector of radius 1 with an unstructured mesh.
+
+    This demo solves the Laplace equation :math:`\Delta u = 0` on a circular sector with angle
+    :math:`\alpha` and radius 1
+    (:class:`~pymor.analyticalproblems.domaindescriptions.CircularSectorDomain`) with the
+    Dirichlet data :math:`u = \sin(\pi\varphi / \alpha)` in polar coordinates
+    :math:`(r, \varphi)`. The arc of the sector is approximated by a polygon, the domain is meshed
+    using Gmsh, and the problem is discretized with linear finite elements using
+    :func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`. The plots show the discrete
+    solution, the function :math:`r^{\pi/\alpha} \sin(\pi\varphi / \alpha)`, which solves the
+    problem on the exact circular sector, and their difference.
 
     Note that Gmsh (https://gmsh.info/) is required for meshing.
+
+    See :doc:`/tutorial_builtin_discretizer` for an introduction to pyMOR's builtin
+    discretization toolkit. For a structured grid, see :ref:`cyclopts-pymor-demo-elliptic`.
 
     Parameters
     ----------

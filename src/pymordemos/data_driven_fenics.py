@@ -32,7 +32,37 @@ def main(
     input_scaling: bool = False,
     output_scaling: bool = False
 ):
-    """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
+    r"""Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
+
+    This demo builds a reduced order model for a nonlinear diffusion problem discretized with
+    FEniCS using machine learning methods (:cite:`HU18`). The full-order model solves
+
+    .. math::
+
+        -\nabla \cdot \big((1 + \mu u^2) \nabla u\big) = x_1 \sin(x_2)
+
+    on the unit square with :math:`u = 1` on the right boundary and homogeneous Neumann boundary
+    conditions elsewhere, where :math:`\mu \in [0, 1000]` is the parameter. The problem is
+    discretized with linear finite elements, and the nonlinear system is solved using Newton's
+    method. First, the full-order solutions are computed for uniformly sampled training
+    parameters. Then, a :class:`~pymor.reductors.data_driven.DataDrivenPODReductor` computes a
+    reduced basis by POD and trains a regressor to predict the reduced coefficients. One of the
+    following regressors can be selected:
+
+    - a fully connected neural network using PyTorch
+      ('fcnn', :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`),
+    - the vectorial kernel orthogonal greedy algorithm
+      ('vkoga', :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`), or
+    - Gaussian process regression using scikit-learn ('gpr').
+
+    Optionally, the inputs and outputs of the regressor are scaled using scikit-learn's
+    ``MinMaxScaler``. Finally, the reduced order model is evaluated for a random test parameter,
+    and the absolute and relative errors and the speedup are printed.
+
+    See :doc:`/tutorial_mor_with_ml` for background on machine learning methods for model order
+    reduction. For the same problem reduced using POD and empirical interpolation, see
+    :ref:`cyclopts-pymor-demo-fenics_nonlinear`, and for a linear problem discretized with
+    pyMOR's builtin discretizer, see :ref:`cyclopts-pymor-demo-data_driven`.
 
     Parameters
     ----------
@@ -46,7 +76,7 @@ def main(
     input_scaling
         Scale the input of the regressor (i.e. the parameter).
     output_scaling
-        Scale the output of the regressor (i.e. reduced coefficients or output quantity.).
+        Scale the output of the regressor (i.e. the reduced coefficients).
     """
     config.require('FENICS')
     if regressor == 'fcnn' and not config.HAVE_TORCH:
