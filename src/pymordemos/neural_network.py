@@ -14,6 +14,8 @@ from pymor.algorithms.ml.nn import NeuralNetworkRegressor
 from pymor.core.config import config
 from pymor.tools.random import new_rng
 
+TAGS = ('machine-learning',)
+
 app = App(help_on_error=True)
 
 
@@ -24,7 +26,24 @@ def main(
     grid_search_parameter_optimization: bool = False,
     num_points_plotting: int = 200
 ):
-    """Approximates a function with 2d output from training data using a neural network.
+    r"""Approximates a function with 2d output from training data using a neural network.
+
+    This demo uses a neural network to approximate
+
+    .. math::
+
+        f(x) = (\sin(2\pi x), \cos(2\pi x))^\top, \qquad x \in [0, 1],
+
+    from randomly or uniformly sampled training data. A fully connected neural network is
+    trained using PyTorch. The plots show the approximation and the training data for each
+    component. Optionally, a grid search using scikit-learn's ``GridSearchCV`` selects the
+    validation ratio, the optimizer (L-BFGS or Adam) and the hidden layers of the network by
+    cross-validation.
+
+    See :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor` for the implementation
+    and :doc:`/tutorial_mor_with_ml` for background on neural networks and their use in model
+    order reduction. For the approximation of the same function using kernel methods, see
+    :ref:`cyclopts-pymor-demo-vkoga`.
 
     Parameters
     ----------

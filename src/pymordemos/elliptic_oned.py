@@ -12,6 +12,8 @@ from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunct
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.parameters.functionals import ProjectionParameterFunctional
 
+TAGS = ('stationary', 'linear', 'parametric', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -21,7 +23,24 @@ def main(
     /, *,
     fv: bool = False,
 ):
-    """Solves the Poisson equation in 1D using pyMOR's builtin discretization toolkit.
+    r"""Solves a parametric elliptic problem in 1D using pyMOR's builtin discretization toolkit.
+
+    This demo solves the parametric elliptic problem
+
+    .. math::
+
+        -\big(((1 - x)\mu + x) u'\big)' = f
+
+    on the unit interval with homogeneous Dirichlet boundary conditions, where
+    :math:`\mu \in [0.1, 1]` is the parameter and the right-hand side is :math:`f = 10` (0) or
+    :math:`f = 1000 (x - 0.5)^2` (1). The problem is discretized with finite elements
+    (:func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`) or finite volumes
+    (:func:`~pymor.discretizers.builtin.fv.discretize_stationary_fv`) and solved for ten
+    uniformly sampled parameters, and the solutions are visualized.
+
+    See :doc:`/tutorial_builtin_discretizer` for an introduction to pyMOR's builtin
+    discretization toolkit. For two-dimensional problems, see :ref:`cyclopts-pymor-demo-elliptic`
+    and :ref:`cyclopts-pymor-demo-elliptic2`.
 
     Parameters
     ----------

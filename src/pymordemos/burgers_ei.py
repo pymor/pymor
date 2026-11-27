@@ -18,6 +18,8 @@ from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.tools.progress import track
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'reduced-basis', 'empirical-interpolation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -50,14 +52,44 @@ def main(
     vx: float = 1.,
     vy: float = 1.
 ):
-    """Reduction of a two-dimensional Burgers-type equation using empirical interpolation.
+    r"""Reduction of a two-dimensional Burgers-type equation using empirical interpolation.
+
+    This demo constructs a reduced order model for the two-dimensional Burgers-type equation
+    from :ref:`cyclopts-pymor-demo-burgers`, where the exponent :math:`\mu` in the flux is the
+    parameter. The problem is given by
+    :func:`~pymor.analyticalproblems.burgers.burgers_problem_2d` and is discretized with finite
+    volumes using :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv`. Since the
+    nonlinear finite volume operator cannot be projected efficiently, it is replaced by an
+    :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator` using
+    :func:`~pymor.algorithms.ei.interpolate_operators`. The collateral basis and the
+    interpolation DOFs are computed from evaluations of the operator on solution snapshots for
+    uniformly sampled parameters, using one of the following algorithms:
+
+    - the EI-Greedy algorithm ('ei_greedy', :func:`~pymor.algorithms.ei.ei_greedy`, :cite:`BMNP04`),
+    - the discrete empirical interpolation method ('deim', :func:`~pymor.algorithms.ei.deim`), or
+    - DEIM with QR-based selection of the interpolation DOFs
+      ('qdeim', :func:`~pymor.algorithms.ei.qdeim`, :cite:`DG16`).
+
+    The reduced basis is then computed by the POD-greedy algorithm
+    (:func:`~pymor.algorithms.greedy.rb_greedy`) using the true :math:`L^2`-in-space,
+    maximum-in-time error, and the reduced order model is constructed by Galerkin projection
+    of the interpolated model using :class:`~pymor.reductors.basic.InstationaryRBReductor`.
+    Finally, the maximum error over random test parameters is printed. Optionally, the
+    empirical interpolation errors and the interpolation DOFs, the maximum error for different
+    sizes of the reduced and collateral bases, and the solution with the largest error are
+    visualized.
+
+    See :doc:`/tutorial_basis_generation` for an introduction to reduced basis generation. For
+    empirical interpolation of a parameter-dependent coefficient function, see
+    :ref:`cyclopts-pymor-demo-function_ei`, and for a nonlinear problem discretized with FEniCS,
+    see :ref:`cyclopts-pymor-demo-fenics_nonlinear`.
 
     Parameters
     ----------
     exp_min
-        Minimal exponent.
+        Minimal exponent :math:`\mu` in the flux.
     exp_max
-        Maximal exponent.
+        Maximal exponent :math:`\mu` in the flux.
     ei_snapshots
         Number of snapshots for empirical interpolation.
     ei_size
@@ -76,7 +108,7 @@ def main(
         Type of grid to use.
     initial_data
         Select the initial data (sin, bump).
-    ipython_engines:
+    ipython_engines
         If positive, the number of IPython cluster engines to use for parallel greedy search.
         If zero, no parallelization is performed.
     ipython_profile
@@ -84,7 +116,8 @@ def main(
     lxf_lambda
         Parameter lambda in Lax-Friedrichs flux.
     periodic
-        If not, solve with dirichlet boundary conditions on left and bottom boundary.
+        If `False`, use Dirichlet boundary conditions on the left and bottom boundary
+        and outflow boundary conditions on the top and right boundary.
     nt
         Number of time steps.
     num_flux
@@ -94,7 +127,7 @@ def main(
     plot_ei_err
         Plot empirical interpolation error.
     plot_error_landscape
-        Calculate and show plot of reduction error vs. basis sizes.
+        Plot the maximum reduction error for different sizes of the reduced and collateral bases.
     plot_error_landscape_M
         Number of collateral basis sizes to test.
     plot_error_landscape_N

@@ -15,18 +15,44 @@ from pymor.reductors.stokes import LSRBStokesReductor, SupremizerGalerkinStokesR
 
 PROJECTION_METHODS = ['supremizer_galerkin', 'ls-normal', 'ls-ls']
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'scikit-fem')
+
 app = App(help_on_error=True)
 
 @app.default
 def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: int = 10):
-    """This example demonstrates a MOR workflow for a 2D Stokes equation.
+    r"""MOR for a parametric Stokes equation on the unit disk.
 
-    The script first computes POD bases for the velocity and pressure spaces
-    from randomly sampled solutions of the full order model (FOM). Then, it
-    constructs reduced order models (ROMs) using three different projection
-    methods: supremizer enrichment Galerkin projection, least-squares projection with
-    normal equations, and least-squares projection without normal equations.  Finally,
-    it evaluates the ROMs against the FOM on a set of random parameters.
+    This demo compares three projection methods for the reduced basis approximation of a
+    stationary Stokes equation. The full-order model is a
+    :class:`~pymor.models.saddle_point.SaddlePointModel` given by
+    :func:`~pymor.models.examples.stokes_2Dexample` with the body force
+    :math:`f(x) = (0, x_1)^\top`, where the dynamic viscosity :math:`\mu` is the parameter.
+    First, the full-order model is solved for randomly sampled viscosities, and separate POD
+    bases (:func:`~pymor.algorithms.pod.pod`) for the velocity and the pressure are computed
+    from these snapshots. Then, reduced order models are constructed using
+
+    - Galerkin projection with supremizer enrichment of the velocity space
+      ('supremizer_galerkin', :class:`~pymor.reductors.stokes.SupremizerGalerkinStokesReductor`),
+    - least-squares projection solved via the normal equations
+      ('ls-normal', :class:`~pymor.reductors.stokes.LSRBStokesReductor`), and
+    - least-squares projection solved directly without the normal equations
+      ('ls-ls', :class:`~pymor.reductors.stokes.LSRBStokesReductor`).
+
+    Finally, the reduced order models are evaluated for a set of random test viscosities, and
+    the mean speedup and the mean relative errors of velocity and pressure are printed for each
+    method.
+
+    Parameters
+    ----------
+    mu_low
+        Lower bound of the viscosity range.
+    mu_high
+        Upper bound of the viscosity range.
+    modes
+        Number of snapshots and maximum number of POD modes for velocity and pressure.
+    n_tests
+        Number of random test viscosities.
     """
     # sets up the discrete Stokes model
     config.require('SCIKIT_FEM')
@@ -60,24 +86,24 @@ def main(mu_low: float = 0.01, mu_high: float = 1000, modes: int = 50, n_tests: 
         # construct reduced order model
         if method == 'supremizer_galerkin':
             reductor_stokes = SupremizerGalerkinStokesReductor(fom_stokes,
-                                                                         RB_u=basis_u,
-                                                                         RB_p=basis_p,
-                                                                         u_product = fom_stokes.u_product,
-                                                                         p_product=fom_stokes.p_product)
+                                                               RB_u=basis_u,
+                                                               RB_p=basis_p,
+                                                               u_product = fom_stokes.u_product,
+                                                               p_product=fom_stokes.p_product)
         elif method == 'ls-normal':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=True)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product = fom_stokes.u_product,
+                                                 p_product=fom_stokes.p_product,
+                                                 use_normal_equations=True)
         elif method == 'ls-ls':
             reductor_stokes = LSRBStokesReductor(fom_stokes,
-                                                           RB_u=basis_u,
-                                                           RB_p=basis_p,
-                                                           u_product = fom_stokes.u_product,
-                                                           p_product=fom_stokes.p_product,
-                                                           use_normal_equations=False)
+                                                 RB_u=basis_u,
+                                                 RB_p=basis_p,
+                                                 u_product = fom_stokes.u_product,
+                                                 p_product=fom_stokes.p_product,
+                                                 use_normal_equations=False)
         else:
             raise ValueError(f'Unknown projection method {method}')
 

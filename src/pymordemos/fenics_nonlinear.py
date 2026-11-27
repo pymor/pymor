@@ -8,6 +8,8 @@ from cyclopts import App
 
 from pymor.core.config import config
 
+TAGS = ('stationary', 'nonlinear', 'parametric', 'pod', 'empirical-interpolation', 'fenics')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -18,7 +20,37 @@ def main(
     /, *,
     visualize: bool = True
 ):
-    """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM.
+    r"""Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM.
+
+    This demo reduces a nonlinear diffusion problem discretized with FEniCS using POD and
+    empirical interpolation. The full-order model solves
+
+    .. math::
+
+        -\nabla \cdot \big((1 + \mu u^2) \nabla u\big) = x_1 \sin(x_2)
+
+    on the unit square or unit cube with :math:`u = 1` on the boundary :math:`x_1 = 1` and
+    homogeneous Neumann boundary conditions elsewhere, where :math:`\mu \in [0.01, 1000]` is the
+    parameter. The problem is discretized with Lagrange finite elements using FEniCSx or legacy
+    FEniCS. First, the full-order model is solved using Newton's method
+    (:class:`~pymor.solvers.newton.NewtonSolver`) for logarithmically uniformly sampled
+    parameters, and both the solutions and the Newton residuals are collected. The nonlinear
+    operator is replaced by an
+    :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`, whose collateral basis and
+    interpolation DOFs are computed from the residuals using
+    :func:`~pymor.algorithms.ei.ei_greedy`. The reduced basis is computed by POD
+    (:func:`~pymor.algorithms.pod.pod`) of the solutions, and the reduced order model is
+    constructed by Galerkin projection using
+    :class:`~pymor.reductors.basic.StationaryRBReductor`. Finally, the reduced order model is
+    evaluated for random test parameters, and the sizes of the reduced and collateral bases, the
+    maximum relative error and the median speedup are printed. Optionally, the full-order
+    solution, the reduced solution and the error are visualized for the test parameter with the
+    largest error. The demo can be run in parallel using MPI.
+
+    See :doc:`/tutorial_external_solver` for an introduction to coupling pyMOR with external
+    solvers. For the same problem reduced using machine learning methods, see
+    :ref:`cyclopts-pymor-demo-data_driven_fenics`, and for empirical interpolation with pyMOR's
+    builtin discretizer, see :ref:`cyclopts-pymor-demo-burgers_ei`.
 
     Parameters
     ----------

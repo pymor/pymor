@@ -16,6 +16,8 @@ from pymor.core.exceptions import SklearnMissingError, TorchMissingError
 from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.reductors.data_driven import DataDrivenReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'pod', 'data-driven', 'machine-learning', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -30,6 +32,32 @@ def main(
     output_scaling: bool = False
 ):
     """Model order reduction with machine learning methods (approach by Hesthaven and Ubbiali).
+
+    This demo builds reduced order models for a parametric diffusion problem using machine
+    learning methods. The full-order model is given by
+    :func:`~pymor.models.examples.two_dimensional_parametric_diffusion`. First, the full-order
+    solutions and outputs are computed for randomly sampled training parameters, and a reduced
+    basis is computed from the solution snapshots by POD (:func:`~pymor.algorithms.pod.pod`).
+    Then, two instances of :class:`~pymor.reductors.data_driven.DataDrivenReductor` are trained,
+    one mapping the parameter to the reduced coefficients of the solution and one mapping the
+    parameter to the output. One of the following regressors can be selected:
+
+    - a fully connected neural network using PyTorch
+      ('fcnn', :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`),
+    - the vectorial kernel orthogonal greedy algorithm
+      ('vkoga', :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`), or
+    - Gaussian process regression using scikit-learn ('gpr').
+
+    Optionally, the inputs and outputs of the regressors are scaled using scikit-learn's
+    ``MinMaxScaler``. Starting with a single training sample, the training data is extended one
+    sample at a time. After each extension, the reduced order models are evaluated on a set of
+    random test parameters. The plots show the relative errors and speedups of the solution and
+    output approximations over the number of training samples.
+
+    See :doc:`/tutorial_mor_with_ml` for background on machine learning methods for model order
+    reduction. For instationary problems, see :ref:`cyclopts-pymor-demo-data_driven_instationary`,
+    and for a full-order model discretized with FEniCS,
+    see :ref:`cyclopts-pymor-demo-data_driven_fenics`.
 
     Parameters
     ----------

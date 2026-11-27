@@ -8,6 +8,8 @@ from cyclopts import App
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.basic import *
 
+TAGS = ('instationary', 'linear', 'data-driven', 'system-identification')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -15,14 +17,27 @@ def main(
     n: int = 4,
     M: int = 10,
 ):
-    """DMD system identification demo.
+    r"""DMD system identification demo.
+
+    This demo identifies a linear discrete-time system :math:`x_{k+1} = A x_k` from trajectory
+    data using dynamic mode decomposition (DMD). The system matrix :math:`A` is a random
+    :math:`n \times n` matrix normalized to Frobenius norm one, and the trajectory is generated
+    from the initial state :math:`x_0 = (1, \dots, 1)^\top`. The DMD
+    (:func:`~pymor.algorithms.dmd.dmd`, :cite:`TRLBK14`) of the trajectory yields a low-rank
+    approximation of :math:`A`, and the original matrix, its approximation and the error in the
+    Frobenius norm are printed. If the trajectory spans the whole state space, :math:`A` is
+    recovered up to rounding errors.
+
+    For the DMD of a nonlinear system, see :ref:`cyclopts-pymor-demo-burgers_dmd`, and for
+    system identification from impulse response data using the eigensystem realization
+    algorithm, see :ref:`cyclopts-pymor-demo-era`.
 
     Parameters
     ----------
     n
         Dimension of the state.
     M
-        Number of data pairs.
+        Number of data pairs (time steps of the trajectory).
     """
     A = get_rng().random((n, n))
     A = A / np.linalg.norm(A)

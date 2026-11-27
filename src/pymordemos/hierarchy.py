@@ -17,6 +17,9 @@ from pymor.models.examples import two_dimensional_parametric_diffusion
 from pymor.models.hierarchy import ModelHierarchy
 from pymor.reductors.data_driven import AdaptiveDataDrivenReductor
 
+TAGS = ('stationary', 'instationary', 'linear', 'parametric', 'reduced-basis', 'data-driven', 'machine-learning',
+        'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 
@@ -39,8 +42,38 @@ def main(
 ):
     """Adaptive model hierarchy combining reduced basis and machine learning methods.
 
-    Problem number 0 considers an elliptic problem and problem number 1 considers
-    a parabolic problem.
+    This demo evaluates an adaptive :class:`~pymor.models.hierarchy.ModelHierarchy` consisting
+    of the full-order model, a reduced basis model and, optionally, a data-driven surrogate.
+    Problem number 0 is a stationary parametric diffusion problem given by
+    :func:`~pymor.models.examples.two_dimensional_parametric_diffusion`, and problem number 1 is
+    a parabolic problem with the diffusion coefficient given by
+    :func:`~pymor.analyticalproblems.text.text_problem`, discretized using
+    :func:`~pymor.discretizers.builtin.cg.discretize_instationary_cg`. The reduced basis model
+    is constructed by :class:`~pymor.reductors.coercive.CoerciveRBReductor` or
+    :class:`~pymor.reductors.parabolic.ParabolicRBReductor`, respectively. The data-driven
+    surrogate is constructed by :class:`~pymor.reductors.data_driven.AdaptiveDataDrivenReductor`
+    and approximates the reduced coefficients of the reduced basis model using one of the
+    following regressors:
+
+    - a fully connected neural network using PyTorch
+      ('fcnn', :class:`~pymor.algorithms.ml.nn.regressor.NeuralNetworkRegressor`),
+    - the vectorial kernel orthogonal greedy algorithm
+      ('vkoga', :class:`~pymor.algorithms.ml.vkoga.regressor.VKOGARegressor`), or
+    - Gaussian process regression using scikit-learn ('gpr').
+
+    The hierarchy starts with empty reduced models. For each randomly sampled parameter, the
+    cheapest model is evaluated first, and its a posteriori error estimate for the requested
+    quantity is compared to a fixed tolerance. If the estimated error is too large, the
+    hierarchy falls back to the next more accurate model and adapts the cheaper models using
+    the more accurate solution, i.e., the reduced basis is extended and the data-driven
+    surrogate is retrained. The mean speedup compared to the full-order model, the mean
+    relative errors and the number of evaluations of each model are printed. Optionally, the
+    model usage, the runtimes and the estimated errors are plotted.
+
+    For non-adaptive model order reduction with machine learning methods, see
+    :ref:`cyclopts-pymor-demo-data_driven` and :ref:`cyclopts-pymor-demo-data_driven_instationary`.
+    See :doc:`/tutorial_mor_with_ml` for background on machine learning methods for model order
+    reduction.
 
     Parameters
     ----------

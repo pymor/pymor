@@ -15,6 +15,8 @@ from pymor.discretizers.builtin import RectGrid, discretize_instationary_fv
 from pymor.tools.mpi import parallel
 from pymor.tools.table import format_table
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'pod', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -31,7 +33,31 @@ def main(
     snap: int = 20,
     threads: int = 0
 ):
-    """Compression of snapshot data with the HAPOD algorithm from [HLR18].
+    r"""Compression of snapshot data with the HAPOD algorithm.
+
+    This demo compares the hierarchical approximate proper orthogonal decomposition (HAPOD)
+    :cite:`HLR18` with the standard POD for compressing solution snapshots. The snapshots
+    are the solution trajectories of a two-dimensional Burgers-type equation
+    (:func:`~pymor.analyticalproblems.burgers.burgers_problem_2d`) for randomly sampled
+    parameters, discretized with finite volumes using
+    :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv`. The snapshot data is
+    compressed using
+
+    - the standard POD (:func:`~pymor.algorithms.pod.pod`),
+    - the distributed HAPOD (:func:`~pymor.algorithms.hapod.dist_vectorarray_hapod`), where the
+      snapshots are split into slices, which are compressed individually and then combined
+      along a tree of given arity, and
+    - the incremental HAPOD (:func:`~pymor.algorithms.hapod.inc_vectorarray_hapod`), where the
+      snapshots are processed in several steps and the POD modes are updated incrementally.
+
+    All methods aim at the same prescribed mean :math:`\ell^2`-approximation error, where the
+    parameter :math:`\omega` controls how the error tolerance is distributed between the
+    levels of the HAPOD tree. The distributed HAPOD can be parallelized using multiple
+    processes or threads. A table with the mean approximation errors, the numbers of modes and
+    the computation times of all methods is printed.
+
+    For the use of the POD in reduced basis methods, see
+    :ref:`cyclopts-pymor-demo-thermalblock`.
 
     Parameters
     ----------
@@ -42,13 +68,14 @@ def main(
     inc
         Number of steps for incremental HAPOD.
     arity
-        Arity of distributed HAPOD tree
+        Arity of distributed HAPOD tree.
     grid
         Use grid with (2*NI)*NI elements.
     nt
         Number of time steps.
     omega
-        Parameter omega from HAPOD algorithm.
+        Parameter omega from the HAPOD algorithm
+        (see :func:`~pymor.algorithms.hapod.dist_vectorarray_hapod`).
     procs
         Number of processes to use for parallelization.
     snap

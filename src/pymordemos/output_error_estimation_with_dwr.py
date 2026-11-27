@@ -11,6 +11,8 @@ from cyclopts import App
 from pymor.basic import *
 from pymor.reductors.dwr import DWRCoerciveRBReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'error-estimation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -21,6 +23,29 @@ def main(
     modes: int
 ):
     """Demo script for using DWR-based output error estimation.
+
+    This demo compares the standard a posteriori output error estimation of reduced basis
+    models with the dual-weighted residual (DWR) approach :cite:`Haa17`. The full-order model is
+    a 2x2 thermal block problem
+    (:func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`) with a scalar (0) or
+    vector-valued (1) output, discretized with linear finite elements using pyMOR's builtin
+    discretizer. A primal reduced basis is computed by POD (:func:`~pymor.algorithms.pod.pod`)
+    from the solution snapshots for uniformly sampled training parameters. The following reduced
+    order models are compared:
+
+    - the standard reduced order model constructed by
+      :class:`~pymor.reductors.coercive.CoerciveRBReductor`,
+    - the DWR reduced order model constructed by
+      :class:`~pymor.reductors.dwr.DWRCoerciveRBReductor`, where additional dual reduced bases
+      are computed by POD from the solutions of the dual problems for each output component, and
+    - the DWR reduced order model using only the primal reduced basis.
+
+    The plots show the output errors and estimates of all reduced order models for each
+    training parameter, as well as the minimum and maximum output errors and estimates of the
+    standard and DWR approaches over the training set for increasing reduced basis sizes.
+
+    For output error estimation without the DWR approach, including instationary problems, see
+    :ref:`cyclopts-pymor-demo-output_error_estimation`.
 
     Parameters
     ----------

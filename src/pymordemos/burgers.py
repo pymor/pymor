@@ -12,6 +12,8 @@ from cyclopts import App
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 
+TAGS = ('instationary', 'nonlinear', 'parametric', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -28,14 +30,28 @@ def main(
     vx: float = 1.,
     vy: float = 1.,
 ):
-    """Solves a two-dimensional Burgers-type equation.
+    r"""Solves a two-dimensional Burgers-type equation.
 
-    See pymor.analyticalproblems.burgers for more details.
+    This demo solves a two-dimensional Burgers-type equation for a given exponent :math:`\mu`
+    in the flux. The analytical problem is given by
+    :func:`~pymor.analyticalproblems.burgers.burgers_problem_2d`, where the initial data can be
+    chosen as a sine or a bump function. It is discretized with finite volumes using
+    :func:`~pymor.discretizers.builtin.fv.discretize_instationary_fv` on a rectangular
+    (:class:`~pymor.discretizers.builtin.grids.rect.RectGrid`) or triangular
+    (:class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`) grid, and the numerical flux can
+    be chosen from the Lax-Friedrichs, Engquist-Osher and simplified Engquist-Osher fluxes.
+    The solution is visualized, and the time needed to solve the problem is printed.
+
+    See :doc:`/tutorial_builtin_discretizer` for an introduction to pyMOR's builtin
+    discretization toolkit. For model order reduction of this problem using empirical
+    interpolation, see :ref:`cyclopts-pymor-demo-burgers_ei`, and for dynamic mode
+    decomposition applied to a one-dimensional Burgers-type equation, see
+    :ref:`cyclopts-pymor-demo-burgers_dmd`.
 
     Parameters
     ----------
     exp
-        Exponent.
+        Exponent :math:`\mu` in the flux.
     grid
         Use grid with (2*NI)*NI elements.
     grid_type
@@ -45,7 +61,8 @@ def main(
     lxf_lambda
         Parameter lambda in Lax-Friedrichs flux.
     periodic
-        If not, solve with dirichlet boundary conditions on left and bottom boundary.
+        If `False`, use Dirichlet boundary conditions on the left and bottom boundary
+        and outflow boundary conditions on the top and right boundary.
     nt
         Number of time steps.
     num_flux

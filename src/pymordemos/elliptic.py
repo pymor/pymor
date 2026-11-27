@@ -12,6 +12,8 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_stationary_cg, discretize_stationary_fv
 
+TAGS = ('stationary', 'linear', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -24,7 +26,30 @@ def main(
     fv: bool = False,
     rect: bool = False
 ):
-    """Solves the Poisson equation in 2D using pyMOR's builtin discretization toolkit.
+    r"""Solves the Poisson equation in 2D using pyMOR's builtin discretization toolkit.
+
+    This demo solves a Poisson equation :math:`-\Delta u = f` on the unit square with Dirichlet
+    and Neumann boundary conditions. The analytical problem is given as a
+    :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, where the data can be chosen
+    as follows:
+
+    - right-hand side: :math:`f = 10` (0) or :math:`f = 1000 (x_1 - 0.5)^2` (1),
+    - Dirichlet data: :math:`0` (0), :math:`1` (1) or :math:`x_1` (2),
+    - Neumann data: none (0), the constant :math:`3` (1), or :math:`50` on the strips
+      :math:`0.1 \leq x_2 \leq 0.2` and :math:`0.8 \leq x_2 \leq 0.9` and zero elsewhere (2).
+
+    The edges of the domain that form the Neumann boundary are selected by `neumann_count`. The
+    problem is discretized with finite elements
+    (:func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`) or finite volumes
+    (:func:`~pymor.discretizers.builtin.fv.discretize_stationary_fv`) on a triangular or
+    rectangular grid at two different resolutions. For each resolution, the solution is
+    visualized, and its averages over the domain and over the boundary, which are defined as
+    outputs of the problem, are printed.
+
+    See :doc:`/tutorial_builtin_discretizer` for an introduction to pyMOR's builtin
+    discretization toolkit. For parametric elliptic problems, see
+    :ref:`cyclopts-pymor-demo-elliptic2` and :ref:`cyclopts-pymor-demo-elliptic_oned`, and for
+    an unstructured mesh, see :ref:`cyclopts-pymor-demo-elliptic_unstructured`.
 
     Parameters
     ----------
@@ -38,8 +63,8 @@ def main(
         0: no neumann boundary,
         1: right edge is neumann boundary,
         2: right+top edges are neumann boundary,
-        3: right+top+bottom edges are neumann boundary
-    fb
+        3: right+top+bottom edges are neumann boundary.
+    fv
         Use finite volume discretization instead of finite elements.
     rect
         Use RectGrid instead of TriaGrid.

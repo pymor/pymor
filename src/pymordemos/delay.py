@@ -9,6 +9,8 @@ from pymor.models.examples import transfer_function_delay_example
 from pymor.reductors.h2 import TFIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
+TAGS = ('instationary', 'linear', 'system-theoretic')
+
 app = App(help_on_error=True)
 
 @app.default

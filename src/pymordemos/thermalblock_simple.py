@@ -22,6 +22,8 @@ TEXT = 'pyMOR'
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'builtin-discretizer', 'fenics', 'ngsolve')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -36,6 +38,35 @@ def main(
 ):
     """Simplified version of the 'thermalblock' demo script.
 
+    This demo shows how to construct reduced order models for full-order models from different
+    discretization toolkits. The following full-order models can be selected:
+
+    - a 2x2 thermal block problem
+      (:func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`) discretized with
+      linear finite elements using pyMOR's builtin discretizer ('pymor'),
+    - the same problem discretized with quadratic finite elements using FEniCS or FEniCSx,
+      where the system matrices are assembled by hand and wrapped as a
+      :class:`~pymor.models.basic.StationaryModel` ('fenics'),
+    - a three-dimensional thermal block problem on a cube consisting of 2x2x2 blocks, where
+      the blocks at opposite corners share the same diffusion parameter, discretized with
+      fourth-order finite elements using NGSolve ('ngsolve'), or
+    - a diffusion problem in which the diffusion coefficient on each letter of the text 'pyMOR'
+      is a parameter (:func:`~pymor.analyticalproblems.text.text_problem`), discretized using
+      pyMOR's builtin discretizer ('pymor_text').
+
+    The reduced basis is computed by one of the algorithms 'naive', 'greedy', 'adaptive_greedy'
+    or 'pod' (see :ref:`cyclopts-pymor-demo-thermalblock`), and the reduced order model is
+    constructed by Galerkin projection using :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
+    Finally, the reduced order model is evaluated on random test parameters using
+    :func:`~pymor.algorithms.error.reduction_error_analysis`. The results are printed and
+    plotted, and the reduced order model and the results are pickled to the files
+    `reduced_model.out` and `results.out`. Optionally, the full-order solution, the reduced
+    solution and the error are visualized for the test parameter with the largest error.
+
+    See :doc:`/tutorial_external_solver` for an introduction to coupling pyMOR with external
+    solvers. For more options to configure the reduction process, see
+    :ref:`cyclopts-pymor-demo-thermalblock`.
+
     Parameters
     ----------
     model
@@ -45,14 +76,14 @@ def main(
     snapshots
         naive: ignored;
         greedy/pod: Number of training_set parameters per block
-        (in total SNAPSHOTS^(XBLOCKS * YBLOCKS) parameters);
+        (in total SNAPSHOTS^4 parameters);
         adaptive_greedy: size of validation set.
     rbsize
         Size of the reduced basis.
     test
         Number of parameters for stochastic error estimation.
     visualize
-        Visualize solution and reduced solution
+        Visualize solution and reduced solution.
     """
     # discretize
     ############

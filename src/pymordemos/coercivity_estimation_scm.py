@@ -20,6 +20,8 @@ GRID_INTERVALS = 10     # pyMOR/FEniCS
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('stationary', 'linear', 'parametric', 'error-estimation', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -30,6 +32,26 @@ def main(
     num_neighbors: int = 5
 ):
     """Simplified version of the thermalblock demo to showcase the successive constraints method.
+
+    This demo estimates the coercivity constant of a parametric operator using the successive
+    constraints method (SCM, :cite:`HRSP07`). The full-order model is a 2x2 thermal block
+    problem (:func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`) discretized
+    with linear finite elements on a coarse grid using
+    :func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`. Using a weak greedy
+    algorithm on a random training set, :func:`~pymor.algorithms.scm.construct_scm_functionals`
+    selects constraint parameters and constructs parameter functionals that provide lower and
+    upper bounds for the coercivity constant with respect to the :math:`H^1_0`-seminorm
+    (:class:`~pymor.algorithms.scm.LBSuccessiveConstraintsFunctional` and
+    :class:`~pymor.algorithms.scm.UBSuccessiveConstraintsFunctional`). The lower bound is
+    obtained by solving a linear program that takes the closest constraint parameters into
+    account. The plots show the maximum greedy errors over the extension steps and, for random
+    test parameters, the lower and upper bounds together with the true coercivity constant,
+    which for the thermal block problem is the minimum of the diffusion coefficients.
+
+    Lower bounds for the coercivity constant are required by the residual-based a posteriori
+    error estimators of reduced basis methods. For a reduced basis approximation of the thermal
+    block problem, where the coercivity constant is known explicitly, see
+    :ref:`cyclopts-pymor-demo-thermalblock`.
 
     Parameters
     ----------

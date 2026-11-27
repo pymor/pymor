@@ -21,6 +21,8 @@ DT = 1. / NT
 # Main script                                                                                      #
 ####################################################################################################
 
+TAGS = ('instationary', 'linear', 'parametric', 'reduced-basis', 'pod', 'builtin-discretizer', 'fenics')
+
 app = App(help_on_error=True, result_action='return_value')
 
 @app.default
@@ -32,10 +34,39 @@ def main(
     test: int,
     /, *,
     pickle: bool = True,
-    plot_err: bool =False,
+    plot_err: bool = False,
     plot_error_sequence: bool = False
 ):
-    """Reduced basis approximation of the heat equation.
+    r"""Reduced basis approximation of the heat equation.
+
+    This demo constructs reduced order models for a parametric heat equation on the unit square
+    with a high-conductivity channel and two parametrized channels, where the conductivity
+    :math:`\mu \in [1, 100]` of the two parametrized channels is the parameter. The problem is
+    given by :func:`~pymor.models.examples.heat_equation_example` and is discretized with linear
+    finite elements using pyMOR's builtin discretizer or with quadratic finite elements using
+    FEniCS. The reduced basis is computed using one of the following algorithms:
+
+    - the POD-greedy algorithm (:cite:`HO08`) on a uniform training set
+      ('greedy', :func:`~pymor.algorithms.greedy.rb_greedy`), which in each step extends the
+      reduced basis by the dominant POD mode of the projection error of the worst-approximated
+      solution trajectory,
+    - the POD-greedy algorithm with adaptively refined training set
+      ('adaptive_greedy', :func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`), or
+    - POD of all solution trajectories on a uniform training set, compressing in time and
+      parameter at once ('pod', :func:`~pymor.algorithms.pod.pod`).
+
+    The reduced order model is constructed by Galerkin projection using
+    :class:`~pymor.reductors.parabolic.ParabolicRBReductor`, which also provides an a posteriori
+    error estimator. Finally, the reduced order model is evaluated on random test parameters
+    using :func:`~pymor.algorithms.error.reduction_error_analysis`, where the error is measured
+    in a discrete :math:`L^2`-in-time :math:`H^1_0`-seminorm, and the results are printed.
+    Optionally, the reduced order model and the results are pickled, the reduction error is
+    plotted over the basis size, and the full-order solution, the reduced solution and the
+    error are visualized for the test parameter with the largest error.
+
+    See :doc:`/tutorial_basis_generation` for an introduction to reduced basis generation. For
+    stationary problems, see :ref:`cyclopts-pymor-demo-thermalblock`, and for output error
+    estimation for this problem, see :ref:`cyclopts-pymor-demo-output_error_estimation`.
 
     Parameters
     ----------
@@ -53,7 +84,7 @@ def main(
     pickle
         Pickle reduced model and error analysis results to files.
     plot_err
-        Plot error
+        Plot error for the test parameter with the largest error.
     plot_error_sequence
         Plot reduction error vs. basis size.
     """

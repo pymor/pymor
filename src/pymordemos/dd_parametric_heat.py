@@ -71,6 +71,8 @@ def run_mor_method_dd_param(fom, ss, pp, reductor_cls, reductor_short_name, **re
     plt.show()
 
 
+TAGS = ('instationary', 'linear', 'parametric', 'system-theoretic', 'data-driven', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default

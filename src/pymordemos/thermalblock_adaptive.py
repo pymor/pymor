@@ -16,6 +16,8 @@ from pymor.parallel.default import new_parallel_pool
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 
+TAGS = ('stationary', 'linear', 'parametric', 'reduced-basis', 'builtin-discretizer')
+
 app = App(help_on_error=True)
 
 @app.default
@@ -41,7 +43,27 @@ def main(
     validation_mus: int = 0,
     visualize_refinement: bool = True
 ):
-    """Modified thermalblock demo using adaptive greedy basis generation algorithm.
+    r"""Thermal block demo using the adaptive greedy basis generation algorithm.
+
+    This demo constructs a reduced basis for a 2x2 thermal block problem
+    (see :func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`) using the weak
+    greedy algorithm with adaptively refined training set
+    (:func:`~pymor.algorithms.adaptivegreedy.rb_adaptive_greedy`, :cite:`HDO11`). The problem
+    is modified such that it depends on only two parameters :math:`\mu_1` and :math:`\mu_2`:
+    the diffusion coefficients on the four blocks are :math:`\mu_1`, :math:`\mu_2^2`,
+    :math:`\mu_1` and :math:`\mu_2`. Starting with a coarse training set, the algorithm refines
+    the parameter space where the reduced model is still inaccurate, which prevents
+    overfitting the reduced basis to the training set. The problem is discretized with linear
+    finite elements, and the reduced order model is constructed by Galerkin projection using
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor` or
+    :class:`~pymor.reductors.coercive.SimpleCoerciveRBReductor`. Optionally, the refinement of
+    the training set is visualized. Finally, the reduced order model is evaluated on random test
+    parameters using :func:`~pymor.algorithms.error.reduction_error_analysis`, and the
+    results are printed.
+
+    See :doc:`/tutorial_basis_generation` for an introduction to reduced basis generation. For
+    other basis generation algorithms applied to the thermal block problem, see
+    :ref:`cyclopts-pymor-demo-thermalblock`.
 
     Parameters
     ----------
