@@ -124,6 +124,10 @@ class MTReductor(BasicObject):
                 poles, ev_l, ev_r = spla.eig(A, E, left=True)
                 rev = fom.A.source.from_numpy(ev_r)
                 lev = fom.A.source.from_numpy(ev_l)
+
+            for i in range(len(poles)):
+                lev[i].scal(1 / np.conj(lev[i].inner(fom.E.apply(rev[i]))[0][0]))
+
             if which == 'SM':
                 dominance = np.abs(poles)
             elif which == 'LR':
@@ -131,7 +135,6 @@ class MTReductor(BasicObject):
             else:
                 absres = np.empty(len(poles))
                 for i in range(len(poles)):
-                    lev[i].scal(1 / lev[i].inner(fom.E.apply(rev[i]))[0][0])
                     b_norm = fom.B.apply_adjoint(lev[i]).norm()[0]
                     c_norm = fom.C.apply(rev[i]).norm()[0]
                     absres[i] = b_norm * c_norm
