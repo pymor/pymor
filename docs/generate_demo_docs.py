@@ -57,6 +57,13 @@ def source_lines(module, command):
     return f'5-{doc.lineno - 1},{doc.end_lineno + 1}-'
 
 
+def summary(app):
+    """First sentence of the default command's docstring, or of the app's help if there is none."""
+    doc = getdoc(app.default_command) if app.default_command else app.help
+    paragraph = ' '.join((doc or '').split('\n\n')[0].split())
+    return paragraph.split('. ')[0].removesuffix('.') + '.' if paragraph else ''
+
+
 rows, used_tags = [], set()
 with open(OUT_DIR / 'demos.rst', 'w') as index:
     print("""
@@ -77,7 +84,7 @@ Demo Scripts
         if unknown := set(tags) - set(TAG_VOCABULARY):
             raise ValueError(f'Unknown tags in demo {demo}: {", ".join(sorted(unknown))}')
         used_tags.update(tags)
-        description = escape((getdoc(app.default_command) or '').split('\n')[0])
+        description = escape(summary(app))
         rows.append(f'<tr data-tags="{" ".join(tags)}"><td><a href="{demo}.html">{demo}</a></td>'
                     f'<td>{description}</td><td>{tag_links(tags)}</td></tr>')
         with open(OUT_DIR / f'{demo}.rst', 'w') as f:
